@@ -1555,14 +1555,38 @@ const placeDB=[
 
 function openAddrModal(target){
   psTarget=target;
-  const screen=document.getElementById('place-search-screen');
+  var screen=document.getElementById('place-search-screen');
   screen.style.display='flex';
   psSwitch(target,false);
-  document.getElementById('ps-input').value='';
-  document.getElementById('ps-clear').style.display='none';
   document.getElementById('ps-map-container').style.display='none';
-  showPsDefault();renderPsRecent();renderPsFav();
-  setTimeout(()=>document.getElementById('ps-input').focus(),150);
+  document.getElementById('ps-map-container').classList.remove('on');
+
+  // 기존 입력값 가져오기
+  var existingVal='';
+  if(target==='pickup'){
+    existingVal=(document.getElementById('pickup-input')||{value:''}).value.trim();
+  } else {
+    existingVal=(document.getElementById('dest-input')||{value:''}).value.trim();
+  }
+
+  var psInp=document.getElementById('ps-input');
+  var psClr=document.getElementById('ps-clear');
+
+  if(existingVal){
+    // 기존값 있으면 바로 검색
+    psInp.value=existingVal;
+    psClr.style.display='block';
+    showPsAuto();
+    setTimeout(function(){ psSearch(); },100);
+  } else {
+    // 없으면 기본화면
+    psInp.value='';
+    psClr.style.display='none';
+    showPsDefault();
+    renderPsRecent();
+    renderPsFav();
+    setTimeout(function(){ psInp.focus(); },150);
+  }
 }
 function closePlaceSearch(){document.getElementById('place-search-screen').style.display='none';}
 function psSwitch(target,doFocus=true){
