@@ -1,0 +1,1984 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BossCall">
+<meta name="theme-color" content="#3478f6">
+<title>BossCall</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233478f6'/%3E%3Crect x='8' y='36' width='48' height='16' rx='4' fill='white'/%3E%3Cpath d='M14 36l6-12q3-6 10-6h16q7 0 10 6l6 12z' fill='white'/%3E%3Ccircle cx='18' cy='46' r='6' fill='%233478f6'/%3E%3Ccircle cx='18' cy='46' r='3' fill='white'/%3E%3Ccircle cx='46' cy='46' r='6' fill='%233478f6'/%3E%3Ccircle cx='46' cy='46' r='3' fill='white'/%3E%3Cpath d='M48 16q5 5 5 11t-5 11' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233478f6'/%3E%3Crect x='8' y='36' width='48' height='16' rx='4' fill='white'/%3E%3Cpath d='M14 36l6-12q3-6 10-6h16q7 0 10 6l6 12z' fill='white'/%3E%3Ccircle cx='18' cy='46' r='6' fill='%233478f6'/%3E%3Ccircle cx='18' cy='46' r='3' fill='white'/%3E%3Ccircle cx='46' cy='46' r='6' fill='%233478f6'/%3E%3Ccircle cx='46' cy='46' r='3' fill='white'/%3E%3Cpath d='M48 16q5 5 5 11t-5 11' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<script>
+/* 카카오맵 SDK */
+window.KAKAO_KEY = localStorage.getItem('kakao_api_key') || '383a53cfd4165ce1cd26ed2e3540d7f0';
+window.KAKAO_READY = false;
+function loadKakaoSDK(key) {
+  return new Promise(function(resolve, reject) {
+    if (window.kakao && window.kakao.maps) { resolve(); return; }
+    var s = document.createElement('script');
+    s.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=' + key + '&libraries=services&autoload=false';
+    s.onload = function() {
+      window.kakao.maps.load(function() {
+        window.KAKAO_READY = true;
+        console.log('✅ 카카오맵 로드 완료');
+        resolve();
+      });
+    };
+    s.onerror = function(e) {
+      console.error('❌ 카카오맵 로드 실패:', e);
+      reject(e);
+    };
+    document.head.appendChild(s);
+  });
+}
+if (window.KAKAO_KEY) {
+  loadKakaoSDK(window.KAKAO_KEY)
+    .then(function() { window.KAKAO_READY = true; })
+    .catch(function(e) { console.error('카카오맵 초기화 실패', e); });
+}
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+:root {
+  /* ── 화이트 테마 ── */
+  --bg:#f5f6fa;
+  --surface:#ffffff;
+  --surface2:#f0f2f7;
+  --border:#e2e6ef;
+  --accent:#3478f6;
+  --accent2:#6c5ce7;
+  --green:#00b874;
+  --red:#ff3b30;
+  --amber:#ff9500;
+  --text:#1a1d2e;
+  --text2:#6b7394;
+  --text3:#b0b8d4;
+  --shadow:0 2px 12px rgba(52,120,246,.10);
+  --shadow-lg:0 8px 32px rgba(52,120,246,.14);
+  --radius:18px;--radius-sm:12px;
+  --fs-xs:12px;--fs-sm:15px;--fs-base:17px;--fs-md:19px;
+  --fs-lg:22px;--fs-xl:28px;--fs-hero:36px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:24px 0}
+.phone{width:400px;min-height:860px;background:var(--bg);border-radius:48px;overflow:visible;box-shadow:0 0 0 1px #c8d0e8,0 40px 80px rgba(60,80,160,.18),inset 0 0 0 1px #fff;display:flex;flex-direction:column;position:relative}
+
+/* 상태바 */
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:16px 28px 8px;color:var(--text)}
+.status-bar .time{font-size:16px;font-weight:700}
+.status-icons{display:flex;gap:6px;align-items:center}
+
+/* 역할 전환 */
+.role-switcher{display:flex;margin:8px 18px 0;background:var(--surface2);border-radius:14px;padding:4px;gap:4px}
+.role-btn{flex:1;padding:11px;border:none;border-radius:10px;background:transparent;color:var(--text2);font-size:var(--fs-sm);font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit}
+.role-btn.active{background:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(52,120,246,.3)}
+
+/* 언어 전환 */
+.lang-bar{display:flex;gap:6px;padding:10px 18px 0;justify-content:flex-end}
+.lang-btn{padding:5px 12px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
+.lang-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* 화면 */
+.screen{display:none;flex-direction:column;flex:1;overflow-y:auto;padding-bottom:24px;border-radius:0 0 48px 48px}
+.screen.active{display:flex}
+.screen::-webkit-scrollbar{display:none}
+
+/* 공통 */
+.section-title{font-size:var(--fs-xs);font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;padding:20px 22px 8px}
+.card{margin:0 16px 12px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow)}
+.card-inner{padding:18px}
+.btn{width:100%;padding:17px;border:none;border-radius:var(--radius-sm);font-size:var(--fs-base);font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;letter-spacing:-.01em}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 4px 16px rgba(52,120,246,.3)}
+.btn-danger{background:var(--red);color:#fff;box-shadow:0 4px 16px rgba(255,59,48,.25)}
+.btn-success{background:var(--green);color:#fff;box-shadow:0 4px 16px rgba(0,184,116,.25)}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1.5px solid var(--border)}
+.btn-outline{background:#fff;color:var(--accent);border:2px solid var(--accent)}
+
+/* 입력 */
+.inp{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:15px 16px;color:var(--text);font-size:var(--fs-base);font-family:inherit;outline:none;transition:border-color .2s;margin-bottom:12px}
+.inp:focus{border-color:var(--accent);background:#fff}
+.inp::placeholder{color:var(--text3)}
+.inp-label{font-size:var(--fs-sm);font-weight:700;color:var(--text2);margin-bottom:7px}
+
+/* 히어로 - 화이트 */
+.boss-hero{margin:14px 16px 0;background:linear-gradient(135deg,#3478f6,#5a9bff);border-radius:var(--radius);padding:22px 20px;position:relative;overflow:hidden;box-shadow:var(--shadow-lg)}
+.boss-hero::after{content:'';position:absolute;right:-30px;top:-30px;width:180px;height:180px;background:rgba(255,255,255,.12);border-radius:50%}
+.hero-label{font-size:var(--fs-xs);color:rgba(255,255,255,.75);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.hero-status{font-size:var(--fs-xl);font-weight:900;color:#fff;margin-bottom:6px}
+.hero-sub{font-size:var(--fs-sm);color:rgba(255,255,255,.8);line-height:1.5}
+
+.driver-hero{margin:14px 16px 0;background:linear-gradient(135deg,#00b874,#34d399);border-radius:var(--radius);padding:22px 20px;position:relative;overflow:hidden;box-shadow:var(--shadow-lg)}
+.driver-hero::after{content:'';position:absolute;right:-30px;top:-30px;width:180px;height:180px;background:rgba(255,255,255,.12);border-radius:50%}
+.work-timer{font-size:var(--fs-hero);font-weight:900;color:#fff;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.work-timer-label{font-size:var(--fs-xs);color:rgba(255,255,255,.75);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+
+/* 상태 도트 */
+.status-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.dot-green{background:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.3)}
+.dot-amber{background:#ffe;box-shadow:0 0 0 3px rgba(255,255,200,.3)}
+.dot-red{background:#fcc;box-shadow:0 0 0 3px rgba(255,200,200,.3)}
+
+/* 빠른 선택 칩 */
+.quick-dest{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.quick-chip{padding:9px 16px;background:var(--surface2);border:1.5px solid var(--border);border-radius:22px;font-size:var(--fs-sm);color:var(--text2);cursor:pointer;font-family:inherit;transition:all .15s;font-weight:600}
+.quick-chip:hover{border-color:var(--accent);color:var(--accent);background:#eef3ff}
+
+/* 호출 상태 */
+.call-status{display:none;flex-direction:column;align-items:center;padding:28px;text-align:center}
+.call-status.visible{display:flex}
+.call-ring{width:80px;height:80px;border-radius:50%;background:rgba(52,120,246,.1);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:34px;animation:ring 1.2s ease-in-out infinite;margin-bottom:16px}
+@keyframes ring{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.call-msg{font-size:var(--fs-md);font-weight:700;color:var(--text);margin-bottom:6px}
+.call-sub{font-size:var(--fs-sm);color:var(--text2);line-height:1.6}
+.eta-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(0,184,116,.1);border:1px solid rgba(0,184,116,.25);color:var(--green);padding:8px 16px;border-radius:22px;font-size:var(--fs-sm);font-weight:700;margin-top:12px}
+
+/* 운행 아이템 */
+.trip-item{display:flex;align-items:center;padding:15px 18px;gap:13px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
+.trip-item:last-child{border-bottom:none}
+.trip-item:hover{background:var(--surface2)}
+.trip-icon{width:44px;height:44px;border-radius:13px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}
+.trip-info{flex:1}
+.trip-dest{font-size:var(--fs-base);font-weight:700;color:var(--text)}
+.trip-time{font-size:var(--fs-sm);color:var(--text2);margin-top:3px}
+.trip-dist{font-size:var(--fs-sm);font-weight:700;color:var(--text2)}
+
+/* 호출 알림 */
+.alert-card{margin:0 16px 12px;background:linear-gradient(135deg,#eef3ff,#e8f0ff);border-radius:var(--radius);border:1.5px solid rgba(52,120,246,.2);overflow:hidden;box-shadow:var(--shadow)}
+.alert-header{background:var(--accent);padding:12px 18px;display:flex;align-items:center;gap:8px;font-size:var(--fs-sm);font-weight:700;color:#fff}
+.alert-body{padding:18px}
+.alert-dest{font-size:var(--fs-xl);font-weight:900;color:var(--text);margin-bottom:8px}
+.alert-meta{font-size:var(--fs-sm);color:var(--text2);margin-bottom:18px;line-height:1.5}
+.alert-actions{display:flex;gap:10px}
+.alert-actions .btn{flex:1;padding:14px}
+
+/* 지도 */
+.map-preview{margin:0 16px 12px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow)}
+.map-img{width:100%;height:150px;background:linear-gradient(135deg,#e8f0ff,#d4e3ff);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.map-img svg{width:100%;height:100%;position:absolute}
+.map-label{position:absolute;font-size:var(--fs-sm);font-weight:700;color:var(--accent);background:rgba(255,255,255,.9);padding:6px 14px;border-radius:22px;z-index:2;box-shadow:var(--shadow)}
+.map-actions{display:flex}
+.map-btn{flex:1;padding:14px 8px;background:transparent;border:none;border-top:1px solid var(--border);border-right:1px solid var(--border);color:var(--accent);font-size:var(--fs-sm);font-weight:700;cursor:pointer;font-family:inherit;transition:background .12s}
+.map-btn:last-child{border-right:none}
+.map-btn:hover{background:var(--surface2)}
+
+/* 출퇴근 로그 */
+.log-row{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);gap:13px;cursor:pointer;transition:background .12s}
+.log-row:last-child{border-bottom:none}
+.log-row:hover{background:var(--surface2)}
+.log-date{font-size:var(--fs-sm);color:var(--text2);width:44px;flex-shrink:0;line-height:1.4;font-weight:600}
+.log-times{flex:1}
+.log-in{font-size:var(--fs-base);font-weight:700;color:var(--green)}
+.log-out{font-size:var(--fs-base);font-weight:700;color:var(--red)}
+.log-total{font-size:var(--fs-sm);color:var(--text2);margin-top:2px}
+.log-ot{font-size:var(--fs-xs);font-weight:700;color:var(--amber);background:rgba(255,149,0,.1);border:1px solid rgba(255,149,0,.25);padding:4px 10px;border-radius:8px}
+
+/* 네비 버튼 */
+.navi-buttons{display:flex;gap:8px;padding:0 16px 12px;flex-wrap:wrap}
+.navi-btn{flex:1;min-width:80px;padding:14px 8px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:var(--fs-sm);font-weight:700;cursor:pointer;font-family:inherit;text-align:center;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:5px;box-shadow:var(--shadow)}
+.navi-btn span:first-child{font-size:24px}
+.navi-btn:hover{border-color:var(--accent);color:var(--accent);background:#eef3ff}
+
+/* 바텀탭 */
+.bottom-tab{display:flex;background:var(--surface);border-top:1px solid var(--border);padding:8px 0 22px;flex-shrink:0;box-shadow:0 -2px 12px rgba(52,120,246,.07)}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0;cursor:pointer;border:none;background:transparent;font-family:inherit;transition:all .15s}
+.tab-item .tab-icon{font-size:22px}
+.tab-item .tab-label{font-size:11px;font-weight:700;color:var(--text3)}
+.tab-item.active .tab-label{color:var(--accent)}
+.tab-panel{display:none;flex-direction:column}
+.tab-panel.active{display:flex}
+
+/* 즐겨찾기 */
+.fav-item{display:flex;align-items:center;padding:15px 16px;border-bottom:1px solid var(--border);gap:13px}
+.fav-item:last-child{border-bottom:none}
+.fav-emoji{width:46px;height:46px;border-radius:13px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.fav-info{flex:1;min-width:0}
+.fav-name{font-size:var(--fs-base);font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fav-addr{font-size:var(--fs-sm);color:var(--text2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fav-del{width:32px;height:32px;border-radius:50%;background:rgba(255,59,48,.1);border:none;color:var(--red);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* 광고 */
+.ad-banner{margin:0 16px 12px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);cursor:pointer;position:relative;box-shadow:var(--shadow)}
+.ad-tag{position:absolute;top:10px;right:12px;font-size:10px;font-weight:700;color:#fff;background:rgba(0,0,0,.35);padding:3px 8px;border-radius:5px}
+.ad-slide{display:none;align-items:center;gap:14px;padding:16px}
+.ad-slide.active{display:flex}
+.ad-img{width:58px;height:58px;border-radius:14px;font-size:30px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ad-info{flex:1}
+.ad-title{font-size:var(--fs-base);font-weight:900;color:var(--text);margin-bottom:4px}
+.ad-sub{font-size:var(--fs-sm);color:var(--text2);line-height:1.4}
+.ad-cta{font-size:var(--fs-sm);font-weight:700;color:#fff;padding:9px 14px;border-radius:11px;border:none;cursor:pointer;white-space:nowrap;font-family:inherit}
+.ad-dots{display:flex;justify-content:center;gap:5px;padding:6px 0 12px}
+.ad-dot{width:6px;height:6px;border-radius:50%;background:var(--border);transition:all .2s}
+.ad-dot.active{background:var(--accent);width:16px;border-radius:3px}
+
+/* 통계 */
+.stat-hero{margin:14px 16px 0;background:linear-gradient(135deg,#6c5ce7,#a29bfe);border-radius:var(--radius);padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:14px;box-shadow:var(--shadow-lg)}
+.stat-hero-label{font-size:var(--fs-xs);color:rgba(255,255,255,.75);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+.stat-hero-val{font-size:var(--fs-lg);font-weight:900;color:#fff}
+.chart-wrap{padding:16px 16px 8px}
+.chart-month-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.chart-label{font-size:var(--fs-sm);color:var(--text2);width:32px;flex-shrink:0;text-align:right;font-weight:600}
+.chart-bar-bg{flex:1;height:32px;background:var(--surface2);border-radius:8px;overflow:hidden}
+.chart-bar-fill{height:100%;border-radius:8px;display:flex;align-items:center;padding-left:12px;font-size:var(--fs-sm);font-weight:700;color:#fff;transition:width .6s cubic-bezier(.4,0,.2,1);white-space:nowrap}
+.chart-val{font-size:var(--fs-sm);color:var(--text2);width:46px;text-align:right;flex-shrink:0;font-weight:600}
+.month-tabs{display:flex;gap:8px;padding:0 16px;overflow-x:auto;scrollbar-width:none;margin-bottom:6px}
+.month-tabs::-webkit-scrollbar{display:none}
+.month-tab{padding:8px 18px;border-radius:22px;font-size:var(--fs-sm);font-weight:700;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .15s;flex-shrink:0}
+.month-tab.active{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+
+/* 카카오 알림 */
+.kakao-hero{margin:14px 16px 0;background:#fff;border-radius:var(--radius);padding:20px;border:1.5px solid #FEE500;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow)}
+.kakao-logo{width:56px;height:56px;border-radius:16px;background:#FEE500;display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-info{flex:1}
+.toggle-label{font-size:var(--fs-base);font-weight:700;color:var(--text)}
+.toggle-sub{font-size:var(--fs-sm);color:var(--text2);margin-top:3px;line-height:1.4}
+.toggle{width:52px;height:30px;border-radius:15px;background:var(--border);position:relative;cursor:pointer;border:none;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle::after{content:'';position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:4px;left:4px;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.toggle.on::after{transform:translateX(22px)}
+.notif-row{display:flex;align-items:flex-start;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border)}
+.notif-row:last-child{border-bottom:none}
+.notif-icon{width:38px;height:38px;border-radius:11px;background:#FEE50033;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;margin-top:1px}
+.notif-body{flex:1}
+.notif-msg{font-size:var(--fs-sm);color:var(--text);line-height:1.5}
+.notif-time{font-size:var(--fs-xs);color:var(--text3);margin-top:4px}
+.notif-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;flex-shrink:0;margin-top:2px}
+.badge-sent{background:rgba(0,184,116,.12);color:var(--green)}
+.badge-pending{background:rgba(255,149,0,.12);color:var(--amber)}
+
+/* 급여 설정 카드 */
+.salary-setting-row{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);gap:12px}
+.salary-setting-row:last-child{border-bottom:none}
+.salary-setting-label{flex:1}
+.salary-setting-name{font-size:var(--fs-base);font-weight:700;color:var(--text)}
+.salary-setting-sub{font-size:var(--fs-sm);color:var(--text2);margin-top:2px}
+.salary-setting-val{font-size:var(--fs-base);font-weight:900;color:var(--accent)}
+.salary-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(0,184,116,.1);border:1px solid rgba(0,184,116,.25);color:var(--green);padding:9px 16px;border-radius:22px;font-size:var(--fs-sm);font-weight:700;cursor:pointer;margin-top:12px;font-family:inherit;transition:all .15s}
+
+/* 주유 기록 */
+.fuel-hero{margin:14px 16px 0;background:linear-gradient(135deg,#ff9500,#ffb347);border-radius:var(--radius);padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:14px;box-shadow:var(--shadow-lg)}
+.fuel-hero-item .label{font-size:var(--fs-xs);color:rgba(255,255,255,.8);font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
+.fuel-hero-item .val{font-size:var(--fs-lg);font-weight:900;color:#fff}
+.fuel-row{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);gap:12px}
+.fuel-row:last-child{border-bottom:none}
+.fuel-icon{width:42px;height:42px;border-radius:12px;background:rgba(255,149,0,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.fuel-info{flex:1}
+.fuel-date{font-size:var(--fs-sm);font-weight:700;color:var(--text)}
+.fuel-detail{font-size:var(--fs-sm);color:var(--text2);margin-top:2px}
+.fuel-amount{text-align:right;flex-shrink:0}
+.fuel-liter{font-size:var(--fs-base);font-weight:700;color:var(--amber)}
+.fuel-cost{font-size:var(--fs-sm);color:var(--text2);margin-top:2px}
+
+/* 모달 공통 */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);z-index:8000;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{width:400px;background:var(--surface);border-radius:28px 28px 0 0;border-top:1px solid var(--border);padding:10px 22px 46px;animation:slideUp .3s ease;max-height:92vh;overflow-y:auto}
+.modal::-webkit-scrollbar{display:none}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:44px;height:5px;background:var(--border);border-radius:2px;margin:14px auto 20px}
+.modal-title{font-size:var(--fs-lg);font-weight:900;color:var(--text);margin-bottom:20px}
+.calc-row{display:flex;justify-content:space-between;align-items:center;padding:15px 0;border-bottom:1px solid var(--border)}
+.calc-row:last-of-type{border-bottom:none}
+.calc-label{font-size:var(--fs-base);color:var(--text2)}
+.calc-value{font-size:var(--fs-md);font-weight:700;color:var(--text)}
+.calc-total{font-size:var(--fs-xl);font-weight:900;color:var(--green)}
+
+/* 주유 입력 그리드 */
+.fuel-input-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.fuel-input-box{background:var(--surface2);border-radius:var(--radius-sm);padding:14px;border:1.5px solid var(--border);transition:border-color .2s}
+.fuel-input-box:focus-within{border-color:var(--accent);background:#fff}
+.fuel-input-box .box-label{font-size:var(--fs-xs);font-weight:700;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+.fuel-input-box input{width:100%;background:transparent;border:none;outline:none;font-size:var(--fs-lg);font-weight:900;color:var(--text);font-family:inherit}
+.fuel-input-box .unit{font-size:var(--fs-sm);color:var(--text2);margin-top:2px;font-weight:600}
+
+/* 토스트 */
+.toast{position:fixed;bottom:46px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:#fff;padding:14px 24px;border-radius:30px;font-size:var(--fs-sm);font-weight:700;opacity:0;transition:all .3s;z-index:9999;white-space:nowrap;box-shadow:0 8px 28px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* 검색 전체화면 */
+#place-search-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:9000;flex-direction:column;font-family:'Noto Sans KR',-apple-system,sans-serif}
+/* ══ 온보딩 CSS ══ */
+.ob-pg{width:100%;flex:1;display:none;flex-direction:column;align-items:center;padding:56px 32px 36px}
+.ob-pg.on{display:flex;animation:obUp .3s ease}
+@keyframes obUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.ob-dots{display:flex;gap:7px;margin-bottom:32px}
+.ob-dot{width:7px;height:7px;border-radius:50%;background:#e2e6ef;transition:all .3s}
+.ob-dot.on{background:#3478f6;width:22px;border-radius:4px}
+.ob-ico{width:120px;height:120px;border-radius:30px;background:linear-gradient(135deg,#3478f6,#5a9bff);display:flex;align-items:center;justify-content:center;margin-bottom:28px;box-shadow:0 14px 36px rgba(52,120,246,.32)}
+.ob-title{font-size:26px;font-weight:900;color:#1a1d2e;text-align:center;line-height:1.3;margin-bottom:12px}
+.ob-sub{font-size:16px;color:#6b7394;text-align:center;line-height:1.7;margin-bottom:auto}
+.ob-btn{width:100%;max-width:340px;padding:17px;border:none;border-radius:15px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:13px;transition:all .15s}
+.ob-btn:active{transform:scale(.97)}
+.ob-btn-p{background:#3478f6;color:#fff;box-shadow:0 5px 18px rgba(52,120,246,.32)}
+.ob-btn-g{background:#f0f2f7;color:#6b7394;border:1.5px solid #e2e6ef}
+.ob-role-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:340px;margin:24px 0}
+.ob-role-card{background:#fff;border:2px solid #e2e6ef;border-radius:20px;padding:24px 14px;text-align:center;cursor:pointer;transition:all .2s;box-shadow:0 2px 12px rgba(52,120,246,.10)}
+.ob-role-card:active{transform:scale(.97)}
+.ob-role-card.sel{border-color:#3478f6;background:#eef3ff;box-shadow:0 0 0 3px rgba(52,120,246,.13)}
+.ob-phone-row{width:100%;max-width:340px;display:flex;align-items:center;gap:10px;background:#f0f2f7;border:2px solid #e2e6ef;border-radius:14px;padding:14px 16px;margin:20px 0 8px;transition:border-color .2s}
+.ob-phone-row:focus-within{border-color:#3478f6;background:#fff}
+.ob-phone-input{flex:1;background:transparent;border:none;outline:none;font-size:22px;font-weight:700;color:#1a1d2e;font-family:inherit}
+.ob-phone-input::placeholder{color:#b0b8d4;font-size:16px;font-weight:400}
+.ob-otp-row{display:flex;gap:9px;margin:20px 0 8px}
+.ob-otp-box{width:50px;height:60px;background:#f0f2f7;border:2px solid #e2e6ef;border-radius:13px;font-size:26px;font-weight:900;color:#1a1d2e;text-align:center;outline:none;font-family:inherit;transition:all .2s}
+.ob-otp-box:focus{border-color:#3478f6;background:#fff;box-shadow:0 0 0 3px rgba(52,120,246,.12)}
+.ob-otp-box.ok{border-color:#00b874;background:#f0fff8}
+.ob-invite-box{width:100%;background:linear-gradient(135deg,#eef3ff,#e8f0ff);border:2px solid rgba(52,120,246,.18);border-radius:20px;padding:22px;text-align:center;margin:18px 0}
+.ob-invite-code{font-size:32px;font-weight:900;color:#3478f6;letter-spacing:.14em;margin:10px 0}
+</style>
+</head>
+<body>
+
+<!-- ══ 온보딩 화면 ══ -->
+<div id="ob-screen" style="position:fixed;inset:0;background:#f5f6fa;z-index:9999;display:flex;flex-direction:column;align-items:center;overflow:hidden">
+
+  <!-- P1: 스플래시 -->
+  <div class="ob-pg on" id="ob-p1">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:28px">
+      <div class="ob-ico">
+        <svg viewBox="0 0 64 64" width="72" height="72" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="34" width="52" height="16" rx="4" fill="white" opacity=".95"/>
+          <path d="M11 34 L17 21 Q21 14 29 14 L35 14 Q43 14 47 21 L53 34Z" fill="white" opacity=".95"/>
+          <circle cx="17" cy="44" r="8" fill="#3478f6"/><circle cx="17" cy="44" r="4.5" fill="white"/>
+          <circle cx="47" cy="44" r="8" fill="#3478f6"/><circle cx="47" cy="44" r="4.5" fill="white"/>
+          <path d="M50 13 Q56 19 56 27 Q56 35 50 41" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M55 9 Q63 17 63 27 Q63 37 55 45" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" opacity=".55"/>
+          <path d="M26 12 L28 6 L32 10 L36 6 L38 12Z" fill="white"/>
+        </svg>
+      </div>
+      <div style="font-size:36px;font-weight:900;color:#1a1d2e;margin-bottom:8px;letter-spacing:-.02em">BossCall</div>
+      <div style="font-size:16px;color:#6b7394;text-align:center;line-height:1.7">나만의 전속기사 호출 &amp; 관리<br>스마트하게 시작하세요</div>
+    </div>
+    <div class="ob-dots"><div class="ob-dot on"></div><div class="ob-dot"></div><div class="ob-dot"></div><div class="ob-dot"></div></div>
+    <button class="ob-btn ob-btn-p" onclick="obGo(2)">시작하기 →</button>
+    <button class="ob-btn ob-btn-g" style="margin-top:10px" onclick="obSkip()">이미 계정이 있어요</button>
+  </div>
+
+  <!-- P2: 역할 선택 -->
+  <div class="ob-pg" id="ob-p2">
+    <div class="ob-dots"><div class="ob-dot"></div><div class="ob-dot on"></div><div class="ob-dot"></div><div class="ob-dot"></div></div>
+    <div class="ob-title">어떤 역할로<br>시작하시나요?</div>
+    <div class="ob-sub">나중에 설정에서 변경할 수 있어요</div>
+    <div class="ob-role-grid">
+      <div class="ob-role-card" id="ob-rc-boss" onclick="obSelectRole('boss')">
+        <div style="font-size:42px;margin-bottom:10px">🧑‍💼</div>
+        <div style="font-size:17px;font-weight:900;color:#1a1d2e;margin-bottom:5px">사장님</div>
+        <div style="font-size:14px;color:#6b7394;line-height:1.4">기사를 호출하고<br>관리합니다</div>
+      </div>
+      <div class="ob-role-card" id="ob-rc-driver" onclick="obSelectRole('driver')">
+        <div style="font-size:42px;margin-bottom:10px">🚗</div>
+        <div style="font-size:17px;font-weight:900;color:#1a1d2e;margin-bottom:5px">기사님</div>
+        <div style="font-size:14px;color:#6b7394;line-height:1.4">사장님 호출을<br>받습니다</div>
+      </div>
+    </div>
+    <button class="ob-btn ob-btn-p" id="ob-role-next" style="opacity:.38;pointer-events:none" onclick="obGo(3)">다음</button>
+    <button class="ob-btn ob-btn-g" style="margin-top:10px" onclick="obGo(1)">← 이전</button>
+  </div>
+
+  <!-- P3: 전화번호 -->
+  <div class="ob-pg" id="ob-p3">
+    <div class="ob-dots"><div class="ob-dot"></div><div class="ob-dot"></div><div class="ob-dot on"></div><div class="ob-dot"></div></div>
+    <div class="ob-title">전화번호로<br>간편 가입</div>
+    <div class="ob-sub">인증번호를 문자로 보내드립니다<br>별도 회원가입이 필요 없어요</div>
+    <div class="ob-phone-row">
+      <span style="font-size:22px">🇰🇷</span>
+      <span style="font-size:17px;font-weight:700;color:#6b7394;flex-shrink:0">+82</span>
+      <div style="width:1px;height:22px;background:#e2e6ef;margin:0 4px"></div>
+      <input class="ob-phone-input" id="ob-phone" type="tel" placeholder="010-0000-0000" maxlength="13"
+        oninput="obFmtPhone(this)" onkeydown="if(event.key==='Enter')obSendOTP()"/>
+    </div>
+    <div style="font-size:12px;color:#b0b8d4;text-align:center;margin-bottom:8px">번호는 암호화되어 안전하게 저장됩니다</div>
+    <button class="ob-btn ob-btn-p" onclick="obSendOTP()">인증번호 받기</button>
+    <button class="ob-btn ob-btn-g" style="margin-top:10px" onclick="obGo(2)">← 이전</button>
+  </div>
+
+  <!-- P4: OTP -->
+  <div class="ob-pg" id="ob-p4">
+    <div class="ob-dots"><div class="ob-dot"></div><div class="ob-dot"></div><div class="ob-dot"></div><div class="ob-dot on"></div></div>
+    <div class="ob-title">인증번호 입력</div>
+    <div style="font-size:15px;color:#6b7394;text-align:center;margin-bottom:4px" id="ob-otp-desc">전송된 6자리를 입력하세요</div>
+    <div style="font-size:15px;color:#3478f6;font-weight:700;margin-bottom:18px" id="ob-timer">3:00</div>
+    <div class="ob-otp-row">
+      <input class="ob-otp-box" type="tel" maxlength="1" id="ob-o0" oninput="obOtpIn(this,0)" onkeydown="obOtpKey(event,0)"/>
+      <input class="ob-otp-box" type="tel" maxlength="1" id="ob-o1" oninput="obOtpIn(this,1)" onkeydown="obOtpKey(event,1)"/>
+      <input class="ob-otp-box" type="tel" maxlength="1" id="ob-o2" oninput="obOtpIn(this,2)" onkeydown="obOtpKey(event,2)"/>
+      <input class="ob-otp-box" type="tel" maxlength="1" id="ob-o3" oninput="obOtpIn(this,3)" onkeydown="obOtpKey(event,3)"/>
+      <input class="ob-otp-box" type="tel" maxlength="1" id="ob-o4" oninput="obOtpIn(this,4)" onkeydown="obOtpKey(event,4)"/>
+      <input class="ob-otp-box" type="tel" maxlength="1" id="ob-o5" oninput="obOtpIn(this,5)" onkeydown="obOtpKey(event,5)"/>
+    </div>
+
+    <!-- 사장: 초대코드 생성 -->
+    <div id="ob-boss-sec" style="display:none;width:100%;max-width:340px">
+      <div class="ob-invite-box">
+        <div style="font-size:14px;font-weight:700;color:#6b7394;margin-bottom:5px">🔗 기사님 초대 코드</div>
+        <div class="ob-invite-code" id="ob-inv-code">------</div>
+        <div style="font-size:14px;color:#6b7394;margin-bottom:14px">기사님께 코드를 알려주거나 링크를 공유하세요</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="obCopyCode()" style="flex:1;padding:11px;background:#3478f6;color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">코드 복사</button>
+          <button onclick="obShareLink()" style="flex:1;padding:11px;background:#f0f2f7;color:#1a1d2e;border:1.5px solid #e2e6ef;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">링크 공유</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 기사: 초대코드 입력 -->
+    <div id="ob-driver-sec" style="display:none;width:100%;max-width:340px">
+      <div style="font-size:14px;font-weight:700;color:#6b7394;text-align:center;margin-bottom:9px">사장님께 받은 초대 코드 입력</div>
+      <input style="width:100%;background:#f0f2f7;border:1.5px solid #e2e6ef;border-radius:12px;padding:14px;color:#1a1d2e;font-size:24px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;text-align:center;outline:none;font-family:inherit;transition:border-color .2s" id="ob-join-code" placeholder="A1B2C3" maxlength="6"/>
+    </div>
+
+    <button class="ob-btn ob-btn-p" onclick="obVerify()">확인</button>
+    <button class="ob-btn ob-btn-g" style="margin-top:10px" onclick="obResend()">재전송</button>
+  </div>
+
+</div><!-- /ob-screen -->
+
+<!-- ══ 앱 본체 (로그인 후 표시) ══ -->
+<div id="app-body" style="display:none">
+<div class="phone">
+
+<!-- 상태바 -->
+<div class="status-bar">
+  <span class="time" id="clock">9:41</span>
+  <div class="status-icons">
+    <svg width="16" height="12" viewBox="0 0 16 12" fill="#1a1d2e"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4.5" y="2" width="3" height="10" rx="1"/><rect x="9" y="0" width="3" height="12" rx="1"/><rect x="13.5" y="0" width="2.5" height="12" rx="1" opacity=".3"/></svg>
+    <svg width="15" height="12" viewBox="0 0 15 12" fill="#1a1d2e"><path d="M7.5 2.5C9.8 2.5 11.9 3.4 13.4 4.9L14.8 3.5C12.9 1.6 10.3.5 7.5.5S2.1 1.6.2 3.5l1.4 1.4C3.1 3.4 5.2 2.5 7.5 2.5z" opacity=".4"/><path d="M7.5 5.5C9 5.5 10.4 6.1 11.4 7.1l1.4-1.4C11.3 4.2 9.5 3.5 7.5 3.5S3.7 4.2 2.2 5.7l1.4 1.4C4.6 6.1 6 5.5 7.5 5.5z" opacity=".7"/><circle cx="7.5" cy="10" r="1.5"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.5" stroke="#1a1d2e" stroke-opacity=".3"/><rect x="1.5" y="1.5" width="16" height="9" rx="2.5" fill="#1a1d2e"/><path d="M23 4v4a2 2 0 000-4z" fill="#1a1d2e" fill-opacity=".4"/></svg>
+  </div>
+</div>
+
+<!-- 언어 전환 -->
+<div class="lang-bar">
+  <button class="lang-btn active" onclick="setLang('ko',this)">한국어</button>
+  <button class="lang-btn" onclick="setLang('en',this)">English</button>
+  <button class="lang-btn" onclick="setLang('id',this)">Indonesia</button>
+</div>
+
+<!-- 역할 전환 -->
+<div class="role-switcher" style="margin-top:10px">
+  <button class="role-btn active" onclick="switchRole('boss',this)" data-i18n="role_boss">🧑‍💼 사장님</button>
+  <button class="role-btn" onclick="switchRole('driver',this)" data-i18n="role_driver">🚗 기사님</button>
+</div>
+
+<!-- ══════ 사장 화면 ══════ -->
+<div class="screen active" id="screen-boss">
+
+  <!-- 홈 탭 -->
+  <div class="tab-panel active" id="tab-home">
+    <div class="boss-hero">
+      <div class="hero-label" data-i18n="driver_status">현재 기사 상태</div>
+      <div class="hero-status" id="driver-status-text"><span class="status-dot dot-green"></span><span data-i18n="status_standby">대기 중</span></div>
+      <div class="hero-sub" id="driver-sub-text">김현수 · <span data-i18n="checkin_today">오늘 09:05 출근</span></div>
+      <button class="salary-pill" onclick="openCalc()">💰 <span data-i18n="salary_check">이달 급여 확인</span></button>
+    </div>
+
+    <div class="section-title" data-i18n="call_driver">기사 호출</div>
+    <div class="card">
+      <div class="card-inner">
+        <div style="font-size:var(--fs-xs);color:var(--text3);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px" data-i18n="pickup_loc">📍 픽업 위치</div>
+        <div style="position:relative;margin-bottom:13px">
+          <input class="inp" id="pickup-input" data-i18n-ph="pickup_ph" placeholder="픽업 위치 입력" style="padding-right:50px;margin-bottom:0" />
+          <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:22px;cursor:pointer" onclick="openAddrModal('pickup')">🔍</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px">
+          <div style="flex:1;height:1.5px;background:var(--border)"></div>
+          <span style="font-size:var(--fs-xs);color:var(--text3);font-weight:700" data-i18n="destination">목적지</span>
+          <div style="flex:1;height:1.5px;background:var(--border)"></div>
+        </div>
+        <div style="font-size:var(--fs-xs);color:var(--text3);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px" data-i18n="dest_loc">🚩 목적지</div>
+        <div style="position:relative;margin-bottom:13px">
+          <input class="inp" id="dest-input" data-i18n-ph="dest_ph" placeholder="목적지 입력" style="padding-right:50px;margin-bottom:0" />
+          <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:22px;cursor:pointer" onclick="openAddrModal('dest')">🔍</span>
+        </div>
+        <div class="quick-dest" id="dest-quick-row"></div>
+        <button class="btn btn-primary" id="call-btn" onclick="callDriver()">📞  <span data-i18n="call_btn">기사 호출</span></button>
+      </div>
+      <div class="call-status" id="call-status">
+        <div class="call-ring">🚗</div>
+        <div class="call-msg" id="call-msg-text" data-i18n="calling">기사님께 알리는 중…</div>
+        <div class="call-sub" id="call-dest-text"></div>
+        <div class="eta-badge" id="eta-badge" style="display:none">⏱ <span data-i18n="eta">예상 도착</span> <strong>5<span data-i18n="min">분</span></strong></div>
+        <button class="btn btn-ghost" style="margin-top:16px;padding:12px" onclick="cancelCall()" data-i18n="cancel">취소</button>
+      </div>
+    </div>
+
+    <div class="section-title" data-i18n="navigation">네비게이션</div>
+    <div class="navi-buttons">
+      <button class="navi-btn" onclick="openNavi('kakao')"><span>🗺️</span><span>카카오</span></button>
+      <button class="navi-btn" onclick="openNavi('naver')"><span>🧭</span><span>네이버</span></button>
+      <button class="navi-btn" onclick="openNavi('tmap')"><span>📍</span><span>티맵</span></button>
+      <button class="navi-btn" onclick="openNavi('google')"><span>🌐</span><span>Google</span></button>
+    </div>
+
+    <div class="section-title" data-i18n="recommend">추천</div>
+    <div id="ad-banner-home" class="ad-banner" onclick="adClick(adData[adIdx])">
+      <div class="ad-tag">AD</div>
+      <div id="ad-slide-0" class="ad-slide active"></div>
+      <div id="ad-slide-1" class="ad-slide"></div>
+      <div id="ad-slide-2" class="ad-slide"></div>
+      <div class="ad-dots" style="background:var(--surface)">
+        <div class="ad-dot active" id="dot-0"></div><div class="ad-dot" id="dot-1"></div><div class="ad-dot" id="dot-2"></div>
+      </div>
+    </div>
+
+    <div class="section-title" data-i18n="today_trip">오늘 운행 <span style="color:var(--accent);cursor:pointer;font-size:var(--fs-xs)" onclick="openEditModal(null)">＋</span></div>
+    <div class="card" id="trip-list-card"></div>
+  </div>
+
+  <!-- 즐겨찾기 탭 -->
+  <div class="tab-panel" id="tab-fav">
+    <div class="boss-hero"><div class="hero-label" data-i18n="fav_places">자주 가는 곳</div><div style="font-size:var(--fs-md);font-weight:700;color:#fff;margin-top:4px" data-i18n="fav_sub">탭하면 목적지로 바로 설정</div></div>
+    <div class="section-title" data-i18n="add_place">장소 추가</div>
+    <div class="card"><div class="card-inner" style="padding-bottom:12px">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input class="inp" id="fav-emoji-input" placeholder="🏢" style="width:58px;flex:none;text-align:center;font-size:24px;padding:10px;margin-bottom:0" maxlength="2" />
+        <input class="inp" id="fav-name-input" data-i18n-ph="place_name" placeholder="장소 이름" style="flex:1;margin-bottom:0" />
+      </div>
+      <input class="inp" id="fav-addr-input" data-i18n-ph="place_addr" placeholder="주소" style="margin-bottom:12px" />
+      <button class="btn btn-primary" style="padding:14px" onclick="addFavPlace()">＋ <span data-i18n="add_place_btn">장소 추가</span></button>
+    </div></div>
+    <div class="section-title" data-i18n="saved_places">저장된 장소</div>
+    <div class="card" id="fav-list-card"></div>
+  </div>
+
+  <!-- 통계 탭 -->
+  <div class="tab-panel" id="tab-stats">
+    <div class="stat-hero">
+      <div><div class="stat-hero-label" data-i18n="year_trips">올해 운행</div><div class="stat-hero-val">1,284<span style="font-size:14px;font-weight:500;opacity:.8" data-i18n="times">회</span></div></div>
+      <div><div class="stat-hero-label" data-i18n="year_dist">올해 거리</div><div class="stat-hero-val">18,420<span style="font-size:14px;font-weight:500;opacity:.8">km</span></div></div>
+      <div><div class="stat-hero-label" data-i18n="month_trips">이달 운행</div><div class="stat-hero-val">48<span style="font-size:14px;font-weight:500;opacity:.8" data-i18n="times">회</span></div></div>
+      <div><div class="stat-hero-label" data-i18n="month_dist">이달 거리</div><div class="stat-hero-val">712<span style="font-size:14px;font-weight:500;opacity:.8">km</span></div></div>
+    </div>
+    <div class="section-title" data-i18n="monthly_trips">월별 운행 횟수</div>
+    <div class="card"><div class="chart-wrap" id="chart-trips"></div></div>
+    <div class="section-title" data-i18n="monthly_dist">월별 운행 거리 (km)</div>
+    <div class="card"><div class="chart-wrap" id="chart-dist"></div></div>
+    <div class="section-title" data-i18n="monthly_detail">월별 상세</div>
+    <div class="month-tabs" id="month-tab-list"></div>
+    <div class="card" id="month-detail-card" style="margin-top:8px"></div>
+  </div>
+
+  <!-- 급여 설정 탭 (NEW) -->
+  <div class="tab-panel" id="tab-salary-setting">
+    <div class="boss-hero">
+      <div class="hero-label" data-i18n="salary_setting">급여 설정</div>
+      <div style="font-size:var(--fs-xl);font-weight:900;color:#fff;margin-top:4px" data-i18n="salary_setting_sub">기사 급여 기준을 설정하세요</div>
+    </div>
+
+    <div class="section-title" data-i18n="basic_salary_setting">기본 급여</div>
+    <div class="card"><div class="card-inner">
+      <div class="inp-label" data-i18n="base_pay">기본 월급 (원)</div>
+      <input class="inp" id="set-base" type="number" value="3500000" oninput="updateSalaryPreview()" />
+      <div class="inp-label" data-i18n="ot_rate">시간외수당 단가 (원/시간)</div>
+      <input class="inp" id="set-ot-rate" type="number" value="15000" oninput="updateSalaryPreview()" />
+      <div class="inp-label" data-i18n="standard_hours">소정근로시간 (일)</div>
+      <input class="inp" id="set-std-hours" type="number" value="8" oninput="updateSalaryPreview()" />
+    </div></div>
+
+    <div class="section-title" data-i18n="allowance_setting">수당 설정</div>
+    <div class="card">
+      <div class="salary-setting-row">
+        <div class="salary-setting-label"><div class="salary-setting-name" data-i18n="meal_allow">식대</div><div class="salary-setting-sub" data-i18n="meal_allow_sub">월 지급 식대</div></div>
+        <input class="inp" id="set-meal" type="number" value="200000" style="width:130px;margin-bottom:0;text-align:right" oninput="updateSalaryPreview()" />
+      </div>
+      <div class="salary-setting-row">
+        <div class="salary-setting-label"><div class="salary-setting-name" data-i18n="car_allow">차량유지비</div><div class="salary-setting-sub" data-i18n="car_allow_sub">월 지급 차량 유지비</div></div>
+        <input class="inp" id="set-car" type="number" value="200000" style="width:130px;margin-bottom:0;text-align:right" oninput="updateSalaryPreview()" />
+      </div>
+      <div class="salary-setting-row">
+        <div class="salary-setting-label"><div class="salary-setting-name" data-i18n="bonus">상여금</div><div class="salary-setting-sub" data-i18n="bonus_sub">이달 추가 지급</div></div>
+        <input class="inp" id="set-bonus" type="number" value="0" style="width:130px;margin-bottom:0;text-align:right" oninput="updateSalaryPreview()" />
+      </div>
+    </div>
+
+    <div class="section-title" data-i18n="insurance_setting">공제 설정</div>
+    <div class="card">
+      <div class="salary-setting-row">
+        <div class="salary-setting-label"><div class="salary-setting-name" data-i18n="insurance">4대보험 공제율</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input class="inp" id="set-ins" type="number" value="9.4" step="0.1" style="width:80px;margin-bottom:0;text-align:right" oninput="updateSalaryPreview()" />
+          <span style="font-size:var(--fs-base);color:var(--text2);font-weight:600">%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title" data-i18n="this_month_ot">이달 초과근무</div>
+    <div class="card"><div class="card-inner">
+      <div class="inp-label" data-i18n="ot_hours">초과근무 시간</div>
+      <input class="inp" id="set-ot-hours" type="number" value="12" oninput="updateSalaryPreview()" />
+    </div></div>
+
+    <!-- 급여 미리보기 -->
+    <div class="section-title" data-i18n="salary_preview">급여 미리보기</div>
+    <div class="card" id="salary-preview-card"></div>
+
+    <div style="padding:4px 16px 16px">
+      <button class="btn btn-primary" onclick="saveSalarySettings()" data-i18n="save_settings">설정 저장</button>
+    </div>
+  </div>
+
+  <!-- 주유 기록 탭 (NEW) -->
+  <div class="tab-panel" id="tab-fuel">
+    <div class="fuel-hero">
+      <div class="fuel-hero-item"><div class="label" data-i18n="month_fuel">이달 주유량</div><div class="val" id="fuel-month-liter">0L</div></div>
+      <div class="fuel-hero-item"><div class="label" data-i18n="month_fuel_cost">이달 주유비</div><div class="val" id="fuel-month-cost">0원</div></div>
+      <div class="fuel-hero-item"><div class="label" data-i18n="year_fuel">올해 주유량</div><div class="val" id="fuel-year-liter">0L</div></div>
+      <div class="fuel-hero-item"><div class="label" data-i18n="avg_price">평균 단가</div><div class="val" id="fuel-avg-price">0원</div></div>
+    </div>
+    <div class="section-title" data-i18n="add_fuel">주유 입력 <span style="color:var(--amber);cursor:pointer;font-size:var(--fs-xs)" onclick="openFuelModal()">＋</span></div>
+    <div class="card" id="boss-fuel-list"></div>
+  </div>
+
+  <!-- 카카오 알림 탭 -->
+  <div class="tab-panel" id="tab-kakao">
+    <div class="kakao-hero">
+      <div class="kakao-logo">💬</div>
+      <div style="flex:1">
+        <div style="font-size:var(--fs-xs);color:#a08010;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px" data-i18n="kakao_talk">카카오 알림톡</div>
+        <div style="font-size:var(--fs-md);font-weight:900;color:var(--text)" id="kakao-conn-text" data-i18n="kakao_wait">연동 대기 중</div>
+        <div style="font-size:var(--fs-sm);color:#8a7030;margin-top:3px" id="kakao-conn-sub" data-i18n="kakao_wait_sub">카카오 계정을 연결하세요</div>
+      </div>
+      <button class="btn btn-primary" id="kakao-link-btn" onclick="kakaoLink()" style="width:auto;padding:11px 18px;font-size:var(--fs-sm)" data-i18n="connect">연결</button>
+    </div>
+    <div class="section-title" data-i18n="notif_setting">알림 설정</div>
+    <div class="card">
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label" data-i18n="notif_call">🚗 호출 알림</div><div class="toggle-sub" data-i18n="notif_call_sub">기사 호출 시 카카오톡 발송</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label" data-i18n="notif_accept">✅ 수락 알림</div><div class="toggle-sub" data-i18n="notif_accept_sub">기사 수락 시 사장님께 알림</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label" data-i18n="notif_checkin">🟢 출근 알림</div><div class="toggle-sub" data-i18n="notif_checkin_sub">기사 출근 기록 시 발송</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label" data-i18n="notif_checkout">🔴 퇴근 알림</div><div class="toggle-sub" data-i18n="notif_checkout_sub">기사 퇴근 기록 시 발송</div></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label" data-i18n="notif_fuel">⛽ 주유 알림</div><div class="toggle-sub" data-i18n="notif_fuel_sub">주유 기록 시 발송</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+    </div>
+    <div class="section-title" data-i18n="kakao_api">카카오 API 설정</div>
+    <div class="card"><div class="card-inner" style="padding-bottom:14px">
+      <div class="inp-label" data-i18n="rest_api_key">REST API 키</div>
+      <input class="inp" id="kakao-api-key" data-i18n-ph="api_key_ph" placeholder="카카오 REST API 키 입력" />
+      <div class="inp-label" data-i18n="template_code">알림톡 템플릿 코드</div>
+      <input class="inp" id="kakao-template" value="TM_DRIVER_CALL" />
+      <button class="btn btn-ghost" style="padding:13px;border-color:rgba(255,149,0,.3);color:var(--amber)" onclick="saveKakaoConfig()">⚙️ <span data-i18n="save_api">API 설정 저장</span></button>
+    </div></div>
+    <div class="section-title" data-i18n="recent_notif">최근 발송</div>
+    <div class="card" id="notif-log-card"></div>
+  </div>
+
+  <!-- 바텀탭 -->
+  <div class="bottom-tab">
+    <button class="tab-item active" id="btab-home" onclick="switchTab('home')"><span class="tab-icon">🏠</span><span class="tab-label" data-i18n="tab_home">홈</span></button>
+    <button class="tab-item" id="btab-fav" onclick="switchTab('fav')"><span class="tab-icon">⭐</span><span class="tab-label" data-i18n="tab_fav">즐겨찾기</span></button>
+    <button class="tab-item" id="btab-stats" onclick="switchTab('stats')"><span class="tab-icon">📈</span><span class="tab-label" data-i18n="tab_stats">통계</span></button>
+    <button class="tab-item" id="btab-salary-setting" onclick="switchTab('salary-setting')"><span class="tab-icon">⚙️</span><span class="tab-label" data-i18n="tab_salary_set">급여설정</span></button>
+    <button class="tab-item" id="btab-fuel" onclick="switchTab('fuel')"><span class="tab-icon">⛽</span><span class="tab-label" data-i18n="tab_fuel">주유</span></button>
+    <button class="tab-item" id="btab-kakao" onclick="switchTab('kakao')"><span class="tab-icon">💬</span><span class="tab-label" data-i18n="tab_notif">알림</span></button>
+  </div>
+</div><!-- /screen-boss -->
+
+<!-- ══════ 기사 화면 ══════ -->
+<div class="screen" id="screen-driver">
+  <div class="driver-hero">
+    <div class="work-timer-label" data-i18n="work_time">오늘 근무 시간</div>
+    <div class="work-timer" id="work-timer">07:23:14</div>
+    <div style="font-size:var(--fs-sm);color:rgba(255,255,255,.8);margin-top:6px" data-i18n="checkin_info">출근 09:05 · 초과근무 2시간 23분</div>
+  </div>
+
+  <div style="display:flex;gap:10px;padding:16px 16px 4px">
+    <button class="btn btn-success" style="flex:1" id="checkin-btn" onclick="checkIn()">🟢 <span data-i18n="checkin">출근</span></button>
+    <button class="btn btn-danger" style="flex:1" id="checkout-btn" onclick="checkOut()">🔴 <span data-i18n="checkout">퇴근</span></button>
+  </div>
+
+  <div class="section-title" data-i18n="call_alert">호출 알림</div>
+  <div class="alert-card" id="call-alert">
+    <div class="alert-header"><span>📲</span> <span data-i18n="new_call">새 호출이 왔습니다</span></div>
+    <div class="alert-body">
+      <div style="font-size:var(--fs-xs);color:var(--accent);font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px" data-i18n="pickup_loc">📍 픽업 위치</div>
+      <div class="alert-dest" id="alert-pickup-text" style="font-size:var(--fs-md);margin-bottom:12px;color:var(--accent)">IBK 을지로 본점 로비</div>
+      <div style="font-size:var(--fs-xs);color:var(--accent);font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px" data-i18n="dest_loc">🚩 목적지</div>
+      <div class="alert-dest" id="alert-dest-text">더플라자 호텔</div>
+      <div class="alert-meta" data-i18n="eta_3min">📍 현재 위치에서 약 3분 · 사장님 요청</div>
+      <div class="alert-actions">
+        <button class="btn btn-success" onclick="acceptCall()" data-i18n="accept">✓ 수락</button>
+        <button class="btn btn-ghost" onclick="declineCall()" data-i18n="decline">✗ 거절</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" data-i18n="navigation">목적지 내비게이션</div>
+  <div class="map-preview">
+    <div class="map-img">
+      <svg viewBox="0 0 400 150" xmlns="http://www.w3.org/2000/svg">
+        <rect width="400" height="150" fill="#dde6ff"/>
+        <line x1="0" y1="35" x2="400" y2="35" stroke="#c0ceff" stroke-width="8"/>
+        <line x1="0" y1="75" x2="400" y2="75" stroke="#b0c0ff" stroke-width="14"/>
+        <line x1="0" y1="115" x2="400" y2="115" stroke="#c0ceff" stroke-width="8"/>
+        <line x1="65" y1="0" x2="65" y2="150" stroke="#c0ceff" stroke-width="8"/>
+        <line x1="150" y1="0" x2="150" y2="150" stroke="#b0c0ff" stroke-width="14"/>
+        <line x1="250" y1="0" x2="250" y2="150" stroke="#c0ceff" stroke-width="8"/>
+        <line x1="335" y1="0" x2="335" y2="150" stroke="#c0ceff" stroke-width="8"/>
+        <polyline points="85,75 150,75 150,35 290,35 290,75 335,75" stroke="#3478f6" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="85" cy="75" r="9" fill="#3478f6"/><circle cx="85" cy="75" r="18" fill="#3478f6" opacity=".2"/>
+        <circle cx="335" cy="75" r="9" fill="#00b874"/><circle cx="335" cy="75" r="18" fill="#00b874" opacity=".2"/>
+      </svg>
+      <div class="map-label" id="map-label-driver">픽업: IBK 을지로 본점</div>
+    </div>
+    <div class="map-actions">
+      <button class="map-btn" onclick="openNavi('kakao')">🗺 카카오</button>
+      <button class="map-btn" onclick="openNavi('naver')">🧭 네이버</button>
+      <button class="map-btn" onclick="openNavi('tmap')">📍 티맵</button>
+      <button class="map-btn" onclick="openNavi('google')">🌐 Google</button>
+    </div>
+  </div>
+
+  <!-- 기사 주유 기록 (NEW) -->
+  <div class="section-title" data-i18n="fuel_record">⛽ 주유 기록 <span style="color:var(--amber);cursor:pointer;font-size:var(--fs-xs)" onclick="openFuelModal()">＋</span></div>
+  <div class="card" id="driver-fuel-list"></div>
+
+  <div class="section-title" data-i18n="att_record">출퇴근 기록 <span style="color:var(--accent);cursor:pointer;font-size:var(--fs-xs)" onclick="openEditModal(null)">＋</span></div>
+  <div class="card" id="log-list-card"></div>
+
+  <div style="padding:8px 16px 20px">
+    <button class="btn btn-outline" onclick="openCalc()">💰 <span data-i18n="salary_check">이달 급여 상세</span></button>
+  </div>
+</div><!-- /screen-driver -->
+
+</div><!-- /phone -->
+</div><!-- /app-body -->
+
+<!-- ════ 급여 계산 모달 ════ -->
+<div class="modal-overlay" id="calc-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💰 <span data-i18n="salary_detail">급여 상세</span></div>
+    <div class="calc-row"><span class="calc-label" data-i18n="base_pay">기본급</span><span class="calc-value" id="r-base">3,500,000원</span></div>
+    <div class="calc-row"><span class="calc-label" data-i18n="meal_allow">식대</span><span class="calc-value" id="r-meal" style="color:var(--green)">+200,000원</span></div>
+    <div class="calc-row"><span class="calc-label" data-i18n="car_allow">차량유지비</span><span class="calc-value" id="r-car" style="color:var(--green)">+200,000원</span></div>
+    <div class="calc-row"><span class="calc-label" data-i18n="ot_pay">초과근무수당</span><span class="calc-value" id="r-ot" style="color:var(--amber)">+180,000원</span></div>
+    <div class="calc-row"><span class="calc-label" data-i18n="bonus">상여금</span><span class="calc-value" id="r-bonus" style="color:var(--green)">+0원</span></div>
+    <div class="calc-row"><span class="calc-label" data-i18n="insurance">4대보험</span><span class="calc-value" id="r-ins" style="color:var(--red)">-348,920원</span></div>
+    <div style="height:1px;background:var(--border);margin:4px 0"></div>
+    <div class="calc-row"><span class="calc-label" style="font-weight:700;color:var(--text)" data-i18n="net_salary">실수령액</span><span class="calc-value calc-total" id="r-total">3,731,080원</span></div>
+    <button class="btn btn-primary" style="margin-top:20px" onclick="document.getElementById('calc-modal').classList.remove('open')" data-i18n="confirm">확인</button>
+  </div>
+</div>
+
+<!-- ════ 주유 입력 모달 ════ -->
+<div class="modal-overlay" id="fuel-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⛽ <span data-i18n="add_fuel_title">주유 기록 추가</span></div>
+    <div class="fuel-input-grid">
+      <div class="fuel-input-box">
+        <div class="box-label" data-i18n="liter">주유량</div>
+        <input id="fuel-liter" type="number" placeholder="0.0" step="0.1" />
+        <div class="unit">리터 (L)</div>
+      </div>
+      <div class="fuel-input-box">
+        <div class="box-label" data-i18n="unit_price">단가</div>
+        <input id="fuel-unit" type="number" placeholder="1700" />
+        <div class="unit" data-i18n="won_per_l">원/L</div>
+      </div>
+      <div class="fuel-input-box">
+        <div class="box-label" data-i18n="total_cost">총 금액</div>
+        <input id="fuel-total" type="number" placeholder="자동계산" readonly style="color:var(--accent)" />
+        <div class="unit" data-i18n="won">원</div>
+      </div>
+      <div class="fuel-input-box">
+        <div class="box-label" data-i18n="mileage">주행거리</div>
+        <input id="fuel-km" type="number" placeholder="0" />
+        <div class="unit">km</div>
+      </div>
+    </div>
+    <div class="inp-label" data-i18n="fuel_station">주유소</div>
+    <input class="inp" id="fuel-station" data-i18n-ph="station_ph" placeholder="주유소명 (예: GS칼텍스 서초)" />
+    <div class="inp-label" data-i18n="fuel_date">날짜</div>
+    <input class="inp" id="fuel-date" type="date" />
+    <div class="inp-label" data-i18n="memo">메모</div>
+    <input class="inp" id="fuel-memo" data-i18n-ph="memo_ph" placeholder="메모 (선택)" style="margin-bottom:16px" />
+    <button class="btn btn-success" onclick="saveFuel()" data-i18n="save_fuel">⛽ 주유 기록 저장</button>
+  </div>
+</div>
+
+<!-- ════ 운행기록 편집 모달 ════ -->
+<div class="modal-overlay" id="edit-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="edit-modal-title" data-i18n="add_trip">🚗 운행기록 추가</div>
+    <input type="hidden" id="edit-idx" value="-1" />
+    <div class="inp-label" data-i18n="destination">목적지</div>
+    <input class="inp" id="edit-dest" data-i18n-ph="dest_ex" placeholder="예: IBK 을지로 본점" />
+    <div style="display:flex;gap:10px">
+      <div style="flex:1"><div class="inp-label" data-i18n="depart_time">출발</div><input class="inp" id="edit-dep" type="time" value="09:00" /></div>
+      <div style="flex:1"><div class="inp-label" data-i18n="arrive_time">도착</div><input class="inp" id="edit-arr" type="time" value="09:30" /></div>
+    </div>
+    <div class="inp-label" data-i18n="distance">거리 (km)</div>
+    <input class="inp" id="edit-dist" type="number" placeholder="12.3" style="margin-bottom:16px" />
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" style="flex:1;padding:15px" onclick="saveTrip()" data-i18n="save">저장</button>
+      <button class="btn btn-ghost" style="flex:1;padding:15px" onclick="document.getElementById('edit-modal').classList.remove('open')" data-i18n="cancel">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ 카카오맵 스타일 장소 검색 ════ -->
+<div id="place-search-screen">
+  <div style="background:var(--surface);padding:14px 16px 0;border-bottom:1px solid var(--border);flex-shrink:0;box-shadow:var(--shadow)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <button onclick="closePlaceSearch()" style="background:none;border:none;color:var(--text2);font-size:24px;cursor:pointer;padding:0;line-height:1;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .12s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">←</button>
+      <div id="ps-badge" style="font-size:13px;font-weight:700;padding:6px 14px;border-radius:20px;background:#eef3ff;color:var(--accent)">📍 픽업 위치</div>
+    </div>
+    <div style="position:relative;margin-bottom:14px">
+      <span style="position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--text3)">🔍</span>
+      <input id="ps-input"
+        style="width:100%;background:var(--surface2);border:2px solid var(--accent);border-radius:14px;padding:15px 44px 15px 46px;color:var(--text);font-size:18px;font-family:inherit;outline:none"
+        placeholder="장소, 주소 검색"
+        oninput="psOnInput()" onkeydown="if(event.key==='Enter')psSearch()"
+        autocomplete="off" autocorrect="off" spellcheck="false"
+      />
+      <button id="ps-clear" onclick="psClear()" style="display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:var(--text3);border:none;border-radius:50%;width:24px;height:24px;color:#fff;font-size:14px;cursor:pointer;line-height:24px;text-align:center">✕</button>
+    </div>
+    <div style="display:flex;gap:0;margin-bottom:-1px">
+      <button id="ps-tab-pickup" onclick="psSwitch('pickup')" style="flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid var(--accent);color:var(--accent);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">📍 <span data-i18n="pickup_loc">픽업</span></button>
+      <button id="ps-tab-dest" onclick="psSwitch('dest')" style="flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid transparent;color:var(--text3);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">🚩 <span data-i18n="dest_loc">목적지</span></button>
+    </div>
+  </div>
+
+  <!-- 지도 영역 -->
+  <div id="ps-map-container" style="display:none;flex-shrink:0;position:relative">
+    <div id="kakao-map" style="width:100%;height:220px"></div>
+    <div id="ps-map-info" style="position:absolute;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)">
+      <div id="ps-map-icon" style="font-size:26px">📍</div>
+      <div style="flex:1;min-width:0">
+        <div id="ps-map-name" style="font-size:17px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+        <div id="ps-map-addr" style="font-size:13px;color:var(--text2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+      </div>
+      <button onclick="psConfirmSelected()" style="background:var(--accent);color:#fff;border:none;border-radius:12px;padding:10px 18px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0" data-i18n="select">선택</button>
+    </div>
+  </div>
+
+  <div id="ps-content" style="flex:1;overflow-y:auto;background:var(--bg)">
+    <div id="ps-default">
+      <div onclick="psUseGPS()" style="display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid var(--border);cursor:pointer;background:rgba(52,120,246,.04);transition:background .12s" onmouseover="this.style.background='rgba(52,120,246,.08)'" onmouseout="this.style.background='rgba(52,120,246,.04)'">
+        <div style="width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📡</div>
+        <div><div style="font-size:17px;font-weight:700;color:var(--accent)" data-i18n="use_gps">현재 위치 사용</div><div style="font-size:14px;color:var(--text2);margin-top:2px" data-i18n="use_gps_sub">GPS로 내 위치 자동 입력</div></div>
+      </div>
+      <div style="padding:18px 20px 8px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase" data-i18n="recent_search">최근 검색</span>
+        <button onclick="psClearRecent()" style="background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit" data-i18n="clear_all">전체 삭제</button>
+      </div>
+      <div id="ps-recent-list"></div>
+      <div style="padding:16px 20px 8px"><span style="font-size:13px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase" data-i18n="tab_fav">즐겨찾기</span></div>
+      <div id="ps-fav-list"></div>
+    </div>
+    <div id="ps-autocomplete" style="display:none;background:var(--surface)"></div>
+    <div id="ps-results" style="display:none">
+      <div id="ps-result-count" style="padding:14px 20px 6px;font-size:13px;color:var(--text3);font-weight:600"></div>
+      <div id="ps-result-list" style="background:var(--surface)"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ 다국어 ══
+const i18n = {
+  ko:{
+    role_boss:'🧑‍💼 사장님',role_driver:'🚗 기사님',driver_status:'현재 기사 상태',
+    status_standby:'대기 중',checkin_today:'오늘 09:05 출근',salary_check:'이달 급여 확인',
+    call_driver:'기사 호출',pickup_loc:'📍 픽업 위치',pickup_ph:'픽업 위치 입력',
+    destination:'목적지',dest_loc:'🚩 목적지',dest_ph:'목적지 입력',call_btn:'기사 호출',
+    calling:'기사님께 알리는 중…',eta:'예상 도착',min:'분',cancel:'취소',
+    navigation:'네비게이션',recommend:'추천',today_trip:'오늘 운행',
+    fav_places:'자주 가는 곳',fav_sub:'탭하면 목적지로 바로 설정',add_place:'장소 추가',
+    place_name:'장소 이름',place_addr:'주소',add_place_btn:'장소 추가',saved_places:'저장된 장소',
+    year_trips:'올해 운행',year_dist:'올해 거리',month_trips:'이달 운행',month_dist:'이달 거리',
+    times:'회',monthly_trips:'월별 운행 횟수',monthly_dist:'월별 운행 거리 (km)',monthly_detail:'월별 상세',
+    salary_setting:'급여 설정',salary_setting_sub:'기사 급여 기준을 설정하세요',
+    basic_salary_setting:'기본 급여',base_pay:'기본 월급 (원)',ot_rate:'시간외수당 단가 (원/시간)',
+    standard_hours:'소정근로시간 (일)',allowance_setting:'수당 설정',
+    meal_allow:'식대',meal_allow_sub:'월 지급 식대',car_allow:'차량유지비',car_allow_sub:'월 지급 차량 유지비',
+    bonus:'상여금',bonus_sub:'이달 추가 지급',insurance_setting:'공제 설정',insurance:'4대보험 공제율',
+    this_month_ot:'이달 초과근무',ot_hours:'초과근무 시간',salary_preview:'급여 미리보기',
+    save_settings:'설정 저장',
+    tab_fuel:'주유',fuel_record:'⛽ 주유 기록',month_fuel:'이달 주유량',month_fuel_cost:'이달 주유비',
+    year_fuel:'올해 주유량',avg_price:'평균 단가',add_fuel:'주유 입력',
+    add_fuel_title:'주유 기록 추가',liter:'주유량',unit_price:'단가',won_per_l:'원/L',
+    total_cost:'총 금액',won:'원',mileage:'주행거리',fuel_station:'주유소',station_ph:'주유소명 (예: GS칼텍스 서초)',
+    fuel_date:'날짜',memo:'메모',memo_ph:'메모 (선택)',save_fuel:'⛽ 주유 기록 저장',
+    kakao_talk:'카카오 알림톡',kakao_wait:'연동 대기 중',kakao_wait_sub:'카카오 계정을 연결하세요',
+    connect:'연결',notif_setting:'알림 설정',notif_call:'🚗 호출 알림',notif_call_sub:'기사 호출 시 카카오톡 발송',
+    notif_accept:'✅ 수락 알림',notif_accept_sub:'기사 수락 시 사장님께 알림',
+    notif_checkin:'🟢 출근 알림',notif_checkin_sub:'기사 출근 기록 시 발송',
+    notif_checkout:'🔴 퇴근 알림',notif_checkout_sub:'기사 퇴근 기록 시 발송',
+    notif_fuel:'⛽ 주유 알림',notif_fuel_sub:'주유 기록 시 발송',
+    kakao_api:'카카오 API 설정',rest_api_key:'REST API 키',api_key_ph:'카카오 REST API 키 입력',
+    template_code:'알림톡 템플릿 코드',save_api:'API 설정 저장',recent_notif:'최근 발송',
+    salary_detail:'급여 상세',ot_pay:'초과근무수당',net_salary:'실수령액',confirm:'확인',
+    work_time:'오늘 근무 시간',checkin_info:'출근 09:05 · 초과근무 2시간 23분',
+    checkin:'출근',checkout:'퇴근',call_alert:'호출 알림',new_call:'새 호출이 왔습니다',
+    eta_3min:'📍 현재 위치에서 약 3분 · 사장님 요청',accept:'✓ 수락',decline:'✗ 거절',
+    att_record:'출퇴근 기록',add_trip:'🚗 운행기록 추가',depart_time:'출발',arrive_time:'도착',
+    distance:'거리 (km)',save:'저장',
+    use_gps:'현재 위치 사용',use_gps_sub:'GPS로 내 위치 자동 입력',
+    recent_search:'최근 검색',clear_all:'전체 삭제',select:'선택',
+    tab_home:'홈',tab_fav:'즐겨찾기',tab_stats:'통계',tab_salary_set:'급여설정',tab_notif:'알림',
+    dest_ex:'예: IBK 을지로 본점',
+  },
+  en:{
+    role_boss:'🧑‍💼 Boss',role_driver:'🚗 Driver',driver_status:'Driver Status',
+    status_standby:'Standby',checkin_today:'Checked in 09:05',salary_check:'This Month Salary',
+    call_driver:'Call Driver',pickup_loc:'📍 Pickup Location',pickup_ph:'Enter pickup location',
+    destination:'Destination',dest_loc:'🚩 Destination',dest_ph:'Enter destination',call_btn:'Call Driver',
+    calling:'Notifying driver…',eta:'ETA',min:'min',cancel:'Cancel',
+    navigation:'Navigation',recommend:'Recommended',today_trip:'Today\'s Trips',
+    fav_places:'Favorite Places',fav_sub:'Tap to set as destination',add_place:'Add Place',
+    place_name:'Place Name',place_addr:'Address',add_place_btn:'Add Place',saved_places:'Saved Places',
+    year_trips:'Year Trips',year_dist:'Year Distance',month_trips:'Month Trips',month_dist:'Month Distance',
+    times:'trips',monthly_trips:'Monthly Trips',monthly_dist:'Monthly Distance (km)',monthly_detail:'Monthly Detail',
+    salary_setting:'Salary Settings',salary_setting_sub:'Set driver salary standards',
+    basic_salary_setting:'Base Salary',base_pay:'Base Monthly Pay (₩)',ot_rate:'OT Rate (₩/hr)',
+    standard_hours:'Standard Hours (day)',allowance_setting:'Allowances',
+    meal_allow:'Meal Allowance',meal_allow_sub:'Monthly meal allowance',car_allow:'Vehicle Allowance',car_allow_sub:'Monthly vehicle allowance',
+    bonus:'Bonus',bonus_sub:'Additional payment this month',insurance_setting:'Deductions',insurance:'Social Insurance Rate',
+    this_month_ot:'This Month OT',ot_hours:'Overtime Hours',salary_preview:'Salary Preview',
+    save_settings:'Save Settings',
+    tab_fuel:'Fuel',fuel_record:'⛽ Fuel Log',month_fuel:'Month Fuel',month_fuel_cost:'Month Fuel Cost',
+    year_fuel:'Year Fuel',avg_price:'Avg Price',add_fuel:'Add Fuel',
+    add_fuel_title:'Add Fuel Record',liter:'Liters',unit_price:'Unit Price',won_per_l:'₩/L',
+    total_cost:'Total',won:'₩',mileage:'Mileage',fuel_station:'Station',station_ph:'Gas station name',
+    fuel_date:'Date',memo:'Memo',memo_ph:'Memo (optional)',save_fuel:'⛽ Save Fuel Record',
+    kakao_talk:'KakaoTalk Notification',kakao_wait:'Not Connected',kakao_wait_sub:'Connect your Kakao account',
+    connect:'Connect',notif_setting:'Notification Settings',notif_call:'🚗 Call Alert',notif_call_sub:'Send KakaoTalk on driver call',
+    notif_accept:'✅ Accept Alert',notif_accept_sub:'Notify boss when driver accepts',
+    notif_checkin:'🟢 Check-in Alert',notif_checkin_sub:'Send when driver checks in',
+    notif_checkout:'🔴 Check-out Alert',notif_checkout_sub:'Send when driver checks out',
+    notif_fuel:'⛽ Fuel Alert',notif_fuel_sub:'Send when fuel is logged',
+    kakao_api:'Kakao API Settings',rest_api_key:'REST API Key',api_key_ph:'Enter Kakao REST API Key',
+    template_code:'Alimtalk Template Code',save_api:'Save API Settings',recent_notif:'Recent Notifications',
+    salary_detail:'Salary Detail',ot_pay:'Overtime Pay',net_salary:'Net Salary',confirm:'Confirm',
+    work_time:'Today Work Time',checkin_info:'In 09:05 · OT 2h 23m',
+    checkin:'Check In',checkout:'Check Out',call_alert:'Call Alert',new_call:'New Call Received',
+    eta_3min:'📍 ~3 min from current · Boss request',accept:'✓ Accept',decline:'✗ Decline',
+    att_record:'Attendance',add_trip:'🚗 Add Trip',depart_time:'Depart',arrive_time:'Arrive',
+    distance:'Distance (km)',save:'Save',
+    use_gps:'Use Current Location',use_gps_sub:'Auto-fill with GPS',
+    recent_search:'Recent Searches',clear_all:'Clear All',select:'Select',
+    tab_home:'Home',tab_fav:'Favorites',tab_stats:'Stats',tab_salary_set:'Salary',tab_notif:'Alerts',
+    dest_ex:'e.g. IBK Euljiro Branch',
+  },
+  id:{
+    role_boss:'🧑‍💼 Bos',role_driver:'🚗 Sopir',driver_status:'Status Sopir',
+    status_standby:'Siaga',checkin_today:'Masuk jam 09:05',salary_check:'Gaji Bulan Ini',
+    call_driver:'Panggil Sopir',pickup_loc:'📍 Lokasi Jemput',pickup_ph:'Masukkan lokasi jemput',
+    destination:'Tujuan',dest_loc:'🚩 Tujuan',dest_ph:'Masukkan tujuan',call_btn:'Panggil Sopir',
+    calling:'Menghubungi sopir…',eta:'Perkiraan Tiba',min:'mnt',cancel:'Batal',
+    navigation:'Navigasi',recommend:'Rekomendasi',today_trip:'Perjalanan Hari Ini',
+    fav_places:'Tempat Favorit',fav_sub:'Ketuk untuk atur tujuan',add_place:'Tambah Tempat',
+    place_name:'Nama Tempat',place_addr:'Alamat',add_place_btn:'Tambah Tempat',saved_places:'Tempat Tersimpan',
+    year_trips:'Perjalanan Tahun Ini',year_dist:'Jarak Tahun Ini',month_trips:'Perjalanan Bulan Ini',month_dist:'Jarak Bulan Ini',
+    times:'kali',monthly_trips:'Perjalanan per Bulan',monthly_dist:'Jarak per Bulan (km)',monthly_detail:'Detail Bulanan',
+    salary_setting:'Pengaturan Gaji',salary_setting_sub:'Atur standar gaji sopir',
+    basic_salary_setting:'Gaji Pokok',base_pay:'Gaji Pokok Bulanan (₩)',ot_rate:'Tarif Lembur (₩/jam)',
+    standard_hours:'Jam Kerja Standar (hari)',allowance_setting:'Tunjangan',
+    meal_allow:'Tunjangan Makan',meal_allow_sub:'Tunjangan makan bulanan',car_allow:'Tunjangan Kendaraan',car_allow_sub:'Tunjangan kendaraan bulanan',
+    bonus:'Bonus',bonus_sub:'Pembayaran tambahan bulan ini',insurance_setting:'Potongan',insurance:'Tarif Asuransi Sosial',
+    this_month_ot:'Lembur Bulan Ini',ot_hours:'Jam Lembur',salary_preview:'Pratinjau Gaji',
+    save_settings:'Simpan Pengaturan',
+    tab_fuel:'BBM',fuel_record:'⛽ Catatan BBM',month_fuel:'BBM Bulan Ini',month_fuel_cost:'Biaya BBM Bulan Ini',
+    year_fuel:'BBM Tahun Ini',avg_price:'Harga Rata-rata',add_fuel:'Tambah BBM',
+    add_fuel_title:'Tambah Catatan BBM',liter:'Liter',unit_price:'Harga per Liter',won_per_l:'₩/L',
+    total_cost:'Total',won:'₩',mileage:'Kilometer',fuel_station:'SPBU',station_ph:'Nama SPBU',
+    fuel_date:'Tanggal',memo:'Catatan',memo_ph:'Catatan (opsional)',save_fuel:'⛽ Simpan Catatan BBM',
+    kakao_talk:'Notifikasi KakaoTalk',kakao_wait:'Belum Terhubung',kakao_wait_sub:'Hubungkan akun Kakao Anda',
+    connect:'Hubungkan',notif_setting:'Pengaturan Notifikasi',notif_call:'🚗 Notif Panggilan',notif_call_sub:'Kirim KakaoTalk saat sopir dipanggil',
+    notif_accept:'✅ Notif Penerimaan',notif_accept_sub:'Beritahu bos saat sopir menerima',
+    notif_checkin:'🟢 Notif Masuk',notif_checkin_sub:'Kirim saat sopir absen masuk',
+    notif_checkout:'🔴 Notif Keluar',notif_checkout_sub:'Kirim saat sopir absen keluar',
+    notif_fuel:'⛽ Notif BBM',notif_fuel_sub:'Kirim saat pengisian BBM dicatat',
+    kakao_api:'Pengaturan API Kakao',rest_api_key:'REST API Key',api_key_ph:'Masukkan Kakao REST API Key',
+    template_code:'Kode Template Alimtalk',save_api:'Simpan Pengaturan API',recent_notif:'Notifikasi Terbaru',
+    salary_detail:'Detail Gaji',ot_pay:'Upah Lembur',net_salary:'Gaji Bersih',confirm:'Konfirmasi',
+    work_time:'Waktu Kerja Hari Ini',checkin_info:'Masuk 09:05 · Lembur 2j 23m',
+    checkin:'Absen Masuk',checkout:'Absen Keluar',call_alert:'Notif Panggilan',new_call:'Ada Panggilan Baru',
+    eta_3min:'📍 ~3 menit dari lokasi · Permintaan bos',accept:'✓ Terima',decline:'✗ Tolak',
+    att_record:'Kehadiran',add_trip:'🚗 Tambah Perjalanan',depart_time:'Berangkat',arrive_time:'Tiba',
+    distance:'Jarak (km)',save:'Simpan',
+    use_gps:'Gunakan Lokasi Saat Ini',use_gps_sub:'Isi otomatis dengan GPS',
+    recent_search:'Pencarian Terbaru',clear_all:'Hapus Semua',select:'Pilih',
+    tab_home:'Beranda',tab_fav:'Favorit',tab_stats:'Statistik',tab_salary_set:'Gaji',tab_notif:'Notif',
+    dest_ex:'cth: IBK Euljiro',
+  }
+};
+
+let currentLang = localStorage.getItem('app_lang') || 'ko';
+
+function t(key) { return (i18n[currentLang]||i18n.ko)[key] || i18n.ko[key] || key; }
+
+function setLang(lang, btn) {
+  currentLang = lang;
+  localStorage.setItem('app_lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyI18n();
+}
+
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (el.children.length === 0 || el.tagName === 'BUTTON') {
+      // 버튼 내 span 포함 처리
+      const spans = el.querySelectorAll('[data-i18n]');
+      if (spans.length === 0) el.textContent = t(key);
+    }
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-i18n-ph'));
+  });
+  // 언어별 폰트 설정
+  document.body.style.fontFamily = currentLang === 'ko'
+    ? "'Noto Sans KR', -apple-system, sans-serif"
+    : "'Noto Sans', -apple-system, sans-serif";
+}
+
+// ══ 시계 ══
+function updateClock(){
+  var n=new Date();
+  var el=document.getElementById('clock');
+  if(el) el.textContent=n.getHours()+':'+(n.getMinutes()<10?'0':'')+n.getMinutes();
+}
+
+// ══ 역할/탭 전환 ══
+function switchRole(role,btn){
+  document.querySelectorAll('.role-btn').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('screen-'+role).classList.add('active');
+}
+function switchTab(name){
+  document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.tab-item').forEach(function(b){b.classList.remove('active');});
+  var tp=document.getElementById('tab-'+name);
+  var bt=document.getElementById('btab-'+name);
+  if(tp) tp.classList.add('active');
+  if(bt) bt.classList.add('active');
+  if(name==='salary-setting') updateSalaryPreview();
+  if(name==='fuel'||name==='stats') renderFuelSummary();
+}
+
+// ══ 토스트 ══
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+// ══════════════════════════════════
+// 💰 급여 설정 & 계산
+// ══════════════════════════════════
+let salaryConfig = JSON.parse(localStorage.getItem('salary_config')||'null') || {
+  base:3500000, otRate:15000, stdHours:8,
+  meal:200000, car:200000, bonus:0, insRate:9.4, otHours:12
+};
+
+function loadSalaryForm(){
+  document.getElementById('set-base').value = salaryConfig.base;
+  document.getElementById('set-ot-rate').value = salaryConfig.otRate;
+  document.getElementById('set-std-hours').value = salaryConfig.stdHours;
+  document.getElementById('set-meal').value = salaryConfig.meal;
+  document.getElementById('set-car').value = salaryConfig.car;
+  document.getElementById('set-bonus').value = salaryConfig.bonus;
+  document.getElementById('set-ins').value = salaryConfig.insRate;
+  document.getElementById('set-ot-hours').value = salaryConfig.otHours;
+}
+
+function getSalaryFromForm(){
+  return {
+    base: parseInt(document.getElementById('set-base').value)||0,
+    otRate: parseInt(document.getElementById('set-ot-rate').value)||0,
+    stdHours: parseInt(document.getElementById('set-std-hours').value)||8,
+    meal: parseInt(document.getElementById('set-meal').value)||0,
+    car: parseInt(document.getElementById('set-car').value)||0,
+    bonus: parseInt(document.getElementById('set-bonus').value)||0,
+    insRate: parseFloat(document.getElementById('set-ins').value)||9.4,
+    otHours: parseInt(document.getElementById('set-ot-hours').value)||0,
+  };
+}
+
+function calcSalaryData(cfg){
+  const ot = cfg.otRate * cfg.otHours;
+  const gross = cfg.base + cfg.meal + cfg.car + cfg.bonus + ot;
+  const ins = Math.round(gross * cfg.insRate / 100);
+  return { base:cfg.base, meal:cfg.meal, car:cfg.car, bonus:cfg.bonus, ot, gross, ins, net:gross-ins };
+}
+
+function fmt(n){ return n.toLocaleString('ko-KR')+'원'; }
+
+function updateSalaryPreview(){
+  const cfg = getSalaryFromForm();
+  const d = calcSalaryData(cfg);
+  const card = document.getElementById('salary-preview-card');
+  card.innerHTML = `
+    <div style="padding:18px">
+      ${row(t('base_pay'), fmt(d.base), '#1a1d2e')}
+      ${row(t('meal_allow'), '+'+fmt(d.meal), 'var(--green)')}
+      ${row(t('car_allow'), '+'+fmt(d.car), 'var(--green)')}
+      ${row(t('ot_pay')+' ('+cfg.otHours+'h)', '+'+fmt(d.ot), 'var(--amber)')}
+      ${d.bonus?row(t('bonus'), '+'+fmt(d.bonus), 'var(--green)'):''}
+      <div style="height:1px;background:var(--border);margin:8px 0"></div>
+      ${row(t('insurance')+' (-'+cfg.insRate+'%)', '-'+fmt(d.ins), 'var(--red)')}
+      <div style="height:1px;background:var(--border);margin:8px 0"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0">
+        <span style="font-size:var(--fs-base);font-weight:700;color:var(--text)">${t('net_salary')}</span>
+        <span style="font-size:var(--fs-xl);font-weight:900;color:var(--green)">${fmt(d.net)}</span>
+      </div>
+    </div>`;
+}
+
+function row(label,value,color){
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+    <span style="font-size:var(--fs-base);color:var(--text2)">${label}</span>
+    <span style="font-size:var(--fs-md);font-weight:700;color:${color}">${value}</span>
+  </div>`;
+}
+
+function saveSalarySettings(){
+  salaryConfig = getSalaryFromForm();
+  localStorage.setItem('salary_config', JSON.stringify(salaryConfig));
+  showToast('✅ '+t('save_settings'));
+  updateCalcModal();
+}
+
+function updateCalcModal(){
+  const d = calcSalaryData(salaryConfig);
+  document.getElementById('r-base').textContent = fmt(d.base);
+  document.getElementById('r-meal').textContent = '+'+fmt(d.meal);
+  document.getElementById('r-car').textContent = '+'+fmt(d.car);
+  document.getElementById('r-ot').textContent = '+'+fmt(d.ot);
+  document.getElementById('r-bonus').textContent = '+'+fmt(d.bonus);
+  document.getElementById('r-ins').textContent = '-'+fmt(d.ins);
+  document.getElementById('r-total').textContent = fmt(d.net);
+}
+
+function openCalc(){ updateCalcModal(); document.getElementById('calc-modal').classList.add('open'); }
+
+// ══════════════════════════════════
+// ⛽ 주유 기록
+// ══════════════════════════════════
+let fuelList = JSON.parse(localStorage.getItem('fuel_list')||'[]');
+if(!fuelList.length){
+  fuelList = [
+    {date:'2025-06-14',liter:50,unitPrice:1680,total:84000,km:450,station:'GS칼텍스 서초IC',memo:''},
+    {date:'2025-06-07',liter:48,unitPrice:1690,total:81120,km:420,station:'현대오일뱅크 반포',memo:''},
+    {date:'2025-05-31',liter:52,unitPrice:1700,total:88400,km:480,station:'SK에너지 강남',memo:''},
+  ];
+}
+
+function openFuelModal(){
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('fuel-date').value = today;
+  document.getElementById('fuel-liter').value = '';
+  document.getElementById('fuel-unit').value = '1680';
+  document.getElementById('fuel-total').value = '';
+  document.getElementById('fuel-km').value = '';
+  document.getElementById('fuel-station').value = '';
+  document.getElementById('fuel-memo').value = '';
+  document.getElementById('fuel-modal').classList.add('open');
+}
+
+// 금액 자동계산
+
+function saveFuel(){
+  const liter=parseFloat(document.getElementById('fuel-liter').value)||0;
+  const unitPrice=parseFloat(document.getElementById('fuel-unit').value)||0;
+  const total=parseFloat(document.getElementById('fuel-total').value)||Math.round(liter*unitPrice);
+  const km=parseFloat(document.getElementById('fuel-km').value)||0;
+  const station=document.getElementById('fuel-station').value.trim()||'주유소';
+  const date=document.getElementById('fuel-date').value||new Date().toISOString().split('T')[0];
+  const memo=document.getElementById('fuel-memo').value.trim();
+  if(!liter){showToast('⛽ 주유량을 입력하세요');return;}
+  fuelList.unshift({date,liter,unitPrice,total,km,station,memo});
+  localStorage.setItem('fuel_list',JSON.stringify(fuelList));
+  document.getElementById('fuel-modal').classList.remove('open');
+  showToast('⛽ '+t('save_fuel'));
+}
+
+function renderFuelList(){
+  const tmpl = fuelList.map((f,i)=>`
+    <div class="fuel-row">
+      <div class="fuel-icon">⛽</div>
+      <div class="fuel-info">
+        <div class="fuel-date">${f.station}</div>
+        <div class="fuel-detail">${f.date} · ${f.km?f.km+'km':''}${f.memo?' · '+f.memo:''}</div>
+      </div>
+      <div class="fuel-amount">
+        <div class="fuel-liter">${f.liter}L</div>
+        <div class="fuel-cost">${f.total.toLocaleString()}원</div>
+      </div>
+    </div>`).join('');
+  const empty=`<div style="padding:28px;text-align:center;color:var(--text3);font-size:var(--fs-base)">${t('add_fuel')}</div>`;
+  const boss=document.getElementById('boss-fuel-list');
+  const driver=document.getElementById('driver-fuel-list');
+  if(boss)boss.innerHTML=fuelList.length?tmpl:empty;
+  if(driver)driver.innerHTML=fuelList.length?tmpl:empty;
+}
+
+function renderFuelSummary(){
+  const now=new Date();const ym=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const thisMonth=fuelList.filter(f=>f.date.startsWith(ym));
+  const mLiter=thisMonth.reduce((s,f)=>s+f.liter,0);
+  const mCost=thisMonth.reduce((s,f)=>s+f.total,0);
+  const yLiter=fuelList.reduce((s,f)=>s+f.liter,0);
+  const avgPrice=fuelList.length?Math.round(fuelList.reduce((s,f)=>s+(f.unitPrice||0),0)/fuelList.length):0;
+  const el=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  el('fuel-month-liter',mLiter.toFixed(1)+'L');
+  el('fuel-month-cost',mCost.toLocaleString()+'원');
+  el('fuel-year-liter',yLiter.toFixed(1)+'L');
+  el('fuel-avg-price',avgPrice.toLocaleString()+'원/L');
+}
+
+
+// ══════════════════════════════════
+// 🚗 운행기록
+// ══════════════════════════════════
+let tripList=[
+  {dest:'IBK 을지로 본점',dep:'09:10',arr:'09:38',dist:'12.3',icon:'🏦'},
+  {dest:'더플라자 호텔 (오찬)',dep:'11:50',arr:'12:08',dist:'5.1',icon:'🍽️'},
+];
+const iconMap={'공항':'✈️','호텔':'🏨','은행':'🏦','IBK':'🏦','자택':'🏠','집':'🏠','코엑스':'🏢','병원':'🏥','식당':'🍽️','갈비':'🍽️','커피':'☕','역':'🚉','시청':'🏛️'};
+function guessIcon(d){for(const[k,v]of Object.entries(iconMap))if(d.includes(k))return v;return '📍';}
+
+function renderTripList(){
+  const card=document.getElementById('trip-list-card');if(!card)return;
+  const total=tripList.reduce((s,t)=>s+parseFloat(t.dist||0),0).toFixed(1);
+  card.innerHTML=tripList.map((t,i)=>`
+    <div class="trip-item" onclick="openEditModal(${i})">
+      <div class="trip-icon">${t.icon||guessIcon(t.dest)}</div>
+      <div class="trip-info"><div class="trip-dest">${t.dest}</div><div class="trip-time">${t.dep} → ${t.arr}</div></div>
+      <div class="trip-dist">${t.dist}km</div>
+    </div>`).join('')+`
+    <div class="trip-item" style="cursor:default;background:var(--surface2)">
+      <div class="trip-icon">📊</div>
+      <div class="trip-info"><div class="trip-dest" style="color:var(--text2)">${t('today_trip')}</div><div class="trip-time">${tripList.length}${t('times')} · ${total}km</div></div>
+      <div class="trip-dist" style="color:var(--accent)">진행중</div>
+    </div>`;
+}
+
+let logList=[
+  {date:'6/15',day:'오늘',in:'09:05',out:'진행중',total:'',ot:'2:23',oting:true},
+  {date:'6/14',day:'금',in:'08:52',out:'20:10',total:'11:18',ot:'3:18',oting:false},
+  {date:'6/13',day:'목',in:'09:00',out:'18:05',total:'9:05',ot:'',oting:false},
+  {date:'6/12',day:'수',in:'09:10',out:'21:30',total:'12:20',ot:'4:20',oting:false},
+];
+function renderLogList(){
+  const card=document.getElementById('log-list-card');if(!card)return;
+  card.innerHTML=logList.map((l,i)=>`
+    <div class="log-row">
+      <div class="log-date">${l.date}<br><span style="color:var(--text3);font-size:12px">${l.day}</span></div>
+      <div class="log-times">
+        <div class="log-in">▶ ${l.in} ${t('checkin')}</div>
+        <div class="${l.oting?'':'log-out'}" style="${l.oting?'color:var(--text2)':''}">${l.oting?'■ 진행중':'■ '+l.out+' '+t('checkout')}</div>
+        ${l.total?`<div class="log-total">총 ${l.total}</div>`:''}
+      </div>
+      ${l.ot?`<div class="log-ot">OT ${l.ot}</div>`:`<div style="font-size:12px;color:var(--text3)">정시</div>`}
+    </div>`).join('');
+}
+
+function openEditModal(idx){
+  document.getElementById('edit-idx').value=idx??-1;
+  if(idx!==null&&idx>=0){
+    const t=tripList[idx];
+    document.getElementById('edit-modal-title').textContent='✏️ 운행기록 수정';
+    document.getElementById('edit-dest').value=t.dest;
+    document.getElementById('edit-dep').value=t.dep;
+    document.getElementById('edit-arr').value=t.arr;
+    document.getElementById('edit-dist').value=t.dist;
+  } else {
+    document.getElementById('edit-modal-title').textContent=t('add_trip');
+    ['edit-dest','edit-dep','edit-arr','edit-dist'].forEach(id=>document.getElementById(id).value='');
+  }
+  document.getElementById('edit-modal').classList.add('open');
+}
+function saveTrip(){
+  const idx=parseInt(document.getElementById('edit-idx').value);
+  const dest=document.getElementById('edit-dest').value.trim();
+  if(!dest){showToast(t('destination')+' 입력 필요');return;}
+  const entry={dest,dep:document.getElementById('edit-dep').value,arr:document.getElementById('edit-arr').value,dist:document.getElementById('edit-dist').value||'0',icon:guessIcon(dest)};
+  if(idx>=0){tripList[idx]=entry;}else{tripList.push(entry);}
+  document.getElementById('edit-modal').classList.remove('open');
+  showToast('✅ '+t('save'));
+}
+
+// ══ 출퇴근 ══
+function checkIn(){
+  const now=new Date();const tm=`${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  logList[0].in=tm;logList[0].oting=true;renderLogList();
+  showToast(`🟢 ${t('checkin')} ✓  ${tm}`);
+  document.getElementById('checkin-btn').style.opacity='.5';
+}
+function checkOut(){
+  const now=new Date();const tm=`${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  logList[0].out=tm;logList[0].oting=false;renderLogList();
+  showToast(`🔴 ${t('checkout')} ✓  ${tm}`);
+  document.getElementById('checkout-btn').style.opacity='.5';
+}
+
+// ══ 호출 ══
+let callTimer=null;
+function callDriver(){
+  const pickup=document.getElementById('pickup-input').value.trim();
+  const dest=document.getElementById('dest-input').value.trim();
+  if(!pickup){showToast('📍 '+t('pickup_ph'));openAddrModal('pickup');return;}
+  if(!dest){showToast('🚩 '+t('dest_ph'));openAddrModal('dest');return;}
+  document.getElementById('call-btn').style.display='none';
+  document.getElementById('call-status').classList.add('visible');
+  document.getElementById('call-dest-text').innerHTML=`<span style="color:var(--accent)">📍 ${pickup}</span><br><span style="color:var(--text2)">🚩 ${dest}</span>`;
+  document.getElementById('call-msg-text').textContent=t('calling');
+  document.getElementById('eta-badge').style.display='none';
+  document.getElementById('alert-pickup-text').textContent=pickup;
+  document.getElementById('alert-dest-text').textContent=dest;
+  document.getElementById('map-label-driver').textContent='픽업: '+pickup;
+  callTimer=setTimeout(()=>{
+    document.getElementById('call-msg-text').textContent='✅ '+t('accept');
+    document.getElementById('eta-badge').style.display='inline-flex';
+    document.getElementById('driver-status-text').innerHTML=`<span class="status-dot dot-amber"></span>${t('calling')}`;
+    showToast('🚗 기사님 출발!');
+  },3000);
+}
+function cancelCall(){
+  clearTimeout(callTimer);
+  document.getElementById('call-btn').style.display='block';
+  document.getElementById('call-status').classList.remove('visible');
+  showToast(t('cancel'));
+}
+function acceptCall(){document.getElementById('call-alert').style.display='none';showToast('✅ '+t('accept'));}
+function declineCall(){document.getElementById('call-alert').style.display='none';showToast(t('decline'));}
+
+// ══ 네비 ══
+function openNavi(app){
+  const pickup=document.getElementById('pickup-input')?.value||document.getElementById('alert-pickup-text')?.textContent||'';
+  const dest=document.getElementById('dest-input')?.value||document.getElementById('alert-dest-text')?.textContent||'';
+  const ep=encodeURIComponent(dest||'IBK 을지로 본점');
+  const sp=encodeURIComponent(pickup||'현위치');
+  const labels={kakao:'카카오내비',naver:'네이버지도',tmap:'티맵',google:'Google Maps'};
+  if(app==='google'){
+    const web=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${ep}&travelmode=driving`;
+    window.location.href=`comgooglemaps://?saddr=${encodeURIComponent(pickup)}&daddr=${ep}&directionsmode=driving`;
+    setTimeout(()=>window.open(web,'_blank'),1000);
+  } else {
+    const urls={kakao:`kakaomap://route?sp=${sp}&ep=${ep}&by=CAR`,naver:`nmap://route/car?sname=${sp}&dname=${ep}`,tmap:`tmap://route?startname=${sp}&goalname=${ep}`};
+    window.location.href=urls[app];
+  }
+  setTimeout(()=>showToast(labels[app]),300);
+}
+
+// ══════════════════════════════════
+// ⭐ 즐겨찾기
+// ══════════════════════════════════
+let favPlaces=JSON.parse(localStorage.getItem('fav_places')||'null')||[
+  {emoji:'🏦',name:'IBK 을지로 본점',addr:'서울 중구 을지로 79'},
+  {emoji:'🏠',name:'집',addr:'서울 서초구 서초동'},
+  {emoji:'✈️',name:'인천국제공항',addr:'인천 중구 공항로 272'},
+  {emoji:'🏨',name:'더플라자 호텔',addr:'서울 중구 태평로1가 23'},
+];
+function saveFavPlaces(){localStorage.setItem('fav_places',JSON.stringify(favPlaces));}
+function renderFavList(){
+  document.getElementById('fav-list-card').innerHTML=favPlaces.length
+    ?favPlaces.map((p,i)=>`
+      <div class="fav-item">
+        <div class="fav-emoji">${p.emoji}</div>
+        <div class="fav-info" onclick="applyFav(${i})" style="cursor:pointer">
+          <div class="fav-name">${p.name}</div><div class="fav-addr">${p.addr}</div>
+        </div>
+        <button class="fav-del" onclick="delFav(${i})">✕</button>
+      </div>`).join('')
+    :`<div style="padding:28px;text-align:center;color:var(--text3);font-size:var(--fs-base)">${t('saved_places')}</div>`;
+  const dr=document.getElementById('dest-quick-row');
+  if(dr)dr.innerHTML=favPlaces.slice(0,5).map(p=>`<button class="quick-chip" onclick="document.getElementById('dest-input').value='${p.name}'">${p.emoji} ${p.name}</button>`).join('');
+  if(document.getElementById('ps-fav-list'))renderPsFav();
+}
+function addFavPlace(){
+  const emoji=document.getElementById('fav-emoji-input').value.trim()||'📍';
+  const name=document.getElementById('fav-name-input').value.trim();
+  const addr=document.getElementById('fav-addr-input').value.trim();
+  if(!name){showToast(t('place_name'));return;}
+  favPlaces.unshift({emoji,name,addr});saveFavPlaces();
+  ['fav-emoji-input','fav-name-input','fav-addr-input'].forEach(id=>document.getElementById(id).value='');
+  renderFavList();showToast(`'${name}' ⭐`);
+}
+function delFav(i){const n=favPlaces[i].name;favPlaces.splice(i,1);saveFavPlaces();renderFavList();showToast(`'${n}' 삭제됨`);}
+function applyFav(i){document.getElementById('dest-input').value=favPlaces[i].name;switchTab('home');showToast(`🚩 ${favPlaces[i].name}`);}
+
+// ══════════════════════════════════
+// 📈 통계
+// ══════════════════════════════════
+const monthlyData=[
+  {m:'1월',trips:198,dist:2840,ot:8,topDest:'IBK 본점'},
+  {m:'2월',trips:172,dist:2510,ot:6,topDest:'인천공항'},
+  {m:'3월',trips:215,dist:3120,ot:14,topDest:'IBK 본점'},
+  {m:'4월',trips:203,dist:2980,ot:10,topDest:'코엑스'},
+  {m:'5월',trips:228,dist:3340,ot:16,topDest:'IBK 본점'},
+  {m:'6월',trips:48,dist:712,ot:12,topDest:'IBK 본점'},
+];
+function renderCharts(){
+  const maxT=Math.max(...monthlyData.map(d=>d.trips));
+  const maxD=Math.max(...monthlyData.map(d=>d.dist));
+  const cols=['#3478f6','#6c5ce7','#00b874','#ff9500','#ff3b30','#3478f6'];
+  document.getElementById('chart-trips').innerHTML=monthlyData.map((d,i)=>{
+    const pct=Math.round(d.trips/maxT*100);const isThis=i===monthlyData.length-1;
+    return `<div class="chart-month-row"><div class="chart-label">${d.m}</div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${pct}%;background:${isThis?'linear-gradient(90deg,#00b874,#34d399)':`linear-gradient(90deg,${cols[i]},${cols[i]}99)`}">${pct>28?d.trips+t('times'):''}</div></div><div class="chart-val">${isThis?'<span style="color:var(--green)">진행</span>':d.trips+t('times')}</div></div>`;
+  }).join('');
+  document.getElementById('chart-dist').innerHTML=monthlyData.map((d,i)=>{
+    const pct=Math.round(d.dist/maxD*100);const isThis=i===monthlyData.length-1;
+    return `<div class="chart-month-row"><div class="chart-label">${d.m}</div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${pct}%;background:${isThis?'linear-gradient(90deg,#00b874,#34d399)':'linear-gradient(90deg,#6c5ce7,#a29bfe)'}">${pct>28?d.dist.toLocaleString()+'km':''}</div></div><div class="chart-val" style="font-size:12px">${d.dist.toLocaleString()}</div></div>`;
+  }).join('');
+  document.getElementById('month-tab-list').innerHTML=monthlyData.map((d,i)=>`<button class="month-tab${i===monthlyData.length-1?' active':''}" onclick="showMonthDetail(${i})">${d.m}</button>`).join('');
+  showMonthDetail(monthlyData.length-1);
+}
+function showMonthDetail(idx){
+  document.querySelectorAll('.month-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));
+  const d=monthlyData[idx];const isThis=idx===monthlyData.length-1;
+  document.getElementById('month-detail-card').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px">
+      ${[['운행 횟수',d.trips+t('times'),'#6c5ce7'],['총 거리',d.dist.toLocaleString()+'km','#6c5ce7'],['초과근무',d.ot+'시간','var(--amber)'],['최다 목적지',d.topDest,'var(--green)']].map(([l,v,c])=>`<div style="background:var(--surface2);border-radius:12px;padding:14px"><div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:5px">${l}</div><div style="font-size:var(--fs-lg);font-weight:900;color:${c}">${v}</div></div>`).join('')}
+    </div>
+    <div style="margin:0 14px 16px;background:var(--surface2);border-radius:12px;padding:14px">
+      <div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:6px">일 평균 운행</div>
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <span style="font-size:var(--fs-xl);font-weight:900;color:var(--text)">${(d.trips/(isThis?15:30)).toFixed(1)}</span>
+        <span style="font-size:var(--fs-sm);color:var(--text2)">${t('times')} / 일</span>
+        <span style="margin-left:auto;font-size:var(--fs-sm);font-weight:700;color:var(--text2)">${(d.dist/d.trips).toFixed(1)} km/${t('times')}</span>
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════
+// 💬 카카오 알림
+// ══════════════════════════════════
+let kakaoLinked=false;
+let kakaoConfig={apiKey:'',templateCode:'TM_DRIVER_CALL',phone:'010-1234-5678'};
+let notifLog=[
+  {icon:'🚗',msg:'기사 호출\n픽업: IBK 을지로 본점\n목적지: 더플라자 호텔',time:'오늘 11:48',sent:true},
+  {icon:'✅',msg:'기사님이 호출을 수락했습니다\n예상 도착: 5분',time:'오늘 11:49',sent:true},
+  {icon:'🟢',msg:'출근 기록\n김현수 기사님 09:05 출근',time:'오늘 09:05',sent:true},
+];
+function renderNotifLog(){
+  document.getElementById('notif-log-card').innerHTML=notifLog.length
+    ?notifLog.map(n=>`<div class="notif-row"><div class="notif-icon">${n.icon}</div><div class="notif-body"><div class="notif-msg">${n.msg.replace(/\n/g,'<br>')}</div><div class="notif-time">${n.time}</div></div><div class="notif-badge ${n.sent?'badge-sent':'badge-pending'}">${n.sent?'발송':'대기'}</div></div>`).join('')
+    :`<div style="padding:24px;text-align:center;color:var(--text3);">${t('recent_notif')}</div>`;
+}
+function kakaoLink(){
+  if(kakaoLinked){
+    kakaoLinked=false;
+    document.getElementById('kakao-conn-text').textContent=t('kakao_wait');
+    document.getElementById('kakao-conn-sub').textContent=t('kakao_wait_sub');
+    document.getElementById('kakao-link-btn').textContent=t('connect');
+    document.getElementById('kakao-link-btn').style.background='var(--accent)';
+    showToast('카카오톡 연동 해제');return;
+  }
+  showToast('카카오 연결 중…');
+  setTimeout(()=>{
+    kakaoLinked=true;
+    document.getElementById('kakao-conn-text').innerHTML='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;vertical-align:middle"></span>연동됨';
+    document.getElementById('kakao-conn-sub').textContent=`${kakaoConfig.phone} · 알림톡 활성`;
+    document.getElementById('kakao-link-btn').textContent='해제';
+    document.getElementById('kakao-link-btn').style.background='var(--surface2)';
+    showToast('💬 카카오톡 연동 완료');
+  },1200);
+}
+function saveKakaoConfig(){
+  var key=(document.getElementById('kakao-api-key').value||'').trim();
+  var tmpl=document.getElementById('kakao-template').value.trim();
+  if(key){
+    localStorage.setItem('kakao_api_key',key);
+    window.KAKAO_KEY=key;
+    showToast('카카오맵 로드 중 🗺️');
+    loadKakaoSDK(key).then(function(){
+      window.KAKAO_READY=true;
+      kakaoMapObj=null;
+      showToast('✅ 카카오맵 연동 완료! 장소 검색을 이용해보세요');
+    }).catch(function(){
+      showToast('❌ API 키를 확인하세요 (플랫폼 도메인 등록 필요)');
+    });
+  } else {
+    showToast('API 설정 저장됨 ⚙️');
+  }
+}
+
+// ══════════════════════════════════
+// 🗺️ 장소 검색 (카카오맵 스타일)
+// ══════════════════════════════════
+var psTarget='pickup';
+var psRecent=JSON.parse(localStorage.getItem('ps_recent')||'[]');
+var psSelectedPlace=null;
+var kakaoMapObj=null;
+var kakaoMarker=null;
+
+const placeDB=[
+  {icon:'🏦',cat:'금융',name:'IBK 기업은행 을지로 본점',addr:'서울 중구 을지로 79',dist:'0.2km'},
+  {icon:'🏦',cat:'금융',name:'IBK 기업은행 서울역지점',addr:'서울 중구 봉래동 1가 7',dist:'1.8km'},
+  {icon:'🏨',cat:'숙박',name:'더플라자 호텔',addr:'서울 중구 태평로1가 23',dist:'0.8km'},
+  {icon:'🏨',cat:'숙박',name:'롯데호텔 서울',addr:'서울 중구 을지로 30',dist:'0.5km'},
+  {icon:'✈️',cat:'교통',name:'인천국제공항 제1터미널',addr:'인천 중구 공항로 272',dist:'48.2km'},
+  {icon:'✈️',cat:'교통',name:'인천국제공항 제2터미널',addr:'인천 중구 제2터미널대로 443',dist:'49.1km'},
+  {icon:'🚉',cat:'교통',name:'서울역',addr:'서울 용산구 한강대로 405',dist:'2.4km'},
+  {icon:'🏢',cat:'업무',name:'코엑스',addr:'서울 강남구 봉은사로 524',dist:'8.3km'},
+  {icon:'🏠',cat:'주거',name:'서초동 자택',addr:'서울 서초구 서초대로 99',dist:'6.1km'},
+  {icon:'🍽️',cat:'식음료',name:'하남갈비',addr:'서울 중구 명동길 74',dist:'0.4km'},
+  {icon:'☕',cat:'식음료',name:'투썸플레이스 명동 L7점',addr:'서울 중구 명동8길 31',dist:'0.5km'},
+  {icon:'🏛️',cat:'공공',name:'서울시청',addr:'서울 중구 세종대로 110',dist:'1.2km'},
+  {icon:'🏥',cat:'의료',name:'서울아산병원',addr:'서울 송파구 올림픽로43길 88',dist:'12.7km'},
+  {icon:'⛽',cat:'주유',name:'GS칼텍스 서초IC점',addr:'서울 서초구 서초대로 99',dist:'5.8km'},
+  {icon:'⛽',cat:'주유',name:'현대오일뱅크 반포점',addr:'서울 서초구 반포대로 99',dist:'6.4km'},
+];
+
+function openAddrModal(target){
+  psTarget=target;
+  const screen=document.getElementById('place-search-screen');
+  screen.style.display='flex';
+  psSwitch(target,false);
+  document.getElementById('ps-input').value='';
+  document.getElementById('ps-clear').style.display='none';
+  document.getElementById('ps-map-container').style.display='none';
+  showPsDefault();renderPsRecent();renderPsFav();
+  setTimeout(()=>document.getElementById('ps-input').focus(),150);
+}
+function closePlaceSearch(){document.getElementById('place-search-screen').style.display='none';}
+function psSwitch(target,doFocus=true){
+  psTarget=target;
+  const badge=document.getElementById('ps-badge');
+  const tp=document.getElementById('ps-tab-pickup');
+  const td=document.getElementById('ps-tab-dest');
+  const inp=document.getElementById('ps-input');
+  if(target==='pickup'){
+    badge.textContent='📍 '+t('pickup_loc');badge.style.cssText='font-size:13px;font-weight:700;padding:6px 14px;border-radius:20px;background:#eef3ff;color:var(--accent)';
+    tp.style.cssText='flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid var(--accent);color:var(--accent);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit';
+    td.style.cssText='flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid transparent;color:var(--text3);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit';
+    inp.style.borderColor='var(--accent)';
+  } else {
+    badge.textContent='🚩 '+t('dest_loc');badge.style.cssText='font-size:13px;font-weight:700;padding:6px 14px;border-radius:20px;background:rgba(0,184,116,.1);color:var(--green)';
+    tp.style.cssText='flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid transparent;color:var(--text3);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit';
+    td.style.cssText='flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid var(--green);color:var(--green);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit';
+    inp.style.borderColor='var(--green)';
+  }
+  if(doFocus)document.getElementById('ps-input').focus();
+}
+function showPsDefault(){document.getElementById('ps-default').style.display='block';document.getElementById('ps-autocomplete').style.display='none';document.getElementById('ps-results').style.display='none';}
+function showPsAuto(){document.getElementById('ps-default').style.display='none';document.getElementById('ps-autocomplete').style.display='block';document.getElementById('ps-results').style.display='none';}
+function showPsResults(){document.getElementById('ps-default').style.display='none';document.getElementById('ps-autocomplete').style.display='none';document.getElementById('ps-results').style.display='block';}
+
+let psTimer=null;
+function psOnInput(){
+  const q=document.getElementById('ps-input').value;
+  document.getElementById('ps-clear').style.display=q?'block':'none';
+  clearTimeout(psTimer);
+  if(!q){showPsDefault();return;}
+  psTimer=setTimeout(()=>psAutoComplete(q),200);
+}
+function psClear(){document.getElementById('ps-input').value='';document.getElementById('ps-clear').style.display='none';showPsDefault();document.getElementById('ps-input').focus();}
+
+function psAutoComplete(q){
+  const lower=q.toLowerCase();
+  let matches=placeDB.filter(p=>p.name.toLowerCase().includes(lower)||p.addr.toLowerCase().includes(lower)||p.cat.toLowerCase().includes(lower)).slice(0,6);
+  window._psAutoList=matches;
+  const ac=document.getElementById('ps-autocomplete');
+  ac.innerHTML=(matches.length?matches.map((p,i)=>`
+    <div onclick="psSelectPlace(${i},'auto')" style="display:flex;align-items:center;gap:13px;padding:16px 20px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--surface);transition:background .12s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'">
+      <div style="width:44px;height:44px;border-radius:12px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${p.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:17px;font-weight:700;color:var(--text)">${hl(p.name,q)}</div>
+        <div style="font-size:14px;color:var(--text2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.addr}</div>
+      </div>
+      <div style="font-size:13px;color:var(--text3);flex-shrink:0">${p.dist}</div>
+    </div>`).join('')
+    :`<div style="padding:20px;text-align:center;color:var(--text3);font-size:15px">'${q}' 검색 결과 없음</div>`)
+    +`<div onclick="psSearch()" style="display:flex;align-items:center;gap:12px;padding:16px 20px;cursor:pointer;color:var(--accent);font-size:15px;font-weight:700;border-top:1px solid var(--border);background:var(--surface)">🔍 &nbsp;"${q}" 전체 검색</div>`;
+  showPsAuto();
+}
+
+function hl(text,q){
+  if(!q)return text;
+  const idx=text.toLowerCase().indexOf(q.toLowerCase());
+  if(idx<0)return text;
+  return text.slice(0,idx)+`<span style="color:var(--accent);font-weight:900">${text.slice(idx,idx+q.length)}</span>`+text.slice(idx+q.length);
+}
+
+function psSearch(){
+  const q=document.getElementById('ps-input').value.trim();
+  if(!q)return;
+  if(window.KAKAO_READY&&window.kakao?.maps?.services){
+    const ps=new window.kakao.maps.services.Places();
+    ps.keywordSearch(q,(data,status)=>{
+      if(status===window.kakao.maps.services.Status.OK){
+        window._psResultList=data.map(p=>({icon:getCatIcon(p.category_group_code),cat:p.category_group_name||'장소',name:p.place_name,addr:p.road_address_name||p.address_name,dist:p.distance?(p.distance>=1000?(p.distance/1000).toFixed(1)+'km':p.distance+'m'):'',lat:parseFloat(p.y),lng:parseFloat(p.x),_k:p}));
+        renderResults(q);
+      } else psFallback(q);
+    },{size:15});
+  } else psFallback(q);
+}
+function psFallback(q){
+  const lower=q.toLowerCase();
+  window._psResultList=placeDB.filter(p=>p.name.toLowerCase().includes(lower)||p.addr.toLowerCase().includes(lower)||p.cat.toLowerCase().includes(lower));
+  renderResults(q);
+}
+function renderResults(q){
+  const list=window._psResultList||[];
+  document.getElementById('ps-result-count').textContent=`"${q}" ${list.length}건${window.KAKAO_READY?'':' (내장 DB)'}`;
+  document.getElementById('ps-result-list').innerHTML=list.length
+    ?list.map((p,i)=>`
+      <div onclick="psSelectPlace(${i},'result')" style="display:flex;align-items:center;gap:13px;padding:18px 20px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--surface);transition:background .12s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'">
+        <div style="width:48px;height:48px;border-radius:14px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${p.icon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:17px;font-weight:700;color:var(--text)">${hl(p.name,q)}</div>
+          <div style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600">${p.cat}</div>
+          <div style="font-size:14px;color:var(--text2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.addr}</div>
+        </div>
+        <div style="font-size:13px;color:var(--text3);flex-shrink:0">${p.dist||''}</div>
+      </div>`).join('')
+    :`<div style="padding:48px 20px;text-align:center;background:var(--surface)"><div style="font-size:40px;margin-bottom:12px">🔍</div><div style="font-size:17px;font-weight:700;color:var(--text2)">'${q}' 결과 없음</div></div>`;
+  showPsResults();
+}
+function getCatIcon(code){const m={MT1:'🛒',CS2:'🏪',BK9:'🏦',CT1:'🎭',PO3:'🏛️',AT4:'🗺️',AD5:'🏨',FD6:'🍽️',CE7:'☕',HP8:'🏥',OL7:'⛽',SW8:'🚇',PK6:'🅿️'};return m[code]||'📍';}
+
+function psSelectPlace(idx,from){
+  const list=from==='auto'?window._psAutoList:window._psResultList;
+  const p=list[idx];if(!p)return;
+  psSelectedPlace=p;
+  document.getElementById('ps-map-name').textContent=p.name;
+  document.getElementById('ps-map-addr').textContent=p.addr;
+  document.getElementById('ps-map-icon').textContent=p.icon||'📍';
+  document.getElementById('ps-map-container').style.display='block';
+  if(window.KAKAO_READY&&(p.lat||p._k)){
+    const lat=p.lat||parseFloat(p._k?.y);const lng=p.lng||parseFloat(p._k?.x);
+    if(lat&&lng)showKakaoMap(lat,lng,p.name);
+  } else showFakemap(p.name,p.addr);
+  document.getElementById('ps-content').scrollTop=0;
+}
+function showKakaoMap(lat,lng,name){
+  const container=document.getElementById('kakao-map');
+  if(!container||!window.KAKAO_READY) return;
+  const coords=new window.kakao.maps.LatLng(lat,lng);
+  if(!kakaoMapObj){
+    kakaoMapObj=new window.kakao.maps.Map(container,{center:coords,level:3});
+    kakaoMarker=new window.kakao.maps.Marker({map:kakaoMapObj,position:coords});
+  } else {kakaoMapObj.setCenter(coords);kakaoMarker.setPosition(coords);}
+  const iw=new window.kakao.maps.InfoWindow({content:`<div style="padding:7px 12px;font-size:14px;font-weight:700;white-space:nowrap">${name}</div>`});
+  iw.open(kakaoMapObj,kakaoMarker);
+}
+function showFakemap(name,addr){
+  document.getElementById('kakao-map').innerHTML=`
+    <div style="width:100%;height:220px;background:linear-gradient(135deg,#dde6ff,#c8d8ff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">
+      <div style="font-size:40px">🗺️</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text)">${name}</div>
+      <div style="font-size:13px;color:var(--text2)">${addr}</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px">API 키 입력 시 실제 지도 표시</div>
+    </div>`;
+}
+function psConfirmSelected(){if(!psSelectedPlace)return;psConfirmPlace(psSelectedPlace.name,psSelectedPlace.addr);}
+function psConfirmPlace(name,addr){
+  psRecent=psRecent.filter(r=>r.name!==name);
+  psRecent.unshift({name,addr,time:Date.now()});
+  if(psRecent.length>8)psRecent.pop();
+  localStorage.setItem('ps_recent',JSON.stringify(psRecent));
+  if(psTarget==='pickup'){
+    document.getElementById('pickup-input').value=name;
+    document.getElementById('map-label-driver').textContent='픽업: '+name;
+    document.getElementById('alert-pickup-text').textContent=name;
+  } else {
+    document.getElementById('dest-input').value=name;
+    document.getElementById('alert-dest-text').textContent=name;
+  }
+  closePlaceSearch();showToast(`✓ ${psTarget==='pickup'?t('pickup_loc'):t('dest_loc')}: ${name}`);
+}
+function psUseGPS(){
+  if(!navigator.geolocation){showToast('위치 권한 필요');return;}
+  showToast('📡 위치 측위 중…');
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const{latitude:lat,longitude:lng}=pos.coords;
+    window._pickupCoords={lat,lng};
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ko`)
+      .then(r=>r.json()).then(data=>{
+        const a=data.address;
+        const label=[a.road||a.suburb,a.city_district||a.city].filter(Boolean).join(' ')||`${lat.toFixed(4)},${lng.toFixed(4)}`;
+        psConfirmPlace(label,`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+      }).catch(()=>psConfirmPlace(`현재 위치 (${lat.toFixed(4)},${lng.toFixed(4)})`, ''));
+  },()=>showToast('위치 접근 거부'));
+}
+function renderPsRecent(){
+  const el=document.getElementById('ps-recent-list');
+  el.innerHTML=psRecent.length
+    ?psRecent.slice(0,5).map((r,i)=>`
+      <div onclick="psConfirmPlace('${r.name.replace(/'/g,"\\'")}','${(r.addr||'').replace(/'/g,"\\'")}') " style="display:flex;align-items:center;gap:13px;padding:14px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+        <div style="width:40px;height:40px;border-radius:11px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🕐</div>
+        <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name}</div><div style="font-size:13px;color:var(--text3);margin-top:2px">${r.addr||''}</div></div>
+        <button onclick="event.stopPropagation();psDelRecent(${i})" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:4px;flex-shrink:0">✕</button>
+      </div>`).join('')
+    :`<div style="padding:12px 20px;font-size:14px;color:var(--text3)">${t('recent_search')} 없음</div>`;
+}
+function psDelRecent(i){psRecent.splice(i,1);localStorage.setItem('ps_recent',JSON.stringify(psRecent));renderPsRecent();}
+function psClearRecent(){psRecent=[];localStorage.setItem('ps_recent',JSON.stringify(psRecent));renderPsRecent();}
+function renderPsFav(){
+  const el=document.getElementById('ps-fav-list');if(!el)return;
+  el.innerHTML=favPlaces.length
+    ?favPlaces.slice(0,5).map(p=>`
+      <div onclick="psConfirmPlace('${p.name.replace(/'/g,"\\'")}','${(p.addr||'').replace(/'/g,"\\'")}') " style="display:flex;align-items:center;gap:13px;padding:14px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+        <div style="width:40px;height:40px;border-radius:11px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${p.emoji}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div><div style="font-size:13px;color:var(--text3);margin-top:2px">${p.addr}</div></div>
+        <span style="font-size:18px">⭐</span>
+      </div>`).join('')
+    :`<div style="padding:12px 20px;font-size:14px;color:var(--text3)">${t('saved_places')} 없음</div>`;
+}
+
+// ══ 광고 슬라이더 ══
+var adData=[
+  {emoji:'🍱',title:'하남갈비 런치세트',sub:'기사님 20% 할인',color:'#e74c3c'},
+  {emoji:'☕',title:'투썸플레이스 명동 L7',sub:'아메리카노 쿠폰',color:'#2980b9'},
+  {emoji:'⛽',title:'GS칼텍스 서초IC',sub:'리터당 50원 할인',color:'#27ae60'}
+];
+var adIdx=0;
+function renderAdSlides(){
+  adData.forEach(function(d,i){
+    var el=document.getElementById('ad-slide-'+i);
+    if(!el) return;
+    el.style.background='linear-gradient(135deg,'+d.color+'18,'+d.color+'08)';
+    el.innerHTML='<div class="ad-img" style="background:'+d.color+'22;font-size:30px;display:flex;align-items:center;justify-content:center">'+d.emoji+'</div>'
+      +'<div class="ad-info"><div class="ad-title">'+d.title+'</div><div class="ad-sub">'+d.sub+'</div></div>'
+      +'<button class="ad-cta" style="background:'+d.color+'">보기</button>';
+  });
+}
+function showAdSlide(idx){
+  document.querySelectorAll('#ad-banner-home .ad-slide').forEach(function(s,i){s.classList.toggle('active',i===idx);});
+  document.querySelectorAll('.ad-dot').forEach(function(d,i){d.classList.toggle('active',i===idx);});
+  adIdx=idx;
+}
+function adClick(d){showToast((d&&d.title?d.title:'광고')+' — 준비 중');}
+
+// ══════════════════════════════════
+// 온보딩 로직
+// ══════════════════════════════════
+var _obRole = '';
+var _obOtp = '123456';
+var _obTimerInt = null;
+
+function obGo(n) {
+  document.querySelectorAll('.ob-pg').forEach(function(p) { p.classList.remove('on'); });
+  var pg = document.getElementById('ob-p' + n);
+  if (!pg) return;
+  pg.classList.add('on');
+  if (n === 4) {
+    document.getElementById('ob-boss-sec').style.display = _obRole === 'boss' ? 'block' : 'none';
+    document.getElementById('ob-driver-sec').style.display = _obRole === 'driver' ? 'block' : 'none';
+    if (_obRole === 'boss') {
+      var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      var code = Array.from({length:6}, function() { return chars[Math.floor(Math.random()*chars.length)]; }).join('');
+      document.getElementById('ob-inv-code').textContent = code;
+      localStorage.setItem('my_invite_code', code);
+    }
+    var pending = localStorage.getItem('pending_invite');
+    if (pending && document.getElementById('ob-join-code')) {
+      document.getElementById('ob-join-code').value = pending;
+    }
+  }
+}
+
+function obSkip() {
+  obLaunch(localStorage.getItem('user_role') || 'boss');
+}
+
+function obSelectRole(role) {
+  _obRole = role;
+  document.querySelectorAll('.ob-role-card').forEach(function(c) { c.classList.remove('sel'); });
+  document.getElementById('ob-rc-' + role).classList.add('sel');
+  var btn = document.getElementById('ob-role-next');
+  btn.style.opacity = '1';
+  btn.style.pointerEvents = 'all';
+}
+
+function obFmtPhone(el) {
+  var v = el.value.replace(/\D/g,'').slice(0,11);
+  if (v.length > 7) v = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7);
+  else if (v.length > 3) v = v.slice(0,3)+'-'+v.slice(3);
+  el.value = v;
+}
+
+function obSendOTP() {
+  var ph = (document.getElementById('ob-phone').value || '').replace(/\D/g,'');
+  if (ph.length < 10) { showToast('올바른 전화번호를 입력해주세요'); return; }
+  localStorage.setItem('user_phone', ph);
+  _obOtp = '123456';
+  var desc = document.getElementById('ob-otp-desc');
+  if (desc) desc.textContent = ph.slice(0,3)+'-'+ph.slice(3,7)+'-'+ph.slice(7)+'로 보낸 6자리를 입력하세요';
+  obGo(4);
+  obStartTimer();
+  showToast('📱 인증번호 발송 (데모: 123456)');
+  setTimeout(function() { var o = document.getElementById('ob-o0'); if (o) o.focus(); }, 350);
+}
+
+function obStartTimer() {
+  var sec = 180;
+  clearInterval(_obTimerInt);
+  _obTimerInt = setInterval(function() {
+    sec--;
+    var el = document.getElementById('ob-timer');
+    if (el) el.textContent = Math.floor(sec/60) + ':' + (sec%60 < 10 ? '0' : '') + sec%60;
+    if (sec <= 0) {
+      clearInterval(_obTimerInt);
+      if (el) { el.textContent = '만료됨'; el.style.color = '#ff3b30'; }
+    }
+  }, 1000);
+}
+
+function obOtpIn(el, i) {
+  el.value = el.value.replace(/\D/g,'').slice(-1);
+  el.classList.toggle('ok', !!el.value);
+  if (el.value && i < 5) {
+    var nx = document.getElementById('ob-o' + (i+1));
+    if (nx) nx.focus();
+  }
+  var code = [0,1,2,3,4,5].map(function(n) {
+    return (document.getElementById('ob-o'+n) || {value:''}).value;
+  }).join('');
+  if (code.length === 6) setTimeout(obVerify, 200);
+}
+
+function obOtpKey(e, i) {
+  if (e.key === 'Backspace' && !e.target.value && i > 0) {
+    var pv = document.getElementById('ob-o' + (i-1));
+    if (pv) pv.focus();
+  }
+}
+
+function obVerify() {
+  var code = [0,1,2,3,4,5].map(function(n) {
+    return (document.getElementById('ob-o'+n) || {value:''}).value;
+  }).join('');
+  if (code.length < 6) { showToast('6자리를 모두 입력해주세요'); return; }
+  if (code !== _obOtp && code !== '000000') { showToast('❌ 인증번호가 맞지 않습니다'); return; }
+  clearInterval(_obTimerInt);
+  if (_obRole === 'driver') {
+    var jc = (document.getElementById('ob-join-code') || {value:''}).value.trim();
+    if (!jc) { showToast('사장님 초대 코드를 입력해주세요'); return; }
+  }
+  localStorage.setItem('user_role', _obRole);
+  localStorage.setItem('is_logged_in', '1');
+  localStorage.removeItem('pending_invite');
+  showToast('✅ 환영합니다! 🎉');
+  setTimeout(function() { obLaunch(_obRole); }, 750);
+}
+
+function obResend() {
+  _obOtp = '123456';
+  obStartTimer();
+  var el = document.getElementById('ob-timer');
+  if (el) el.style.color = '#3478f6';
+  showToast('📱 재전송 (데모: 123456)');
+}
+
+function obCopyCode() {
+  var code = (document.getElementById('ob-inv-code') || {textContent:''}).textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code).then(function() { showToast('코드 복사됨: ' + code); }).catch(function() { showToast('코드: ' + code); });
+  } else { showToast('코드: ' + code); }
+}
+
+function obShareLink() {
+  var code = (document.getElementById('ob-inv-code') || {textContent:''}).textContent;
+  var url = location.href.split('?')[0] + '?invite=' + code;
+  var text = 'BossCall 앱 초대\n코드: ' + code + '\n링크: ' + url;
+  if (navigator.share) navigator.share({title:'BossCall',text:text,url:url}).catch(function(){});
+  else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function() { showToast('링크 복사됨!'); });
+  else showToast(url);
+}
+
+function obLaunch(role) {
+  var ob = document.getElementById('ob-screen');
+  if (ob) ob.style.display = 'none';
+  var app = document.getElementById('app-body');
+  if (app) app.style.display = 'block';
+  initApp(role);
+}
+
+// ══ 앱 초기화 - DOMContentLoaded 후 한번만 실행 ══
+function initApp(role) {
+  // 역할 설정
+  role = role || localStorage.getItem('user_role') || 'boss';
+  var badge = document.getElementById('user-badge');
+  if (badge) badge.textContent = role === 'boss' ? '사장님' : '기사님';
+  if (role === 'driver') {
+    var btns = document.querySelectorAll('.role-btn');
+    if (btns[0]) btns[0].classList.remove('active');
+    if (btns[1]) btns[1].classList.add('active');
+    var sb = document.getElementById('screen-boss');
+    var sd = document.getElementById('screen-driver');
+    if (sb) sb.classList.remove('active');
+    if (sd) sd.classList.add('active');
+  }
+  // 시계 시작
+  updateClock();
+  setInterval(updateClock,10000);
+
+  // 근무 타이머
+  var workSec=7*3600+23*60+14;
+  setInterval(function(){
+    workSec++;
+    var h=Math.floor(workSec/3600),m=Math.floor((workSec%3600)/60),s=workSec%60;
+    var el=document.getElementById('work-timer');
+    if(el) el.textContent=(h<10?'0':'')+h+':'+(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  },1000);
+
+  // 주유 자동계산
+  document.addEventListener('input',function(e){
+    if(e.target.id==='fuel-liter'||e.target.id==='fuel-unit'){
+      var l=parseFloat(document.getElementById('fuel-liter').value)||0;
+      var u=parseFloat(document.getElementById('fuel-unit').value)||0;
+      if(l&&u) document.getElementById('fuel-total').value=Math.round(l*u);
+    }
+  });
+
+  // 광고 슬라이더 시작
+  renderAdSlides();
+  setInterval(function(){showAdSlide((adIdx+1)%3);},3500);
+
+  // 급여 초기화
+  loadSalaryForm();
+  updateSalaryPreview();
+  updateCalcModal();
+
+  // 렌더링
+  renderFuelList();
+  renderFuelSummary();
+  renderTripList();
+  renderLogList();
+  renderFavList();
+  renderCharts();
+  renderNotifLog();
+
+  // 언어 버튼 초기 상태
+  var lang=currentLang;
+  document.querySelectorAll('.lang-btn').forEach(function(b){
+    var isActive=(lang==='ko'&&b.textContent.includes('한국어'))
+      ||(lang==='en'&&b.textContent.includes('English'))
+      ||(lang==='id'&&b.textContent.includes('Indonesia'));
+    if(isActive) b.classList.add('active');
+  });
+
+  // 주유 날짜 기본값
+  var fd=document.getElementById('fuel-date');
+  if(fd) fd.value=new Date().toISOString().split('T')[0];
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // 초대 링크 파라미터 처리
+  var params = new URLSearchParams(location.search);
+  var inv = params.get('invite');
+  if (inv) {
+    localStorage.setItem('pending_invite', inv);
+    _obRole = 'driver';
+    showToast('초대 링크로 접속했습니다 🔗');
+  }
+  // 이미 로그인된 경우 바로 앱 실행
+  if (localStorage.getItem('is_logged_in') === '1') {
+    obLaunch(localStorage.getItem('user_role') || 'boss');
+  }
+  // 아니면 온보딩 화면 표시 (이미 기본 표시 상태)
+});
+</script>
+</body>
+</html>
