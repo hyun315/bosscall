@@ -1383,20 +1383,58 @@ function declineCall(){document.getElementById('call-alert').style.display='none
 
 // ══ 네비 ══
 function openNavi(app){
-  const pickup=document.getElementById('pickup-input')?.value||document.getElementById('alert-pickup-text')?.textContent||'';
-  const dest=document.getElementById('dest-input')?.value||document.getElementById('alert-dest-text')?.textContent||'';
-  const ep=encodeURIComponent(dest||'IBK 을지로 본점');
-  const sp=encodeURIComponent(pickup||'현위치');
-  const labels={kakao:'카카오내비',naver:'네이버지도',tmap:'티맵',google:'Google Maps'};
-  if(app==='google'){
-    const web=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${ep}&travelmode=driving`;
-    window.location.href=`comgooglemaps://?saddr=${encodeURIComponent(pickup)}&daddr=${ep}&directionsmode=driving`;
-    setTimeout(()=>window.open(web,'_blank'),1000);
-  } else {
-    const urls={kakao:`kakaomap://route?sp=${sp}&ep=${ep}&by=CAR`,naver:`nmap://route/car?sname=${sp}&dname=${ep}`,tmap:`tmap://route?startname=${sp}&goalname=${ep}`};
-    window.location.href=urls[app];
+  var pickup = (document.getElementById('pickup-input')&&document.getElementById('pickup-input').value)
+    || (document.getElementById('alert-pickup-text')&&document.getElementById('alert-pickup-text').textContent) || '';
+  var dest = (document.getElementById('dest-input')&&document.getElementById('dest-input').value)
+    || (document.getElementById('alert-dest-text')&&document.getElementById('alert-dest-text').textContent) || '';
+
+  var ep = encodeURIComponent(dest||'목적지');
+  var sp = encodeURIComponent(pickup||'현재위치');
+  var labels = {kakao:'카카오내비',naver:'네이버지도',tmap:'티맵',google:'Google Maps'};
+
+  var url = '';
+  if(app==='kakao'){
+    // 카카오내비 앱 URL 스킴
+    // 좌표가 있으면 좌표로, 없으면 이름으로
+    var destCoords = window._mapSelectedAddr && window._mapSelectedAddr.lat ? window._mapSelectedAddr : null;
+    if(destCoords && destCoords.lat){
+      url = 'kakaonavi://navigate?ep=' + destCoords.lng + ',' + destCoords.lat
+        + '&epname=' + ep
+        + '&by=CAR&via=CAR';
+    } else {
+      url = 'kakaonavi://navigate?epname=' + ep + '&by=CAR';
+    }
+    // 앱 없으면 웹으로 폴백
+    window.location.href = url;
+    setTimeout(function(){
+      window.open('https://map.kakao.com/?target=car&to=' + ep, '_blank');
+    }, 1500);
+    setTimeout(function(){ showToast('카카오내비'); }, 300);
+    return;
+
+  } else if(app==='naver'){
+    url = 'nmap://route/car?dname=' + ep + '&appname=com.bosscall';
+    window.location.href = url;
+    setTimeout(function(){
+      window.open('https://map.naver.com/v5/directions/-/-/' + ep + '/walk', '_blank');
+    }, 1500);
+
+  } else if(app==='tmap'){
+    url = 'tmap://route?goalname=' + ep;
+    window.location.href = url;
+    setTimeout(function(){
+      window.open('https://tmap.co.kr/', '_blank');
+    }, 1500);
+
+  } else if(app==='google'){
+    url = 'comgooglemaps://?daddr=' + ep + '&directionsmode=driving';
+    window.location.href = url;
+    setTimeout(function(){
+      window.open('https://www.google.com/maps/dir/?api=1&destination=' + ep + '&travelmode=driving', '_blank');
+    }, 1500);
   }
-  setTimeout(()=>showToast(labels[app]),300);
+
+  setTimeout(function(){ showToast(labels[app]); }, 300);
 }
 
 // ══════════════════════════════════
