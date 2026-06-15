@@ -300,6 +300,8 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
 
 /* 검색 전체화면 */
 #place-search-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:9000;flex-direction:column;font-family:'Noto Sans KR',-apple-system,sans-serif}
+#ps-map-container.on{display:flex!important}
+#kakao-map{width:100%;flex:1;min-height:0}
 /* ══ 온보딩 CSS ══ */
 .ob-pg{width:100%;flex:1;display:none;flex-direction:column;align-items:center;padding:56px 32px 36px}
 .ob-pg.on{display:flex;animation:obUp .3s ease}
@@ -841,16 +843,38 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
     </div>
   </div>
 
-  <!-- 지도 영역 -->
-  <div id="ps-map-container" style="display:none;flex-shrink:0;position:relative">
-    <div id="kakao-map" style="width:100%;height:220px"></div>
-    <div id="ps-map-info" style="position:absolute;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)">
-      <div id="ps-map-icon" style="font-size:26px">📍</div>
-      <div style="flex:1;min-width:0">
-        <div id="ps-map-name" style="font-size:17px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
-        <div id="ps-map-addr" style="font-size:13px;color:var(--text2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+
+  <!-- 카카오톡 스타일 지도 선택 화면 -->
+  <div id="ps-map-container" style="display:none;flex-direction:column;flex:1;position:relative">
+    <!-- 전체화면 지도 -->
+    <div id="kakao-map" style="width:100%;flex:1;min-height:400px"></div>
+
+    <!-- 뒤로가기 버튼 -->
+    <button onclick="psMapBack()" style="position:absolute;top:14px;left:14px;width:40px;height:40px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 10px rgba(0,0,0,.15);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:100">←</button>
+
+    <!-- 중앙 고정 핀 -->
+    <div id="map-center-pin" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-100%);pointer-events:none;z-index:100;display:flex;flex-direction:column;align-items:center">
+      <div style="width:36px;height:36px;border-radius:50% 50% 50% 0;background:#3478f6;transform:rotate(-45deg);box-shadow:0 4px 12px rgba(52,120,246,.4);display:flex;align-items:center;justify-content:center">
+        <div style="width:12px;height:12px;border-radius:50%;background:#fff;transform:rotate(45deg)"></div>
       </div>
-      <button onclick="psConfirmSelected()" style="background:var(--accent);color:#fff;border:none;border-radius:12px;padding:10px 18px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0" data-i18n="select">선택</button>
+      <div style="width:8px;height:8px;border-radius:50%;background:rgba(52,120,246,.3);margin-top:2px"></div>
+    </div>
+
+    <!-- 현재위치 버튼 -->
+    <button onclick="psMapGPS()" style="position:absolute;right:14px;bottom:130px;width:44px;height:44px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 12px rgba(0,0,0,.15);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:100">📡</button>
+
+    <!-- 하단 주소 바 -->
+    <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.12);z-index:100;padding:16px 16px 20px">
+      <div style="width:40px;height:4px;background:#e2e6ef;border-radius:2px;margin:0 auto 14px"></div>
+      <div style="font-size:12px;color:#6b7394;font-weight:700;margin-bottom:6px;letter-spacing:.05em;text-transform:uppercase" id="map-addr-label">선택된 위치</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <span style="font-size:24px">📍</span>
+        <div style="flex:1;min-width:0">
+          <div id="map-sel-name" style="font-size:16px;font-weight:700;color:#1a1d2e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">지도를 움직여 위치를 선택하세요</div>
+          <div id="map-sel-addr" style="font-size:13px;color:#6b7394;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+        </div>
+      </div>
+      <button onclick="psConfirmMap()" style="width:100%;padding:16px;background:#3478f6;color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(52,120,246,.3)">이 위치로 설정</button>
     </div>
   </div>
 
@@ -1638,38 +1662,134 @@ function renderResults(q){
 function getCatIcon(code){const m={MT1:'🛒',CS2:'🏪',BK9:'🏦',CT1:'🎭',PO3:'🏛️',AT4:'🗺️',AD5:'🏨',FD6:'🍽️',CE7:'☕',HP8:'🏥',OL7:'⛽',SW8:'🚇',PK6:'🅿️'};return m[code]||'📍';}
 
 function psSelectPlace(idx,from){
-  const list=from==='auto'?window._psAutoList:window._psResultList;
-  const p=list[idx];if(!p)return;
+  var list=from==='auto'?window._psAutoList:window._psResultList;
+  var p=list[idx]; if(!p) return;
   psSelectedPlace=p;
-  document.getElementById('ps-map-name').textContent=p.name;
-  document.getElementById('ps-map-addr').textContent=p.addr;
-  document.getElementById('ps-map-icon').textContent=p.icon||'📍';
-  document.getElementById('ps-map-container').style.display='block';
   if(window.KAKAO_READY&&(p.lat||p._k)){
-    const lat=p.lat||parseFloat(p._k?.y);const lng=p.lng||parseFloat(p._k?.x);
-    if(lat&&lng)showKakaoMap(lat,lng,p.name);
-  } else showFakemap(p.name,p.addr);
-  document.getElementById('ps-content').scrollTop=0;
+    var lat=p.lat||parseFloat(p._k&&p._k.y);
+    var lng=p.lng||parseFloat(p._k&&p._k.x);
+    if(lat&&lng) showKakaoMap(lat,lng,p.name||p.n);
+  } else {
+    showFakemap(p.name||p.n, p.addr||p.a||'');
+  }
 }
+var _mapDragTimer = null;
+
 function showKakaoMap(lat,lng,name){
-  const container=document.getElementById('kakao-map');
+  var container=document.getElementById('kakao-map');
   if(!container||!window.KAKAO_READY) return;
-  const coords=new window.kakao.maps.LatLng(lat,lng);
+
+  // 지도 컨테이너를 전체화면으로 전환
+  var mapCon = document.getElementById('ps-map-container');
+  var psCon  = document.getElementById('ps-content');
+  if(mapCon){ mapCon.classList.add('on'); mapCon.style.display='flex'; }
+  if(psCon)  psCon.style.display='none';
+
+  var coords=new window.kakao.maps.LatLng(lat,lng);
   if(!kakaoMapObj){
     kakaoMapObj=new window.kakao.maps.Map(container,{center:coords,level:3});
-    kakaoMarker=new window.kakao.maps.Marker({map:kakaoMapObj,position:coords});
-  } else {kakaoMapObj.setCenter(coords);kakaoMarker.setPosition(coords);}
-  const iw=new window.kakao.maps.InfoWindow({content:`<div style="padding:7px 12px;font-size:14px;font-weight:700;white-space:nowrap">${name}</div>`});
-  iw.open(kakaoMapObj,kakaoMarker);
+  } else {
+    kakaoMapObj.setCenter(coords);
+  }
+
+  // relayout (컨테이너 크기 변경 후 필수)
+  setTimeout(function(){
+    kakaoMapObj.relayout();
+    kakaoMapObj.setCenter(coords);
+  }, 100);
+
+  // 지도 드래그 끝날 때 중앙 좌표로 역지오코딩
+  window.kakao.maps.event.addListener(kakaoMapObj,'dragstart',function(){
+    var nameEl=document.getElementById('map-sel-name');
+    if(nameEl) nameEl.textContent='위치를 선택하는 중…';
+    clearTimeout(_mapDragTimer);
+  });
+  window.kakao.maps.event.addListener(kakaoMapObj,'dragend',function(){
+    clearTimeout(_mapDragTimer);
+    _mapDragTimer=setTimeout(function(){
+      _geocodeCenter();
+    },400);
+  });
+
+  // 초기 주소 표시
+  var nameEl=document.getElementById('map-sel-name');
+  var addrEl=document.getElementById('map-sel-addr');
+  if(nameEl) nameEl.textContent=name||'위치를 선택하세요';
+  if(addrEl) addrEl.textContent='';
+  _geocodeCenter();
 }
+
+function _geocodeCenter(){
+  if(!kakaoMapObj||!window.KAKAO_READY) return;
+  var center=kakaoMapObj.getCenter();
+  var gc=new window.kakao.maps.services.Geocoder();
+  gc.coord2Address(center.getLng(),center.getLat(),function(result,status){
+    if(status===window.kakao.maps.services.Status.OK){
+      var addr=result[0];
+      var roadAddr=addr.road_address?addr.road_address.address_name:'';
+      var jibunAddr=addr.address?addr.address.address_name:'';
+      var displayName=roadAddr||jibunAddr||'선택된 위치';
+      var nameEl=document.getElementById('map-sel-name');
+      var addrEl=document.getElementById('map-sel-addr');
+      if(nameEl) nameEl.textContent=displayName;
+      if(addrEl) addrEl.textContent=roadAddr&&jibunAddr?jibunAddr:'';
+      // 선택된 위치 저장
+      window._mapSelectedAddr={
+        name:displayName,
+        addr:jibunAddr,
+        lat:center.getLat(),
+        lng:center.getLng()
+      };
+    }
+  });
+}
+
+function psMapBack(){
+  var mapCon=document.getElementById('ps-map-container');
+  var psCon=document.getElementById('ps-content');
+  if(mapCon){ mapCon.classList.remove('on'); mapCon.style.display='none'; }
+  if(psCon)  psCon.style.display='block';
+}
+
+function psConfirmMap(){
+  if(!window._mapSelectedAddr){ showToast('위치를 선택해주세요'); return; }
+  var a=window._mapSelectedAddr;
+  psConfirmPlace(a.name, a.addr||a.name);
+  // 지도 닫고 검색화면으로
+  var mapCon=document.getElementById('ps-map-container');
+  var psCon=document.getElementById('ps-content');
+  if(mapCon){ mapCon.classList.remove('on'); mapCon.style.display='none'; }
+  if(psCon)  psCon.style.display='block';
+}
+
+function psMapGPS(){
+  if(!navigator.geolocation){ showToast('위치 권한이 필요합니다'); return; }
+  showToast('📡 위치 측위 중…');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat=pos.coords.latitude, lng=pos.coords.longitude;
+    if(kakaoMapObj&&window.KAKAO_READY){
+      kakaoMapObj.setCenter(new window.kakao.maps.LatLng(lat,lng));
+      setTimeout(_geocodeCenter,500);
+    }
+  },function(){ showToast('위치 접근이 거부되었습니다'); });
+}
+
 function showFakemap(name,addr){
-  document.getElementById('kakao-map').innerHTML=`
-    <div style="width:100%;height:220px;background:linear-gradient(135deg,#dde6ff,#c8d8ff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">
-      <div style="font-size:40px">🗺️</div>
-      <div style="font-size:16px;font-weight:700;color:var(--text)">${name}</div>
-      <div style="font-size:13px;color:var(--text2)">${addr}</div>
-      <div style="font-size:12px;color:var(--text3);margin-top:4px">API 키 입력 시 실제 지도 표시</div>
-    </div>`;
+  // API 없을 때 - 간단한 안내
+  var mapCon=document.getElementById('ps-map-container');
+  if(mapCon){ mapCon.classList.add('on'); mapCon.style.display='flex'; }
+  var psCon=document.getElementById('ps-content');
+  if(psCon) psCon.style.display='none';
+  document.getElementById('kakao-map').innerHTML=
+    '<div style="width:100%;height:100%;background:linear-gradient(135deg,#e8f0ff,#d4e3ff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">'
+    +'<div style="font-size:48px">🗺️</div>'
+    +'<div style="font-size:16px;font-weight:700;color:#1a1d2e">'+name+'</div>'
+    +'<div style="font-size:13px;color:#6b7394">'+addr+'</div>'
+    +'<div style="font-size:12px;color:#b0b8d4;margin-top:4px">카카오맵 API 연동 후 실제 지도 표시</div>'
+    +'</div>';
+  var nameEl=document.getElementById('map-sel-name');
+  if(nameEl) nameEl.textContent=name;
+  window._mapSelectedAddr={name:name,addr:addr,lat:0,lng:0};
 }
 function psConfirmSelected(){if(!psSelectedPlace)return;psConfirmPlace(psSelectedPlace.name,psSelectedPlace.addr);}
 function psConfirmPlace(name,addr){
@@ -1690,16 +1810,14 @@ function psConfirmPlace(name,addr){
 function psUseGPS(){
   if(!navigator.geolocation){showToast('위치 권한 필요');return;}
   showToast('📡 위치 측위 중…');
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const{latitude:lat,longitude:lng}=pos.coords;
-    window._pickupCoords={lat,lng};
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ko`)
-      .then(r=>r.json()).then(data=>{
-        const a=data.address;
-        const label=[a.road||a.suburb,a.city_district||a.city].filter(Boolean).join(' ')||`${lat.toFixed(4)},${lng.toFixed(4)}`;
-        psConfirmPlace(label,`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-      }).catch(()=>psConfirmPlace(`현재 위치 (${lat.toFixed(4)},${lng.toFixed(4)})`, ''));
-  },()=>showToast('위치 접근 거부'));
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat=pos.coords.latitude, lng=pos.coords.longitude;
+    if(window.KAKAO_READY){
+      showKakaoMap(lat,lng,'현재 위치');
+    } else {
+      showFakemap('현재 위치', lat.toFixed(4)+', '+lng.toFixed(4));
+    }
+  },function(){ showToast('위치 접근 거부'); });
 }
 function renderPsRecent(){
   const el=document.getElementById('ps-recent-list');
