@@ -480,9 +480,12 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
     <div class="card">
       <div class="card-inner">
         <div style="font-size:var(--fs-xs);color:var(--text3);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px" data-i18n="pickup_loc">📍 픽업 위치</div>
-        <div style="position:relative;margin-bottom:13px">
-          <input class="inp" id="pickup-input" data-i18n-ph="pickup_ph" placeholder="픽업 위치 입력" style="padding-right:50px;margin-bottom:0" />
-          <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:22px;cursor:pointer" onclick="openAddrModal('pickup')">🔍</span>
+        <div style="position:relative;margin-bottom:13px;display:flex;gap:8px;align-items:center">
+          <div style="position:relative;flex:1">
+            <input class="inp" id="pickup-input" data-i18n-ph="pickup_ph" placeholder="픽업 위치 입력" style="padding-right:46px;margin-bottom:0"/>
+            <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:22px;cursor:pointer" onclick="openAddrModal('pickup')">🔍</span>
+          </div>
+          <button onclick="pickupGPS()" style="width:48px;height:48px;border-radius:13px;background:linear-gradient(135deg,#3478f6,#6c5ce7);border:none;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(52,120,246,.3)">📡</button>
         </div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px">
           <div style="flex:1;height:1.5px;background:var(--border)"></div>
@@ -1782,6 +1785,26 @@ function _geocodeCenter(){
       };
     }
   });
+}
+
+function pickupGPS(){
+  if(!navigator.geolocation){ showToast('위치 권한이 필요합니다'); return; }
+  showToast('📡 현재 위치 측위 중…');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat=pos.coords.latitude, lng=pos.coords.longitude;
+    psTarget='pickup';
+    var screen=document.getElementById('place-search-screen');
+    screen.style.display='flex';
+    psSwitch('pickup',false);
+    if(window.KAKAO_READY){
+      showKakaoMap(lat,lng,'현재 위치');
+    } else {
+      showToast('카카오맵 로드 후 이용 가능합니다');
+      screen.style.display='none';
+    }
+  },function(){
+    showToast('위치 접근이 거부되었습니다');
+  },{enableHighAccuracy:true,timeout:8000});
 }
 
 function psMapBack(){
