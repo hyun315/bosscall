@@ -485,7 +485,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
             <input class="inp" id="pickup-input" data-i18n-ph="pickup_ph" placeholder="픽업 위치 입력" style="padding-right:46px;margin-bottom:0"/>
             <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:22px;cursor:pointer" onclick="openAddrModal('pickup')">🔍</span>
           </div>
-          <button onclick="pickupGPS()" style="width:48px;height:48px;border-radius:13px;background:linear-gradient(135deg,#3478f6,#6c5ce7);border:none;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(52,120,246,.3)">📡</button>
+          <button onclick="pickupGPS()" style="height:48px;padding:0 13px;border-radius:13px;background:linear-gradient(135deg,#3478f6,#6c5ce7);border:none;font-size:13px;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(52,120,246,.3);white-space:nowrap;font-family:inherit" data-i18n="cur_loc">📡 현위치</button>
         </div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px">
           <div style="flex:1;height:1.5px;background:var(--border)"></div>
@@ -946,6 +946,7 @@ const i18n = {
     att_record:'출퇴근 기록',add_trip:'🚗 운행기록 추가',depart_time:'출발',arrive_time:'도착',
     distance:'거리 (km)',save:'저장',
     use_gps:'현재 위치 사용',use_gps_sub:'GPS로 내 위치 자동 입력',
+    cur_loc:'📡 현위치',
     recent_search:'최근 검색',clear_all:'전체 삭제',select:'선택',
     tab_home:'홈',tab_fav:'즐겨찾기',tab_stats:'통계',tab_salary_set:'급여설정',tab_notif:'알림',
     dest_ex:'예: IBK 을지로 본점',
@@ -988,6 +989,7 @@ const i18n = {
     att_record:'Attendance',add_trip:'🚗 Add Trip',depart_time:'Depart',arrive_time:'Arrive',
     distance:'Distance (km)',save:'Save',
     use_gps:'Use Current Location',use_gps_sub:'Auto-fill with GPS',
+    cur_loc:'📡 My Location',
     recent_search:'Recent Searches',clear_all:'Clear All',select:'Select',
     tab_home:'Home',tab_fav:'Favorites',tab_stats:'Stats',tab_salary_set:'Salary',tab_notif:'Alerts',
     dest_ex:'e.g. IBK Euljiro Branch',
@@ -1030,6 +1032,7 @@ const i18n = {
     att_record:'Kehadiran',add_trip:'🚗 Tambah Perjalanan',depart_time:'Berangkat',arrive_time:'Tiba',
     distance:'Jarak (km)',save:'Simpan',
     use_gps:'Gunakan Lokasi Saat Ini',use_gps_sub:'Isi otomatis dengan GPS',
+    cur_loc:'📡 Lokasi Saya',
     recent_search:'Pencarian Terbaru',clear_all:'Hapus Semua',select:'Pilih',
     tab_home:'Beranda',tab_fav:'Favorit',tab_stats:'Statistik',tab_salary_set:'Gaji',tab_notif:'Notif',
     dest_ex:'cth: IBK Euljiro',
