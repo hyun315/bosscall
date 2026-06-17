@@ -1397,24 +1397,15 @@ function openNavi(app){
   var pickupCoord = window._pickupCoord || null; // 픽업 좌표
 
   if(app==='kakao'){
-    var kakaoUrl = '';
+    // 카카오맵 웹으로 바로 열기 (앱 스킴 대신 웹 URL 사용)
+    var webUrl = 'https://map.kakao.com/?target=car&to=' + ep;
     if(destCoord && destCoord.lat){
-      // 카카오맵 앱 - 목적지 좌표로 길찾기
-      kakaoUrl = 'kakaomap://route?sp=' + (pickupCoord ? pickupCoord.lat+','+pickupCoord.lng : '') 
-        + '&ep=' + destCoord.lat + ',' + destCoord.lng + '&by=CAR';
-    } else {
-      // 좌표 없으면 이름으로
-      kakaoUrl = 'kakaomap://route?ep=' + ep + '&by=CAR';
+      webUrl = 'https://map.kakao.com/?target=car&toX=' + destCoord.lng + '&toY=' + destCoord.lat + '&to=' + ep;
     }
-    window.location.href = kakaoUrl;
-    // 앱 없으면 웹 폴백
-    setTimeout(function(){
-      var webUrl = 'https://map.kakao.com/?target=car&to=' + ep;
-      if(destCoord && destCoord.lat){
-        webUrl = 'https://map.kakao.com/?target=car&toX=' + destCoord.lng + '&toY=' + destCoord.lat + '&to=' + ep;
-      }
-      window.open(webUrl, '_blank');
-    }, 1500);
+    if(pickupCoord && pickupCoord.lat){
+      webUrl += '&fromX=' + pickupCoord.lng + '&fromY=' + pickupCoord.lat + '&from=' + sp;
+    }
+    window.open(webUrl, '_blank');
     setTimeout(function(){ showToast('카카오맵'); }, 300);
     return;
 
