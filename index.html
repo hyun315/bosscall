@@ -1392,45 +1392,63 @@ function openNavi(app){
   var sp = encodeURIComponent(pickup||'현재위치');
   var labels = {kakao:'카카오내비',naver:'네이버지도',tmap:'티맵',google:'Google Maps'};
 
-  var url = '';
+  // 저장된 좌표
+  var destCoord  = window._destCoord  || null; // 목적지 좌표
+  var pickupCoord = window._pickupCoord || null; // 픽업 좌표
+
   if(app==='kakao'){
-    // 카카오내비 앱 URL 스킴
-    // 좌표가 있으면 좌표로, 없으면 이름으로
-    var destCoords = window._mapSelectedAddr && window._mapSelectedAddr.lat ? window._mapSelectedAddr : null;
-    if(destCoords && destCoords.lat){
-      url = 'kakaonavi://navigate?ep=' + destCoords.lng + ',' + destCoords.lat
-        + '&epname=' + ep
-        + '&by=CAR&via=CAR';
+    var kakaoUrl = '';
+    if(destCoord && destCoord.lat){
+      // 카카오맵 앱 - 목적지 좌표로 길찾기
+      kakaoUrl = 'kakaomap://route?sp=' + (pickupCoord ? pickupCoord.lat+','+pickupCoord.lng : '') 
+        + '&ep=' + destCoord.lat + ',' + destCoord.lng + '&by=CAR';
     } else {
-      url = 'kakaonavi://navigate?epname=' + ep + '&by=CAR';
+      // 좌표 없으면 이름으로
+      kakaoUrl = 'kakaomap://route?ep=' + ep + '&by=CAR';
     }
-    // 앱 없으면 웹으로 폴백
-    window.location.href = url;
+    window.location.href = kakaoUrl;
+    // 앱 없으면 웹 폴백
     setTimeout(function(){
-      window.open('https://map.kakao.com/?target=car&to=' + ep, '_blank');
+      var webUrl = 'https://map.kakao.com/?target=car&to=' + ep;
+      if(destCoord && destCoord.lat){
+        webUrl = 'https://map.kakao.com/?target=car&toX=' + destCoord.lng + '&toY=' + destCoord.lat + '&to=' + ep;
+      }
+      window.open(webUrl, '_blank');
     }, 1500);
-    setTimeout(function(){ showToast('카카오내비'); }, 300);
+    setTimeout(function(){ showToast('카카오맵'); }, 300);
     return;
 
   } else if(app==='naver'){
-    url = 'nmap://route/car?dname=' + ep + '&appname=com.bosscall';
-    window.location.href = url;
-    setTimeout(function(){
-      window.open('https://map.naver.com/v5/directions/-/-/' + ep + '/walk', '_blank');
-    }, 1500);
+    var nurl = 'nmap://route/car?';
+    if(pickupCoord && pickupCoord.lat){
+      nurl += 'slng=' + pickupCoord.lng + '&slat=' + pickupCoord.lat + '&sname=' + sp + '&';
+    }
+    if(destCoord && destCoord.lat){
+      nurl += 'dlng=' + destCoord.lng + '&dlat=' + destCoord.lat + '&dname=' + ep;
+    } else {
+      nurl += 'dname=' + ep;
+    }
+    nurl += '&appname=com.bosscall';
+    window.location.href = nurl;
+    setTimeout(function(){ window.open('https://map.naver.com/', '_blank'); }, 1500);
 
   } else if(app==='tmap'){
-    url = 'tmap://route?goalname=' + ep;
-    window.location.href = url;
-    setTimeout(function(){
-      window.open('https://tmap.co.kr/', '_blank');
-    }, 1500);
+    var turl = 'tmap://route?goalname=' + ep;
+    if(destCoord && destCoord.lat){
+      turl += '&goalx=' + destCoord.lng + '&goaly=' + destCoord.lat;
+    }
+    if(pickupCoord && pickupCoord.lat){
+      turl += '&startx=' + pickupCoord.lng + '&starty=' + pickupCoord.lat + '&startname=' + sp;
+    }
+    window.location.href = turl;
+    setTimeout(function(){ window.open('https://tmap.co.kr/', '_blank'); }, 1500);
 
   } else if(app==='google'){
-    url = 'comgooglemaps://?daddr=' + ep + '&directionsmode=driving';
-    window.location.href = url;
+    var gDest = (destCoord && destCoord.lat) ? (destCoord.lat+','+destCoord.lng) : dest;
+    var gOrig = (pickupCoord && pickupCoord.lat) ? (pickupCoord.lat+','+pickupCoord.lng) : pickup;
+    window.location.href = 'comgooglemaps://?saddr=' + encodeURIComponent(gOrig) + '&daddr=' + encodeURIComponent(gDest) + '&directionsmode=driving';
     setTimeout(function(){
-      window.open('https://www.google.com/maps/dir/?api=1&destination=' + ep + '&travelmode=driving', '_blank');
+      window.open('https://www.google.com/maps/dir/?api=1&origin=' + encodeURIComponent(gOrig) + '&destination=' + encodeURIComponent(gDest) + '&travelmode=driving', '_blank');
     }, 1500);
   }
 
@@ -1897,19 +1915,31 @@ function showFakemap(name,addr){
 }
 function psConfirmSelected(){if(!psSelectedPlace)return;psConfirmPlace(psSelectedPlace.name,psSelectedPlace.addr);}
 function psConfirmPlace(name,addr){
-  psRecent=psRecent.filter(r=>r.name!==name);
-  psRecent.unshift({name,addr,time:Date.now()});
-  if(psRecent.length>8)psRecent.pop();
+  psRecent=psRecent.filter(function(r){return r.name!==name;});
+  psRecent.unshift({name:name,addr:addr,time:Date.now()});
+  if(psRecent.length>8) psRecent.pop();
   localStorage.setItem('ps_recent',JSON.stringify(psRecent));
+
+  // 좌표 저장 (psSelectedPlace 또는 _mapSelectedAddr에서)
+  var coord = null;
+  if(window._mapSelectedAddr && window._mapSelectedAddr.lat){
+    coord = {lat:window._mapSelectedAddr.lat, lng:window._mapSelectedAddr.lng};
+  } else if(psSelectedPlace && psSelectedPlace.lat){
+    coord = {lat:psSelectedPlace.lat, lng:psSelectedPlace.lng};
+  }
+
   if(psTarget==='pickup'){
     document.getElementById('pickup-input').value=name;
     document.getElementById('map-label-driver').textContent='픽업: '+name;
     document.getElementById('alert-pickup-text').textContent=name;
+    if(coord) window._pickupCoord=coord;
   } else {
     document.getElementById('dest-input').value=name;
     document.getElementById('alert-dest-text').textContent=name;
+    if(coord) window._destCoord=coord;
   }
-  closePlaceSearch();showToast(`✓ ${psTarget==='pickup'?t('pickup_loc'):t('dest_loc')}: ${name}`);
+  closePlaceSearch();
+  showToast('✓ '+(psTarget==='pickup'?t('pickup_loc'):t('dest_loc'))+': '+name);
 }
 function psUseGPS(){
   if(!navigator.geolocation){showToast('위치 권한 필요');return;}
