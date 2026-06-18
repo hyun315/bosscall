@@ -1918,9 +1918,11 @@ function psOnInput(){
 function psClear(){document.getElementById('ps-input').value='';document.getElementById('ps-clear').style.display='none';showPsDefault();document.getElementById('ps-input').focus();}
 
 function psAutoComplete(q){
+  showToast('검색: '+q+' | Google:'+(window.GOOGLE_PLACES_READY?'✅':'❌'));
   if(window.GOOGLE_PLACES_READY && window.google && window.google.maps && window.google.maps.places){
     var svc = new window.google.maps.places.AutocompleteService();
     svc.getPlacePredictions({input:q, language:'id'}, function(predictions, status){
+      showToast('결과: '+status+' | '+(predictions?predictions.length+'개':'0개'));
       if(status === window.google.maps.places.PlacesServiceStatus.OK && predictions && predictions.length){
         window._psAutoList = predictions.map(function(p){
           return {
