@@ -24,7 +24,7 @@ window._googleMapsReady = function(){
 (function(){
   var s = document.createElement('script');
   s.src = 'https://maps.googleapis.com/maps/api/js?key=' + window.GOOGLE_KEY
-    + '&libraries=places&v=alpha&language=id&callback=_googleMapsReady';
+    + '&libraries=places,marker&v=weekly&language=id&callback=_googleMapsReady';
   s.async = true;
   s.defer = true;
   document.head.appendChild(s);
@@ -969,8 +969,16 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
     <!-- 뒤로가기 버튼 -->
     <button onclick="psMapBack()" style="position:absolute;top:14px;left:14px;width:40px;height:40px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 10px rgba(0,0,0,.15);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1000;pointer-events:all">←</button>
 
-    <!-- 구글맵 iframe -->
-    <iframe id="google-map-iframe" style="width:100%;flex:1;min-height:400px;border:none" allowfullscreen></iframe>
+    <!-- 구글맵 div -->
+    <div id="google-map-div" style="width:100%;flex:1;min-height:400px"></div>
+
+    <!-- 중앙 고정 핀 -->
+    <div id="map-center-pin" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-100%);pointer-events:none;z-index:1000;display:flex;flex-direction:column;align-items:center;transition:transform .15s ease">
+      <div style="width:36px;height:36px;border-radius:50% 50% 50% 0;background:#e74c3c;transform:rotate(-45deg);box-shadow:0 4px 12px rgba(231,76,60,.5);display:flex;align-items:center;justify-content:center">
+        <div style="width:12px;height:12px;border-radius:50%;background:#fff;transform:rotate(45deg)"></div>
+      </div>
+      <div style="width:8px;height:8px;border-radius:50%;background:rgba(231,76,60,.3);margin-top:2px"></div>
+    </div>
 
     <!-- 하단 주소 바 -->
     <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.12);z-index:1000;padding:16px 16px 20px;pointer-events:all">
@@ -978,7 +986,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
         <span style="font-size:24px">📍</span>
         <div style="flex:1;min-width:0">
-          <div id="map-sel-name" style="font-size:16px;font-weight:700;color:#1a1d2e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">위치를 확인하세요</div>
+          <div id="map-sel-name" style="font-size:16px;font-weight:700;color:#1a1d2e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">지도를 움직여 위치 선택</div>
           <div id="map-sel-addr" style="font-size:13px;color:#6b7394;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
         </div>
       </div>
@@ -2064,20 +2072,86 @@ function _openMap(p){
   if(addrEl) addrEl.textContent = addr;
 }
 
+var _gMap = null;
+var _gGeocoder = null;
+var _mapDragTimer = null;
+
 function showMap(lat, lng, name){
   var mapCon = document.getElementById('ps-map-container');
   var psCon  = document.getElementById('ps-content');
   if(mapCon){ mapCon.classList.add('on'); mapCon.style.display='flex'; }
   if(psCon)  psCon.style.display='none';
 
-  var iframe = document.getElementById('google-map-iframe');
-  var src = '';
-  if(lat && lng){
-    src = 'https://maps.google.com/maps?q='+lat+','+lng+'&z=16&output=embed&hl=id';
-  } else if(name){
-    src = 'https://maps.google.com/maps?q='+encodeURIComponent(name)+'&output=embed&hl=id';
+  var nameEl = document.getElementById('map-sel-name');
+  var addrEl = document.getElementById('map-sel-addr');
+  if(nameEl) nameEl.textContent = name || 'Pilih lokasi';
+  if(addrEl) addrEl.textContent = '';
+
+  window._mapSelectedAddr = {name:name||'', addr:'', lat:lat||0, lng:lng||0};
+
+  if(!window.GOOGLE_READY || !window.google || !window.google.maps){
+    if(nameEl) nameEl.textContent = name||'위치 선택됨';
+    return;
   }
-  if(iframe && src) iframe.src = src;
+
+  var container = document.getElementById('google-map-div');
+  var center = {lat: lat||0, lng: lng||0};
+
+  setTimeout(function(){
+    if(!_gMap){
+      _gMap = new window.google.maps.Map(container, {
+        center: center,
+        zoom: 16,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        zoomControlOptions: {position: window.google.maps.ControlPosition.RIGHT_CENTER}
+      });
+      _gGeocoder = new window.google.maps.Geocoder();
+    } else {
+      _gMap.setCenter(center);
+      _gMap.setZoom(16);
+    }
+
+    // resize 트리거
+    window.google.maps.event.trigger(_gMap, 'resize');
+    _gMap.setCenter(center);
+
+    // 드래그 시작 - 핀 위로
+    window.google.maps.event.addListener(_gMap, 'dragstart', function(){
+      var pin = document.getElementById('map-center-pin');
+      if(pin) pin.style.transform = 'translate(-50%,-130%)';
+      var ne = document.getElementById('map-sel-name');
+      if(ne) ne.textContent = 'Memilih lokasi...';
+    });
+
+    // idle - 드래그 끝 (PC + 모바일 터치 모두)
+    window.google.maps.event.addListener(_gMap, 'idle', function(){
+      var pin = document.getElementById('map-center-pin');
+      if(pin) pin.style.transform = 'translate(-50%,-100%)';
+      clearTimeout(_mapDragTimer);
+      _mapDragTimer = setTimeout(_geocodeCenterGoogle, 300);
+    });
+
+    // 초기 역지오코딩
+    _geocodeCenterGoogle();
+  }, 100);
+}
+
+function _geocodeCenterGoogle(){
+  if(!_gMap || !_gGeocoder) return;
+  var center = _gMap.getCenter();
+  _gGeocoder.geocode({location:{lat:center.lat(),lng:center.lng()}, language:'id'}, function(results, status){
+    if(status==='OK' && results[0]){
+      var name = results[0].address_components[0] ? results[0].address_components[0].long_name : results[0].formatted_address;
+      var addr = results[0].formatted_address;
+      var nameEl = document.getElementById('map-sel-name');
+      var addrEl = document.getElementById('map-sel-addr');
+      if(nameEl) nameEl.textContent = name;
+      if(addrEl) addrEl.textContent = addr;
+      window._mapSelectedAddr = {name:name, addr:addr, lat:center.lat(), lng:center.lng()};
+    }
+  });
 }
 
 function pickupGPS(){
