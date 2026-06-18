@@ -2097,19 +2097,105 @@ function psSelectPlace(idx,from){
 }
 
 function _openMap(p){
-  if(window.KAKAO_READY && p.lat && p.lng){
-    showKakaoMap(p.lat, p.lng, p.name||p.n);
+  if(p.lat && p.lng){
+    showMap(p.lat, p.lng, p.name||p.n);
   } else {
     showFakemap(p.name||p.n, p.addr||p.a||'');
   }
 }
 var _mapDragTimer = null;
 
+var googleMapObj = null;
+var googleMarker = null;
+
+function showMap(lat, lng, name){
+  if(window.GOOGLE_PLACES_READY && window.google && window.google.maps){
+    showGoogleMap(lat, lng, name);
+  } else if(window.KAKAO_READY){
+    showKakaoMap(lat, lng, name);
+  } else {
+    showFakemap(name, '');
+  }
+}
+
+function showGoogleMap(lat, lng, name){
+  var container = document.getElementById('kakao-map');
+  if(!container) return;
+
+  var mapCon = document.getElementById('ps-map-container');
+  var psCon  = document.getElementById('ps-content');
+  if(mapCon){ mapCon.classList.add('on'); mapCon.style.display='flex'; }
+  if(psCon)  psCon.style.display='none';
+
+  var coords = {lat: lat, lng: lng};
+
+  if(!googleMapObj){
+    googleMapObj = new window.google.maps.Map(container, {
+      center: coords,
+      zoom: 16,
+      disableDefaultUI: false,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false
+    });
+    googleMarker = new window.google.maps.Marker({
+      map: googleMapObj,
+      position: coords,
+      title: name
+    });
+  } else {
+    googleMapObj.setCenter(coords);
+    googleMarker.setPosition(coords);
+  }
+
+  // 지도 이동 시 핀 애니메이션
+  window.google.maps.event.addListener(googleMapObj, 'dragstart', function(){
+    var pin = document.getElementById('map-center-pin');
+    if(pin) pin.style.transform = 'translate(-50%,-120%)';
+    var nameEl = document.getElementById('map-sel-name');
+    if(nameEl) nameEl.textContent = 'Memilih lokasi...';
+  });
+
+  // idle - 드래그 끝 (PC + 모바일)
+  window.google.maps.event.addListener(googleMapObj, 'idle', function(){
+    var pin = document.getElementById('map-center-pin');
+    if(pin) pin.style.transform = 'translate(-50%,-100%)';
+    clearTimeout(_mapDragTimer);
+    _mapDragTimer = setTimeout(function(){
+      _geocodeCenterGoogle();
+    }, 300);
+  });
+
+  var nameEl = document.getElementById('map-sel-name');
+  if(nameEl) nameEl.textContent = name || 'Pilih lokasi';
+  _geocodeCenterGoogle();
+}
+
+function _geocodeCenterGoogle(){
+  if(!googleMapObj || !window.GOOGLE_PLACES_READY) return;
+  var center = googleMapObj.getCenter();
+  var geocoder = new window.google.maps.Geocoder();
+  geocoder.geocode({location: {lat: center.lat(), lng: center.lng()}, language: 'id'}, function(results, status){
+    if(status === 'OK' && results[0]){
+      var addr = results[0].formatted_address;
+      var nameEl = document.getElementById('map-sel-name');
+      var addrEl = document.getElementById('map-sel-addr');
+      if(nameEl) nameEl.textContent = results[0].address_components[0] ? results[0].address_components[0].long_name : addr;
+      if(addrEl) addrEl.textContent = addr;
+      window._mapSelectedAddr = {
+        name: nameEl ? nameEl.textContent : addr,
+        addr: addr,
+        lat: center.lat(),
+        lng: center.lng()
+      };
+    }
+  });
+}
+
 function showKakaoMap(lat,lng,name){
   var container=document.getElementById('kakao-map');
   if(!container||!window.KAKAO_READY) return;
 
-  // 지도 컨테이너를 전체화면으로 전환
   var mapCon = document.getElementById('ps-map-container');
   var psCon  = document.getElementById('ps-content');
   if(mapCon){ mapCon.classList.add('on'); mapCon.style.display='flex'; }
@@ -2122,13 +2208,11 @@ function showKakaoMap(lat,lng,name){
     kakaoMapObj.setCenter(coords);
   }
 
-  // relayout (컨테이너 크기 변경 후 필수)
   setTimeout(function(){
     kakaoMapObj.relayout();
     kakaoMapObj.setCenter(coords);
   }, 100);
 
-  // 지도 이동 시작 - 핀 위로 올라감
   window.kakao.maps.event.addListener(kakaoMapObj,'drag',function(){
     var pin=document.getElementById('map-center-pin');
     if(pin) pin.style.transform='translate(-50%,-120%)';
@@ -2136,17 +2220,13 @@ function showKakaoMap(lat,lng,name){
     if(nameEl) nameEl.textContent='위치를 선택하는 중…';
   });
 
-  // idle 이벤트 - PC 드래그 + 모바일 터치 모두 지원
   window.kakao.maps.event.addListener(kakaoMapObj,'idle',function(){
     var pin=document.getElementById('map-center-pin');
     if(pin) pin.style.transform='translate(-50%,-100%)';
     clearTimeout(_mapDragTimer);
-    _mapDragTimer=setTimeout(function(){
-      _geocodeCenter();
-    },100);
+    _mapDragTimer=setTimeout(function(){ _geocodeCenter(); },100);
   });
 
-  // 초기 주소 표시
   var nameEl=document.getElementById('map-sel-name');
   var addrEl=document.getElementById('map-sel-addr');
   if(nameEl) nameEl.textContent=name||'위치를 선택하세요';
@@ -2189,7 +2269,7 @@ function pickupGPS(){
     screen.style.display='flex';
     psSwitch('pickup',false);
     if(window.KAKAO_READY){
-      showKakaoMap(lat,lng,'현재 위치');
+      showMap(lat,lng,'Lokasi saat ini');
     } else {
       showToast('카카오맵 로드 후 이용 가능합니다');
       screen.style.display='none';
@@ -2280,7 +2360,7 @@ function psUseGPS(){
   navigator.geolocation.getCurrentPosition(function(pos){
     var lat=pos.coords.latitude, lng=pos.coords.longitude;
     if(window.KAKAO_READY){
-      showKakaoMap(lat,lng,'현재 위치');
+      showMap(lat,lng,'Lokasi saat ini');
     } else {
       showFakemap('현재 위치', lat.toFixed(4)+', '+lng.toFixed(4));
     }
