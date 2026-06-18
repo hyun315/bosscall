@@ -1860,7 +1860,15 @@ function openAddrModal(target){
     setTimeout(function(){ psInp.focus(); },150);
   }
 }
-function closePlaceSearch(){document.getElementById('place-search-screen').style.display='none';}
+function closePlaceSearch(){
+  var sc=document.getElementById('place-search-screen');
+  if(sc){ sc.style.display='none'; sc.classList.remove('on'); }
+  var mapCon=document.getElementById('ps-map-container');
+  if(mapCon){ mapCon.style.display='none'; mapCon.classList.remove('on'); }
+  var psCon=document.getElementById('ps-content');
+  if(psCon) psCon.style.display='block';
+  clearTimeout(_mapDragTimer);
+}
 function psSwitch(target, doFocus){
   if(doFocus === undefined) doFocus = true;
   psTarget=target;
@@ -2191,16 +2199,23 @@ function psMapBack(){
 
 function psConfirmMap(){
   clearTimeout(_mapDragTimer);
-  if(!window._mapSelectedAddr){ showToast('위치를 선택해주세요'); return; }
-  var a=window._mapSelectedAddr;
-  psConfirmPlace(a.name, a.addr||a.name);
-  var mapCon=document.getElementById('ps-map-container');
-  var psCon=document.getElementById('ps-content');
+  if(!window._mapSelectedAddr || !window._mapSelectedAddr.name){
+    showToast('위치를 선택해주세요'); return;
+  }
+  var a = window._mapSelectedAddr;
+  // "Memilih lokasi..." 같은 임시 텍스트 걸러냄
+  if(a.name === 'Memilih lokasi...' || !a.name.trim()){
+    showToast('위치를 선택해주세요'); return;
+  }
+  var mapCon = document.getElementById('ps-map-container');
   if(mapCon){ mapCon.classList.remove('on'); mapCon.style.display='none'; }
-  if(psCon)  psCon.style.display='block';
+  var psCon = document.getElementById('ps-content');
+  if(psCon) psCon.style.display='block';
+  psConfirmPlace(a.name, a.addr||a.name);
 }
 
 function psConfirmPlace(name,addr){
+  if(!name||name==='Memilih lokasi...'||name==='Pilih lokasi'||name==='지도를 움직여 위치 선택') return;
   psRecent=psRecent.filter(function(r){return r.name!==name;});
   psRecent.unshift({name:name,addr:addr,time:Date.now()});
   if(psRecent.length>8) psRecent.pop();
