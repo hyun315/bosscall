@@ -1899,36 +1899,16 @@ function psOnInput(){
   document.getElementById('ps-clear').style.display=q?'block':'none';
   clearTimeout(psTimer);
   if(!q){showPsDefault();return;}
-  psTimer=setTimeout(function(){ psAutoComplete(q); },300);
+  psTimer=setTimeout(function(){ psSearch(q); },500);
 }
 function psClear(){document.getElementById('ps-input').value='';document.getElementById('ps-clear').style.display='none';showPsDefault();document.getElementById('ps-input').focus();}
 
-function psAutoComplete(q){
-  if(window.GOOGLE_READY && window.google && window.google.maps && window.google.maps.places && window.google.maps.places.AutocompleteSuggestion){
-    window.google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({input:q})
-    .then(function(res){
-      var suggestions = (res && res.suggestions) || [];
-      if(suggestions.length){
-        window._psAutoList = suggestions.map(function(s){
-          var pp = s.placePrediction;
-          return {
-            icon:'📍',
-            name: pp.mainText ? pp.mainText.text : pp.text.text,
-            addr: pp.secondaryText ? pp.secondaryText.text : '',
-            dist:'',
-            place_id: pp.placeId
-          };
-        });
-        renderAutoList(q);
-      } else { psFallback(q); }
-    }).catch(function(){ psFallback(q); });
-  } else if(window.KAKAO_READY){ psSearchKakao(q); }
-  else { psFallback(q); }
-}
+function psAutoComplete(q){ psSearch(q); }
 
-function psSearch(){
-  var q = document.getElementById('ps-input').value.trim();
+function psSearch(q){
+  if(!q) q=document.getElementById('ps-input').value.trim();
   if(!q) return;
+
   if(window.GOOGLE_READY && window.google && window.google.maps && window.google.maps.places && window.google.maps.places.Place){
     window.google.maps.places.Place.searchByText({
       textQuery: q,
@@ -1950,10 +1930,19 @@ function psSearch(){
           };
         });
         renderResults(q);
-      } else { psFallback(q); }
-    }).catch(function(){ psFallback(q); });
-  } else if(window.KAKAO_READY){ psSearchKakao(q); }
-  else { psFallback(q); }
+      } else {
+        window._psResultList=[];
+        renderResults(q);
+      }
+    }).catch(function(e){
+      console.error('searchByText error:',e);
+      window._psResultList=[];
+      renderResults(q);
+    });
+  } else {
+    // Google 안되면 카카오
+    if(window.KAKAO_READY) psSearchKakao(q);
+  }
 }
 
 function getCatIconByType(types){
