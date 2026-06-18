@@ -1026,7 +1026,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
 <!-- ════ 지도 화면 (별도 레이어) ════ -->
 <div id="map-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:9500;flex-direction:column;background:#fff">
   <!-- 지도 -->
-  <div id="google-map-div" style="flex:1;width:100%;min-height:0"></div>
+  <div id="google-map-div" style="width:100%;height:calc(100% - 160px);flex-shrink:0"></div>
   <!-- 핀 -->
   <div style="position:absolute;top:0;left:0;right:0;bottom:160px;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:100">
     <div id="map-pin-inner" style="display:flex;flex-direction:column;align-items:center;margin-bottom:0;transition:transform .15s">
