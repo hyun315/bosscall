@@ -2900,21 +2900,13 @@ function generateDriverLink(driverIdx){
 }
 
 function shareDriverLink(driverIdx){
-  var url = generateDriverLink(driverIdx);
   var d = driverList[driverIdx] || {};
+  var wa = (d.wa||'').replace(/\s+|\+/g,'');
+  if(!wa){ showToast('먼저 WA 번호를 입력해주세요'); return; }
+  var url = generateDriverLink(driverIdx);
   var name = d.name || ('기사 '+(driverIdx+1));
-  var msg = '🚗 BossCall 기사 앱 링크\n'+name+'님, 아래 링크를 탭하면 바로 앱이 열립니다:\n\n'+url+'\n\n별도 로그인 없이 바로 사용 가능합니다.';
-  if(navigator.share){
-    navigator.share({title:'BossCall - '+name, text:msg, url:url}).catch(function(){});
-  } else {
-    navigator.clipboard.writeText(url).then(function(){
-      showToast('🔗 링크 복사됨!');
-    }).catch(function(){
-      // 클립보드 실패시 WA로 바로 발송
-      var waNum = getWaNumber('driver');
-      window.open('https://wa.me/'+waNum+'?text='+encodeURIComponent(msg), '_blank');
-    });
-  }
+  var msg = '🚗 BossCall 기사 앱 링크\n\n'+name+'님, 아래 링크를 탭하면 바로 앱이 열립니다:\n\n'+url+'\n\n별도 로그인 없이 바로 사용 가능합니다.';
+  window.open('https://wa.me/'+wa+'?text='+encodeURIComponent(msg), '_blank');
 }
 
 function obShareLink() {
