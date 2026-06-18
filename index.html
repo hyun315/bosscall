@@ -975,76 +975,44 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
   </div>
 </div>
 
-<!-- ════ 카카오맵 스타일 장소 검색 ════ -->
+<!-- ════ 장소 검색 화면 ════ -->
 <div id="place-search-screen" style="display:none">
-  <div style="background:var(--surface);padding:14px 16px 0;border-bottom:1px solid var(--border);flex-shrink:0;box-shadow:var(--shadow)">
+
+  <!-- 검색 헤더 -->
+  <div style="background:var(--surface);padding:14px 16px 0;border-bottom:1px solid var(--border);flex-shrink:0">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-      <button onclick="closePlaceSearch()" style="background:none;border:none;color:var(--text2);font-size:24px;cursor:pointer;padding:0;line-height:1;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .12s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">←</button>
+      <button onclick="closePlaceSearch()" style="background:none;border:none;color:var(--text2);font-size:24px;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center">←</button>
       <div id="ps-badge" style="font-size:13px;font-weight:700;padding:6px 14px;border-radius:20px;background:#eef3ff;color:var(--accent)">📍 픽업 위치</div>
     </div>
     <div style="position:relative;margin-bottom:14px">
       <span style="position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--text3)">🔍</span>
       <input id="ps-input"
-        style="width:100%;background:var(--surface2);border:2px solid var(--accent);border-radius:14px;padding:15px 44px 15px 46px;color:var(--text);font-size:18px;font-family:inherit;outline:none"
+        style="width:100%;background:var(--surface2);border:2px solid var(--accent);border-radius:14px;padding:15px 44px 15px 46px;color:var(--text);font-size:18px;font-family:inherit;outline:none;box-sizing:border-box"
         placeholder="장소, 주소 검색"
         oninput="psOnInput()" onkeydown="if(event.key==='Enter')psSearch()"
         autocomplete="off" autocorrect="off" spellcheck="false"
       />
-      <button id="ps-clear" onclick="psClear()" style="display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:var(--text3);border:none;border-radius:50%;width:24px;height:24px;color:#fff;font-size:14px;cursor:pointer;line-height:24px;text-align:center">✕</button>
+      <button id="ps-clear" onclick="psClear()" style="display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:var(--text3);border:none;border-radius:50%;width:24px;height:24px;color:#fff;font-size:14px;cursor:pointer">✕</button>
     </div>
     <div style="display:flex;gap:0;margin-bottom:-1px">
-      <button id="ps-tab-pickup" onclick="psSwitch('pickup')" style="flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid var(--accent);color:var(--accent);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">📍 <span data-i18n="pickup_loc">픽업</span></button>
-      <button id="ps-tab-dest" onclick="psSwitch('dest')" style="flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid transparent;color:var(--text3);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">🚩 <span data-i18n="dest_loc">목적지</span></button>
+      <button id="ps-tab-pickup" onclick="psSwitch('pickup')" style="flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid var(--accent);color:var(--accent);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">📍 픽업</button>
+      <button id="ps-tab-dest" onclick="psSwitch('dest')" style="flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid transparent;color:var(--text3);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">🚩 목적지</button>
     </div>
   </div>
 
-
-  <!-- 구글맵 지도 선택 화면 -->
-  <div id="ps-map-container" style="display:none;flex-direction:column;flex:1;position:relative;overflow:hidden">
-
-    <!-- 뒤로가기 버튼 -->
-    <button onclick="psMapBack()" style="position:absolute;top:14px;left:14px;width:40px;height:40px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 10px rgba(0,0,0,.15);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9999">←</button>
-
-    <!-- 구글맵 div - flex:1로 남은 공간 채움 -->
-    <div id="google-map-div" style="flex:1;width:100%;min-height:0"></div>
-
-    <!-- 중앙 고정 핀 - 지도 영역 중앙 -->
-    <div id="map-center-pin" style="position:absolute;top:0;left:50%;transform:translate(-50%,0);bottom:160px;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:500">
-      <div style="display:flex;flex-direction:column;align-items:center;transform:translateY(-100%);transition:transform .15s ease" id="map-pin-inner">
-        <div style="width:36px;height:36px;border-radius:50% 50% 50% 0;background:#e74c3c;transform:rotate(-45deg);box-shadow:0 4px 12px rgba(231,76,60,.5);display:flex;align-items:center;justify-content:center">
-          <div style="width:12px;height:12px;border-radius:50%;background:#fff;transform:rotate(45deg)"></div>
-        </div>
-        <div style="width:8px;height:8px;border-radius:50%;background:rgba(231,76,60,.3);margin-top:2px"></div>
-      </div>
-    </div>
-
-    <!-- 하단 주소 바 - flex에서 자연스럽게 아래에 위치 (겹치지 않음) -->
-    <div style="background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.15);padding:14px 16px 20px;flex-shrink:0;position:relative;z-index:9999">
-      <div style="width:40px;height:4px;background:#e2e6ef;border-radius:2px;margin:0 auto 12px"></div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-        <span style="font-size:22px">📍</span>
-        <div style="flex:1;min-width:0">
-          <div id="map-sel-name" style="font-size:15px;font-weight:700;color:#1a1d2e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">지도를 움직여 위치 선택</div>
-          <div id="map-sel-addr" style="font-size:12px;color:#6b7394;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
-        </div>
-      </div>
-      <button onclick="psConfirmMap()" style="width:100%;padding:15px;background:#3478f6;color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit">이 위치로 설정</button>
-    </div>
-  </div>
-  </div>
-
+  <!-- 검색 결과 영역 -->
   <div id="ps-content" style="flex:1;overflow-y:auto;background:var(--bg)">
     <div id="ps-default">
-      <div onclick="psUseGPS()" style="display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid var(--border);cursor:pointer;background:rgba(52,120,246,.04);transition:background .12s" onmouseover="this.style.background='rgba(52,120,246,.08)'" onmouseout="this.style.background='rgba(52,120,246,.04)'">
+      <div onclick="psUseGPS()" style="display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid var(--border);cursor:pointer;background:rgba(52,120,246,.04)">
         <div style="width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📡</div>
         <div><div style="font-size:17px;font-weight:700;color:var(--accent)" data-i18n="use_gps">현재 위치 사용</div><div style="font-size:14px;color:var(--text2);margin-top:2px" data-i18n="use_gps_sub">GPS로 내 위치 자동 입력</div></div>
       </div>
       <div style="padding:18px 20px 8px;display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:13px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase" data-i18n="recent_search">최근 검색</span>
+        <span style="font-size:13px;font-weight:700;color:var(--text3)" data-i18n="recent_search">최근 검색</span>
         <button onclick="psClearRecent()" style="background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit" data-i18n="clear_all">전체 삭제</button>
       </div>
       <div id="ps-recent-list"></div>
-      <div style="padding:16px 20px 8px"><span style="font-size:13px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase" data-i18n="tab_fav">즐겨찾기</span></div>
+      <div style="padding:16px 20px 8px"><span style="font-size:13px;font-weight:700;color:var(--text3)" data-i18n="tab_fav">즐겨찾기</span></div>
       <div id="ps-fav-list"></div>
     </div>
     <div id="ps-autocomplete" style="display:none;background:var(--surface)"></div>
@@ -1052,6 +1020,34 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
       <div id="ps-result-count" style="padding:14px 20px 6px;font-size:13px;color:var(--text3);font-weight:600"></div>
       <div id="ps-result-list" style="background:var(--surface)"></div>
     </div>
+  </div>
+</div>
+
+<!-- ════ 지도 화면 (별도 레이어) ════ -->
+<div id="map-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:9500;flex-direction:column;background:#fff">
+  <!-- 지도 -->
+  <div id="google-map-div" style="flex:1;width:100%;min-height:0"></div>
+  <!-- 핀 -->
+  <div style="position:absolute;top:0;left:0;right:0;bottom:160px;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:100">
+    <div id="map-pin-inner" style="display:flex;flex-direction:column;align-items:center;margin-bottom:0;transition:transform .15s">
+      <div style="width:36px;height:36px;border-radius:50% 50% 50% 0;background:#e74c3c;transform:rotate(-45deg);box-shadow:0 4px 12px rgba(231,76,60,.4);display:flex;align-items:center;justify-content:center">
+        <div style="width:12px;height:12px;border-radius:50%;background:#fff;transform:rotate(45deg)"></div>
+      </div>
+      <div style="width:8px;height:8px;border-radius:50%;background:rgba(231,76,60,.3);margin-top:2px"></div>
+    </div>
+  </div>
+  <!-- 뒤로가기 -->
+  <button onclick="closeMapScreen()" style="position:absolute;top:14px;left:14px;width:44px;height:44px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 12px rgba(0,0,0,.2);font-size:20px;cursor:pointer;z-index:200;display:flex;align-items:center;justify-content:center">←</button>
+  <!-- 하단 바 -->
+  <div style="height:160px;background:#fff;padding:14px 16px 20px;flex-shrink:0;box-shadow:0 -4px 20px rgba(0,0,0,.1)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span style="font-size:22px">📍</span>
+      <div style="flex:1;min-width:0">
+        <div id="map-sel-name" style="font-size:15px;font-weight:700;color:#1a1d2e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">지도를 움직여 위치 선택</div>
+        <div id="map-sel-addr" style="font-size:12px;color:#6b7394;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+      </div>
+    </div>
+    <button id="map-confirm-btn" onclick="psConfirmMap()" style="width:100%;padding:15px;background:#3478f6;color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;display:block">이 위치로 설정</button>
   </div>
 </div>
 
@@ -1862,192 +1858,123 @@ var _mapDragTimer=null;
 
 
 function openAddrModal(target){
-  psTarget=target;
-  var screen=document.getElementById('place-search-screen');
-  screen.style.display='flex';
-  screen.style.position='fixed';
-  screen.style.top='0';
-  screen.style.left='0';
-  screen.style.width='100vw';
-  screen.style.height='100vh';
-  screen.style.margin='0';
-  screen.style.padding='0';
-  screen.style.flexDirection='column';
-  psSwitch(target,false);
-  document.getElementById('ps-map-container').style.display='none';
-  document.getElementById('ps-map-container').classList.remove('on');
-
-  // 기존 입력값 가져오기
-  var existingVal='';
-  if(target==='pickup'){
-    existingVal=(document.getElementById('pickup-input')||{value:''}).value.trim();
-  } else {
-    existingVal=(document.getElementById('dest-input')||{value:''}).value.trim();
-  }
-
-  var psInp=document.getElementById('ps-input');
-  var psClr=document.getElementById('ps-clear');
-
+  psTarget = target;
+  var screen = document.getElementById('place-search-screen');
+  screen.style.cssText = 'display:flex;position:fixed;top:0;left:0;width:100%;height:100%;z-index:9000;flex-direction:column;background:var(--bg)';
+  psSwitch(target, false);
+  var existingVal = target==='pickup'
+    ? ((document.getElementById('pickup-input')||{}).value||'')
+    : ((document.getElementById('dest-input')||{}).value||'');
+  existingVal = existingVal.trim();
+  var inp = document.getElementById('ps-input');
+  var clr = document.getElementById('ps-clear');
   if(existingVal){
-    // 기존값 있으면 바로 검색
-    psInp.value=existingVal;
-    psClr.style.display='block';
-    showPsAuto();
-    setTimeout(function(){ psSearch(); },100);
+    inp.value = existingVal; clr.style.display='block'; psSearch(existingVal);
   } else {
-    // 없으면 기본화면
-    psInp.value='';
-    psClr.style.display='none';
-    showPsDefault();
-    renderPsRecent();
-    renderPsFav();
-    setTimeout(function(){ psInp.focus(); },150);
+    inp.value=''; clr.style.display='none'; showPsDefault(); renderPsRecent(); renderPsFav();
+    setTimeout(function(){ inp.focus(); }, 150);
   }
 }
+
 function closePlaceSearch(){
-  var sc=document.getElementById('place-search-screen');
-  if(sc){ sc.style.display='none'; sc.classList.remove('on'); }
-  var mapCon=document.getElementById('ps-map-container');
-  if(mapCon){ mapCon.style.display='none'; mapCon.classList.remove('on'); }
-  var psCon=document.getElementById('ps-content');
-  if(psCon) psCon.style.display='block';
   clearTimeout(_mapDragTimer);
+  var sc = document.getElementById('place-search-screen');
+  if(sc) sc.style.display = 'none';
+  var ms = document.getElementById('map-screen');
+  if(ms) ms.style.display = 'none';
 }
+
+function closeMapScreen(){
+  clearTimeout(_mapDragTimer);
+  var ms = document.getElementById('map-screen');
+  if(ms) ms.style.display = 'none';
+}
+
 function psSwitch(target, doFocus){
-  if(doFocus === undefined) doFocus = true;
+  if(doFocus===undefined) doFocus=true;
   psTarget=target;
-  const badge=document.getElementById('ps-badge');
-  const tp=document.getElementById('ps-tab-pickup');
-  const td=document.getElementById('ps-tab-dest');
-  const inp=document.getElementById('ps-input');
+  var badge=document.getElementById('ps-badge');
+  var tp=document.getElementById('ps-tab-pickup');
+  var td=document.getElementById('ps-tab-dest');
+  var inp=document.getElementById('ps-input');
   if(target==='pickup'){
-    badge.textContent='📍 '+t('pickup_loc');badge.style.cssText='font-size:13px;font-weight:700;padding:6px 14px;border-radius:20px;background:#eef3ff;color:var(--accent)';
-    tp.style.cssText='flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid var(--accent);color:var(--accent);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit';
-    td.style.cssText='flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid transparent;color:var(--text3);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit';
-    inp.style.borderColor='var(--accent)';
+    if(badge){badge.textContent='📍 픽업 위치';badge.style.cssText='font-size:13px;font-weight:700;padding:6px 14px;border-radius:20px;background:#eef3ff;color:var(--accent)';}
+    if(tp) tp.style.cssText='flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid var(--accent);color:var(--accent);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit';
+    if(td) td.style.cssText='flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid transparent;color:var(--text3);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit';
+    if(inp) inp.style.borderColor='var(--accent)';
   } else {
-    badge.textContent='🚩 '+t('dest_loc');badge.style.cssText='font-size:13px;font-weight:700;padding:6px 14px;border-radius:20px;background:rgba(0,184,116,.1);color:var(--green)';
-    tp.style.cssText='flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid transparent;color:var(--text3);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit';
-    td.style.cssText='flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid var(--green);color:var(--green);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit';
-    inp.style.borderColor='var(--green)';
+    if(badge){badge.textContent='🚩 목적지';badge.style.cssText='font-size:13px;font-weight:700;padding:6px 14px;border-radius:20px;background:rgba(0,184,116,.1);color:var(--green)';}
+    if(tp) tp.style.cssText='flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid transparent;color:var(--text3);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit';
+    if(td) td.style.cssText='flex:1;padding:11px;background:transparent;border:none;border-bottom:3px solid var(--green);color:var(--green);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit';
+    if(inp) inp.style.borderColor='var(--green)';
   }
-  if(doFocus)document.getElementById('ps-input').focus();
+  if(doFocus && inp) inp.focus();
 }
+
 function showPsDefault(){document.getElementById('ps-default').style.display='block';document.getElementById('ps-autocomplete').style.display='none';document.getElementById('ps-results').style.display='none';}
 function showPsAuto(){document.getElementById('ps-default').style.display='none';document.getElementById('ps-autocomplete').style.display='block';document.getElementById('ps-results').style.display='none';}
 function showPsResults(){document.getElementById('ps-default').style.display='none';document.getElementById('ps-autocomplete').style.display='none';document.getElementById('ps-results').style.display='block';}
 
-let psTimer=null;
+var psTimer=null;
 function psOnInput(){
   var q=document.getElementById('ps-input').value;
   document.getElementById('ps-clear').style.display=q?'block':'none';
   clearTimeout(psTimer);
   if(!q){showPsDefault();return;}
-  psTimer=setTimeout(function(){ psSearch(q); },500);
+  psTimer=setTimeout(function(){psSearch(q);},500);
 }
 function psClear(){document.getElementById('ps-input').value='';document.getElementById('ps-clear').style.display='none';showPsDefault();document.getElementById('ps-input').focus();}
-
-function psAutoComplete(q){ psSearch(q); }
 
 function psSearch(q){
   if(!q) q=document.getElementById('ps-input').value.trim();
   if(!q) return;
-
   if(window.GOOGLE_READY && window.google && window.google.maps && window.google.maps.places && window.google.maps.places.Place){
     window.google.maps.places.Place.searchByText({
-      textQuery: q,
-      fields: ['displayName','formattedAddress','location','types','id'],
-      language: 'id',
-      locationBias: {
-        center: {lat: -6.2088, lng: 106.8456},
-        radius: 50000
-      }
+      textQuery:q, fields:['displayName','formattedAddress','location','types','id'],
+      language:'id', locationBias:{center:{lat:-6.2088,lng:106.8456},radius:50000}
     }).then(function(res){
-      var places = (res && res.places) || [];
-      if(places.length){
-        window._psResultList = places.map(function(p){
-          return {
-            icon: getCatIconByType(p.types||[]),
-            cat: p.types ? p.types[0].replace(/_/g,' ') : 'Tempat',
-            name: p.displayName||'',
-            addr: p.formattedAddress||'',
-            dist:'',
-            lat: p.location ? p.location.lat() : 0,
-            lng: p.location ? p.location.lng() : 0,
-            place_id: p.id||''
-          };
-        });
-        renderResults(q);
-      } else {
-        window._psResultList=[];
-        renderResults(q);
-      }
-    }).catch(function(e){
-      console.error('searchByText error:',e);
-      window._psResultList=[];
+      var places=(res&&res.places)||[];
+      window._psResultList=places.map(function(p){
+        return {icon:getCatIconByType(p.types||[]),cat:p.types?p.types[0].replace(/_/g,' '):'Tempat',
+          name:p.displayName||'',addr:p.formattedAddress||'',
+          lat:p.location?p.location.lat():0,lng:p.location?p.location.lng():0,place_id:p.id||''};
+      });
       renderResults(q);
-    });
+    }).catch(function(){if(window.KAKAO_READY)psSearchKakao(q);else{window._psResultList=[];renderResults(q);}});
+  } else if(window.KAKAO_READY){
+    psSearchKakao(q);
   } else {
-    // Google 안되면 카카오
-    if(window.KAKAO_READY) psSearchKakao(q);
+    window._psResultList=[]; renderResults(q);
   }
 }
 
 function getCatIconByType(types){
-  if(!types||!types.length) return '📍';
+  if(!types||!types.length)return '📍';
   var m={airport:'✈️',lodging:'🏨',restaurant:'🍽️',cafe:'☕',hospital:'🏥',bank:'🏦',shopping_mall:'🛒',store:'🏪',gas_station:'⛽',subway_station:'🚇',train_station:'🚉',mosque:'🕌',church:'⛪',school:'🏫',university:'🎓',park:'🌳',museum:'🏛️'};
   for(var i=0;i<types.length;i++){if(m[types[i]])return m[types[i]];}
   return '📍';
 }
 
 function psSearchKakao(q){
-  var ps = new window.kakao.maps.services.Places();
-  ps.keywordSearch(q, function(data, status){
-    if(status === window.kakao.maps.services.Status.OK){
-      window._psResultList = data.map(function(p){
-        return {
-          icon: getCatIcon(p.category_group_code),
-          cat: p.category_group_name||'장소',
-          name: p.place_name,
-          addr: p.road_address_name||p.address_name,
-          dist: p.distance?(p.distance>=1000?(p.distance/1000).toFixed(1)+'km':p.distance+'m'):'',
-          lat: parseFloat(p.y),
-          lng: parseFloat(p.x)
-        };
+  var ps=new window.kakao.maps.services.Places();
+  ps.keywordSearch(q,function(data,status){
+    if(status===window.kakao.maps.services.Status.OK){
+      window._psResultList=data.map(function(p){
+        return {icon:getCatIcon(p.category_group_code),cat:p.category_group_name||'장소',
+          name:p.place_name,addr:p.road_address_name||p.address_name,
+          lat:parseFloat(p.y),lng:parseFloat(p.x)};
       });
       renderResults(q);
-    } else psFallback(q);
-  }, {size:15});
+    } else {window._psResultList=[];renderResults(q);}
+  },{size:15});
 }
 
-
-function psFallback(q){
-  window._psResultList = [];
-  renderResults(q);
-}
-
-function renderAutoList(q){
-  var list = window._psAutoList||[];
-  var ac = document.getElementById('ps-autocomplete');
-  if(!ac) return;
-  ac.innerHTML = list.length ? list.map(function(p,i){
-    return '<div style="display:flex;align-items:center;gap:13px;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--surface)" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'var(--surface)\'">'
-      +'<div onclick="psSelectPlace('+i+',\'auto\')" style="width:40px;height:40px;border-radius:11px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;cursor:pointer">📍</div>'
-      +'<div onclick="psSelectPlace('+i+',\'auto\')" style="flex:1;min-width:0;cursor:pointer">'
-        +'<div style="font-size:16px;font-weight:700;color:var(--text)">'+hl(p.name,q)+'</div>'
-        +'<div style="font-size:13px;color:var(--text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.addr||'')+'</div>'
-      +'</div>'
-      +'<button onclick="event.stopPropagation();psQuickSet('+i+',\'auto\')" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0">설정</button>'
-    +'</div>';
-  }).join('')+'<div onclick="psSearch()" style="padding:14px 20px;cursor:pointer;color:var(--accent);font-size:14px;font-weight:700;border-top:1px solid var(--border);background:var(--surface)">🔍 "'+q+'" 전체 검색</div>'
-  : '<div style="padding:20px;text-align:center;color:var(--text3)">검색 중…</div>';
-  showPsAuto();
-}
+function psFallback(q){window._psResultList=[];renderResults(q);}
 
 function hl(text,q){
-  if(!q) return text;
+  if(!q)return text;
   var idx=text.toLowerCase().indexOf(q.toLowerCase());
-  if(idx<0) return text;
+  if(idx<0)return text;
   return text.slice(0,idx)+'<span style="color:var(--accent);font-weight:900">'+text.slice(idx,idx+q.length)+'</span>'+text.slice(idx+q.length);
 }
 
@@ -2056,216 +1983,118 @@ function renderResults(q){
   document.getElementById('ps-result-count').textContent='"'+q+'" '+list.length+'건';
   document.getElementById('ps-result-list').innerHTML=list.length
     ?list.map(function(p,i){
-      return '<div style="display:flex;align-items:center;gap:13px;padding:16px 20px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--surface)" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'var(--surface)\'">'
-        +'<div onclick="psSelectPlace('+i+',\'result\')" style="width:48px;height:48px;border-radius:14px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">'+(p.icon||'📍')+'</div>'
-        +'<div onclick="psSelectPlace('+i+',\'result\')" style="flex:1;min-width:0">'
+      return '<div style="display:flex;align-items:center;gap:13px;padding:16px 20px;border-bottom:1px solid var(--border);background:var(--surface)">'
+        +'<div onclick="psSelectPlace('+i+')" style="width:48px;height:48px;border-radius:14px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;cursor:pointer">'+(p.icon||'📍')+'</div>'
+        +'<div onclick="psSelectPlace('+i+')" style="flex:1;min-width:0;cursor:pointer">'
           +'<div style="font-size:16px;font-weight:700;color:var(--text)">'+hl(p.name,q)+'</div>'
-          +'<div style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600">'+(p.cat||'')+'</div>'
+          +'<div style="font-size:12px;color:var(--accent);margin-top:2px">'+(p.cat||'')+'</div>'
           +'<div style="font-size:13px;color:var(--text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.addr||'')+'</div>'
         +'</div>'
-        +'<button onclick="event.stopPropagation();psQuickSet('+i+',\'result\')" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0">설정</button>'
+        +'<button onclick="event.stopPropagation();psQuickSet('+i+')" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0">설정</button>'
       +'</div>';
     }).join('')
-    :'<div style="padding:48px 20px;text-align:center"><div style="font-size:40px;margin-bottom:12px">🔍</div><div style="font-size:17px;font-weight:700;color:var(--text2)">"'+q+'" 결과 없음</div></div>';
+    :'<div style="padding:48px 20px;text-align:center"><div style="font-size:40px;margin-bottom:12px">🔍</div><div style="font-size:17px;color:var(--text2)">"'+q+'" 결과 없음</div></div>';
   showPsResults();
-}
-
-// 지도 없이 바로 입력창에 설정
-function psQuickSet(idx, from){
-  var list = from==='auto' ? window._psAutoList : window._psResultList;
-  var p = list[idx]; if(!p) return;
-  psSelectedPlace = p;
-  window._mapSelectedAddr = {name:p.name||p.n||'', addr:p.addr||p.a||'', lat:p.lat||0, lng:p.lng||0};
-  if(p.lat && p.lng){
-    if(psTarget==='pickup') window._pickupCoord={lat:p.lat,lng:p.lng};
-    else window._destCoord={lat:p.lat,lng:p.lng};
-  }
-  psConfirmPlace(p.name||p.n||'', p.addr||p.a||'');
 }
 
 function getCatIcon(code){var m={MT1:'🛒',CS2:'🏪',BK9:'🏦',CT1:'🎭',PO3:'🏛️',AT4:'🗺️',AD5:'🏨',FD6:'🍽️',CE7:'☕',HP8:'🏥',OL7:'⛽',SW8:'🚇',PK6:'🅿️'};return m[code]||'📍';}
 
-function psSelectPlace(idx,from){
-  var list = from==='auto' ? window._psAutoList : window._psResultList;
-  var p = list[idx]; if(!p) return;
-  psSelectedPlace = p;
-  if(p.place_id && window.GOOGLE_READY && window.google && window.google.maps.places && window.google.maps.places.Place){
-    var place = new window.google.maps.places.Place({id:p.place_id});
-    place.fetchFields({fields:['location','formattedAddress','displayName']})
-    .then(function(){
-      if(place.location){ p.lat=place.location.lat(); p.lng=place.location.lng(); }
-      if(place.formattedAddress) p.addr=place.formattedAddress;
-      if(place.displayName) p.name=place.displayName;
-      _openMap(p);
-    }).catch(function(){ _openMap(p); });
-  } else { _openMap(p); }
+function psQuickSet(idx){
+  var p=(window._psResultList||[])[idx]; if(!p)return;
+  psSelectedPlace=p;
+  window._mapSelectedAddr={name:p.name,addr:p.addr||'',lat:p.lat||0,lng:p.lng||0};
+  if(p.lat&&p.lng){ if(psTarget==='pickup')window._pickupCoord={lat:p.lat,lng:p.lng}; else window._destCoord={lat:p.lat,lng:p.lng}; }
+  psConfirmPlace(p.name,p.addr||'');
 }
 
-function _openMap(p){
-  var name = p.name||p.n||'';
-  var addr = p.addr||p.a||'';
-  var lat = p.lat||0;
-  var lng = p.lng||0;
-
-  // _mapSelectedAddr 먼저 저장 (showMap이 덮어쓰기 전에)
-  window._mapSelectedAddr = {name:name, addr:addr, lat:lat, lng:lng};
-
-  // 지도 표시
-  showMap(lat, lng, name);
-
-  // 하단 바 업데이트
-  var nameEl = document.getElementById('map-sel-name');
-  var addrEl = document.getElementById('map-sel-addr');
-  if(nameEl) nameEl.textContent = name;
-  if(addrEl) addrEl.textContent = addr;
+function psSelectPlace(idx){
+  var p=(window._psResultList||[])[idx]; if(!p)return;
+  psSelectedPlace=p;
+  openMapScreen(p.lat||0, p.lng||0, p.name, p.addr||'');
 }
 
-var _gMap = null;
-var _gGeocoder = null;
-var _mapDragTimer = null;
-var _gListenersAdded = false;
+var _gMap=null, _gGeocoder=null, _mapDragTimer=null;
 
-function showMap(lat, lng, name){
-  var mapCon = document.getElementById('ps-map-container');
-  var psCon  = document.getElementById('ps-content');
-  if(mapCon){ mapCon.classList.add('on'); mapCon.style.display='flex'; }
-  if(psCon)  psCon.style.display='none';
-
-  var nameEl = document.getElementById('map-sel-name');
-  var addrEl = document.getElementById('map-sel-addr');
-  if(nameEl) nameEl.textContent = name || 'Pilih lokasi';
-  if(addrEl) addrEl.textContent = '';
-
-  window._mapSelectedAddr = {name:name||'', addr:'', lat:lat||0, lng:lng||0};
-
-  if(!window.GOOGLE_READY || !window.google || !window.google.maps){
-    return;
-  }
-
-  var container = document.getElementById('google-map-div');
-  var center = {lat: lat||0, lng: lng||0};
-
+function openMapScreen(lat,lng,name,addr){
+  var ms=document.getElementById('map-screen');
+  ms.style.cssText='display:flex;position:fixed;top:0;left:0;width:100%;height:100%;z-index:9500;flex-direction:column;background:#fff';
+  window._mapSelectedAddr={name:name||'',addr:addr||'',lat:lat||0,lng:lng||0};
+  var nameEl=document.getElementById('map-sel-name');
+  var addrEl=document.getElementById('map-sel-addr');
+  if(nameEl) nameEl.textContent=name||'위치 선택';
+  if(addrEl) addrEl.textContent=addr||'';
+  if(!window.GOOGLE_READY||!window.google||!window.google.maps) return;
+  var container=document.getElementById('google-map-div');
+  var center={lat:lat||0,lng:lng||0};
   setTimeout(function(){
     if(!_gMap){
-      _gMap = new window.google.maps.Map(container, {
-        center: center,
-        zoom: 16,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false,
-        clickableIcons: false,
-        gestureHandling: 'greedy',
-        zoomControlOptions: {position: window.google.maps.ControlPosition.RIGHT_CENTER}
+      _gMap=new window.google.maps.Map(container,{
+        center:center,zoom:16,mapTypeControl:false,streetViewControl:false,
+        fullscreenControl:false,clickableIcons:false,gestureHandling:'greedy'
       });
-      _gGeocoder = new window.google.maps.Geocoder();
-
-      // 이벤트는 최초 1회만 등록
-      window.google.maps.event.addListener(_gMap, 'dragstart', function(){
-        var pin = document.getElementById('map-pin-inner');
-        if(pin) pin.style.transform = 'translateY(-130%)';
-        var ne = document.getElementById('map-sel-name');
-        if(ne) ne.textContent = 'Memilih lokasi...';
+      _gGeocoder=new window.google.maps.Geocoder();
+      window.google.maps.event.addListener(_gMap,'dragstart',function(){
+        var pin=document.getElementById('map-pin-inner');
+        if(pin) pin.style.transform='translateY(-20px)';
+        var ne=document.getElementById('map-sel-name');
+        if(ne) ne.textContent='위치 선택 중...';
       });
-
-      window.google.maps.event.addListener(_gMap, 'idle', function(){
-        var pin = document.getElementById('map-pin-inner');
-        if(pin) pin.style.transform = 'translateY(-100%)';
+      window.google.maps.event.addListener(_gMap,'idle',function(){
+        var pin=document.getElementById('map-pin-inner');
+        if(pin) pin.style.transform='translateY(0)';
+        var ms2=document.getElementById('map-screen');
+        if(!ms2||ms2.style.display==='none') return;
         clearTimeout(_mapDragTimer);
-        _mapDragTimer = setTimeout(_geocodeCenterGoogle, 300);
+        _mapDragTimer=setTimeout(_geocodeCenter,400);
       });
-
     } else {
-      _gMap.setCenter(center);
-      _gMap.setZoom(16);
+      _gMap.setCenter(center); _gMap.setZoom(16);
     }
-
-    window.google.maps.event.trigger(_gMap, 'resize');
+    window.google.maps.event.trigger(_gMap,'resize');
     _gMap.setCenter(center);
-    _geocodeCenterGoogle();
-  }, 100);
+    _geocodeCenter();
+  },150);
 }
 
-function _geocodeCenterGoogle(){
-  if(!_gMap || !_gGeocoder) return;
-  // 지도 컨테이너가 닫혀있으면 실행 안 함
-  var mapCon = document.getElementById('ps-map-container');
-  if(!mapCon || mapCon.style.display==='none') return;
-  var center = _gMap.getCenter();
-  var curName = (document.getElementById('map-sel-name')||{}).textContent || '';
-  _gGeocoder.geocode({location:{lat:center.lat(),lng:center.lng()}, language:'id'}, function(results, status){
-    var nameEl = document.getElementById('map-sel-name');
-    var addrEl = document.getElementById('map-sel-addr');
-    if(status==='OK' && results[0]){
-      var comps = results[0].address_components;
-      var name = (comps[1]&&comps[1].long_name) || (comps[0]&&comps[0].long_name) || curName;
-      var addr = results[0].formatted_address;
-      if(nameEl) nameEl.textContent = name;
-      if(addrEl) addrEl.textContent = addr;
-      window._mapSelectedAddr = {name:name, addr:addr, lat:center.lat(), lng:center.lng()};
+function _geocodeCenter(){
+  if(!_gMap||!_gGeocoder) return;
+  var ms=document.getElementById('map-screen');
+  if(!ms||ms.style.display==='none') return;
+  var c=_gMap.getCenter();
+  _gGeocoder.geocode({location:{lat:c.lat(),lng:c.lng()},language:'id'},function(results,status){
+    var ms2=document.getElementById('map-screen');
+    if(!ms2||ms2.style.display==='none') return;
+    var nameEl=document.getElementById('map-sel-name');
+    var addrEl=document.getElementById('map-sel-addr');
+    if(status==='OK'&&results[0]){
+      var comps=results[0].address_components;
+      var name=(comps[1]&&comps[1].long_name)||(comps[0]&&comps[0].long_name)||results[0].formatted_address;
+      var addr=results[0].formatted_address;
+      if(nameEl) nameEl.textContent=name;
+      if(addrEl) addrEl.textContent=addr;
+      window._mapSelectedAddr={name:name,addr:addr,lat:c.lat(),lng:c.lng()};
     } else {
-      // 실패해도 좌표 대신 기존 이름 유지
-      if(nameEl && nameEl.textContent.indexOf(',')>0) nameEl.textContent = curName;
-      window._mapSelectedAddr = {name:curName, addr:'', lat:center.lat(), lng:center.lng()};
+      window._mapSelectedAddr={name:(nameEl?nameEl.textContent:''),addr:'',lat:c.lat(),lng:c.lng()};
     }
   });
 }
 
-function pickupGPS(){
-  if(!navigator.geolocation){ showToast('위치 권한이 필요합니다'); return; }
-  showToast('📡 현재 위치 측위 중…');
-  navigator.geolocation.getCurrentPosition(function(pos){
-    var lat=pos.coords.latitude, lng=pos.coords.longitude;
-    psTarget='pickup';
-    var screen=document.getElementById('place-search-screen');
-    screen.style.display='flex';
-    psSwitch('pickup',false);
-    showMap(lat, lng, 'Lokasi saat ini');
-  },function(){
-    showToast('위치 접근이 거부되었습니다');
-  },{enableHighAccuracy:true,timeout:8000});
-}
-
-function psMapBack(){
-  // idle 이벤트 타이머 중단
-  clearTimeout(_mapDragTimer);
-  var mapCon=document.getElementById('ps-map-container');
-  var psCon=document.getElementById('ps-content');
-  if(mapCon){ mapCon.classList.remove('on'); mapCon.style.display='none'; }
-  if(psCon)  psCon.style.display='block';
-}
-
 function psConfirmMap(){
   clearTimeout(_mapDragTimer);
-  if(!window._mapSelectedAddr || !window._mapSelectedAddr.name){
-    showToast('위치를 선택해주세요'); return;
-  }
-  var a = window._mapSelectedAddr;
-  // "Memilih lokasi..." 같은 임시 텍스트 걸러냄
-  if(a.name === 'Memilih lokasi...' || !a.name.trim()){
-    showToast('위치를 선택해주세요'); return;
-  }
-  var mapCon = document.getElementById('ps-map-container');
-  if(mapCon){ mapCon.classList.remove('on'); mapCon.style.display='none'; }
-  var psCon = document.getElementById('ps-content');
-  if(psCon) psCon.style.display='block';
-  psConfirmPlace(a.name, a.addr||a.name);
+  var a=window._mapSelectedAddr;
+  if(!a||!a.name||a.name==='위치 선택 중...'){showToast('위치를 선택해주세요');return;}
+  psConfirmPlace(a.name,a.addr||a.name);
 }
 
 function psConfirmPlace(name,addr){
-  if(!name||name==='Memilih lokasi...'||name==='Pilih lokasi'||name==='지도를 움직여 위치 선택') return;
+  if(!name||name==='위치 선택 중...') return;
   psRecent=psRecent.filter(function(r){return r.name!==name;});
   psRecent.unshift({name:name,addr:addr,time:Date.now()});
   if(psRecent.length>8) psRecent.pop();
   localStorage.setItem('ps_recent',JSON.stringify(psRecent));
-
-  // 좌표 저장 (psSelectedPlace 또는 _mapSelectedAddr에서)
-  var coord = null;
-  if(window._mapSelectedAddr && window._mapSelectedAddr.lat){
-    coord = {lat:window._mapSelectedAddr.lat, lng:window._mapSelectedAddr.lng};
-  } else if(psSelectedPlace && psSelectedPlace.lat){
-    coord = {lat:psSelectedPlace.lat, lng:psSelectedPlace.lng};
-  }
-
+  var coord=null;
+  if(window._mapSelectedAddr&&window._mapSelectedAddr.lat) coord={lat:window._mapSelectedAddr.lat,lng:window._mapSelectedAddr.lng};
+  else if(psSelectedPlace&&psSelectedPlace.lat) coord={lat:psSelectedPlace.lat,lng:psSelectedPlace.lng};
   if(psTarget==='pickup'){
     document.getElementById('pickup-input').value=name;
     document.getElementById('map-label-driver').textContent='픽업: '+name;
@@ -2277,22 +2106,28 @@ function psConfirmPlace(name,addr){
     if(coord) window._destCoord=coord;
   }
   closePlaceSearch();
-  showToast('✓ '+(psTarget==='pickup'?t('pickup_loc'):t('dest_loc'))+': '+name);
+  showToast('✓ '+(psTarget==='pickup'?'픽업':'목적지')+': '+name);
 }
+
 function psUseGPS(){
   if(!navigator.geolocation){showToast('위치 권한 필요');return;}
   showToast('📡 위치 측위 중…');
   navigator.geolocation.getCurrentPosition(function(pos){
-    var lat=pos.coords.latitude, lng=pos.coords.longitude;
-    var name='Lokasi saat ini';
-    window._mapSelectedAddr={name:name,addr:lat.toFixed(5)+', '+lng.toFixed(5),lat:lat,lng:lng};
-    showMap(lat, lng, name);
-    var nameEl=document.getElementById('map-sel-name');
-    var addrEl=document.getElementById('map-sel-addr');
-    if(nameEl) nameEl.textContent=name;
-    if(addrEl) addrEl.textContent=lat.toFixed(5)+', '+lng.toFixed(5);
-  },function(){ showToast('위치 접근 거부'); });
+    openMapScreen(pos.coords.latitude,pos.coords.longitude,'Lokasi saat ini','');
+  },function(){showToast('위치 접근 거부');});
 }
+
+function pickupGPS(){
+  if(!navigator.geolocation){showToast('위치 권한이 필요합니다');return;}
+  showToast('📡 현재 위치 측위 중…');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    psTarget='pickup';
+    openAddrModal('pickup');
+    setTimeout(function(){openMapScreen(pos.coords.latitude,pos.coords.longitude,'Lokasi saat ini','');},200);
+  },function(){showToast('위치 접근이 거부되었습니다');},{enableHighAccuracy:true,timeout:8000});
+}
+
+function psMapBack(){closeMapScreen();}
 function renderPsRecent(){
   const el=document.getElementById('ps-recent-list');
   el.innerHTML=psRecent.length
