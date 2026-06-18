@@ -82,8 +82,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
 .phone{width:100%;min-height:100vh;min-height:100dvh;background:var(--bg);display:flex;flex-direction:column;position:relative;border-radius:0;box-shadow:none;overflow:hidden;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
 
 /* 상태바 */
-.status-bar{display:flex;justify-content:space-between;align-items:center;padding:16px 28px 8px;color:var(--text)}
-.status-bar .time{font-size:16px;font-weight:700}
+
 .status-icons{display:flex;gap:6px;align-items:center}
 
 /* 역할 전환 */
@@ -461,14 +460,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
 <div class="phone">
 
 <!-- 상태바 -->
-<div class="status-bar">
-  <span class="time" id="clock">9:41</span>
-  <div class="status-icons">
-    <svg width="16" height="12" viewBox="0 0 16 12" fill="#1a1d2e"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4.5" y="2" width="3" height="10" rx="1"/><rect x="9" y="0" width="3" height="12" rx="1"/><rect x="13.5" y="0" width="2.5" height="12" rx="1" opacity=".3"/></svg>
-    <svg width="15" height="12" viewBox="0 0 15 12" fill="#1a1d2e"><path d="M7.5 2.5C9.8 2.5 11.9 3.4 13.4 4.9L14.8 3.5C12.9 1.6 10.3.5 7.5.5S2.1 1.6.2 3.5l1.4 1.4C3.1 3.4 5.2 2.5 7.5 2.5z" opacity=".4"/><path d="M7.5 5.5C9 5.5 10.4 6.1 11.4 7.1l1.4-1.4C11.3 4.2 9.5 3.5 7.5 3.5S3.7 4.2 2.2 5.7l1.4 1.4C4.6 6.1 6 5.5 7.5 5.5z" opacity=".7"/><circle cx="7.5" cy="10" r="1.5"/></svg>
-    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.5" stroke="#1a1d2e" stroke-opacity=".3"/><rect x="1.5" y="1.5" width="16" height="9" rx="2.5" fill="#1a1d2e"/><path d="M23 4v4a2 2 0 000-4z" fill="#1a1d2e" fill-opacity=".4"/></svg>
-  </div>
-</div>
+
 
 <!-- 언어 전환 -->
 <div class="lang-bar">
@@ -1260,11 +1252,6 @@ function applyI18n() {
 }
 
 // ══ 시계 ══
-function updateClock(){
-  var n=new Date();
-  var el=document.getElementById('clock');
-  if(el) el.textContent=n.getHours()+':'+(n.getMinutes()<10?'0':'')+n.getMinutes();
-}
 
 // ══ 역할/탭 전환 ══
 function switchRole(role,btn){
@@ -2645,8 +2632,7 @@ function initApp(role) {
     if (sd) sd.classList.add('active');
   }
   // 시계 시작
-  updateClock();
-  setInterval(updateClock,10000);
+
 
   // 근무 타이머
   var workSec=7*3600+23*60+14;
