@@ -2325,7 +2325,6 @@ function openAdminScreen(){
 function closeAdminScreen(){
   var sc = document.getElementById('admin-screen');
   if(sc) sc.style.display = 'none';
-  _adminAuthed = false;
 }
 
 function renderAdminList(){
@@ -2347,8 +2346,8 @@ function renderAdminList(){
           +'<div style="font-size:11px;color:var(--text3);margin-top:2px">📍 '+ad.addr+'</div>'
         +'</div>'
         +'<div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">'
-          +'<button onclick="openEditAd('+i+')" style="background:var(--surface2);border:none;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;color:var(--accent);font-family:inherit">수정</button>'
-          +'<button onclick="deleteAd('+i+')" style="background:rgba(255,59,48,.1);border:none;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;color:#ff3b30;font-family:inherit">삭제</button>'
+          +'<button onclick="event.stopPropagation();openEditAd('+i+')" style="background:var(--surface2);border:none;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;color:var(--accent);font-family:inherit">수정</button>'
+          +'<button onclick="event.stopPropagation();deleteAd('+i+')" style="background:rgba(255,59,48,.1);border:none;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;color:#ff3b30;font-family:inherit">삭제</button>'
         +'</div>'
         +'</div>';
     }).join('')
