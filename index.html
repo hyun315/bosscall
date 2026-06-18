@@ -275,6 +275,9 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
 /* 모달 공통 */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);z-index:8000;align-items:flex-end;justify-content:center}
 .modal-overlay.open{display:flex}
+#ad-edit-modal{z-index:9100}
+#mo-confirm{z-index:9100}
+#admin-auth-modal{z-index:9100}
 .modal{width:400px;background:var(--surface);border-radius:28px 28px 0 0;border-top:1px solid var(--border);padding:10px 22px 46px;animation:slideUp .3s ease;max-height:92vh;overflow-y:auto}
 .modal::-webkit-scrollbar{display:none}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
