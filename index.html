@@ -24,7 +24,7 @@ window._googleMapsReady = function(){
 (function(){
   var s = document.createElement('script');
   s.src = 'https://maps.googleapis.com/maps/api/js?key=' + window.GOOGLE_KEY
-    + '&libraries=places&language=id&callback=_googleMapsReady';
+    + '&libraries=places&v=alpha&language=id&callback=_googleMapsReady';
   s.async = true;
   s.defer = true;
   document.head.appendChild(s);
@@ -1867,7 +1867,8 @@ function openAddrModal(target){
   }
 }
 function closePlaceSearch(){document.getElementById('place-search-screen').style.display='none';}
-function psSwitch(target,doFocus=true){
+function psSwitch(target, doFocus){
+  if(doFocus === undefined) doFocus = true;
   psTarget=target;
   const badge=document.getElementById('ps-badge');
   const tp=document.getElementById('ps-tab-pickup');
@@ -1901,60 +1902,56 @@ function psOnInput(){
 function psClear(){document.getElementById('ps-input').value='';document.getElementById('ps-clear').style.display='none';showPsDefault();document.getElementById('ps-input').focus();}
 
 function psAutoComplete(q){
-  if(window.GOOGLE_READY && window.google && window.google.maps && window.google.maps.places){
-    var svc = new window.google.maps.places.AutocompleteService();
-    svc.getPlacePredictions({input:q, language:'id'}, function(predictions, status){
-      if(predictions && predictions.length){
-        window._psAutoList = predictions.map(function(p){
+  if(window.GOOGLE_READY && window.google && window.google.maps && window.google.maps.places && window.google.maps.places.AutocompleteSuggestion){
+    window.google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({input:q})
+    .then(function(res){
+      var suggestions = (res && res.suggestions) || [];
+      if(suggestions.length){
+        window._psAutoList = suggestions.map(function(s){
+          var pp = s.placePrediction;
           return {
             icon:'📍',
-            name: p.structured_formatting ? p.structured_formatting.main_text : p.description,
-            addr: p.structured_formatting ? (p.structured_formatting.secondary_text||'') : p.description,
+            name: pp.mainText ? pp.mainText.text : pp.text.text,
+            addr: pp.secondaryText ? pp.secondaryText.text : '',
             dist:'',
-            place_id: p.place_id
+            place_id: pp.placeId
           };
         });
         renderAutoList(q);
-      } else {
-        psSearchKakao(q);
-      }
-    });
-  } else if(window.KAKAO_READY){
-    psSearchKakao(q);
-  } else {
-    psFallback(q);
-  }
+      } else { psFallback(q); }
+    }).catch(function(){ psFallback(q); });
+  } else if(window.KAKAO_READY){ psSearchKakao(q); }
+  else { psFallback(q); }
 }
 
 function psSearch(){
   var q = document.getElementById('ps-input').value.trim();
   if(!q) return;
-  if(window.GOOGLE_READY && window.google && window.google.maps && window.google.maps.places){
-    var svc = new window.google.maps.places.PlacesService(document.createElement('div'));
-    svc.textSearch({query:q, language:'id'}, function(results, status){
-      if(results && results.length){
-        window._psResultList = results.map(function(p){
+  if(window.GOOGLE_READY && window.google && window.google.maps && window.google.maps.places && window.google.maps.places.Place){
+    window.google.maps.places.Place.searchByText({
+      textQuery: q,
+      fields: ['displayName','formattedAddress','location','types','id'],
+      language: 'id'
+    }).then(function(res){
+      var places = (res && res.places) || [];
+      if(places.length){
+        window._psResultList = places.map(function(p){
           return {
             icon: getCatIconByType(p.types||[]),
             cat: p.types ? p.types[0].replace(/_/g,' ') : 'Tempat',
-            name: p.name,
-            addr: p.formatted_address||'',
+            name: p.displayName||'',
+            addr: p.formattedAddress||'',
             dist:'',
-            lat: p.geometry ? p.geometry.location.lat() : 0,
-            lng: p.geometry ? p.geometry.location.lng() : 0,
-            place_id: p.place_id||''
+            lat: p.location ? p.location.lat() : 0,
+            lng: p.location ? p.location.lng() : 0,
+            place_id: p.id||''
           };
         });
         renderResults(q);
-      } else {
-        psFallback(q);
-      }
-    });
-  } else if(window.KAKAO_READY){
-    psSearchKakao(q);
-  } else {
-    psFallback(q);
-  }
+      } else { psFallback(q); }
+    }).catch(function(){ psFallback(q); });
+  } else if(window.KAKAO_READY){ psSearchKakao(q); }
+  else { psFallback(q); }
 }
 
 function getCatIconByType(types){
@@ -2056,20 +2053,16 @@ function psSelectPlace(idx,from){
   var list = from==='auto' ? window._psAutoList : window._psResultList;
   var p = list[idx]; if(!p) return;
   psSelectedPlace = p;
-  if(p.place_id && window.GOOGLE_READY && window.google){
-    var svc = new window.google.maps.places.PlacesService(document.createElement('div'));
-    svc.getDetails({placeId:p.place_id, fields:['geometry','formatted_address','name']}, function(result, status){
-      if(status === window.google.maps.places.PlacesServiceStatus.OK && result.geometry){
-        p.lat = result.geometry.location.lat();
-        p.lng = result.geometry.location.lng();
-        if(result.formatted_address) p.addr = result.formatted_address;
-        if(result.name) p.name = result.name;
-      }
+  if(p.place_id && window.GOOGLE_READY && window.google && window.google.maps.places && window.google.maps.places.Place){
+    var place = new window.google.maps.places.Place({id:p.place_id});
+    place.fetchFields({fields:['location','formattedAddress','displayName']})
+    .then(function(){
+      if(place.location){ p.lat=place.location.lat(); p.lng=place.location.lng(); }
+      if(place.formattedAddress) p.addr=place.formattedAddress;
+      if(place.displayName) p.name=place.displayName;
       _openMap(p);
-    });
-  } else {
-    _openMap(p);
-  }
+    }).catch(function(){ _openMap(p); });
+  } else { _openMap(p); }
 }
 
 function _openMap(p){
