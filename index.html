@@ -2377,6 +2377,13 @@ function renderPsFav(){
 // ══════════════════════════════════
 // 📢 광고 관리
 // ══════════════════════════════════
+// 광고 데이터 강제 초기화 (버전 관리)
+var AD_VERSION = '2';
+if(localStorage.getItem('ad_version') !== AD_VERSION){
+  localStorage.removeItem('ad_list');
+  localStorage.setItem('ad_version', AD_VERSION);
+}
+
 var adList = JSON.parse(localStorage.getItem('ad_list') || 'null') || [
   {emoji:'🇰🇷', title:'Chir Chir Fusion Chicken', sub:'Ayam Korea terbaik di Jakarta', addr:'Grand Indonesia, Jl. M.H. Thamrin No.1, Jakarta Pusat', color:'#e74c3c'},
   {emoji:'🥩', title:'Sariwangi Korean BBQ', sub:'Daging sapi premium ala Korea', addr:'Jl. Kemang Raya No.45, Jakarta Selatan', color:'#c0392b'},
