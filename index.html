@@ -561,18 +561,24 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
   <!-- 통계 탭 -->
   <!-- 기사 현황 탭 (사장이 기사 화면 조회) -->
   <div class="tab-panel" id="tab-driver-status">
+
+    <!-- 기사 정보 입력 -->
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 16px 8px">
+      <span style="font-size:13px;font-weight:800;color:var(--text2);letter-spacing:.05em">기사 목록</span>
+      <button onclick="addDriverSlot()" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">＋ 기사 추가</button>
+    </div>
+    <div id="driver-slot-list" style="padding:0 14px"></div>
+
     <div class="section-title" data-i18n="role_driver">기사 현황</div>
     <div class="card">
-      <!-- 출퇴근 상태 -->
       <div style="padding:16px">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
           <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:24px">🚗</div>
           <div>
-            <div style="font-size:16px;font-weight:800;color:var(--text)" id="boss-view-driver-name">김현수 기사님</div>
+            <div style="font-size:16px;font-weight:800;color:var(--text)" id="boss-view-driver-name">-</div>
             <div id="boss-view-status" style="font-size:13px;color:var(--green);font-weight:700;margin-top:2px">● 대기 중</div>
           </div>
         </div>
-        <!-- 오늘 출퇴근 -->
         <div id="boss-view-log-list"></div>
       </div>
     </div>
@@ -687,7 +693,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
         <div class="inp-label" data-i18n="wa_number">Nomor WhatsApp Sopir</div>
         <div style="display:flex;gap:8px;align-items:center">
           <span style="font-size:20px">🇮🇩</span>
-          <input class="inp" id="kakao-api-key" data-i18n-ph="wa_placeholder" placeholder="+62 812 3456 7890" style="margin-bottom:0;flex:1" />
+          <input class="inp" id="kakao-api-key" data-i18n-ph="wa_placeholder" placeholder="+62 812 3456 7890" style="margin-bottom:0;flex:1" oninput="syncWaFromKakaoTab()" />
         </div>
         <div style="font-size:12px;color:var(--text3);margin-top:8px" data-i18n="wa_format">Format: +62</div>
         <div style="margin-top:14px">
@@ -1055,11 +1061,10 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
 // 테스트용 고정 번호 (+82 10 8518 4845 → 821085184845)
 var TEST_WA_NUMBER = '821085184845';
 function getWaNumber(type){
-  // 테스트 기간: 고정 번호 사용
-  return TEST_WA_NUMBER;
-  // 실제 운영 시 아래로 교체:
-  // if(type==='boss') return (localStorage.getItem('wa_boss_number')||'').replace(/\s+|\+/g,'');
-  // return (localStorage.getItem('wa_number')||'').replace(/\s+|\+/g,'');
+  // 활성 기사 번호 사용
+  var active = (typeof driverList !== 'undefined' && driverList[activeDriverIdx]) || null;
+  var num = (active && active.wa) ? active.wa : (localStorage.getItem('wa_number') || TEST_WA_NUMBER);
+  return num.replace(/\s+|\+/g,'') || TEST_WA_NUMBER;
 }
 var i18n = {
   ko:{
@@ -1621,6 +1626,137 @@ var logList=[
   {date:'6/13',day:'목',in:'09:00',out:'18:05',total:'9:05',ot:'',oting:false},
   {date:'6/12',day:'수',in:'09:10',out:'21:30',total:'12:20',ot:'4:20',oting:false},
 ];
+// 기사 목록
+var driverList = JSON.parse(localStorage.getItem('driver_list') || 'null') || [
+  {name:'', wa:'', active:true}
+];
+var activeDriverIdx = parseInt(localStorage.getItem('active_driver_idx') || '0');
+
+function saveDriverList(){
+  localStorage.setItem('driver_list', JSON.stringify(driverList));
+  localStorage.setItem('active_driver_idx', activeDriverIdx);
+  // 활성 기사 WA 번호 → wa_number에 동기화
+  var active = driverList[activeDriverIdx] || driverList[0];
+  if(active && active.wa) localStorage.setItem('wa_number', active.wa);
+}
+
+function renderDriverSlots(){
+  var container = document.getElementById('driver-slot-list');
+  if(!container) return;
+  container.innerHTML = driverList.map(function(d, i){
+    var isActive = i === activeDriverIdx;
+    return '<div style="background:var(--surface);border-radius:14px;padding:14px 16px;margin-bottom:10px;border:2px solid '+(isActive?'var(--accent)':'var(--border)')+';">'
+      // 헤더
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+          +'<div style="width:32px;height:32px;border-radius:50%;background:'+(isActive?'var(--accent)':'var(--surface2)')+';display:flex;align-items:center;justify-content:center;font-size:16px">'+(isActive?'✅':'🚗')+'</div>'
+          +'<span style="font-size:14px;font-weight:800;color:'+(isActive?'var(--accent)':'var(--text2)')+'">기사 '+(i+1)+(isActive?' (활성)':'')+'</span>'
+        +'</div>'
+        +'<div style="display:flex;gap:6px">'
+          +(driverList.length > 1 && !isActive ? '<button onclick="setActiveDriver('+i+')" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">활성화</button>' : '')
+          +(driverList.length > 1 ? '<button onclick="removeDriver('+i+')" style="background:rgba(255,59,48,.1);color:#ff3b30;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">삭제</button>' : '')
+        +'</div>'
+      +'</div>'
+      // 이름 입력
+      +'<div class="inp-label">이름</div>'
+      +'<input class="inp" placeholder="예: 김현수" value="'+escHtml(d.name||'')+'" oninput="updateDriver('+i+',\'name\',this.value)" style="margin-bottom:10px" />'
+      // WA 번호 입력
+      +'<div class="inp-label">WhatsApp</div>'
+      +'<div style="display:flex;gap:8px;align-items:center">'
+        +'<span style="font-size:18px">🇮🇩</span>'
+        +'<input class="inp" placeholder="+62 812 3456 7890" value="'+escHtml(d.wa||'')+'" oninput="updateDriver('+i+',\'wa\',this.value)" style="margin-bottom:0;flex:1" />'
+        +'<button onclick="testWa('+i+')" style="background:#25D366;color:#fff;border:none;border-radius:10px;padding:8px 12px;font-size:13px;cursor:pointer;flex-shrink:0">💬</button>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+
+  // 현황 이름 업데이트
+  var active = driverList[activeDriverIdx] || driverList[0];
+  var nameEl = document.getElementById('boss-view-driver-name');
+  if(nameEl) nameEl.textContent = (active && active.name) ? active.name : '-';
+  var subEl = document.getElementById('driver-sub-text');
+  if(subEl && active && active.name){
+    var span = subEl.querySelector('span[data-i18n]');
+    subEl.textContent = active.name + ' · ';
+    if(span) subEl.appendChild(span);
+  }
+  // WA 탭 헤더 업데이트
+  if(active && active.wa){
+    var connText = document.getElementById('kakao-conn-text');
+    var connSub = document.getElementById('kakao-conn-sub');
+    if(connText) connText.innerHTML='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;vertical-align:middle"></span>'+(active.name||active.wa);
+    if(connSub) connSub.textContent = t('wa_connected');
+  }
+}
+
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function updateDriver(idx, field, val){
+  if(!driverList[idx]) return;
+  driverList[idx][field] = val;
+  saveDriverList();
+  // 활성 기사면 WA 탭도 업데이트
+  if(idx === activeDriverIdx){
+    var nameEl = document.getElementById('boss-view-driver-name');
+    if(nameEl && field==='name') nameEl.textContent = val||'-';
+    if(field==='wa'){
+      var connText = document.getElementById('kakao-conn-text');
+      if(connText && val) connText.innerHTML='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;vertical-align:middle"></span>'+val;
+    }
+  }
+}
+
+function addDriverSlot(){
+  driverList.push({name:'', wa:'', active:false});
+  saveDriverList();
+  renderDriverSlots();
+}
+
+function removeDriver(idx){
+  if(driverList.length <= 1){ showToast('최소 1명은 필요합니다'); return; }
+  driverList.splice(idx, 1);
+  if(activeDriverIdx >= driverList.length) activeDriverIdx = 0;
+  saveDriverList();
+  renderDriverSlots();
+}
+
+function setActiveDriver(idx){
+  activeDriverIdx = idx;
+  saveDriverList();
+  renderDriverSlots();
+  var d = driverList[idx];
+  showToast('✅ '+(d.name||'기사 '+(idx+1))+' 활성화');
+}
+
+function testWa(idx){
+  var d = driverList[idx];
+  if(!d || !d.wa){ showToast('번호를 입력해주세요'); return; }
+  var num = d.wa.replace(/\s+/g,'').replace('+','');
+  var msg = encodeURIComponent('Halo! Ini pesan test dari BossCall 🚗');
+  window.open('https://wa.me/'+num+'?text='+msg, '_blank');
+}
+
+function loadDriverInfo(){
+  // 기존 단일 기사 데이터 마이그레이션
+  var oldName = localStorage.getItem('driver_name');
+  var oldWa = localStorage.getItem('wa_number');
+  if(oldName && driverList[0] && !driverList[0].name){
+    driverList[0].name = oldName;
+    driverList[0].wa = oldWa || '';
+    saveDriverList();
+  }
+  renderDriverSlots();
+}
+
+function saveDriverInfo(){ saveDriverList(); renderDriverSlots(); }
+function syncWaFromKakaoTab(){
+  var wa = (document.getElementById('kakao-api-key')||{value:''}).value.trim();
+  if(wa && driverList[activeDriverIdx]){
+    driverList[activeDriverIdx].wa = wa;
+    saveDriverList();
+  }
+}
+
 function renderBossDriverView(){
   // 출퇴근 로그
   var logEl = document.getElementById('boss-view-log-list');
@@ -2815,6 +2951,7 @@ function initApp(role) {
   renderFavList();
   renderCharts();
   renderNotifLog();
+  loadDriverInfo();
 
   // 언어 버튼 초기 상태
   var lang=currentLang;
