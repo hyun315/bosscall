@@ -497,7 +497,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
             <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:22px;cursor:pointer" onclick="openAddrModal('pickup')">🔍</span>
           </div>
           <button onclick="pickupGPS()" style="height:48px;padding:0 13px;border-radius:13px;background:linear-gradient(135deg,#3478f6,#6c5ce7);border:none;font-size:13px;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(52,120,246,.3);white-space:nowrap;font-family:inherit" data-i18n="cur_loc">📡 현위치</button>
-          <button onclick="setLastDropoff()" style="height:48px;padding:0 11px;border-radius:13px;background:linear-gradient(135deg,#00b874,#00cba8);border:none;font-size:12px;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(0,184,116,.3);white-space:nowrap;font-family:inherit;line-height:1.2;text-align:center">🚗<br>내려준곳</button>
+          <button onclick="setLastDropoff()" style="height:48px;padding:0 11px;border-radius:13px;background:linear-gradient(135deg,#00b874,#00cba8);border:none;font-size:12px;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(0,184,116,.3);white-space:nowrap;font-family:inherit;text-align:center" data-i18n="last_dropoff">🚗 내려준 곳</button>
         </div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px">
           <div style="flex:1;height:1.5px;background:var(--border)"></div>
@@ -1077,7 +1077,7 @@ const i18n = {
     recent_search:'최근 검색',clear_all:'전체 삭제',
     tab_home:'홈',tab_fav:'즐겨찾기',tab_stats:'통계',tab_salary_set:'급여설정',tab_notif:'알림',
     dest_ex:'예: IBK 을지로 본점',map_confirm:'이 위치로 설정',map_moving:'위치 선택 중...',
-    set_btn:'설정',checkin_label:'출근',checkout_label:'퇴근',admin:'관리자',
+    set_btn:'설정',checkin_label:'출근',checkout_label:'퇴근',admin:'관리자',last_dropoff:'🚗 내려준 곳',
   },
   en:{
     role_boss:'🧑‍💼 Boss',role_driver:'🚗 Driver',driver_status:'Driver Status',
@@ -1120,7 +1120,7 @@ const i18n = {
     recent_search:'Recent Searches',clear_all:'Clear All',
     tab_home:'Home',tab_fav:'Favorites',tab_stats:'Stats',tab_salary_set:'Salary',tab_notif:'Alerts',
     dest_ex:'e.g. Grand Indonesia, Jakarta',map_confirm:'Set This Location',map_moving:'Selecting location...',
-    set_btn:'Set',checkin_label:'Check In',checkout_label:'Check Out',admin:'Admin',
+    set_btn:'Set',checkin_label:'Check In',checkout_label:'Check Out',admin:'Admin',last_dropoff:'🚗 Drop-off',
   },
   id:{
     role_boss:'🧑‍💼 Bos',role_driver:'🚗 Sopir',driver_status:'Status Sopir',
@@ -1163,7 +1163,7 @@ const i18n = {
     recent_search:'Pencarian Terbaru',clear_all:'Hapus Semua',
     tab_home:'Beranda',tab_fav:'Favorit',tab_stats:'Statistik',tab_salary_set:'Gaji',tab_notif:'Notif',
     dest_ex:'cth: Grand Indonesia, Jakarta',map_confirm:'Atur Lokasi Ini',map_moving:'Memilih lokasi...',
-    set_btn:'Atur',checkin_label:'Absen Masuk',checkout_label:'Absen Keluar',admin:'Admin',
+    set_btn:'Atur',checkin_label:'Absen Masuk',checkout_label:'Absen Keluar',admin:'Admin',last_dropoff:'🚗 Lokasi Turun',
   }
 };
 
@@ -1200,18 +1200,18 @@ function setLang(lang, btn) {
 }
 
 function applyI18n() {
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    if (el.children.length === 0 || el.tagName === 'BUTTON') {
-      // 버튼 내 span 포함 처리
-      const spans = el.querySelectorAll('[data-i18n]');
-      if (spans.length === 0) el.textContent = t(key);
-    }
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    var val = t(key);
+    // 자식 중 data-i18n 있는 게 있으면 스킵
+    if(el.querySelector('[data-i18n]')) return;
+    // br 등 HTML 태그 없으면 textContent, 있으면 innerHTML
+    if(val.indexOf('<') >= 0) el.innerHTML = val;
+    else el.textContent = val;
   });
-  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+  document.querySelectorAll('[data-i18n-ph]').forEach(function(el) {
     el.placeholder = t(el.getAttribute('data-i18n-ph'));
   });
-  // 언어별 폰트 설정
   document.body.style.fontFamily = currentLang === 'ko'
     ? "'Noto Sans KR', -apple-system, sans-serif"
     : "'Noto Sans', -apple-system, sans-serif";
@@ -1419,7 +1419,10 @@ var tripList = JSON.parse(localStorage.getItem('trip_list') || 'null') || [
   {date:todayStr(), dest:'Grand Indonesia Mall', dep:'09:10', arr:'09:38', dist:'5.2', icon:'🛒'},
   {date:todayStr(), dest:'SCBD Sudirman Tower', dep:'11:50', arr:'12:08', dist:'3.1', icon:'🏢'},
 ];
-
+// date 없는 구 데이터 마이그레이션
+var migrated = false;
+tripList.forEach(function(tt){ if(!tt.date){ tt.date=todayStr(); migrated=true; } });
+if(migrated) localStorage.setItem('trip_list', JSON.stringify(tripList));
 function saveTripList(){ localStorage.setItem('trip_list', JSON.stringify(tripList)); }
 
 var iconMap={'공항':'✈️','호텔':'🏨','은행':'🏦','IBK':'🏦','자택':'🏠','집':'🏠','코엑스':'🏢','병원':'🏥','식당':'🍽️','갈비':'🍽️','커피':'☕','역':'🚉','시청':'🏛️','Mall':'🛒','Plaza':'🛒','Hotel':'🏨','Airport':'✈️','Bank':'🏦','Hospital':'🏥'};
@@ -1463,11 +1466,11 @@ function closeTripScreen(){
 function renderTripScreenList(){
   var allDist=tripList.reduce(function(s,tt){return s+parseFloat(tt.dist||0);},0).toFixed(1);
   var sub=document.getElementById('trip-screen-sub');
-  if(sub) sub.textContent=t('times').replace('회','')+' '+tripList.length+'회 · 누적 '+allDist+'km';
+  if(sub) sub.textContent=tripList.length+' '+t('times')+' · '+allDist+'km';
   var list=document.getElementById('trip-screen-list');
   if(!list) return;
   if(tripList.length===0){
-    list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);font-size:16px">운행 기록이 없습니다</div>';
+    list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);font-size:16px">'+t('today_trip')+' —</div>';
     return;
   }
 
@@ -1479,21 +1482,33 @@ function renderTripScreenList(){
     groups[d].push({tt:tt,i:i});
   });
 
+  var days={'ko':'일월화수목금토','en':'SunMonTueWedThuFriSat','id':'MggSenSelRabKamJumSab'};
+  var dayNames=(days[currentLang]||days.ko);
+
   // 날짜 내림차순 정렬
   var dates=Object.keys(groups).sort(function(a,b){return b>a?1:-1;});
 
   list.innerHTML = dates.map(function(date){
     var items=groups[date];
     var dayDist=items.reduce(function(s,x){return s+parseFloat(x.tt.dist||0);},0).toFixed(1);
-    // 날짜 포맷
-    var d=new Date(date);
-    var dateLabel=date===todayStr()?'오늘':
-      (d.getMonth()+1)+'월 '+d.getDate()+'일 ('+'일월화수목금토'[d.getDay()]+')';
+    var d=new Date(date+'T00:00:00');
+    var dateLabel;
+    if(date===todayStr()){
+      dateLabel = currentLang==='ko'?'오늘':currentLang==='en'?'Today':'Hari Ini';
+    } else {
+      if(currentLang==='id'){
+        dateLabel = d.getDate()+' '+(d.getMonth()+1)+' '+d.getFullYear();
+      } else if(currentLang==='en'){
+        dateLabel = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]+' '+d.getDate();
+      } else {
+        dateLabel = (d.getMonth()+1)+'월 '+d.getDate()+'일 ('+dayNames[d.getDay()]+')';
+      }
+    }
 
     return '<div style="margin:0 14px 16px">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;margin-bottom:6px">'
         +'<span style="font-size:13px;font-weight:800;color:var(--text2)">📅 '+dateLabel+'</span>'
-        +'<span style="font-size:12px;color:var(--accent);font-weight:700">'+items.length+'회 · '+dayDist+'km</span>'
+        +'<span style="font-size:12px;color:var(--accent);font-weight:700">'+items.length+' '+t('times')+' · '+dayDist+'km</span>'
       +'</div>'
       +'<div class="card">'
       +items.map(function(x){
@@ -1502,25 +1517,21 @@ function renderTripScreenList(){
           +'<div class="trip-info"><div class="trip-dest">'+x.tt.dest+'</div><div class="trip-time">'+x.tt.dep+' → '+x.tt.arr+'</div></div>'
           +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
             +'<div class="trip-dist">'+x.tt.dist+'km</div>'
-            +'<button onclick="event.stopPropagation();deleteTrip('+x.i+')" style="background:rgba(255,59,48,.1);border:none;border-radius:6px;color:#ff3b30;font-size:11px;font-weight:700;padding:3px 8px;cursor:pointer;font-family:inherit">삭제</button>'
+            +'<button onclick="event.stopPropagation();deleteTrip('+x.i+')" style="background:rgba(255,59,48,.1);border:none;border-radius:6px;color:#ff3b30;font-size:11px;font-weight:700;padding:3px 8px;cursor:pointer;font-family:inherit">🗑</button>'
           +'</div>'
           +'</div>';
       }).join('')
       +'</div>'
-
-      // 일별 소계
       +'<div style="padding:10px 14px;background:var(--surface2);border-radius:0 0 14px 14px;display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-top:-2px">'
-        +'<span style="color:var(--text2)">소계</span>'
-        +'<span style="color:var(--accent)">'+items.length+'회 · '+dayDist+'km</span>'
+        +'<span style="color:var(--text2)">'+(currentLang==='ko'?'소계':currentLang==='en'?'Subtotal':'Subtotal')+'</span>'
+        +'<span style="color:var(--accent)">'+items.length+' '+t('times')+' · '+dayDist+'km</span>'
       +'</div>'
       +'</div>';
   }).join('')
-
-  // 전체 누적
   +'<div style="margin:0 14px 20px;padding:14px 16px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:14px;color:#fff">'
-    +'<div style="font-size:12px;font-weight:700;opacity:.8;margin-bottom:6px">📊 전체 누적</div>'
+    +'<div style="font-size:12px;font-weight:700;opacity:.8;margin-bottom:6px">📊 '+(currentLang==='ko'?'전체 누적':currentLang==='en'?'Total':'Total Keseluruhan')+'</div>'
     +'<div style="display:flex;justify-content:space-between;align-items:center">'
-      +'<span style="font-size:22px;font-weight:900">'+tripList.length+'회</span>'
+      +'<span style="font-size:22px;font-weight:900">'+tripList.length+' '+t('times')+'</span>'
       +'<span style="font-size:22px;font-weight:900">'+allDist+' km</span>'
     +'</div>'
   +'</div>';
@@ -2223,8 +2234,9 @@ function psUseGPS(){
 }
 
 function setLastDropoff(){
-  document.getElementById('pickup-input').value = '내려준 곳';
-  showToast('📍 내려준 곳');
+  var label = t('last_dropoff').replace('🚗 ','').replace('🚗','');
+  document.getElementById('pickup-input').value = label;
+  showToast('📍 ' + label);
 }
 
 function pickupGPS(){
