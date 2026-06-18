@@ -659,34 +659,34 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
       <div class="kakao-logo" style="background:#25D366">💬</div>
       <div style="flex:1">
         <div style="font-size:var(--fs-xs);color:#1a7a3f;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px">WhatsApp</div>
-        <div style="font-size:var(--fs-md);font-weight:900;color:var(--text)" id="kakao-conn-text">Nomor WhatsApp</div>
-        <div style="font-size:var(--fs-sm);color:#1a7a3f;margin-top:3px" id="kakao-conn-sub">Masukkan nomor WA pengemudi</div>
+        <div style="font-size:var(--fs-md);font-weight:900;color:var(--text)" id="kakao-conn-text" data-i18n="wa_number">WhatsApp Sopir</div>
+        <div style="font-size:var(--fs-sm);color:#1a7a3f;margin-top:3px" id="kakao-conn-sub" data-i18n="wa_placeholder">+62 812 3456 7890</div>
       </div>
-      <button class="btn btn-primary" id="kakao-link-btn" onclick="kakaoLink()" style="width:auto;padding:11px 18px;font-size:var(--fs-sm);background:#25D366;border-color:#25D366">Simpan</button>
+      <button class="btn btn-primary" id="kakao-link-btn" onclick="kakaoLink()" style="width:auto;padding:11px 18px;font-size:var(--fs-sm);background:#25D366;border-color:#25D366" data-i18n="wa_save">Simpan</button>
     </div>
     <div class="card" style="margin:14px 16px 0">
       <div style="padding:14px 16px">
-        <div class="inp-label">Nomor WhatsApp Pengemudi</div>
+        <div class="inp-label" data-i18n="wa_number">Nomor WhatsApp Sopir</div>
         <div style="display:flex;gap:8px;align-items:center">
           <span style="font-size:20px">🇮🇩</span>
-          <input class="inp" id="kakao-api-key" placeholder="+62 812 3456 7890" style="margin-bottom:0;flex:1" />
+          <input class="inp" id="kakao-api-key" data-i18n-ph="wa_placeholder" placeholder="+62 812 3456 7890" style="margin-bottom:0;flex:1" />
         </div>
-        <div style="font-size:12px;color:var(--text3);margin-top:8px">Format: +62 diikuti nomor (contoh: +6281234567890)</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:8px" data-i18n="wa_format">Format: +62</div>
       </div>
     </div>
-    <div class="section-title">Pengaturan Notifikasi</div>
+    <div class="section-title" data-i18n="wa_notif_setting">Pengaturan Notifikasi</div>
     <div class="card">
-      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">🚗 Notif Panggilan</div><div class="toggle-sub">Kirim WA saat pengemudi dipanggil</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
-      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">✅ Notif Terima</div><div class="toggle-sub">Kirim WA saat pengemudi menerima</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
-      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">🟢 Notif Absen Masuk</div><div class="toggle-sub">Kirim WA saat absen masuk</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
-      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">🔴 Notif Absen Keluar</div><div class="toggle-sub">Kirim WA saat absen keluar</div></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
-      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">⛽ Notif BBM</div><div class="toggle-sub">Kirim WA saat isi BBM</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label" data-i18n="notif_call">🚗 Notif Panggilan</div><div class="toggle-sub" data-i18n="notif_call_sub">Kirim WA saat dipanggil</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label" data-i18n="notif_accept">✅ Notif Penerimaan</div><div class="toggle-sub" data-i18n="notif_accept_sub">Beritahu bos saat menerima</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label" data-i18n="notif_checkin">🟢 Notif Absen Masuk</div><div class="toggle-sub" data-i18n="notif_checkin_sub">Kirim saat absen masuk</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label" data-i18n="notif_checkout">🔴 Notif Absen Keluar</div><div class="toggle-sub" data-i18n="notif_checkout_sub">Kirim saat absen keluar</div></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label" data-i18n="notif_fuel">⛽ Notif BBM</div><div class="toggle-sub" data-i18n="notif_fuel_sub">Kirim saat isi BBM</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
     </div>
-    <div class="section-title">Kirim Pesan Test</div>
+    <div class="section-title" data-i18n="wa_test">Kirim Pesan Test</div>
     <div class="card"><div style="padding:14px 16px">
-      <button class="btn btn-primary" style="background:#25D366;border-color:#25D366;padding:13px" onclick="sendWhatsappTest()">💬 Kirim Pesan Test WhatsApp</button>
+      <button class="btn btn-primary" style="background:#25D366;border-color:#25D366;padding:13px" onclick="sendWhatsappTest()">💬 <span data-i18n="wa_test">Kirim Pesan Test WhatsApp</span></button>
     </div></div>
-    <div class="section-title">Log Notifikasi Terbaru</div>
+    <div class="section-title" data-i18n="wa_recent">Notifikasi Terbaru</div>
     <div class="card" id="notif-log-card"></div>
   </div>
 
@@ -1054,7 +1054,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
         <div id="map-sel-addr" style="font-size:12px;color:#6b7394;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
       </div>
     </div>
-    <button id="map-confirm-btn" onclick="psConfirmMap()" style="width:100%;padding:15px;background:#3478f6;color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;display:block">이 위치로 설정</button>
+    <button id="map-confirm-btn" onclick="psConfirmMap()" style="width:100%;padding:15px;background:#3478f6;color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;display:block" data-i18n="map_confirm">이 위치로 설정</button>
   </div>
 </div>
 
@@ -1075,41 +1075,41 @@ const i18n = {
     year_trips:'올해 운행',year_dist:'올해 거리',month_trips:'이달 운행',month_dist:'이달 거리',
     times:'회',monthly_trips:'월별 운행 횟수',monthly_dist:'월별 운행 거리 (km)',monthly_detail:'월별 상세',
     salary_setting:'급여 설정',salary_setting_sub:'기사 급여 기준을 설정하세요',
-    basic_salary_setting:'기본 급여',base_pay:'기본 월급 (원)',ot_rate:'시간외수당 단가 (원/시간)',
+    basic_salary_setting:'기본 급여',base_pay:'기본 월급',ot_rate:'시간외수당 단가 (시간당)',
     standard_hours:'소정근로시간 (일)',allowance_setting:'수당 설정',
     meal_allow:'식대',meal_allow_sub:'월 지급 식대',car_allow:'차량유지비',car_allow_sub:'월 지급 차량 유지비',
-    bonus:'상여금',bonus_sub:'이달 추가 지급',insurance_setting:'공제 설정',insurance:'4대보험 공제율',
+    bonus:'상여금',bonus_sub:'이달 추가 지급',insurance_setting:'공제 설정',insurance:'사회보험 공제율',
     this_month_ot:'이달 초과근무',ot_hours:'초과근무 시간',salary_preview:'급여 미리보기',
     save_settings:'설정 저장',
     tab_fuel:'주유',fuel_record:'⛽ 주유 기록',month_fuel:'이달 주유량',month_fuel_cost:'이달 주유비',
     year_fuel:'올해 주유량',avg_price:'평균 단가',add_fuel:'주유 입력',
-    add_fuel_title:'주유 기록 추가',liter:'주유량',unit_price:'단가',won_per_l:'원/L',
-    total_cost:'총 금액',won:'원',mileage:'주행거리',fuel_station:'주유소',station_ph:'주유소명 (예: GS칼텍스 서초)',
+    add_fuel_title:'주유 기록 추가',liter:'주유량 (L)',unit_price:'단가',price_per_l:'원/L',
+    total_cost:'총 금액',mileage:'주행거리 (km)',fuel_station:'주유소',station_ph:'주유소명',
     fuel_date:'날짜',memo:'메모',memo_ph:'메모 (선택)',save_fuel:'⛽ 주유 기록 저장',
-    kakao_talk:'카카오 알림톡',kakao_wait:'연동 대기 중',kakao_wait_sub:'카카오 계정을 연결하세요',
-    connect:'연결',notif_setting:'알림 설정',notif_call:'🚗 호출 알림',notif_call_sub:'기사 호출 시 카카오톡 발송',
+    wa_title:'WhatsApp 알림',wa_number:'기사 WhatsApp 번호',wa_placeholder:'+62 812 3456 7890',
+    wa_format:'형식: +62로 시작 (예: +6281234567890)',wa_save:'저장',wa_test:'테스트 메시지 발송',
+    wa_connected:'연결됨',wa_notif_setting:'알림 설정',wa_recent:'최근 발송',
+    notif_call:'🚗 호출 알림',notif_call_sub:'기사 호출 시 WhatsApp 발송',
     notif_accept:'✅ 수락 알림',notif_accept_sub:'기사 수락 시 사장님께 알림',
-    notif_checkin:'🟢 출근 알림',notif_checkin_sub:'기사 출근 기록 시 발송',
-    notif_checkout:'🔴 퇴근 알림',notif_checkout_sub:'기사 퇴근 기록 시 발송',
+    notif_checkin:'🟢 출근 알림',notif_checkin_sub:'기사 출근 시 발송',
+    notif_checkout:'🔴 퇴근 알림',notif_checkout_sub:'기사 퇴근 시 발송',
     notif_fuel:'⛽ 주유 알림',notif_fuel_sub:'주유 기록 시 발송',
-    kakao_api:'카카오 API 설정',rest_api_key:'REST API 키',api_key_ph:'카카오 REST API 키 입력',
-    template_code:'알림톡 템플릿 코드',save_api:'API 설정 저장',recent_notif:'최근 발송',
     salary_detail:'급여 상세',ot_pay:'초과근무수당',net_salary:'실수령액',confirm:'확인',
-    work_time:'오늘 근무 시간',checkin_info:'출근 09:05 · 초과근무 2시간 23분',
-    checkin:'출근',checkout:'퇴근',call_alert:'호출 알림',new_call:'새 호출이 왔습니다',
+    work_time:'오늘 근무 시간',checkin:'출근',checkout:'퇴근',
+    call_alert:'호출 알림',new_call:'새 호출이 왔습니다',
     eta_3min:'📍 현재 위치에서 약 3분 · 사장님 요청',accept:'✓ 수락',decline:'✗ 거절',
     att_record:'출퇴근 기록',add_trip:'🚗 운행기록 추가',depart_time:'출발',arrive_time:'도착',
     distance:'거리 (km)',save:'저장',
-    use_gps:'현재 위치 사용',use_gps_sub:'GPS로 내 위치 자동 입력',
-    cur_loc:'📡 현위치',
-    recent_search:'최근 검색',clear_all:'전체 삭제',select:'선택',
+    use_gps:'현재 위치 사용',use_gps_sub:'GPS로 내 위치 자동 입력',cur_loc:'📡 현위치',
+    recent_search:'최근 검색',clear_all:'전체 삭제',
     tab_home:'홈',tab_fav:'즐겨찾기',tab_stats:'통계',tab_salary_set:'급여설정',tab_notif:'알림',
-    dest_ex:'예: IBK 을지로 본점',
+    dest_ex:'예: IBK 을지로 본점',map_confirm:'이 위치로 설정',map_moving:'위치 선택 중...',
+    set_btn:'설정',checkin_label:'출근',checkout_label:'퇴근',admin:'관리자',
   },
   en:{
     role_boss:'🧑‍💼 Boss',role_driver:'🚗 Driver',driver_status:'Driver Status',
     status_standby:'Standby',checkin_today:'Checked in 09:05',salary_check:'This Month Salary',
-    call_driver:'Call Driver',pickup_loc:'📍 Pickup Location',pickup_ph:'Enter pickup location',
+    call_driver:'Call Driver',pickup_loc:'📍 Pickup',pickup_ph:'Enter pickup location',
     destination:'Destination',dest_loc:'🚩 Destination',dest_ph:'Enter destination',call_btn:'Call Driver',
     calling:'Notifying driver…',eta:'ETA',min:'min',cancel:'Cancel',
     navigation:'Navigation',recommend:'Recommended',today_trip:'Today\'s Trips',
@@ -1118,7 +1118,7 @@ const i18n = {
     year_trips:'Year Trips',year_dist:'Year Distance',month_trips:'Month Trips',month_dist:'Month Distance',
     times:'trips',monthly_trips:'Monthly Trips',monthly_dist:'Monthly Distance (km)',monthly_detail:'Monthly Detail',
     salary_setting:'Salary Settings',salary_setting_sub:'Set driver salary standards',
-    basic_salary_setting:'Base Salary',base_pay:'Base Monthly Pay (₩)',ot_rate:'OT Rate (₩/hr)',
+    basic_salary_setting:'Base Salary',base_pay:'Base Monthly Pay',ot_rate:'OT Rate (per hour)',
     standard_hours:'Standard Hours (day)',allowance_setting:'Allowances',
     meal_allow:'Meal Allowance',meal_allow_sub:'Monthly meal allowance',car_allow:'Vehicle Allowance',car_allow_sub:'Monthly vehicle allowance',
     bonus:'Bonus',bonus_sub:'Additional payment this month',insurance_setting:'Deductions',insurance:'Social Insurance Rate',
@@ -1126,28 +1126,28 @@ const i18n = {
     save_settings:'Save Settings',
     tab_fuel:'Fuel',fuel_record:'⛽ Fuel Log',month_fuel:'Month Fuel',month_fuel_cost:'Month Fuel Cost',
     year_fuel:'Year Fuel',avg_price:'Avg Price',add_fuel:'Add Fuel',
-    add_fuel_title:'Add Fuel Record',liter:'Liters',unit_price:'Unit Price',won_per_l:'₩/L',
-    total_cost:'Total',won:'₩',mileage:'Mileage',fuel_station:'Station',station_ph:'Gas station name',
+    add_fuel_title:'Add Fuel Record',liter:'Liters',unit_price:'Unit Price',price_per_l:'$/L',
+    total_cost:'Total',mileage:'Mileage (km)',fuel_station:'Station',station_ph:'Gas station name',
     fuel_date:'Date',memo:'Memo',memo_ph:'Memo (optional)',save_fuel:'⛽ Save Fuel Record',
-    kakao_talk:'KakaoTalk Notification',kakao_wait:'Not Connected',kakao_wait_sub:'Connect your Kakao account',
-    connect:'Connect',notif_setting:'Notification Settings',notif_call:'🚗 Call Alert',notif_call_sub:'Send KakaoTalk on driver call',
+    wa_title:'WhatsApp Alerts',wa_number:'Driver WhatsApp Number',wa_placeholder:'+62 812 3456 7890',
+    wa_format:'Format: start with +62 (e.g. +6281234567890)',wa_save:'Save',wa_test:'Send Test Message',
+    wa_connected:'Connected',wa_notif_setting:'Notification Settings',wa_recent:'Recent Notifications',
+    notif_call:'🚗 Call Alert',notif_call_sub:'Send WhatsApp on driver call',
     notif_accept:'✅ Accept Alert',notif_accept_sub:'Notify boss when driver accepts',
     notif_checkin:'🟢 Check-in Alert',notif_checkin_sub:'Send when driver checks in',
     notif_checkout:'🔴 Check-out Alert',notif_checkout_sub:'Send when driver checks out',
     notif_fuel:'⛽ Fuel Alert',notif_fuel_sub:'Send when fuel is logged',
-    kakao_api:'Kakao API Settings',rest_api_key:'REST API Key',api_key_ph:'Enter Kakao REST API Key',
-    template_code:'Alimtalk Template Code',save_api:'Save API Settings',recent_notif:'Recent Notifications',
     salary_detail:'Salary Detail',ot_pay:'Overtime Pay',net_salary:'Net Salary',confirm:'Confirm',
-    work_time:'Today Work Time',checkin_info:'In 09:05 · OT 2h 23m',
-    checkin:'Check In',checkout:'Check Out',call_alert:'Call Alert',new_call:'New Call Received',
+    work_time:'Today Work Time',checkin:'Check In',checkout:'Check Out',
+    call_alert:'Call Alert',new_call:'New Call Received',
     eta_3min:'📍 ~3 min from current · Boss request',accept:'✓ Accept',decline:'✗ Decline',
     att_record:'Attendance',add_trip:'🚗 Add Trip',depart_time:'Depart',arrive_time:'Arrive',
     distance:'Distance (km)',save:'Save',
-    use_gps:'Use Current Location',use_gps_sub:'Auto-fill with GPS',
-    cur_loc:'📡 My Location',
-    recent_search:'Recent Searches',clear_all:'Clear All',select:'Select',
+    use_gps:'Use Current Location',use_gps_sub:'Auto-fill with GPS',cur_loc:'📡 My Location',
+    recent_search:'Recent Searches',clear_all:'Clear All',
     tab_home:'Home',tab_fav:'Favorites',tab_stats:'Stats',tab_salary_set:'Salary',tab_notif:'Alerts',
-    dest_ex:'e.g. IBK Euljiro Branch',
+    dest_ex:'e.g. Grand Indonesia, Jakarta',map_confirm:'Set This Location',map_moving:'Selecting location...',
+    set_btn:'Set',checkin_label:'Check In',checkout_label:'Check Out',admin:'Admin',
   },
   id:{
     role_boss:'🧑‍💼 Bos',role_driver:'🚗 Sopir',driver_status:'Status Sopir',
@@ -1161,7 +1161,7 @@ const i18n = {
     year_trips:'Perjalanan Tahun Ini',year_dist:'Jarak Tahun Ini',month_trips:'Perjalanan Bulan Ini',month_dist:'Jarak Bulan Ini',
     times:'kali',monthly_trips:'Perjalanan per Bulan',monthly_dist:'Jarak per Bulan (km)',monthly_detail:'Detail Bulanan',
     salary_setting:'Pengaturan Gaji',salary_setting_sub:'Atur standar gaji sopir',
-    basic_salary_setting:'Gaji Pokok',base_pay:'Gaji Pokok Bulanan (₩)',ot_rate:'Tarif Lembur (₩/jam)',
+    basic_salary_setting:'Gaji Pokok',base_pay:'Gaji Pokok Bulanan',ot_rate:'Tarif Lembur (per jam)',
     standard_hours:'Jam Kerja Standar (hari)',allowance_setting:'Tunjangan',
     meal_allow:'Tunjangan Makan',meal_allow_sub:'Tunjangan makan bulanan',car_allow:'Tunjangan Kendaraan',car_allow_sub:'Tunjangan kendaraan bulanan',
     bonus:'Bonus',bonus_sub:'Pembayaran tambahan bulan ini',insurance_setting:'Potongan',insurance:'Tarif Asuransi Sosial',
@@ -1169,28 +1169,28 @@ const i18n = {
     save_settings:'Simpan Pengaturan',
     tab_fuel:'BBM',fuel_record:'⛽ Catatan BBM',month_fuel:'BBM Bulan Ini',month_fuel_cost:'Biaya BBM Bulan Ini',
     year_fuel:'BBM Tahun Ini',avg_price:'Harga Rata-rata',add_fuel:'Tambah BBM',
-    add_fuel_title:'Tambah Catatan BBM',liter:'Liter',unit_price:'Harga per Liter',won_per_l:'₩/L',
-    total_cost:'Total',won:'₩',mileage:'Kilometer',fuel_station:'SPBU',station_ph:'Nama SPBU',
+    add_fuel_title:'Tambah Catatan BBM',liter:'Liter',unit_price:'Harga per Liter',price_per_l:'Rp/L',
+    total_cost:'Total',mileage:'Kilometer',fuel_station:'SPBU',station_ph:'Nama SPBU',
     fuel_date:'Tanggal',memo:'Catatan',memo_ph:'Catatan (opsional)',save_fuel:'⛽ Simpan Catatan BBM',
-    kakao_talk:'Notifikasi KakaoTalk',kakao_wait:'Belum Terhubung',kakao_wait_sub:'Hubungkan akun Kakao Anda',
-    connect:'Hubungkan',notif_setting:'Pengaturan Notifikasi',notif_call:'🚗 Notif Panggilan',notif_call_sub:'Kirim KakaoTalk saat sopir dipanggil',
+    wa_title:'Notifikasi WhatsApp',wa_number:'Nomor WhatsApp Sopir',wa_placeholder:'+62 812 3456 7890',
+    wa_format:'Format: awali dengan +62 (cth: +6281234567890)',wa_save:'Simpan',wa_test:'Kirim Pesan Test',
+    wa_connected:'Terhubung',wa_notif_setting:'Pengaturan Notifikasi',wa_recent:'Notifikasi Terbaru',
+    notif_call:'🚗 Notif Panggilan',notif_call_sub:'Kirim WhatsApp saat sopir dipanggil',
     notif_accept:'✅ Notif Penerimaan',notif_accept_sub:'Beritahu bos saat sopir menerima',
-    notif_checkin:'🟢 Notif Masuk',notif_checkin_sub:'Kirim saat sopir absen masuk',
-    notif_checkout:'🔴 Notif Keluar',notif_checkout_sub:'Kirim saat sopir absen keluar',
+    notif_checkin:'🟢 Notif Absen Masuk',notif_checkin_sub:'Kirim saat sopir absen masuk',
+    notif_checkout:'🔴 Notif Absen Keluar',notif_checkout_sub:'Kirim saat sopir absen keluar',
     notif_fuel:'⛽ Notif BBM',notif_fuel_sub:'Kirim saat pengisian BBM dicatat',
-    kakao_api:'Pengaturan API Kakao',rest_api_key:'REST API Key',api_key_ph:'Masukkan Kakao REST API Key',
-    template_code:'Kode Template Alimtalk',save_api:'Simpan Pengaturan API',recent_notif:'Notifikasi Terbaru',
     salary_detail:'Detail Gaji',ot_pay:'Upah Lembur',net_salary:'Gaji Bersih',confirm:'Konfirmasi',
-    work_time:'Waktu Kerja Hari Ini',checkin_info:'Masuk 09:05 · Lembur 2j 23m',
-    checkin:'Absen Masuk',checkout:'Absen Keluar',call_alert:'Notif Panggilan',new_call:'Ada Panggilan Baru',
+    work_time:'Waktu Kerja Hari Ini',checkin:'Absen Masuk',checkout:'Absen Keluar',
+    call_alert:'Notif Panggilan',new_call:'Ada Panggilan Baru',
     eta_3min:'📍 ~3 menit dari lokasi · Permintaan bos',accept:'✓ Terima',decline:'✗ Tolak',
     att_record:'Kehadiran',add_trip:'🚗 Tambah Perjalanan',depart_time:'Berangkat',arrive_time:'Tiba',
     distance:'Jarak (km)',save:'Simpan',
-    use_gps:'Gunakan Lokasi Saat Ini',use_gps_sub:'Isi otomatis dengan GPS',
-    cur_loc:'📡 Lokasi Saya',
-    recent_search:'Pencarian Terbaru',clear_all:'Hapus Semua',select:'Pilih',
+    use_gps:'Gunakan Lokasi Saat Ini',use_gps_sub:'Isi otomatis dengan GPS',cur_loc:'📡 Lokasi Saya',
+    recent_search:'Pencarian Terbaru',clear_all:'Hapus Semua',
     tab_home:'Beranda',tab_fav:'Favorit',tab_stats:'Statistik',tab_salary_set:'Gaji',tab_notif:'Notif',
-    dest_ex:'cth: Grand Indonesia, Jakarta',
+    dest_ex:'cth: Grand Indonesia, Jakarta',map_confirm:'Atur Lokasi Ini',map_moving:'Memilih lokasi...',
+    set_btn:'Atur',checkin_label:'Absen Masuk',checkout_label:'Absen Keluar',admin:'Admin',
   }
 };
 
