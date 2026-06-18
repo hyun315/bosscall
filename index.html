@@ -1662,10 +1662,6 @@ function callDriver(){
   document.getElementById('alert-dest-text').textContent=dest;
   document.getElementById('map-label-driver').textContent='📍 '+pickup;
 
-  // 마지막 내려준 곳 저장
-  localStorage.setItem('last_dropoff', dest);
-  if(window._destCoord) localStorage.setItem('last_dropoff_coord', JSON.stringify(window._destCoord));
-
   // WhatsApp으로 기사에게 호출 발송
   var waNum = getWaNumber('driver');
   if(waNum){
@@ -2227,16 +2223,8 @@ function psUseGPS(){
 }
 
 function setLastDropoff(){
-  var last = localStorage.getItem('last_dropoff');
-  var lastCoord = JSON.parse(localStorage.getItem('last_dropoff_coord') || 'null');
-  if(!last){
-    showToast('아직 내려준 곳이 없습니다');
-    return;
-  }
-  document.getElementById('pickup-input').value = last;
-  document.getElementById('map-label-driver').textContent = '📍 ' + last;
-  if(lastCoord) window._pickupCoord = lastCoord;
-  showToast('📍 ' + last);
+  document.getElementById('pickup-input').value = '내려준 곳';
+  showToast('📍 내려준 곳');
 }
 
 function pickupGPS(){
