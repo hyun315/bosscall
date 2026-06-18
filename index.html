@@ -653,34 +653,40 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
     <div class="card" id="boss-fuel-list"></div>
   </div>
 
-  <!-- 카카오 알림 탭 -->
+  <!-- 와츠앱 알림 탭 -->
   <div class="tab-panel" id="tab-kakao">
-    <div class="kakao-hero">
-      <div class="kakao-logo">💬</div>
+    <div class="kakao-hero" style="border-color:#25D366">
+      <div class="kakao-logo" style="background:#25D366">💬</div>
       <div style="flex:1">
-        <div style="font-size:var(--fs-xs);color:#a08010;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px" data-i18n="kakao_talk">카카오 알림톡</div>
-        <div style="font-size:var(--fs-md);font-weight:900;color:var(--text)" id="kakao-conn-text" data-i18n="kakao_wait">연동 대기 중</div>
-        <div style="font-size:var(--fs-sm);color:#8a7030;margin-top:3px" id="kakao-conn-sub" data-i18n="kakao_wait_sub">카카오 계정을 연결하세요</div>
+        <div style="font-size:var(--fs-xs);color:#1a7a3f;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px">WhatsApp</div>
+        <div style="font-size:var(--fs-md);font-weight:900;color:var(--text)" id="kakao-conn-text">Nomor WhatsApp</div>
+        <div style="font-size:var(--fs-sm);color:#1a7a3f;margin-top:3px" id="kakao-conn-sub">Masukkan nomor WA pengemudi</div>
       </div>
-      <button class="btn btn-primary" id="kakao-link-btn" onclick="kakaoLink()" style="width:auto;padding:11px 18px;font-size:var(--fs-sm)" data-i18n="connect">연결</button>
+      <button class="btn btn-primary" id="kakao-link-btn" onclick="kakaoLink()" style="width:auto;padding:11px 18px;font-size:var(--fs-sm);background:#25D366;border-color:#25D366">Simpan</button>
     </div>
-    <div class="section-title" data-i18n="notif_setting">알림 설정</div>
+    <div class="card" style="margin:14px 16px 0">
+      <div style="padding:14px 16px">
+        <div class="inp-label">Nomor WhatsApp Pengemudi</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:20px">🇮🇩</span>
+          <input class="inp" id="kakao-api-key" placeholder="+62 812 3456 7890" style="margin-bottom:0;flex:1" />
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-top:8px">Format: +62 diikuti nomor (contoh: +6281234567890)</div>
+      </div>
+    </div>
+    <div class="section-title">Pengaturan Notifikasi</div>
     <div class="card">
-      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label" data-i18n="notif_call">🚗 호출 알림</div><div class="toggle-sub" data-i18n="notif_call_sub">기사 호출 시 카카오톡 발송</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
-      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label" data-i18n="notif_accept">✅ 수락 알림</div><div class="toggle-sub" data-i18n="notif_accept_sub">기사 수락 시 사장님께 알림</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
-      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label" data-i18n="notif_checkin">🟢 출근 알림</div><div class="toggle-sub" data-i18n="notif_checkin_sub">기사 출근 기록 시 발송</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
-      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label" data-i18n="notif_checkout">🔴 퇴근 알림</div><div class="toggle-sub" data-i18n="notif_checkout_sub">기사 퇴근 기록 시 발송</div></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
-      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label" data-i18n="notif_fuel">⛽ 주유 알림</div><div class="toggle-sub" data-i18n="notif_fuel_sub">주유 기록 시 발송</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">🚗 Notif Panggilan</div><div class="toggle-sub">Kirim WA saat pengemudi dipanggil</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">✅ Notif Terima</div><div class="toggle-sub">Kirim WA saat pengemudi menerima</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">🟢 Notif Absen Masuk</div><div class="toggle-sub">Kirim WA saat absen masuk</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">🔴 Notif Absen Keluar</div><div class="toggle-sub">Kirim WA saat absen keluar</div></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">⛽ Notif BBM</div><div class="toggle-sub">Kirim WA saat isi BBM</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
     </div>
-    <div class="section-title" data-i18n="kakao_api">카카오 API 설정</div>
-    <div class="card"><div class="card-inner" style="padding-bottom:14px">
-      <div class="inp-label" data-i18n="rest_api_key">REST API 키</div>
-      <input class="inp" id="kakao-api-key" data-i18n-ph="api_key_ph" placeholder="카카오 REST API 키 입력" />
-      <div class="inp-label" data-i18n="template_code">알림톡 템플릿 코드</div>
-      <input class="inp" id="kakao-template" value="TM_DRIVER_CALL" />
-      <button class="btn btn-ghost" style="padding:13px;border-color:rgba(255,149,0,.3);color:var(--amber)" onclick="saveKakaoConfig()">⚙️ <span data-i18n="save_api">API 설정 저장</span></button>
+    <div class="section-title">Kirim Pesan Test</div>
+    <div class="card"><div style="padding:14px 16px">
+      <button class="btn btn-primary" style="background:#25D366;border-color:#25D366;padding:13px" onclick="sendWhatsappTest()">💬 Kirim Pesan Test WhatsApp</button>
     </div></div>
-    <div class="section-title" data-i18n="recent_notif">최근 발송</div>
+    <div class="section-title">Log Notifikasi Terbaru</div>
     <div class="card" id="notif-log-card"></div>
   </div>
 
@@ -691,7 +697,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
     <button class="tab-item" id="btab-stats" onclick="switchTab('stats')"><span class="tab-icon">📈</span><span class="tab-label" data-i18n="tab_stats">통계</span></button>
     <button class="tab-item" id="btab-salary-setting" onclick="switchTab('salary-setting')"><span class="tab-icon">⚙️</span><span class="tab-label" data-i18n="tab_salary_set">급여설정</span></button>
     <button class="tab-item" id="btab-fuel" onclick="switchTab('fuel')"><span class="tab-icon">⛽</span><span class="tab-label" data-i18n="tab_fuel">주유</span></button>
-    <button class="tab-item" id="btab-kakao" onclick="switchTab('kakao')"><span class="tab-icon">💬</span><span class="tab-label" data-i18n="tab_notif">알림</span></button>
+    <button class="tab-item" id="btab-kakao" onclick="switchTab('kakao')"><span class="tab-icon">💬</span><span class="tab-label">WhatsApp</span></button>
     <button class="tab-item" onclick="openAdminAuth()"><span class="tab-icon">🔧</span><span class="tab-label">관리자</span></button>
   </div>
 </div><!-- /screen-boss -->
@@ -1809,44 +1815,35 @@ let notifLog=[
 ];
 function renderNotifLog(){
   document.getElementById('notif-log-card').innerHTML=notifLog.length
-    ?notifLog.map(n=>`<div class="notif-row"><div class="notif-icon">${n.icon}</div><div class="notif-body"><div class="notif-msg">${n.msg.replace(/\n/g,'<br>')}</div><div class="notif-time">${n.time}</div></div><div class="notif-badge ${n.sent?'badge-sent':'badge-pending'}">${n.sent?'발송':'대기'}</div></div>`).join('')
-    :`<div style="padding:24px;text-align:center;color:var(--text3);">${t('recent_notif')}</div>`;
+    ?notifLog.map(n=>`<div class="notif-row"><div class="notif-icon">${n.icon}</div><div class="notif-body"><div class="notif-msg">${n.msg.replace(/\n/g,'<br>')}</div><div class="notif-time">${n.time}</div></div><div class="notif-badge ${n.sent?'badge-sent':'badge-pending'}">${n.sent?'Terkirim':'Pending'}</div></div>`).join('')
+    :`<div style="padding:24px;text-align:center;color:var(--text3);">Belum ada notifikasi</div>`;
 }
+
 function kakaoLink(){
-  if(kakaoLinked){
-    kakaoLinked=false;
-    document.getElementById('kakao-conn-text').textContent=t('kakao_wait');
-    document.getElementById('kakao-conn-sub').textContent=t('kakao_wait_sub');
-    document.getElementById('kakao-link-btn').textContent=t('connect');
-    document.getElementById('kakao-link-btn').style.background='var(--accent)';
-    showToast('카카오톡 연동 해제');return;
-  }
-  showToast('카카오 연결 중…');
-  setTimeout(()=>{
-    kakaoLinked=true;
-    document.getElementById('kakao-conn-text').innerHTML='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;vertical-align:middle"></span>연동됨';
-    document.getElementById('kakao-conn-sub').textContent=`${kakaoConfig.phone} · 알림톡 활성`;
-    document.getElementById('kakao-link-btn').textContent='해제';
-    document.getElementById('kakao-link-btn').style.background='var(--surface2)';
-    showToast('💬 카카오톡 연동 완료');
-  },1200);
+  var num = (document.getElementById('kakao-api-key').value||'').trim();
+  if(!num){ showToast('Masukkan nomor WhatsApp terlebih dahulu'); return; }
+  // 번호 정규화 (+62로 시작)
+  num = num.replace(/\s+/g,'').replace(/^0/,'+62');
+  if(!num.startsWith('+')) num = '+62' + num;
+  localStorage.setItem('wa_number', num);
+  document.getElementById('kakao-conn-text').innerHTML='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;vertical-align:middle"></span>'+num;
+  document.getElementById('kakao-conn-sub').textContent='WhatsApp aktif';
+  document.getElementById('kakao-link-btn').textContent='Update';
+  showToast('💬 Nomor WhatsApp disimpan');
 }
+
+function sendWhatsappTest(){
+  var num = localStorage.getItem('wa_number') || (document.getElementById('kakao-api-key').value||'').trim();
+  if(!num){ showToast('Masukkan nomor WhatsApp terlebih dahulu'); return; }
+  num = num.replace(/\s+/g,'').replace(/^0/,'+62');
+  if(!num.startsWith('+')) num = '+62' + num;
+  var msg = encodeURIComponent('Halo! Ini pesan test dari BossCall 🚗\nAplikasi manajemen pengemudi pribadi Anda.');
+  window.open('https://wa.me/'+num.replace('+','')+'?text='+msg, '_blank');
+}
+
 function saveKakaoConfig(){
-  var key=(document.getElementById('kakao-api-key').value||'').trim();
-  var tmpl=document.getElementById('kakao-template').value.trim();
-  if(key){
-    localStorage.setItem('kakao_api_key',key);
-    window.KAKAO_KEY=key;
-    showToast('카카오맵 로드 중 🗺️');
-    loadKakaoSDK(key).then(function(){
-      window.KAKAO_READY=true;
-      showToast('✅ 카카오맵 연동 완료! 장소 검색을 이용해보세요');
-    }).catch(function(){
-      showToast('❌ API 키를 확인하세요 (플랫폼 도메인 등록 필요)');
-    });
-  } else {
-    showToast('API 설정 저장됨 ⚙️');
-  }
+  // 와츠앱 탭에서는 kakaoLink()로 처리
+  kakaoLink();
 }
 
 // ══════════════════════════════════
