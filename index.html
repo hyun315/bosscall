@@ -1968,20 +1968,63 @@ function renderCharts(){
 function showMonthDetail(idx){
   document.querySelectorAll('.month-tab').forEach(function(t,i){t.classList.toggle('active',i===idx);});
   var d=monthlyData[idx]; var isThis=idx===monthlyData.length-1;
+
+  // 해당 월의 실제 운행기록 필터링
+  var monthKey = d.m; // 예: "6월"
+  var monthNum = parseInt(monthKey);
+  var now = new Date();
+  var year = now.getFullYear();
+  var monthTrips = tripList.filter(function(tt){
+    if(!tt.date) return false;
+    var td = new Date(tt.date+'T00:00:00');
+    return td.getFullYear()===year && (td.getMonth()+1)===monthNum;
+  });
+
+  // 날짜별 그룹핑
+  var groups={};
+  monthTrips.forEach(function(tt){
+    var day = tt.date;
+    if(!groups[day]) groups[day]=[];
+    groups[day].push(tt);
+  });
+  var dates = Object.keys(groups).sort(function(a,b){return b>a?1:-1;});
+
   document.getElementById('month-detail-card').innerHTML=
+    // 요약 카드
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px">'
     +[['운행 횟수',d.trips+t('times'),'#6c5ce7'],['총 거리',d.dist.toLocaleString()+'km','#6c5ce7'],['초과근무',d.ot+'시간','var(--amber)'],['최다 목적지',d.topDest,'var(--green)']].map(function(r){
       return '<div style="background:var(--surface2);border-radius:12px;padding:14px"><div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:5px">'+r[0]+'</div><div style="font-size:var(--fs-lg);font-weight:900;color:'+r[2]+'">'+r[1]+'</div></div>';
     }).join('')
     +'</div>'
-    +'<div style="margin:0 14px 16px;background:var(--surface2);border-radius:12px;padding:14px">'
-      +'<div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:6px">일 평균 운행</div>'
-      +'<div style="display:flex;align-items:baseline;gap:8px">'
-        +'<span style="font-size:var(--fs-xl);font-weight:900;color:var(--text)">'+(d.trips/(isThis?15:30)).toFixed(1)+'</span>'
-        +'<span style="font-size:var(--fs-sm);color:var(--text2)">'+t('times')+' / 일</span>'
-        +'<span style="margin-left:auto;font-size:var(--fs-sm);font-weight:700;color:var(--text2)">'+(d.dist/d.trips).toFixed(1)+' km/'+t('times')+'</span>'
-      +'</div>'
-    +'</div>';
+    // 일별 운행기록
+    +(dates.length > 0
+      ? '<div style="padding:0 14px 14px">'
+        +'<div style="font-size:13px;font-weight:800;color:var(--text2);margin-bottom:10px">📅 일별 운행 기록</div>'
+        +dates.map(function(date){
+          var items = groups[date];
+          var dayDist = items.reduce(function(s,tt){return s+parseFloat(tt.dist||0);},0).toFixed(1);
+          var d2 = new Date(date+'T00:00:00');
+          var dayLabel = (d2.getMonth()+1)+'/'+ d2.getDate()+' ('+'일월화수목금토'[d2.getDay()]+')';
+          return '<div style="margin-bottom:12px">'
+            +'<div style="display:flex;justify-content:space-between;margin-bottom:6px">'
+              +'<span style="font-size:13px;font-weight:700;color:var(--text2)">'+dayLabel+'</span>'
+              +'<span style="font-size:12px;color:var(--accent);font-weight:700">'+items.length+'회 · '+dayDist+'km</span>'
+            +'</div>'
+            +items.map(function(tt){
+              return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:10px;margin-bottom:4px">'
+                +'<span style="font-size:20px">'+(tt.icon||'📍')+'</span>'
+                +'<div style="flex:1;min-width:0">'
+                  +'<div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+tt.dest+'</div>'
+                  +'<div style="font-size:12px;color:var(--text2)">'+tt.dep+' → '+tt.arr+'</div>'
+                +'</div>'
+                +'<span style="font-size:13px;font-weight:700;color:var(--accent)">'+tt.dist+'km</span>'
+              +'</div>';
+            }).join('')
+          +'</div>';
+        }).join('')
+        +'</div>'
+      : '<div style="padding:20px;text-align:center;color:var(--text3)">이달 운행 기록 없음</div>'
+    );
 }
 
 // ══════════════════════════════════
