@@ -1445,22 +1445,31 @@ function renderFuelSummary(){
 // ══════════════════════════════════
 // 🚗 운행기록
 // ══════════════════════════════════
-var tripList=[
-  {dest:'Grand Indonesia Mall',dep:'09:10',arr:'09:38',dist:'5.2',icon:'🛒'},
-  {dest:'SCBD Sudirman Tower',dep:'11:50',arr:'12:08',dist:'3.1',icon:'🏢'},
+// 오늘 날짜
+function todayStr(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate(); }
+
+// localStorage에서 불러오기
+var tripList = JSON.parse(localStorage.getItem('trip_list') || 'null') || [
+  {date:todayStr(), dest:'Grand Indonesia Mall', dep:'09:10', arr:'09:38', dist:'5.2', icon:'🛒'},
+  {date:todayStr(), dest:'SCBD Sudirman Tower', dep:'11:50', arr:'12:08', dist:'3.1', icon:'🏢'},
 ];
-var iconMap={'공항':'✈️','호텔':'🏨','은행':'🏦','IBK':'🏦','자택':'🏠','집':'🏠','코엑스':'🏢','병원':'🏥','식당':'🍽️','갈비':'🍽️','커피':'☕','역':'🚉','시청':'🏛️'};
+
+function saveTripList(){ localStorage.setItem('trip_list', JSON.stringify(tripList)); }
+
+var iconMap={'공항':'✈️','호텔':'🏨','은행':'🏦','IBK':'🏦','자택':'🏠','집':'🏠','코엑스':'🏢','병원':'🏥','식당':'🍽️','갈비':'🍽️','커피':'☕','역':'🚉','시청':'🏛️','Mall':'🛒','Plaza':'🛒','Hotel':'🏨','Airport':'✈️','Bank':'🏦','Hospital':'🏥'};
 function guessIcon(d){for(var k in iconMap){if(d.includes(k))return iconMap[k];}return '📍';}
 
 // 홈 요약 카드
 function renderTripSummary(){
   var card=document.getElementById('trip-summary-card'); if(!card) return;
-  var total=tripList.reduce(function(s,tt){return s+parseFloat(tt.dist||0);},0).toFixed(1);
-  if(tripList.length===0){
-    card.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3)">오늘 운행 기록이 없습니다 →</div>';
+  var today=todayStr();
+  var todayList=tripList.filter(function(tt){return (tt.date||today)===today;});
+  var total=todayList.reduce(function(s,tt){return s+parseFloat(tt.dist||0);},0).toFixed(1);
+  if(todayList.length===0){
+    card.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3)">'+t('today_trip')+' 없음 →</div>';
     return;
   }
-  card.innerHTML=tripList.slice(0,2).map(function(tt){
+  card.innerHTML=todayList.slice(0,2).map(function(tt){
     return '<div class="trip-item" style="pointer-events:none">'
       +'<div class="trip-icon">'+(tt.icon||guessIcon(tt.dest))+'</div>'
       +'<div class="trip-info"><div class="trip-dest">'+tt.dest+'</div><div class="trip-time">'+tt.dep+' → '+tt.arr+'</div></div>'
@@ -1468,7 +1477,7 @@ function renderTripSummary(){
       +'</div>';
   }).join('')
   +'<div style="padding:11px 17px;display:flex;align-items:center;justify-content:space-between;background:var(--surface2);font-size:14px;font-weight:700">'
-    +'<span style="color:var(--text2)">📊 총 '+tripList.length+'회 · '+total+'km</span>'
+    +'<span style="color:var(--text2)">📊 '+todayList.length+'회 · '+total+'km</span>'
     +'<span style="color:var(--accent)">전체보기 →</span>'
   +'</div>';
 }
@@ -1484,35 +1493,77 @@ function closeTripScreen(){
   if(sc) sc.style.display='none';
 }
 
-// 전체화면 목록
+// 전체화면 목록 - 날짜별 그룹 + 누적
 function renderTripScreenList(){
-  var total=tripList.reduce(function(s,tt){return s+parseFloat(tt.dist||0);},0).toFixed(1);
+  var allDist=tripList.reduce(function(s,tt){return s+parseFloat(tt.dist||0);},0).toFixed(1);
   var sub=document.getElementById('trip-screen-sub');
-  if(sub) sub.textContent=tripList.length+'회 · '+total+'km';
+  if(sub) sub.textContent=t('times').replace('회','')+' '+tripList.length+'회 · 누적 '+allDist+'km';
   var list=document.getElementById('trip-screen-list');
   if(!list) return;
   if(tripList.length===0){
-    list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);font-size:16px">운행 기록이 없습니다<br><span style="font-size:13px;margin-top:6px;display:block">상단 ＋ 버튼으로 추가하세요</span></div>';
+    list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);font-size:16px">운행 기록이 없습니다</div>';
     return;
   }
-  list.innerHTML='<div class="card" style="margin:0 14px">'
-    +tripList.map(function(tt,i){
-      return '<div class="trip-item" onclick="openEditTrip('+i+')" style="cursor:pointer">'
-        +'<div class="trip-icon">'+(tt.icon||guessIcon(tt.dest))+'</div>'
-        +'<div class="trip-info"><div class="trip-dest">'+tt.dest+'</div><div class="trip-time">'+tt.dep+' → '+tt.arr+'</div></div>'
-        +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
-          +'<div class="trip-dist">'+tt.dist+'km</div>'
-          +'<button onclick="event.stopPropagation();deleteTrip('+i+')" style="background:rgba(255,59,48,.1);border:none;border-radius:6px;color:#ff3b30;font-size:11px;font-weight:700;padding:3px 8px;cursor:pointer;font-family:inherit">삭제</button>'
-        +'</div>'
-        +'</div>';
-    }).join('')
-    +'</div>';
+
+  // 날짜별 그룹핑
+  var groups={};
+  tripList.forEach(function(tt,i){
+    var d=tt.date||todayStr();
+    if(!groups[d]) groups[d]=[];
+    groups[d].push({tt:tt,i:i});
+  });
+
+  // 날짜 내림차순 정렬
+  var dates=Object.keys(groups).sort(function(a,b){return b>a?1:-1;});
+
+  list.innerHTML = dates.map(function(date){
+    var items=groups[date];
+    var dayDist=items.reduce(function(s,x){return s+parseFloat(x.tt.dist||0);},0).toFixed(1);
+    // 날짜 포맷
+    var d=new Date(date);
+    var dateLabel=date===todayStr()?'오늘':
+      (d.getMonth()+1)+'월 '+d.getDate()+'일 ('+'일월화수목금토'[d.getDay()]+')';
+
+    return '<div style="margin:0 14px 16px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;margin-bottom:6px">'
+        +'<span style="font-size:13px;font-weight:800;color:var(--text2)">📅 '+dateLabel+'</span>'
+        +'<span style="font-size:12px;color:var(--accent);font-weight:700">'+items.length+'회 · '+dayDist+'km</span>'
+      +'</div>'
+      +'<div class="card">'
+      +items.map(function(x){
+        return '<div class="trip-item" onclick="openEditTrip('+x.i+')" style="cursor:pointer">'
+          +'<div class="trip-icon">'+(x.tt.icon||guessIcon(x.tt.dest))+'</div>'
+          +'<div class="trip-info"><div class="trip-dest">'+x.tt.dest+'</div><div class="trip-time">'+x.tt.dep+' → '+x.tt.arr+'</div></div>'
+          +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
+            +'<div class="trip-dist">'+x.tt.dist+'km</div>'
+            +'<button onclick="event.stopPropagation();deleteTrip('+x.i+')" style="background:rgba(255,59,48,.1);border:none;border-radius:6px;color:#ff3b30;font-size:11px;font-weight:700;padding:3px 8px;cursor:pointer;font-family:inherit">삭제</button>'
+          +'</div>'
+          +'</div>';
+      }).join('')
+      +'</div>'
+
+      // 일별 소계
+      +'<div style="padding:10px 14px;background:var(--surface2);border-radius:0 0 14px 14px;display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-top:-2px">'
+        +'<span style="color:var(--text2)">소계</span>'
+        +'<span style="color:var(--accent)">'+items.length+'회 · '+dayDist+'km</span>'
+      +'</div>'
+      +'</div>';
+  }).join('')
+
+  // 전체 누적
+  +'<div style="margin:0 14px 20px;padding:14px 16px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:14px;color:#fff">'
+    +'<div style="font-size:12px;font-weight:700;opacity:.8;margin-bottom:6px">📊 전체 누적</div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center">'
+      +'<span style="font-size:22px;font-weight:900">'+tripList.length+'회</span>'
+      +'<span style="font-size:22px;font-weight:900">'+allDist+' km</span>'
+    +'</div>'
+  +'</div>';
 }
 
 // 추가
 function openAddTrip(){
   document.getElementById('trip-idx').value=-1;
-  document.getElementById('trip-modal-title').textContent='🚗 운행기록 추가';
+  document.getElementById('trip-modal-title').textContent=t('add_trip');
   ['trip-dest','trip-dep','trip-arr','trip-dist'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.value='';
   });
@@ -1523,7 +1574,7 @@ function openAddTrip(){
 function openEditTrip(idx){
   var tt=tripList[idx]; if(!tt) return;
   document.getElementById('trip-idx').value=idx;
-  document.getElementById('trip-modal-title').textContent='✏️ 운행기록 수정';
+  document.getElementById('trip-modal-title').textContent='✏️ 수정';
   document.getElementById('trip-dest').value=tt.dest;
   document.getElementById('trip-dep').value=tt.dep;
   document.getElementById('trip-arr').value=tt.arr;
@@ -1535,22 +1586,24 @@ function openEditTrip(idx){
 function saveTrip(){
   var idx=parseInt(document.getElementById('trip-idx').value);
   var dest=(document.getElementById('trip-dest').value||'').trim();
-  if(!dest){showToast('목적지를 입력하세요'); return;}
-  var entry={dest:dest,dep:document.getElementById('trip-dep').value,arr:document.getElementById('trip-arr').value,dist:document.getElementById('trip-dist').value||'0',icon:guessIcon(dest)};
+  if(!dest){showToast(t('dest_ph')); return;}
+  var entry={date:todayStr(),dest:dest,dep:document.getElementById('trip-dep').value,arr:document.getElementById('trip-arr').value,dist:document.getElementById('trip-dist').value||'0',icon:guessIcon(dest)};
   if(idx>=0) tripList[idx]=entry; else tripList.push(entry);
+  saveTripList();
   document.getElementById('trip-modal').classList.remove('open');
   renderTripSummary();
   renderTripScreenList();
-  showToast('✅ 저장됨');
+  showToast('✅ '+t('save'));
 }
 
 // 삭제
 function deleteTrip(idx){
-  showConfirm('운행기록 삭제', tripList[idx].dest+' 기록을 삭제하시겠습니까?', function(){
+  showConfirm(t('save'), tripList[idx].dest+' — '+t('confirm')+'?', function(){
     tripList.splice(idx,1);
+    saveTripList();
     renderTripSummary();
     renderTripScreenList();
-    showToast('삭제됨');
+    showToast('🗑️ '+t('save'));
   });
 }
 
