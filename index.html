@@ -517,19 +517,16 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
       <button class="navi-btn" onclick="openNavi('naver')"><span>🧭</span><span>네이버</span></button>
     </div>
 
-    <div class="section-title" data-i18n="recommend">추천</div>
-    <div id="ad-banner-home" class="ad-banner" onclick="adClick(adData[adIdx])">
-      <div class="ad-tag">AD</div>
-      <div id="ad-slide-0" class="ad-slide active"></div>
-      <div id="ad-slide-1" class="ad-slide"></div>
-      <div id="ad-slide-2" class="ad-slide"></div>
-      <div class="ad-dots" style="background:var(--surface)">
-        <div class="ad-dot active" id="dot-0"></div><div class="ad-dot" id="dot-1"></div><div class="ad-dot" id="dot-2"></div>
-      </div>
+    <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+      <span data-i18n="recommend">추천 광고</span>
+      <span style="font-size:11px;color:var(--text3);font-weight:400">AD</span>
     </div>
+    <div id="ad-grid" style="margin:0 14px 12px;display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
 
     <div class="section-title" data-i18n="today_trip">오늘 운행</div>
-    <div class="card" id="trip-summary-card" onclick="openTripScreen()" style="cursor:pointer"></div>
+    <div class="card" id="trip-summary-card" onclick="openTripScreen()" style="cursor:pointer">
+      <div style="padding:20px;text-align:center;color:var(--text3)">불러오는 중…</div>
+    </div>
 
   </div>
 
@@ -676,6 +673,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
     <button class="tab-item" id="btab-salary-setting" onclick="switchTab('salary-setting')"><span class="tab-icon">⚙️</span><span class="tab-label" data-i18n="tab_salary_set">급여설정</span></button>
     <button class="tab-item" id="btab-fuel" onclick="switchTab('fuel')"><span class="tab-icon">⛽</span><span class="tab-label" data-i18n="tab_fuel">주유</span></button>
     <button class="tab-item" id="btab-kakao" onclick="switchTab('kakao')"><span class="tab-icon">💬</span><span class="tab-label" data-i18n="tab_notif">알림</span></button>
+    <button class="tab-item" onclick="openAdminAuth()"><span class="tab-icon">🔧</span><span class="tab-label">관리자</span></button>
   </div>
 </div><!-- /screen-boss -->
 
@@ -815,6 +813,78 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
     </div>
   </div>
 </div>
+<!-- ════ 관리자 인증 모달 ════ -->
+<div class="modal-overlay" id="admin-auth-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:48px;margin-bottom:10px">🔧</div>
+      <div style="font-size:20px;font-weight:900;color:var(--text)">관리자 인증</div>
+      <div style="font-size:14px;color:var(--text2);margin-top:5px">광고 관리 페이지에 접근하려면 인증이 필요합니다</div>
+    </div>
+    <button onclick="adminFaceID()" style="width:100%;padding:16px;background:linear-gradient(135deg,#3478f6,#6c5ce7);color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px">
+      <span style="font-size:22px">🪪</span> Face ID / Touch ID
+    </button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <span style="font-size:13px;color:var(--text3)">또는</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+    <div class="inp-label">비밀번호</div>
+    <input class="inp" id="admin-pw" type="password" placeholder="관리자 비밀번호 입력" onkeydown="if(event.key==='Enter')adminPwLogin()"/>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-primary" style="flex:1;padding:14px" onclick="adminPwLogin()">확인</button>
+      <button class="btn btn-ghost" style="flex:1;padding:14px" onclick="document.getElementById('admin-auth-modal').classList.remove('open')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ 관리자 화면 ════ -->
+<div id="admin-screen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:8500;flex-direction:column;font-family:'Noto Sans KR',-apple-system,sans-serif">
+  <!-- 헤더 -->
+  <div style="background:linear-gradient(135deg,#3478f6,#6c5ce7);padding:18px 18px 16px;display:flex;align-items:center;gap:14px;flex-shrink:0">
+    <button onclick="closeAdminScreen()" style="background:rgba(255,255,255,.2);border:none;font-size:20px;cursor:pointer;color:#fff;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0">←</button>
+    <div style="flex:1">
+      <div style="font-size:18px;font-weight:900;color:#fff">🔧 광고 관리</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.8);margin-top:1px" id="admin-ad-count">광고 0개 등록됨</div>
+    </div>
+    <button onclick="openAddAd()" style="background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:11px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">＋ 추가</button>
+  </div>
+  <!-- 광고 목록 -->
+  <div style="flex:1;overflow-y:auto;padding:14px 0" id="admin-ad-list"></div>
+</div>
+
+<!-- ════ 광고 추가/수정 모달 ════ -->
+<div class="modal-overlay" id="ad-edit-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="ad-edit-title">📢 광고 추가</div>
+    <input type="hidden" id="ad-edit-idx" value="-1"/>
+    <div class="inp-label">이모지</div>
+    <input class="inp" id="ad-emoji" placeholder="🍱" maxlength="2" style="font-size:28px;text-align:center"/>
+    <div class="inp-label">광고 제목</div>
+    <input class="inp" id="ad-title" placeholder="예: 하남갈비 을지로점"/>
+    <div class="inp-label">광고 내용 (부제목)</div>
+    <input class="inp" id="ad-sub" placeholder="예: 기사님 20% 할인"/>
+    <div class="inp-label">목적지 주소 (클릭 시 자동 설정)</div>
+    <input class="inp" id="ad-addr" placeholder="예: 서울 중구 을지로 79"/>
+    <div class="inp-label">배경색</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button onclick="setAdColor(this,'#e74c3c')" style="width:36px;height:36px;background:#e74c3c;border:none;border-radius:8px;cursor:pointer"></button>
+      <button onclick="setAdColor(this,'#3478f6')" style="width:36px;height:36px;background:#3478f6;border:none;border-radius:8px;cursor:pointer"></button>
+      <button onclick="setAdColor(this,'#00b874')" style="width:36px;height:36px;background:#00b874;border:none;border-radius:8px;cursor:pointer"></button>
+      <button onclick="setAdColor(this,'#ff9500')" style="width:36px;height:36px;background:#ff9500;border:none;border-radius:8px;cursor:pointer"></button>
+      <button onclick="setAdColor(this,'#6c5ce7')" style="width:36px;height:36px;background:#6c5ce7;border:none;border-radius:8px;cursor:pointer"></button>
+      <button onclick="setAdColor(this,'#e91e8c')" style="width:36px;height:36px;background:#e91e8c;border:none;border-radius:8px;cursor:pointer"></button>
+    </div>
+    <input type="hidden" id="ad-color" value="#3478f6"/>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" style="flex:1;padding:14px" onclick="saveAd()">저장</button>
+      <button class="btn btn-ghost" style="flex:1;padding:14px" onclick="document.getElementById('ad-edit-modal').classList.remove('open')">취소</button>
+    </div>
+  </div>
+</div>
+
 <!-- ════ 운행기록 전체화면 ════ -->
 <div id="trip-screen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:8500;flex-direction:column;font-family:'Noto Sans KR',-apple-system,sans-serif">
   <!-- 헤더 -->
@@ -2120,28 +2190,234 @@ function renderPsFav(){
 }
 
 // ══ 광고 슬라이더 ══
-var adData=[
-  {emoji:'🍱',title:'하남갈비 런치세트',sub:'기사님 20% 할인',color:'#e74c3c'},
-  {emoji:'☕',title:'투썸플레이스 명동 L7',sub:'아메리카노 쿠폰',color:'#2980b9'},
-  {emoji:'⛽',title:'GS칼텍스 서초IC',sub:'리터당 50원 할인',color:'#27ae60'}
+// ══════════════════════════════════
+// 📢 광고 관리
+// ══════════════════════════════════
+var adList = JSON.parse(localStorage.getItem('ad_list') || 'null') || [
+  {emoji:'🍱', title:'하남갈비 런치세트', sub:'기사님 20% 할인', addr:'서울 중구 을지로 79', color:'#e74c3c'},
+  {emoji:'☕', title:'투썸플레이스 명동', sub:'아메리카노 쿠폰', addr:'서울 중구 명동길 31', color:'#2980b9'},
+  {emoji:'⛽', title:'GS칼텍스 서초IC', sub:'리터당 50원 할인', addr:'서울 서초구 서초대로 99', color:'#27ae60'},
+  {emoji:'🏨', title:'더플라자 호텔', sub:'발렛파킹 무료', addr:'서울 중구 태평로1가 23', color:'#6c5ce7'},
+  {emoji:'🍜', title:'명동교자 본점', sub:'점심특선 할인', addr:'서울 중구 명동10길 29', color:'#ff9500'},
+  {emoji:'🏥', title:'서울성모병원', sub:'주차 1시간 무료', addr:'서울 서초구 반포대로 222', color:'#00b874'},
+  {emoji:'🛒', title:'롯데마트 서울역', sub:'주차 2시간 무료', addr:'서울 중구 한강대로 405', color:'#e91e8c'},
+  {emoji:'✈️', title:'김포공항 국내선', sub:'빠른 드롭오프', addr:'서울 강서구 하늘길 38', color:'#3478f6'},
+  {emoji:'🎭', title:'국립극장', sub:'공연 안내', addr:'서울 중구 장충단로 59', color:'#8e44ad'},
+  {emoji:'🍣', title:'스시야 을지로', sub:'런치 코스 특가', addr:'서울 중구 을지로 120', color:'#c0392b'}
 ];
-var adIdx=0;
-function renderAdSlides(){
-  adData.forEach(function(d,i){
-    var el=document.getElementById('ad-slide-'+i);
-    if(!el) return;
-    el.style.background='linear-gradient(135deg,'+d.color+'18,'+d.color+'08)';
-    el.innerHTML='<div class="ad-img" style="background:'+d.color+'22;font-size:30px;display:flex;align-items:center;justify-content:center">'+d.emoji+'</div>'
-      +'<div class="ad-info"><div class="ad-title">'+d.title+'</div><div class="ad-sub">'+d.sub+'</div></div>'
-      +'<button class="ad-cta" style="background:'+d.color+'">보기</button>';
+function saveAdList(){ localStorage.setItem('ad_list', JSON.stringify(adList)); }
+
+// 홈 광고 그리드 렌더링
+function renderAdGrid(){
+  var grid = document.getElementById('ad-grid');
+  if(!grid) return;
+  if(adList.length === 0){
+    grid.innerHTML = '<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text3);font-size:14px">등록된 광고가 없습니다</div>';
+    return;
+  }
+  grid.innerHTML = adList.map(function(ad, i){
+    return '<div onclick="adClick('+i+')" style="background:linear-gradient(135deg,'+ad.color+'22,'+ad.color+'11);border:1.5px solid '+ad.color+'33;border-radius:14px;padding:13px;cursor:pointer;transition:transform .15s;display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden" onmouseover="this.style.transform=\'scale(1.02)\'" onmouseout="this.style.transform=\'scale(1)\'">'
+      +'<div style="position:absolute;top:6px;right:7px;font-size:9px;font-weight:700;color:'+ad.color+';opacity:.7">AD</div>'
+      +'<div style="font-size:28px">'+ad.emoji+'</div>'
+      +'<div style="font-size:13px;font-weight:900;color:var(--text);line-height:1.3">'+ad.title+'</div>'
+      +'<div style="font-size:11px;color:var(--text2);line-height:1.4">'+ad.sub+'</div>'
+      +'<div style="font-size:10px;font-weight:700;color:'+ad.color+';margin-top:2px">📍 목적지로 설정 →</div>'
+      +'</div>';
+  }).join('');
+}
+
+// 광고 클릭 → 목적지 자동 설정
+function adClick(idx){
+  var ad = adList[idx]; if(!ad) return;
+  // 목적지 입력창에 설정
+  var di = document.getElementById('dest-input');
+  if(di) di.value = ad.title;
+  // 알림
+  showToast('🚩 목적지: '+ad.title);
+  // 홈탭으로 이동
+  switchTab('home');
+}
+
+// ══ 관리자 인증 ══
+var ADMIN_PW = localStorage.getItem('admin_pw') || 'boss1234';
+var _adminAuthed = false;
+var _adminCredId = localStorage.getItem('admin_cred_id') || null;
+
+function openAdminAuth(){
+  document.getElementById('admin-auth-modal').classList.add('open');
+  document.getElementById('admin-pw').value = '';
+  // Face ID 지원 여부 확인 후 자동 시도
+  if(_adminCredId && window.PublicKeyCredential){
+    setTimeout(adminFaceID, 300);
+  }
+}
+
+function adminFaceID(){
+  if(!window.PublicKeyCredential){
+    showToast('이 기기에서는 Face ID를 지원하지 않습니다. 비밀번호를 사용해주세요');
+    return;
+  }
+  // WebAuthn 인증
+  var challenge = new Uint8Array(32);
+  crypto.getRandomValues(challenge);
+
+  if(_adminCredId){
+    // 등록된 자격증명으로 인증
+    var credId = Uint8Array.from(atob(_adminCredId), function(c){return c.charCodeAt(0);});
+    navigator.credentials.get({
+      publicKey:{
+        challenge: challenge,
+        allowCredentials:[{id: credId, type:'public-key'}],
+        userVerification: 'required',
+        timeout: 60000
+      }
+    }).then(function(){
+      _adminAuthed = true;
+      document.getElementById('admin-auth-modal').classList.remove('open');
+      openAdminScreen();
+    }).catch(function(){
+      showToast('Face ID 인증 실패. 비밀번호를 사용해주세요');
+    });
+  } else {
+    // 최초 등록
+    navigator.credentials.create({
+      publicKey:{
+        challenge: challenge,
+        rp:{name:'BossCall Admin'},
+        user:{id: new Uint8Array(16), name:'admin', displayName:'관리자'},
+        pubKeyCredParams:[{alg:-7, type:'public-key'}],
+        authenticatorSelection:{userVerification:'required'},
+        timeout: 60000
+      }
+    }).then(function(cred){
+      var credId = btoa(String.fromCharCode.apply(null, new Uint8Array(cred.rawId)));
+      localStorage.setItem('admin_cred_id', credId);
+      _adminCredId = credId;
+      _adminAuthed = true;
+      document.getElementById('admin-auth-modal').classList.remove('open');
+      openAdminScreen();
+      showToast('✅ Face ID 등록 완료');
+    }).catch(function(){
+      showToast('Face ID 등록 실패. 비밀번호를 사용해주세요');
+    });
+  }
+}
+
+function adminPwLogin(){
+  var pw = (document.getElementById('admin-pw').value || '').trim();
+  if(pw === ADMIN_PW){
+    _adminAuthed = true;
+    document.getElementById('admin-auth-modal').classList.remove('open');
+    openAdminScreen();
+  } else {
+    showToast('❌ 비밀번호가 틀렸습니다');
+    document.getElementById('admin-pw').value = '';
+    document.getElementById('admin-pw').focus();
+  }
+}
+
+// ══ 관리자 화면 ══
+function openAdminScreen(){
+  var sc = document.getElementById('admin-screen');
+  if(sc) sc.style.display = 'flex';
+  renderAdminList();
+}
+function closeAdminScreen(){
+  var sc = document.getElementById('admin-screen');
+  if(sc) sc.style.display = 'none';
+  _adminAuthed = false;
+}
+
+function renderAdminList(){
+  var cnt = document.getElementById('admin-ad-count');
+  if(cnt) cnt.textContent = '광고 '+adList.length+'개 등록됨';
+  var list = document.getElementById('admin-ad-list');
+  if(!list) return;
+  if(adList.length === 0){
+    list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3)">등록된 광고가 없습니다<br>상단 ＋ 버튼으로 추가하세요</div>';
+    return;
+  }
+  list.innerHTML = '<div class="card" style="margin:0 14px">'
+    + adList.map(function(ad, i){
+      return '<div style="display:flex;align-items:center;padding:14px 17px;border-bottom:1px solid var(--border);gap:12px">'
+        +'<div style="width:44px;height:44px;border-radius:12px;background:'+ad.color+'22;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">'+ad.emoji+'</div>'
+        +'<div style="flex:1;min-width:0">'
+          +'<div style="font-size:15px;font-weight:700;color:var(--text)">'+ad.title+'</div>'
+          +'<div style="font-size:12px;color:var(--text2);margin-top:2px">'+ad.sub+'</div>'
+          +'<div style="font-size:11px;color:var(--text3);margin-top:2px">📍 '+ad.addr+'</div>'
+        +'</div>'
+        +'<div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">'
+          +'<button onclick="openEditAd('+i+')" style="background:var(--surface2);border:none;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;color:var(--accent);font-family:inherit">수정</button>'
+          +'<button onclick="deleteAd('+i+')" style="background:rgba(255,59,48,.1);border:none;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;color:#ff3b30;font-family:inherit">삭제</button>'
+        +'</div>'
+        +'</div>';
+    }).join('')
+    +'</div>';
+}
+
+var _adColor = '#3478f6';
+function setAdColor(btn, color){
+  _adColor = color;
+  document.getElementById('ad-color').value = color;
+  document.querySelectorAll('#ad-edit-modal button[onclick^="setAdColor"]').forEach(function(b){
+    b.style.outline = 'none';
+  });
+  btn.style.outline = '3px solid #1a1d2e';
+  btn.style.outlineOffset = '2px';
+}
+
+function openAddAd(){
+  document.getElementById('ad-edit-idx').value = -1;
+  document.getElementById('ad-edit-title').textContent = '📢 광고 추가';
+  ['ad-emoji','ad-title','ad-sub','ad-addr'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value = '';
+  });
+  _adColor = '#3478f6';
+  document.getElementById('ad-color').value = '#3478f6';
+  document.getElementById('ad-edit-modal').classList.add('open');
+}
+
+function openEditAd(idx){
+  var ad = adList[idx]; if(!ad) return;
+  document.getElementById('ad-edit-idx').value = idx;
+  document.getElementById('ad-edit-title').textContent = '✏️ 광고 수정';
+  document.getElementById('ad-emoji').value = ad.emoji;
+  document.getElementById('ad-title').value = ad.title;
+  document.getElementById('ad-sub').value = ad.sub;
+  document.getElementById('ad-addr').value = ad.addr;
+  _adColor = ad.color;
+  document.getElementById('ad-color').value = ad.color;
+  document.getElementById('ad-edit-modal').classList.add('open');
+}
+
+function saveAd(){
+  var idx = parseInt(document.getElementById('ad-edit-idx').value);
+  var title = (document.getElementById('ad-title').value || '').trim();
+  if(!title){ showToast('광고 제목을 입력하세요'); return; }
+  var entry = {
+    emoji: document.getElementById('ad-emoji').value || '📢',
+    title: title,
+    sub: document.getElementById('ad-sub').value || '',
+    addr: document.getElementById('ad-addr').value || '',
+    color: document.getElementById('ad-color').value || '#3478f6'
+  };
+  if(idx >= 0) adList[idx] = entry; else adList.push(entry);
+  saveAdList();
+  document.getElementById('ad-edit-modal').classList.remove('open');
+  renderAdminList();
+  renderAdGrid();
+  showToast('✅ 광고 저장됨');
+}
+
+function deleteAd(idx){
+  showConfirm('광고 삭제', '"'+adList[idx].title+'" 광고를 삭제하시겠습니까?', function(){
+    adList.splice(idx, 1);
+    saveAdList();
+    renderAdminList();
+    renderAdGrid();
+    showToast('삭제됨');
   });
 }
-function showAdSlide(idx){
-  document.querySelectorAll('#ad-banner-home .ad-slide').forEach(function(s,i){s.classList.toggle('active',i===idx);});
-  document.querySelectorAll('.ad-dot').forEach(function(d,i){d.classList.toggle('active',i===idx);});
-  adIdx=idx;
-}
-function adClick(d){showToast((d&&d.title?d.title:'광고')+' — 준비 중');}
 
 // ══════════════════════════════════
 // 온보딩 로직
@@ -2326,8 +2602,7 @@ function initApp(role) {
   });
 
   // 광고 슬라이더 시작
-  renderAdSlides();
-  setInterval(function(){showAdSlide((adIdx+1)%3);},3500);
+  renderAdGrid();
 
   // 급여 초기화
   loadSalaryForm();
