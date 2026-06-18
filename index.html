@@ -77,8 +77,8 @@ if (window.KAKAO_KEY) {
   --fs-lg:22px;--fs-xl:28px;--fs-hero:36px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:24px 0}
-.phone{width:400px;min-height:860px;background:var(--bg);border-radius:48px;overflow:visible;box-shadow:0 0 0 1px #c8d0e8,0 40px 80px rgba(60,80,160,.18),inset 0 0 0 1px #fff;display:flex;flex-direction:column;position:relative}
+body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;min-height:100vh;padding:24px 0}
+.phone{width:400px;min-height:860px;background:var(--bg);border-radius:48px;overflow:visible;box-shadow:0 0 0 1px #c8d0e8,0 40px 80px rgba(60,80,160,.18),inset 0 0 0 1px #fff;display:flex;flex-direction:column;position:relative;margin:0 auto}
 
 /* 상태바 */
 .status-bar{display:flex;justify-content:space-between;align-items:center;padding:16px 28px 8px;color:var(--text)}
@@ -1957,7 +1957,11 @@ function psSearch(q){
     window.google.maps.places.Place.searchByText({
       textQuery: q,
       fields: ['displayName','formattedAddress','location','types','id'],
-      language: 'id'
+      language: 'id',
+      locationBias: {
+        center: {lat: -6.2088, lng: 106.8456},
+        radius: 50000
+      }
     }).then(function(res){
       var places = (res && res.places) || [];
       if(places.length){
