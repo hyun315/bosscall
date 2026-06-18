@@ -511,10 +511,10 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
 
     <div class="section-title" data-i18n="navigation">네비게이션</div>
     <div class="navi-buttons">
-      <button class="navi-btn" onclick="openNavi('kakao')"><span>🗺️</span><span>카카오</span></button>
-      <button class="navi-btn" onclick="openNavi('naver')"><span>🧭</span><span>네이버</span></button>
-      <button class="navi-btn" onclick="openNavi('tmap')"><span>📍</span><span>티맵</span></button>
       <button class="navi-btn" onclick="openNavi('google')"><span>🌐</span><span>Google</span></button>
+      <button class="navi-btn" onclick="openNavi('kakao')"><span>🗺️</span><span>카카오</span></button>
+      <button class="navi-btn" onclick="openNavi('tmap')"><span>📍</span><span>티맵</span></button>
+      <button class="navi-btn" onclick="openNavi('naver')"><span>🧭</span><span>네이버</span></button>
     </div>
 
     <div class="section-title" data-i18n="recommend">추천</div>
@@ -726,15 +726,15 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
       <div class="map-label" id="map-label-driver">픽업: IBK 을지로 본점</div>
     </div>
     <div class="map-actions">
-      <button class="map-btn" onclick="openNavi('kakao')">🗺 카카오</button>
-      <button class="map-btn" onclick="openNavi('naver')">🧭 네이버</button>
-      <button class="map-btn" onclick="openNavi('tmap')">📍 티맵</button>
       <button class="map-btn" onclick="openNavi('google')">🌐 Google</button>
+      <button class="map-btn" onclick="openNavi('kakao')">🗺 카카오</button>
+      <button class="map-btn" onclick="openNavi('tmap')">📍 티맵</button>
+      <button class="map-btn" onclick="openNavi('naver')">🧭 네이버</button>
     </div>
   </div>
 
   <!-- 기사 주유 기록 (NEW) -->
-  <div class="section-title" data-i18n="fuel_record">⛽ 주유 기록 <span style="color:var(--amber);cursor:pointer;font-size:var(--fs-xs)" onclick="openFuelModal()">＋</span></div>
+  <div class="section-title" data-i18n="fuel_record">⛽ 주유 기록</div>
   <div class="card" id="driver-fuel-list"></div>
 
   <div class="section-title" data-i18n="att_record">출퇴근 기록 <span style="color:var(--accent);cursor:pointer;font-size:var(--fs-xs)" onclick="openEditModal(null)">＋</span></div>
@@ -803,7 +803,17 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
 </div>
 
 <!-- ════ 운행기록 편집 모달 ════ -->
-<div class="modal-overlay" id="edit-modal" onclick="if(event.target===this)this.classList.remove('open')">
+<div class="modal-overlay" id="mo-confirm" onclick="if(event.target===this)confirmCancel()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="mo-confirm-title">확인</div>
+    <div id="mo-confirm-msg" style="font-size:16px;color:#6b7394;margin-bottom:22px;line-height:1.6"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" style="flex:1;padding:15px" onclick="confirmCancel()">취소</button>
+      <button class="btn btn-primary" style="flex:1;padding:15px" onclick="confirmOk()">확인</button>
+    </div>
+  </div>
+</div>
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title" id="edit-modal-title" data-i18n="add_trip">🚗 운행기록 추가</div>
@@ -1338,16 +1348,54 @@ function saveTrip(){
 
 // ══ 출퇴근 ══
 function checkIn(){
-  const now=new Date();const tm=`${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-  logList[0].in=tm;logList[0].oting=true;renderLogList();
-  showToast(`🟢 ${t('checkin')} ✓  ${tm}`);
-  document.getElementById('checkin-btn').style.opacity='.5';
+  var now=new Date();
+  var tm=now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
+  showConfirm(
+    '🟢 출근 확인',
+    tm+' 에 출근 기록하시겠습니까?',
+    function(){
+      logList[0].in=tm; logList[0].oting=true; renderLogList();
+      showToast('🟢 '+t('checkin')+' ✓  '+tm);
+      document.getElementById('checkin-btn').style.opacity='.5';
+      document.getElementById('checkin-btn').style.pointerEvents='none';
+    }
+  );
 }
 function checkOut(){
-  const now=new Date();const tm=`${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-  logList[0].out=tm;logList[0].oting=false;renderLogList();
-  showToast(`🔴 ${t('checkout')} ✓  ${tm}`);
-  document.getElementById('checkout-btn').style.opacity='.5';
+  var now=new Date();
+  var tm=now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
+  showConfirm(
+    '🔴 퇴근 확인',
+    tm+' 에 퇴근 기록하시겠습니까?',
+    function(){
+      logList[0].out=tm; logList[0].oting=false; renderLogList();
+      showToast('🔴 '+t('checkout')+' ✓  '+tm);
+      document.getElementById('checkout-btn').style.opacity='.5';
+      document.getElementById('checkout-btn').style.pointerEvents='none';
+    }
+  );
+}
+
+// 확인 팝업
+function showConfirm(title, msg, onConfirm){
+  var mo=document.getElementById('mo-confirm');
+  var ttl=document.getElementById('mo-confirm-title');
+  var txt=document.getElementById('mo-confirm-msg');
+  if(ttl) ttl.textContent=title;
+  if(txt) txt.textContent=msg;
+  window._confirmCb=onConfirm;
+  if(mo) mo.classList.add('open');
+}
+function confirmOk(){
+  var mo=document.getElementById('mo-confirm');
+  if(mo) mo.classList.remove('open');
+  if(window._confirmCb) window._confirmCb();
+  window._confirmCb=null;
+}
+function confirmCancel(){
+  var mo=document.getElementById('mo-confirm');
+  if(mo) mo.classList.remove('open');
+  window._confirmCb=null;
 }
 
 // ══ 호출 ══
