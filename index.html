@@ -1918,11 +1918,9 @@ function psOnInput(){
 function psClear(){document.getElementById('ps-input').value='';document.getElementById('ps-clear').style.display='none';showPsDefault();document.getElementById('ps-input').focus();}
 
 function psAutoComplete(q){
-  showToast('검색: '+q+' | Google:'+(window.GOOGLE_PLACES_READY?'✅':'❌'));
   if(window.GOOGLE_PLACES_READY && window.google && window.google.maps && window.google.maps.places){
     var svc = new window.google.maps.places.AutocompleteService();
     svc.getPlacePredictions({input:q, language:'id'}, function(predictions, status){
-      showToast('결과: '+status+' | '+(predictions?predictions.length+'개':'0개'));
       if(status === window.google.maps.places.PlacesServiceStatus.OK && predictions && predictions.length){
         window._psAutoList = predictions.map(function(p){
           return {
@@ -2380,16 +2378,16 @@ function renderPsFav(){
 // 📢 광고 관리
 // ══════════════════════════════════
 var adList = JSON.parse(localStorage.getItem('ad_list') || 'null') || [
-  {emoji:'🍜', title:'Restoran Sederhana', sub:'Diskon 20% untuk sopir', addr:'Jl. Sabang No.1, Jakarta Pusat', color:'#e74c3c'},
-  {emoji:'⛽', title:'SPBU Pertamina Thamrin', sub:'Hemat Rp500/liter', addr:'Jl. M.H. Thamrin, Jakarta Pusat', color:'#27ae60'},
-  {emoji:'🏨', title:'Hotel Borobudur Jakarta', sub:'Parkir gratis 2 jam', addr:'Jl. Lapangan Banteng Sel. No.1, Jakarta', color:'#6c5ce7'},
-  {emoji:'☕', title:'Kopi Kenangan Sudirman', sub:'Buy 1 Get 1 untuk sopir', addr:'Jl. Jend. Sudirman, Jakarta Selatan', color:'#2980b9'},
-  {emoji:'🛒', title:'Grand Indonesia', sub:'Parkir gratis 1 jam', addr:'Jl. M.H. Thamrin No.1, Jakarta Pusat', color:'#e91e8c'},
-  {emoji:'🍱', title:'Warteg Bahari', sub:'Makan siang Rp25.000', addr:'Jl. Cideng, Jakarta Pusat', color:'#ff9500'},
-  {emoji:'🏥', title:'RS Medistra Jakarta', sub:'Parkir prioritas sopir', addr:'Jl. Jend. Gatot Subroto Kav.59, Jakarta', color:'#00b874'},
-  {emoji:'✈️', title:'Bandara Soekarno-Hatta', sub:'Antar jemput ekspres', addr:'Tangerang, Banten', color:'#3478f6'},
-  {emoji:'🎭', title:'Taman Ismail Marzuki', sub:'Info acara budaya', addr:'Jl. Cikini Raya No.73, Jakarta Pusat', color:'#8e44ad'},
-  {emoji:'🍣', title:'Sushi Tei Grand Indonesia', sub:'Lunch set spesial', addr:'Grand Indonesia, Jakarta Pusat', color:'#c0392b'}
+  {emoji:'🇰🇷', title:'Chir Chir Fusion Chicken', sub:'Ayam Korea terbaik di Jakarta', addr:'Grand Indonesia, Jl. M.H. Thamrin No.1, Jakarta Pusat', color:'#e74c3c'},
+  {emoji:'🥩', title:'Sariwangi Korean BBQ', sub:'Daging sapi premium ala Korea', addr:'Jl. Kemang Raya No.45, Jakarta Selatan', color:'#c0392b'},
+  {emoji:'🍜', title:'Platinum Korean Restaurant', sub:'Galbi & Samgyeopsal authentic', addr:'Jl. Gajah Mada No.17, Jakarta Pusat', color:'#8e44ad'},
+  {emoji:'🍱', title:'Pochajjang Korean BBQ', sub:'All you can eat Rp199.000', addr:'Summarecon Mall Kelapa Gading, Jakarta', color:'#2980b9'},
+  {emoji:'🥗', title:'Hangawi Korean Cuisine', sub:'Menu sehat ala Korea', addr:'Jl. Sudirman Kav.52, Jakarta Selatan', color:'#27ae60'},
+  {emoji:'🍣', title:'Hoshiguma Japanese & Korean', sub:'Sushi & BBQ Korea premium', addr:'SCBD, Jl. Jend. Sudirman, Jakarta', color:'#16a085'},
+  {emoji:'🍽️', title:'Skye Restaurant & Bar', sub:'Fine dining view Jakarta skyline', addr:'BCA Tower Lt.56, Jl. M.H. Thamrin, Jakarta', color:'#2c3e50'},
+  {emoji:'🥩', title:'Lawry\'s The Prime Rib', sub:'Prime rib terbaik di Jakarta', addr:'Pacific Place Mall, SCBD, Jakarta Selatan', color:'#d35400'},
+  {emoji:'🍛', title:'Dapur Solo', sub:'Masakan Jawa autentik', addr:'Jl. Wolter Monginsidi No.39, Jakarta Selatan', color:'#f39c12'},
+  {emoji:'🦞', title:'Bonchon Chicken', sub:'Korean fried chicken renyah', addr:'Plaza Indonesia Lt.3, Jakarta Pusat', color:'#e91e8c'}
 ];
 function saveAdList(){ localStorage.setItem('ad_list', JSON.stringify(adList)); }
 
