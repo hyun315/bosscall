@@ -11,8 +11,19 @@
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233478f6'/%3E%3Crect x='8' y='36' width='48' height='16' rx='4' fill='white'/%3E%3Cpath d='M14 36l6-12q3-6 10-6h16q7 0 10 6l6 12z' fill='white'/%3E%3Ccircle cx='18' cy='46' r='6' fill='%233478f6'/%3E%3Ccircle cx='18' cy='46' r='3' fill='white'/%3E%3Ccircle cx='46' cy='46' r='6' fill='%233478f6'/%3E%3Ccircle cx='46' cy='46' r='3' fill='white'/%3E%3Cpath d='M48 16q5 5 5 11t-5 11' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>
 /* 카카오맵 SDK */
+window.GOOGLE_KEY = 'AIzaSyAYSKFiBMljBYWoyRAoR93XcbYrp65zaVM';
 window.KAKAO_KEY = localStorage.getItem('kakao_api_key') || '383a53cfd4165ce1cd26ed2e3540d7f0';
 window.KAKAO_READY = false;
+window.GOOGLE_PLACES_READY = false;
+
+// Google Places SDK 로드
+(function(){
+  var s = document.createElement('script');
+  s.src = 'https://maps.googleapis.com/maps/api/js?key=' + window.GOOGLE_KEY + '&libraries=places&language=id&region=ID';
+  s.onload = function(){ window.GOOGLE_PLACES_READY = true; console.log('✅ Google Places 로드 완료'); };
+  s.onerror = function(){ console.error('❌ Google Places 로드 실패'); };
+  document.head.appendChild(s);
+})();
 function loadKakaoSDK(key) {
   return new Promise(function(resolve, reject) {
     if (window.kakao && window.kakao.maps) { resolve(); return; }
@@ -389,8 +400,8 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
     <div class="ob-title">전화번호로<br>간편 가입</div>
     <div class="ob-sub">인증번호를 문자로 보내드립니다<br>별도 회원가입이 필요 없어요</div>
     <div class="ob-phone-row">
-      <span style="font-size:22px">🇰🇷</span>
-      <span style="font-size:17px;font-weight:700;color:#6b7394;flex-shrink:0">+82</span>
+      <span style="font-size:22px">🇮🇩</span>
+      <span style="font-size:17px;font-weight:700;color:#6b7394;flex-shrink:0">+62</span>
       <div style="width:1px;height:22px;background:#e2e6ef;margin:0 4px"></div>
       <input class="ob-phone-input" id="ob-phone" type="tel" placeholder="010-0000-0000" maxlength="13"
         oninput="obFmtPhone(this)" onkeydown="if(event.key==='Enter')obSendOTP()"/>
@@ -456,9 +467,9 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
 
 <!-- 언어 전환 -->
 <div class="lang-bar">
-  <button class="lang-btn active" onclick="setLang('ko',this)">한국어</button>
+  <button class="lang-btn" onclick="setLang('ko',this)">한국어</button>
   <button class="lang-btn" onclick="setLang('en',this)">English</button>
-  <button class="lang-btn" onclick="setLang('id',this)">Indonesia</button>
+  <button class="lang-btn active" onclick="setLang('id',this)">Indonesia</button>
 </div>
 
 <!-- 역할 전환 -->
@@ -1136,11 +1147,11 @@ const i18n = {
     cur_loc:'📡 Lokasi Saya',
     recent_search:'Pencarian Terbaru',clear_all:'Hapus Semua',select:'Pilih',
     tab_home:'Beranda',tab_fav:'Favorit',tab_stats:'Statistik',tab_salary_set:'Gaji',tab_notif:'Notif',
-    dest_ex:'cth: IBK Euljiro',
+    dest_ex:'cth: Grand Indonesia, Jakarta',
   }
 };
 
-var currentLang = localStorage.getItem('app_lang') || 'ko';
+var currentLang = localStorage.getItem('app_lang') || 'id';
 
 function t(key) { return (i18n[currentLang]||i18n.ko)[key] || i18n.ko[key] || key; }
 
@@ -1390,8 +1401,8 @@ function renderFuelSummary(){
 // 🚗 운행기록
 // ══════════════════════════════════
 var tripList=[
-  {dest:'IBK 을지로 본점',dep:'09:10',arr:'09:38',dist:'12.3',icon:'🏦'},
-  {dest:'더플라자 호텔 (오찬)',dep:'11:50',arr:'12:08',dist:'5.1',icon:'🍽️'},
+  {dest:'Grand Indonesia Mall',dep:'09:10',arr:'09:38',dist:'5.2',icon:'🛒'},
+  {dest:'SCBD Sudirman Tower',dep:'11:50',arr:'12:08',dist:'3.1',icon:'🏢'},
 ];
 var iconMap={'공항':'✈️','호텔':'🏨','은행':'🏦','IBK':'🏦','자택':'🏠','집':'🏠','코엑스':'🏢','병원':'🏥','식당':'🍽️','갈비':'🍽️','커피':'☕','역':'🚉','시청':'🏛️'};
 function guessIcon(d){for(var k in iconMap){if(d.includes(k))return iconMap[k];}return '📍';}
@@ -1670,11 +1681,11 @@ function openNavi(app){
 // ══════════════════════════════════
 // ⭐ 즐겨찾기
 // ══════════════════════════════════
-let favPlaces=JSON.parse(localStorage.getItem('fav_places')||'null')||[
-  {emoji:'🏦',name:'IBK 을지로 본점',addr:'서울 중구 을지로 79'},
-  {emoji:'🏠',name:'집',addr:'서울 서초구 서초동'},
-  {emoji:'✈️',name:'인천국제공항',addr:'인천 중구 공항로 272'},
-  {emoji:'🏨',name:'더플라자 호텔',addr:'서울 중구 태평로1가 23'},
+var favPlaces=JSON.parse(localStorage.getItem('fav_places')||'null')||[
+  {emoji:'🏢',name:'Kantor Pusat',addr:'Jl. Jend. Sudirman, Jakarta Pusat'},
+  {emoji:'🏠',name:'Rumah',addr:'Jakarta Selatan'},
+  {emoji:'✈️',name:'Bandara Soekarno-Hatta',addr:'Tangerang, Banten'},
+  {emoji:'🛒',name:'Grand Indonesia',addr:'Jl. M.H. Thamrin No.1, Jakarta Pusat'},
 ];
 function saveFavPlaces(){localStorage.setItem('fav_places',JSON.stringify(favPlaces));}
 function renderFavList(){
@@ -1811,22 +1822,22 @@ var psSelectedPlace=null;
 var kakaoMapObj=null;
 var kakaoMarker=null;
 
-const placeDB=[
-  {icon:'🏦',cat:'금융',name:'IBK 기업은행 을지로 본점',addr:'서울 중구 을지로 79',dist:'0.2km'},
-  {icon:'🏦',cat:'금융',name:'IBK 기업은행 서울역지점',addr:'서울 중구 봉래동 1가 7',dist:'1.8km'},
-  {icon:'🏨',cat:'숙박',name:'더플라자 호텔',addr:'서울 중구 태평로1가 23',dist:'0.8km'},
-  {icon:'🏨',cat:'숙박',name:'롯데호텔 서울',addr:'서울 중구 을지로 30',dist:'0.5km'},
-  {icon:'✈️',cat:'교통',name:'인천국제공항 제1터미널',addr:'인천 중구 공항로 272',dist:'48.2km'},
-  {icon:'✈️',cat:'교통',name:'인천국제공항 제2터미널',addr:'인천 중구 제2터미널대로 443',dist:'49.1km'},
-  {icon:'🚉',cat:'교통',name:'서울역',addr:'서울 용산구 한강대로 405',dist:'2.4km'},
-  {icon:'🏢',cat:'업무',name:'코엑스',addr:'서울 강남구 봉은사로 524',dist:'8.3km'},
-  {icon:'🏠',cat:'주거',name:'서초동 자택',addr:'서울 서초구 서초대로 99',dist:'6.1km'},
-  {icon:'🍽️',cat:'식음료',name:'하남갈비',addr:'서울 중구 명동길 74',dist:'0.4km'},
-  {icon:'☕',cat:'식음료',name:'투썸플레이스 명동 L7점',addr:'서울 중구 명동8길 31',dist:'0.5km'},
-  {icon:'🏛️',cat:'공공',name:'서울시청',addr:'서울 중구 세종대로 110',dist:'1.2km'},
-  {icon:'🏥',cat:'의료',name:'서울아산병원',addr:'서울 송파구 올림픽로43길 88',dist:'12.7km'},
-  {icon:'⛽',cat:'주유',name:'GS칼텍스 서초IC점',addr:'서울 서초구 서초대로 99',dist:'5.8km'},
-  {icon:'⛽',cat:'주유',name:'현대오일뱅크 반포점',addr:'서울 서초구 반포대로 99',dist:'6.4km'},
+var placeDB=[
+  {icon:'🏦',cat:'Bank',name:'Bank BCA KCU Sudirman',addr:'Jl. Jend. Sudirman No.22-23, Jakarta Pusat',dist:'0.5km',lat:-6.2088,lng:106.8227},
+  {icon:'🏦',cat:'Bank',name:'Bank Mandiri Thamrin',addr:'Jl. M.H. Thamrin No.5, Jakarta Pusat',dist:'0.8km',lat:-6.1944,lng:106.8229},
+  {icon:'🏨',cat:'Hotel',name:'Hotel Indonesia Kempinski',addr:'Jl. M.H. Thamrin No.1, Jakarta Pusat',dist:'1.0km',lat:-6.1944,lng:106.8218},
+  {icon:'🏨',cat:'Hotel',name:'Grand Hyatt Jakarta',addr:'Jl. M.H. Thamrin No.28-30, Jakarta Pusat',dist:'1.2km',lat:-6.1958,lng:106.8234},
+  {icon:'✈️',cat:'Bandara',name:'Bandara Soekarno-Hatta T1',addr:'Tangerang, Banten',dist:'28km',lat:-6.1255,lng:106.6559},
+  {icon:'✈️',cat:'Bandara',name:'Bandara Soekarno-Hatta T3',addr:'Tangerang, Banten',dist:'29km',lat:-6.1256,lng:106.6559},
+  {icon:'🚉',cat:'Stasiun',name:'Stasiun Gambir',addr:'Jl. Medan Merdeka Tim., Jakarta Pusat',dist:'2.0km',lat:-6.1766,lng:106.8306},
+  {icon:'🏢',cat:'Bisnis',name:'SCBD Sudirman',addr:'Jl. Jend. Sudirman, Jakarta Selatan',dist:'3.5km',lat:-6.2241,lng:106.8095},
+  {icon:'🛒',cat:'Mall',name:'Grand Indonesia',addr:'Jl. M.H. Thamrin No.1, Jakarta Pusat',dist:'1.0km',lat:-6.1953,lng:106.8212},
+  {icon:'🛒',cat:'Mall',name:'Plaza Indonesia',addr:'Jl. M.H. Thamrin No.28-30, Jakarta Pusat',dist:'1.1km',lat:-6.1929,lng:106.8239},
+  {icon:'🏥',cat:'Rumah Sakit',name:'RS Cipto Mangunkusumo',addr:'Jl. Diponegoro No.71, Jakarta Pusat',dist:'4.0km',lat:-6.1908,lng:106.8457},
+  {icon:'🏛️',cat:'Pemerintahan',name:'Monas',addr:'Gambir, Jakarta Pusat',dist:'1.5km',lat:-6.1754,lng:106.8272},
+  {icon:'🍽️',cat:'Restoran',name:'Restoran Plataran Menteng',addr:'Jl. H.O.S. Cokroaminoto No.42, Jakarta Pusat',dist:'2.5km',lat:-6.1997,lng:106.8316},
+  {icon:'⛽',cat:'SPBU',name:'SPBU Pertamina Thamrin',addr:'Jl. M.H. Thamrin, Jakarta Pusat',dist:'0.9km',lat:-6.1930,lng:106.8230},
+  {icon:'🕌',cat:'Ibadah',name:'Masjid Istiqlal',addr:'Jl. Lapangan Banteng Bar., Jakarta Pusat',dist:'2.2km',lat:-6.1702,lng:106.8310},
 ];
 
 function openAddrModal(target){
@@ -1900,21 +1911,50 @@ function psOnInput(){
 function psClear(){document.getElementById('ps-input').value='';document.getElementById('ps-clear').style.display='none';showPsDefault();document.getElementById('ps-input').focus();}
 
 function psAutoComplete(q){
-  var lower=q.toLowerCase();
-  var matches=placeDB.filter(function(p){
-    return p.name.toLowerCase().indexOf(lower)>=0||p.addr.toLowerCase().indexOf(lower)>=0||(p.cat&&p.cat.toLowerCase().indexOf(lower)>=0);
-  }).slice(0,6);
-
-  // 내장DB 결과 없으면 카카오 API로 바로 검색
-  if(!matches.length&&window.KAKAO_READY&&window.kakao&&window.kakao.maps&&window.kakao.maps.services){
-    psSearch();
-    return;
+  // Google Places Autocomplete 우선
+  if(window.GOOGLE_PLACES_READY && window.google && window.google.maps && window.google.maps.places){
+    var svc = new window.google.maps.places.AutocompleteService();
+    svc.getPlacePredictions({
+      input: q,
+      language: 'id',
+      componentRestrictions: {country: 'id'}
+    }, function(predictions, status){
+      if(status === window.google.maps.places.PlacesServiceStatus.OK && predictions && predictions.length){
+        window._psAutoList = predictions.map(function(p){
+          return {
+            icon: '📍',
+            cat: p.types ? p.types[0].replace(/_/g,' ') : 'Tempat',
+            name: p.structured_formatting ? p.structured_formatting.main_text : p.description,
+            addr: p.structured_formatting ? p.structured_formatting.secondary_text || '' : '',
+            dist: '',
+            place_id: p.place_id
+          };
+        });
+        renderAutoList(q);
+      } else {
+        psAutoFallback(q);
+      }
+    });
+  } else {
+    psAutoFallback(q);
   }
+}
 
-  window._psAutoList=matches;
-  var ac=document.getElementById('ps-autocomplete');
+function psAutoFallback(q){
+  var lower = q.toLowerCase();
+  var matches = placeDB.filter(function(p){
+    return p.name.toLowerCase().indexOf(lower)>=0 || p.addr.toLowerCase().indexOf(lower)>=0 || (p.cat && p.cat.toLowerCase().indexOf(lower)>=0);
+  }).slice(0,6);
+  if(!matches.length){ psSearch(); return; }
+  window._psAutoList = matches;
+  renderAutoList(q);
+}
+
+function renderAutoList(q){
+  var list = window._psAutoList || [];
+  var ac = document.getElementById('ps-autocomplete');
   if(!ac) return;
-  ac.innerHTML=matches.length?matches.map(function(p,i){
+  ac.innerHTML = list.length ? list.map(function(p,i){
     return '<div onclick="psSelectPlace('+i+',\'auto\')" style="display:flex;align-items:center;gap:13px;padding:16px 20px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--surface);transition:background .12s" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'var(--surface)\'">'
       +'<div style="width:44px;height:44px;border-radius:12px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">'+(p.icon||'📍')+'</div>'
       +'<div style="flex:1;min-width:0">'
@@ -1924,7 +1964,7 @@ function psAutoComplete(q){
       +'<div style="font-size:13px;color:var(--text3);flex-shrink:0">'+(p.dist||'')+'</div>'
     +'</div>';
   }).join('')
-  :'<div style="padding:20px;text-align:center;color:var(--text3);font-size:15px">검색 중…</div>';
+  : '<div style="padding:20px;text-align:center;color:var(--text3);font-size:15px">검색 중…</div>';
   showPsAuto();
 }
 
@@ -1936,17 +1976,80 @@ function hl(text,q){
 }
 
 function psSearch(){
-  const q=document.getElementById('ps-input').value.trim();
-  if(!q)return;
-  if(window.KAKAO_READY&&window.kakao?.maps?.services){
-    const ps=new window.kakao.maps.services.Places();
-    ps.keywordSearch(q,(data,status)=>{
-      if(status===window.kakao.maps.services.Status.OK){
-        window._psResultList=data.map(p=>({icon:getCatIcon(p.category_group_code),cat:p.category_group_name||'장소',name:p.place_name,addr:p.road_address_name||p.address_name,dist:p.distance?(p.distance>=1000?(p.distance/1000).toFixed(1)+'km':p.distance+'m'):'',lat:parseFloat(p.y),lng:parseFloat(p.x),_k:p}));
+  var q=document.getElementById('ps-input').value.trim();
+  if(!q) return;
+
+  // Google Places API 우선 (인도네시아 데이터 풍부)
+  if(window.GOOGLE_PLACES_READY && window.google && window.google.maps && window.google.maps.places){
+    var service = new window.google.maps.places.PlacesService(document.createElement('div'));
+    // 자카르타 중심 바이어스
+    var jakarta = new window.google.maps.LatLng(-6.2088, 106.8456);
+    var request = {
+      query: q,
+      location: jakarta,
+      radius: 50000,
+      language: 'id'
+    };
+    service.textSearch(request, function(results, status){
+      if(status === window.google.maps.places.PlacesServiceStatus.OK && results.length){
+        window._psResultList = results.map(function(p){
+          return {
+            icon: getGoogleIcon(p.types),
+            cat: p.types ? p.types[0].replace(/_/g,' ') : 'Tempat',
+            name: p.name,
+            addr: p.formatted_address || '',
+            dist: '',
+            lat: p.geometry.location.lat(),
+            lng: p.geometry.location.lng()
+          };
+        });
         renderResults(q);
-      } else psFallback(q);
-    },{size:15});
-  } else psFallback(q);
+      } else {
+        // Google 실패 시 카카오 폴백
+        psSearchKakao(q);
+      }
+    });
+  } else if(window.KAKAO_READY && window.kakao && window.kakao.maps && window.kakao.maps.services){
+    psSearchKakao(q);
+  } else {
+    psFallback(q);
+  }
+}
+
+function psSearchKakao(q){
+  var ps = new window.kakao.maps.services.Places();
+  ps.keywordSearch(q, function(data, status){
+    if(status === window.kakao.maps.services.Status.OK){
+      window._psResultList = data.map(function(p){
+        return {
+          icon: getCatIcon(p.category_group_code),
+          cat: p.category_group_name || '장소',
+          name: p.place_name,
+          addr: p.road_address_name || p.address_name,
+          dist: p.distance ? (p.distance >= 1000 ? (p.distance/1000).toFixed(1)+'km' : p.distance+'m') : '',
+          lat: parseFloat(p.y),
+          lng: parseFloat(p.x)
+        };
+      });
+      renderResults(q);
+    } else psFallback(q);
+  }, {size:15});
+}
+
+function getGoogleIcon(types){
+  if(!types) return '📍';
+  var m = {
+    airport:'✈️', lodging:'🏨', restaurant:'🍽️', cafe:'☕',
+    hospital:'🏥', bank:'🏦', shopping_mall:'🛒', store:'🏪',
+    gas_station:'⛽', subway_station:'🚇', train_station:'🚉',
+    mosque:'🕌', church:'⛪', school:'🏫', university:'🎓',
+    park:'🌳', museum:'🏛️', stadium:'🏟️', gym:'💪',
+    pharmacy:'💊', supermarket:'🛒', convenience_store:'🏪'
+  };
+  for(var i=0; i<types.length; i++){
+    if(m[types[i]]) return m[types[i]];
+  }
+  return '📍';
 }
 function psFallback(q){
   const lower=q.toLowerCase();
@@ -1973,13 +2076,29 @@ function renderResults(q){
 function getCatIcon(code){const m={MT1:'🛒',CS2:'🏪',BK9:'🏦',CT1:'🎭',PO3:'🏛️',AT4:'🗺️',AD5:'🏨',FD6:'🍽️',CE7:'☕',HP8:'🏥',OL7:'⛽',SW8:'🚇',PK6:'🅿️'};return m[code]||'📍';}
 
 function psSelectPlace(idx,from){
-  var list=from==='auto'?window._psAutoList:window._psResultList;
-  var p=list[idx]; if(!p) return;
-  psSelectedPlace=p;
-  if(window.KAKAO_READY&&(p.lat||p._k)){
-    var lat=p.lat||parseFloat(p._k&&p._k.y);
-    var lng=p.lng||parseFloat(p._k&&p._k.x);
-    if(lat&&lng) showKakaoMap(lat,lng,p.name||p.n);
+  var list = from==='auto' ? window._psAutoList : window._psResultList;
+  var p = list[idx]; if(!p) return;
+  psSelectedPlace = p;
+
+  // Google place_id가 있으면 상세 좌표 가져오기
+  if(p.place_id && window.GOOGLE_PLACES_READY && window.google){
+    var svc = new window.google.maps.places.PlacesService(document.createElement('div'));
+    svc.getDetails({placeId: p.place_id, fields:['geometry','formatted_address','name']}, function(result, status){
+      if(status === window.google.maps.places.PlacesServiceStatus.OK){
+        p.lat = result.geometry.location.lat();
+        p.lng = result.geometry.location.lng();
+        if(result.formatted_address) p.addr = result.formatted_address;
+        _openMap(p);
+      } else _openMap(p);
+    });
+  } else {
+    _openMap(p);
+  }
+}
+
+function _openMap(p){
+  if(window.KAKAO_READY && p.lat && p.lng){
+    showKakaoMap(p.lat, p.lng, p.name||p.n);
   } else {
     showFakemap(p.name||p.n, p.addr||p.a||'');
   }
@@ -2197,16 +2316,16 @@ function renderPsFav(){
 // 📢 광고 관리
 // ══════════════════════════════════
 var adList = JSON.parse(localStorage.getItem('ad_list') || 'null') || [
-  {emoji:'🍱', title:'하남갈비 런치세트', sub:'기사님 20% 할인', addr:'서울 중구 을지로 79', color:'#e74c3c'},
-  {emoji:'☕', title:'투썸플레이스 명동', sub:'아메리카노 쿠폰', addr:'서울 중구 명동길 31', color:'#2980b9'},
-  {emoji:'⛽', title:'GS칼텍스 서초IC', sub:'리터당 50원 할인', addr:'서울 서초구 서초대로 99', color:'#27ae60'},
-  {emoji:'🏨', title:'더플라자 호텔', sub:'발렛파킹 무료', addr:'서울 중구 태평로1가 23', color:'#6c5ce7'},
-  {emoji:'🍜', title:'명동교자 본점', sub:'점심특선 할인', addr:'서울 중구 명동10길 29', color:'#ff9500'},
-  {emoji:'🏥', title:'서울성모병원', sub:'주차 1시간 무료', addr:'서울 서초구 반포대로 222', color:'#00b874'},
-  {emoji:'🛒', title:'롯데마트 서울역', sub:'주차 2시간 무료', addr:'서울 중구 한강대로 405', color:'#e91e8c'},
-  {emoji:'✈️', title:'김포공항 국내선', sub:'빠른 드롭오프', addr:'서울 강서구 하늘길 38', color:'#3478f6'},
-  {emoji:'🎭', title:'국립극장', sub:'공연 안내', addr:'서울 중구 장충단로 59', color:'#8e44ad'},
-  {emoji:'🍣', title:'스시야 을지로', sub:'런치 코스 특가', addr:'서울 중구 을지로 120', color:'#c0392b'}
+  {emoji:'🍜', title:'Restoran Sederhana', sub:'Diskon 20% untuk sopir', addr:'Jl. Sabang No.1, Jakarta Pusat', color:'#e74c3c'},
+  {emoji:'⛽', title:'SPBU Pertamina Thamrin', sub:'Hemat Rp500/liter', addr:'Jl. M.H. Thamrin, Jakarta Pusat', color:'#27ae60'},
+  {emoji:'🏨', title:'Hotel Borobudur Jakarta', sub:'Parkir gratis 2 jam', addr:'Jl. Lapangan Banteng Sel. No.1, Jakarta', color:'#6c5ce7'},
+  {emoji:'☕', title:'Kopi Kenangan Sudirman', sub:'Buy 1 Get 1 untuk sopir', addr:'Jl. Jend. Sudirman, Jakarta Selatan', color:'#2980b9'},
+  {emoji:'🛒', title:'Grand Indonesia', sub:'Parkir gratis 1 jam', addr:'Jl. M.H. Thamrin No.1, Jakarta Pusat', color:'#e91e8c'},
+  {emoji:'🍱', title:'Warteg Bahari', sub:'Makan siang Rp25.000', addr:'Jl. Cideng, Jakarta Pusat', color:'#ff9500'},
+  {emoji:'🏥', title:'RS Medistra Jakarta', sub:'Parkir prioritas sopir', addr:'Jl. Jend. Gatot Subroto Kav.59, Jakarta', color:'#00b874'},
+  {emoji:'✈️', title:'Bandara Soekarno-Hatta', sub:'Antar jemput ekspres', addr:'Tangerang, Banten', color:'#3478f6'},
+  {emoji:'🎭', title:'Taman Ismail Marzuki', sub:'Info acara budaya', addr:'Jl. Cikini Raya No.73, Jakarta Pusat', color:'#8e44ad'},
+  {emoji:'🍣', title:'Sushi Tei Grand Indonesia', sub:'Lunch set spesial', addr:'Grand Indonesia, Jakarta Pusat', color:'#c0392b'}
 ];
 function saveAdList(){ localStorage.setItem('ad_list', JSON.stringify(adList)); }
 
