@@ -1069,6 +1069,15 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
 
 <script>
 // ══ 다국어 ══
+// 테스트용 고정 번호 (+82 10 8518 4845 → 821085184845)
+var TEST_WA_NUMBER = '821085184845';
+function getWaNumber(type){
+  // 테스트 기간: 고정 번호 사용
+  return TEST_WA_NUMBER;
+  // 실제 운영 시 아래로 교체:
+  // if(type==='boss') return (localStorage.getItem('wa_boss_number')||'').replace(/\s+|\+/g,'');
+  // return (localStorage.getItem('wa_number')||'').replace(/\s+|\+/g,'');
+}
 const i18n = {
   ko:{
     role_boss:'🧑‍💼 사장님',role_driver:'🚗 기사님',driver_status:'현재 기사 상태',
@@ -1649,9 +1658,8 @@ function callDriver(){
   document.getElementById('map-label-driver').textContent='📍 '+pickup;
 
   // WhatsApp으로 기사에게 호출 발송
-  var waNum = localStorage.getItem('wa_number') || '';
+  var waNum = getWaNumber('driver');
   if(waNum){
-    waNum = waNum.replace(/\s+/g,'').replace('+','');
     var msg = encodeURIComponent('🚗 PANGGILAN BOSSCALL!\n📍 Jemput: '+pickup+'\n🚩 Tujuan: '+dest+'\n\nMohon konfirmasi segera.');
     window.open('https://wa.me/'+waNum+'?text='+msg,'_blank');
   }
@@ -1690,9 +1698,8 @@ function acceptCall(){
     document.getElementById('eta-badge').textContent=t('eta')+' '+etaText;
     document.getElementById('driver-status-text').innerHTML='<span class="status-dot dot-amber"></span>'+t('calling');
     // WhatsApp 발송
-    var waNum = localStorage.getItem('wa_boss_number') || localStorage.getItem('wa_number') || '';
+    var waNum = getWaNumber('boss');
     if(waNum){
-      waNum = waNum.replace(/\s+/g,'').replace('+','');
       var msg = encodeURIComponent('✅ Panggilan DITERIMA!\n📍 Jemput: '+pickup+'\n🚩 Tujuan: '+dest+'\n⏱️ Perkiraan tiba: '+etaText+'\n🚗 Saya sedang dalam perjalanan...');
       window.open('https://wa.me/'+waNum+'?text='+msg,'_blank');
     }
@@ -1730,9 +1737,8 @@ function declineCall(){
   document.getElementById('call-btn').style.display='block';
   document.getElementById('call-status').classList.remove('visible');
   // 사장님께 WhatsApp으로 거절 알림
-  var waNum = localStorage.getItem('wa_boss_number') || localStorage.getItem('wa_number') || '';
+  var waNum = getWaNumber('boss');
   if(waNum){
-    waNum = waNum.replace(/\s+/g,'').replace('+','');
     var msg = encodeURIComponent('❌ Maaf, panggilan tidak dapat diterima saat ini.\nMohon coba beberapa saat lagi.');
     window.open('https://wa.me/'+waNum+'?text='+msg,'_blank');
   }
@@ -1908,12 +1914,9 @@ function kakaoLink(){
 }
 
 function sendWhatsappTest(){
-  var num = localStorage.getItem('wa_number') || (document.getElementById('kakao-api-key').value||'').trim();
-  if(!num){ showToast('Masukkan nomor WhatsApp terlebih dahulu'); return; }
-  num = num.replace(/\s+/g,'').replace(/^0/,'+62');
-  if(!num.startsWith('+')) num = '+62' + num;
+  var waNum = getWaNumber('driver');
   var msg = encodeURIComponent('Halo! Ini pesan test dari BossCall 🚗\nAplikasi manajemen pengemudi pribadi Anda.');
-  window.open('https://wa.me/'+num.replace('+','')+'?text='+msg, '_blank');
+  window.open('https://wa.me/'+waNum+'?text='+msg, '_blank');
 }
 
 function saveKakaoConfig(){
