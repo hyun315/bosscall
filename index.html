@@ -22,11 +22,11 @@ window._googleMapsReady = function(){
   console.log('✅ Google Maps 로드 완료');
 };
 
-// Google Maps SDK - async + callback 방식
+// Google Maps SDK - Places New 버전
 (function(){
   var s = document.createElement('script');
   s.src = 'https://maps.googleapis.com/maps/api/js?key=' + window.GOOGLE_KEY
-    + '&libraries=places,geocoding&language=id&region=ID&callback=_googleMapsReady';
+    + '&libraries=places,geocoding&language=id&region=ID&v=weekly&callback=_googleMapsReady';
   s.async = true;
   s.defer = true;
   s.onerror = function(){ console.error('❌ Google Maps 로드 실패'); };
@@ -1921,7 +1921,7 @@ function psAutoComplete(q){
   if(window.GOOGLE_PLACES_READY && window.google && window.google.maps && window.google.maps.places){
     var svc = new window.google.maps.places.AutocompleteService();
     svc.getPlacePredictions({input:q, language:'id'}, function(predictions, status){
-      if(status === window.google.maps.places.PlacesServiceStatus.OK && predictions && predictions.length){
+      if(predictions && predictions.length){
         window._psAutoList = predictions.map(function(p){
           return {
             icon: '📍',
@@ -1933,7 +1933,6 @@ function psAutoComplete(q){
         });
         renderAutoList(q);
       } else {
-        // Autocomplete 실패시 TextSearch로 폴백
         psSearch();
       }
     });
@@ -1950,16 +1949,16 @@ function psSearch(){
   if(window.GOOGLE_PLACES_READY && window.google && window.google.maps && window.google.maps.places){
     var service = new window.google.maps.places.PlacesService(document.createElement('div'));
     service.textSearch({query:q, language:'id'}, function(results, status){
-      if(status === window.google.maps.places.PlacesServiceStatus.OK && results.length){
+      if(results && results.length){
         window._psResultList = results.map(function(p){
           return {
-            icon: getGoogleIcon(p.types),
+            icon: getGoogleIcon(p.types||[]),
             cat: p.types ? p.types[0].replace(/_/g,' ') : 'Tempat',
             name: p.name,
             addr: p.formatted_address||'',
             dist: '',
-            lat: p.geometry.location.lat(),
-            lng: p.geometry.location.lng()
+            lat: p.geometry ? p.geometry.location.lat() : 0,
+            lng: p.geometry ? p.geometry.location.lng() : 0
           };
         });
         renderResults(q);
