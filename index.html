@@ -909,41 +909,6 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
 </div>
 
 <!-- ════ 운행기록 전체화면 ════ -->
-<div id="trip-screen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:8500;flex-direction:column;font-family:'Noto Sans KR',-apple-system,sans-serif">
-  <!-- 헤더 -->
-  <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:16px 18px;display:flex;align-items:center;gap:14px;flex-shrink:0">
-    <button onclick="closeTripScreen()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2);width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0">←</button>
-    <div style="flex:1">
-      <div style="font-size:18px;font-weight:900;color:var(--text)" data-i18n="today_trip">오늘 운행</div>
-      <div style="font-size:13px;color:var(--text2);margin-top:1px" id="trip-screen-sub"></div>
-    </div>
-    <button onclick="openAddTrip()" style="background:var(--accent);color:#fff;border:none;border-radius:11px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">＋ 추가</button>
-  </div>
-  <!-- 목록 -->
-  <div style="flex:1;overflow-y:auto;padding:14px 0" id="trip-screen-list"></div>
-</div>
-
-<!-- ════ 운행기록 추가/수정 모달 ════ -->
-<div class="modal-overlay" id="trip-modal" onclick="if(event.target===this)this.classList.remove('open')">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="trip-modal-title">🚗 운행기록 추가</div>
-    <input type="hidden" id="trip-idx" value="-1"/>
-    <div class="inp-label" data-i18n="destination">목적지</div>
-    <input class="inp" id="trip-dest" data-i18n-ph="dest_ex" placeholder="예: IBK 을지로 본점"/>
-    <div style="display:flex;gap:10px">
-      <div style="flex:1"><div class="inp-label" data-i18n="depart_time">출발</div><input class="inp" id="trip-dep" type="time" value="09:00"/></div>
-      <div style="flex:1"><div class="inp-label" data-i18n="arrive_time">도착</div><input class="inp" id="trip-arr" type="time" value="09:30"/></div>
-    </div>
-    <div class="inp-label" data-i18n="distance">거리 (km)</div>
-    <input class="inp" id="trip-dist" type="number" placeholder="12.3" style="margin-bottom:16px"/>
-    <div style="display:flex;gap:10px">
-      <button class="btn btn-primary" style="flex:1;padding:15px" onclick="saveTrip()" data-i18n="save">저장</button>
-      <button class="btn btn-ghost" style="flex:1;padding:15px" onclick="document.getElementById('trip-modal').classList.remove('open')" data-i18n="cancel">취소</button>
-    </div>
-  </div>
-</div>
-
 <!-- ════ 운행기록 전체화면 ════ -->
 <div id="trip-screen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:8500;flex-direction:column;font-family:'Noto Sans KR',-apple-system,sans-serif">
   <!-- 헤더 -->
