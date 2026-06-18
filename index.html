@@ -969,19 +969,19 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
     <!-- 뒤로가기 버튼 -->
     <button onclick="psMapBack()" style="position:absolute;top:14px;left:14px;width:40px;height:40px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 10px rgba(0,0,0,.15);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1000;pointer-events:all">←</button>
 
-    <!-- 구글맵 div -->
-    <div id="google-map-div" style="width:100%;flex:1;min-height:400px"></div>
+    <!-- 구글맵 div - 하단 바 높이만큼 여백 -->
+    <div id="google-map-div" style="width:100%;flex:1;min-height:0;margin-bottom:160px"></div>
 
-    <!-- 중앙 고정 핀 -->
-    <div id="map-center-pin" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-100%);pointer-events:none;z-index:1000;display:flex;flex-direction:column;align-items:center;transition:transform .15s ease">
+    <!-- 중앙 고정 핀 - 지도 중앙 기준 (하단바 제외) -->
+    <div id="map-center-pin" style="position:absolute;top:calc(50% - 80px);left:50%;transform:translate(-50%,-100%);pointer-events:none;z-index:2000;display:flex;flex-direction:column;align-items:center;transition:transform .15s ease">
       <div style="width:36px;height:36px;border-radius:50% 50% 50% 0;background:#e74c3c;transform:rotate(-45deg);box-shadow:0 4px 12px rgba(231,76,60,.5);display:flex;align-items:center;justify-content:center">
         <div style="width:12px;height:12px;border-radius:50%;background:#fff;transform:rotate(45deg)"></div>
       </div>
       <div style="width:8px;height:8px;border-radius:50%;background:rgba(231,76,60,.3);margin-top:2px"></div>
     </div>
 
-    <!-- 하단 주소 바 -->
-    <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.12);z-index:1000;padding:16px 16px 20px;pointer-events:all">
+    <!-- 하단 주소 바 - z-index 최상위 -->
+    <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.15);z-index:9999;padding:16px 16px 20px">
       <div style="width:40px;height:4px;background:#e2e6ef;border-radius:2px;margin:0 auto 14px"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
         <span style="font-size:24px">📍</span>
@@ -990,7 +990,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
           <div id="map-sel-addr" style="font-size:13px;color:#6b7394;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
         </div>
       </div>
-      <button onclick="psConfirmMap()" style="width:100%;padding:16px;background:#3478f6;color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(52,120,246,.3)">이 위치로 설정</button>
+      <button onclick="psConfirmMap()" style="width:100%;padding:16px;background:#3478f6;color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(52,120,246,.3);position:relative;z-index:9999">이 위치로 설정</button>
     </div>
   </div>
 
@@ -2105,6 +2105,8 @@ function showMap(lat, lng, name){
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
+        clickableIcons: false,
+        gestureHandling: 'greedy',
         zoomControlOptions: {position: window.google.maps.ControlPosition.RIGHT_CENTER}
       });
       _gGeocoder = new window.google.maps.Geocoder();
@@ -2138,15 +2140,21 @@ function showMap(lat, lng, name){
 function _geocodeCenterGoogle(){
   if(!_gMap || !_gGeocoder) return;
   var center = _gMap.getCenter();
+  var curName = (document.getElementById('map-sel-name')||{}).textContent || '';
   _gGeocoder.geocode({location:{lat:center.lat(),lng:center.lng()}, language:'id'}, function(results, status){
+    var nameEl = document.getElementById('map-sel-name');
+    var addrEl = document.getElementById('map-sel-addr');
     if(status==='OK' && results[0]){
-      var name = results[0].address_components[0] ? results[0].address_components[0].long_name : results[0].formatted_address;
+      var comps = results[0].address_components;
+      var name = (comps[1]&&comps[1].long_name) || (comps[0]&&comps[0].long_name) || curName;
       var addr = results[0].formatted_address;
-      var nameEl = document.getElementById('map-sel-name');
-      var addrEl = document.getElementById('map-sel-addr');
       if(nameEl) nameEl.textContent = name;
       if(addrEl) addrEl.textContent = addr;
       window._mapSelectedAddr = {name:name, addr:addr, lat:center.lat(), lng:center.lng()};
+    } else {
+      // 실패해도 좌표 대신 기존 이름 유지
+      if(nameEl && nameEl.textContent.indexOf(',')>0) nameEl.textContent = curName;
+      window._mapSelectedAddr = {name:curName, addr:'', lat:center.lat(), lng:center.lng()};
     }
   });
 }
