@@ -732,8 +732,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
       <div class="alert-dest" id="alert-dest-text">더플라자 호텔</div>
       <div class="alert-meta" data-i18n="eta_3min">📍 현재 위치에서 약 3분 · 사장님 요청</div>
       <div class="alert-actions">
-        <button class="btn btn-success" onclick="acceptCall()" data-i18n="accept">✓ 수락</button>
-        <button class="btn btn-ghost" onclick="declineCall()" data-i18n="decline">✗ 거절</button>
+        <button class="btn btn-success" style="width:100%;font-size:18px;padding:16px" onclick="acceptCall()">👍 OK BOSS!</button>
       </div>
     </div>
   </div>
@@ -1700,7 +1699,7 @@ function acceptCall(){
     // WhatsApp 발송
     var waNum = getWaNumber('boss');
     if(waNum){
-      var msg = encodeURIComponent('✅ Panggilan DITERIMA!\n📍 Jemput: '+pickup+'\n🚩 Tujuan: '+dest+'\n⏱️ Perkiraan tiba: '+etaText+'\n🚗 Saya sedang dalam perjalanan...');
+      var msg = encodeURIComponent('👍 OK BOSS!\n📍 Jemput: '+pickup+'\n🚩 Tujuan: '+dest+'\n⏱️ Perkiraan tiba: '+etaText+'\n🚗 Saya sudah melihat pesanan dan segera berangkat!');
       window.open('https://wa.me/'+waNum+'?text='+msg,'_blank');
     }
     showToast('✅ '+t('accept')+' · ETA '+etaText);
