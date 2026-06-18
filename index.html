@@ -1924,8 +1924,7 @@ function psAutoComplete(q){
     var svc = new window.google.maps.places.AutocompleteService();
     svc.getPlacePredictions({
       input: q,
-      language: 'id',
-      componentRestrictions: {country: 'id'}
+      language: 'id'
     }, function(predictions, status){
       if(status === window.google.maps.places.PlacesServiceStatus.OK && predictions && predictions.length){
         window._psAutoList = predictions.map(function(p){
@@ -1991,11 +1990,8 @@ function psSearch(){
   if(window.GOOGLE_PLACES_READY && window.google && window.google.maps && window.google.maps.places){
     var service = new window.google.maps.places.PlacesService(document.createElement('div'));
     // 자카르타 중심 바이어스
-    var jakarta = new window.google.maps.LatLng(-6.2088, 106.8456);
     var request = {
       query: q,
-      location: jakarta,
-      radius: 50000,
       language: 'id'
     };
     service.textSearch(request, function(results, status){
