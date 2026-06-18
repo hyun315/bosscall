@@ -497,6 +497,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
             <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:22px;cursor:pointer" onclick="openAddrModal('pickup')">🔍</span>
           </div>
           <button onclick="pickupGPS()" style="height:48px;padding:0 13px;border-radius:13px;background:linear-gradient(135deg,#3478f6,#6c5ce7);border:none;font-size:13px;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(52,120,246,.3);white-space:nowrap;font-family:inherit" data-i18n="cur_loc">📡 현위치</button>
+          <button onclick="setLastDropoff()" style="height:48px;padding:0 11px;border-radius:13px;background:linear-gradient(135deg,#00b874,#00cba8);border:none;font-size:12px;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(0,184,116,.3);white-space:nowrap;font-family:inherit;line-height:1.2;text-align:center">🚗<br>내려준곳</button>
         </div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px">
           <div style="flex:1;height:1.5px;background:var(--border)"></div>
@@ -1661,6 +1662,10 @@ function callDriver(){
   document.getElementById('alert-dest-text').textContent=dest;
   document.getElementById('map-label-driver').textContent='📍 '+pickup;
 
+  // 마지막 내려준 곳 저장
+  localStorage.setItem('last_dropoff', dest);
+  if(window._destCoord) localStorage.setItem('last_dropoff_coord', JSON.stringify(window._destCoord));
+
   // WhatsApp으로 기사에게 호출 발송
   var waNum = getWaNumber('driver');
   if(waNum){
@@ -2219,6 +2224,19 @@ function psUseGPS(){
   navigator.geolocation.getCurrentPosition(function(pos){
     openMapScreen(pos.coords.latitude,pos.coords.longitude,'Lokasi saat ini','');
   },function(){showToast('위치 접근 거부');});
+}
+
+function setLastDropoff(){
+  var last = localStorage.getItem('last_dropoff');
+  var lastCoord = JSON.parse(localStorage.getItem('last_dropoff_coord') || 'null');
+  if(!last){
+    showToast('아직 내려준 곳이 없습니다');
+    return;
+  }
+  document.getElementById('pickup-input').value = last;
+  document.getElementById('map-label-driver').textContent = '📍 ' + last;
+  if(lastCoord) window._pickupCoord = lastCoord;
+  showToast('📍 ' + last);
 }
 
 function pickupGPS(){
