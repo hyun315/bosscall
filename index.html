@@ -528,7 +528,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
       </div>
     </div>
 
-    <div class="section-title" data-i18n="today_trip">오늘 운행 <span style="color:var(--accent);cursor:pointer;font-size:var(--fs-xs)" onclick="openEditModal(null)">＋</span></div>
+    <div class="section-title" data-i18n="today_trip">오늘 운행</div>
     <div class="card" id="trip-list-card"></div>
   </div>
 
@@ -737,7 +737,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
   <div class="section-title" data-i18n="fuel_record">⛽ 주유 기록</div>
   <div class="card" id="driver-fuel-list"></div>
 
-  <div class="section-title" data-i18n="att_record">출퇴근 기록 <span style="color:var(--accent);cursor:pointer;font-size:var(--fs-xs)" onclick="openEditModal(null)">＋</span></div>
+  <div class="section-title" data-i18n="att_record">출퇴근 기록</div>
   <div class="card" id="log-list-card"></div>
 
   <div style="padding:8px 16px 20px">
@@ -1049,16 +1049,36 @@ const i18n = {
   }
 };
 
-let currentLang = localStorage.getItem('app_lang') || 'ko';
+var currentLang = localStorage.getItem('app_lang') || 'ko';
 
 function t(key) { return (i18n[currentLang]||i18n.ko)[key] || i18n.ko[key] || key; }
+
+// 언어별 통화 단위
+function currency(amount) {
+  if(currentLang === 'en') {
+    return '$' + Math.round(amount/1300).toLocaleString();
+  } else if(currentLang === 'id') {
+    return 'Rp' + Math.round(amount*11.5).toLocaleString();
+  }
+  return amount.toLocaleString() + '원';
+}
+function currencyUnit() {
+  if(currentLang === 'en') return '$';
+  if(currentLang === 'id') return 'Rp';
+  return '원';
+}
 
 function setLang(lang, btn) {
   currentLang = lang;
   localStorage.setItem('app_lang', lang);
-  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.lang-btn').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
   applyI18n();
+  // 통화 단위 변경 - 관련 화면 재렌더링
+  renderFuelSummary();
+  renderFuelList();
+  updateSalaryPreview();
+  updateCalcModal();
 }
 
 function applyI18n() {
@@ -1149,7 +1169,7 @@ function calcSalaryData(cfg){
   return { base:cfg.base, meal:cfg.meal, car:cfg.car, bonus:cfg.bonus, ot, gross, ins, net:gross-ins };
 }
 
-function fmt(n){ return n.toLocaleString('ko-KR')+'원'; }
+function fmt(n){ return currency(n); }
 
 function updateSalaryPreview(){
   const cfg = getSalaryFromForm();
@@ -1250,7 +1270,7 @@ function renderFuelList(){
       </div>
       <div class="fuel-amount">
         <div class="fuel-liter">${f.liter}L</div>
-        <div class="fuel-cost">${f.total.toLocaleString()}원</div>
+        <div class="fuel-cost">${currency(f.total)}</div>
       </div>
     </div>`).join('');
   const empty=`<div style="padding:28px;text-align:center;color:var(--text3);font-size:var(--fs-base)">${t('add_fuel')}</div>`;
@@ -1267,11 +1287,11 @@ function renderFuelSummary(){
   const mCost=thisMonth.reduce((s,f)=>s+f.total,0);
   const yLiter=fuelList.reduce((s,f)=>s+f.liter,0);
   const avgPrice=fuelList.length?Math.round(fuelList.reduce((s,f)=>s+(f.unitPrice||0),0)/fuelList.length):0;
-  const el=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  el('fuel-month-liter',mLiter.toFixed(1)+'L');
-  el('fuel-month-cost',mCost.toLocaleString()+'원');
-  el('fuel-year-liter',yLiter.toFixed(1)+'L');
-  el('fuel-avg-price',avgPrice.toLocaleString()+'원/L');
+  var el2=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
+  el2('fuel-month-liter',mLiter.toFixed(1)+'L');
+  el2('fuel-month-cost',currency(mCost));
+  el2('fuel-year-liter',yLiter.toFixed(1)+'L');
+  el2('fuel-avg-price',currency(avgPrice)+'/L');
 }
 
 
@@ -1558,20 +1578,25 @@ function renderCharts(){
   showMonthDetail(monthlyData.length-1);
 }
 function showMonthDetail(idx){
-  document.querySelectorAll('.month-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));
-  const d=monthlyData[idx];const isThis=idx===monthlyData.length-1;
-  document.getElementById('month-detail-card').innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px">
-      ${[['운행 횟수',d.trips+t('times'),'#6c5ce7'],['총 거리',d.dist.toLocaleString()+'km','#6c5ce7'],['초과근무',d.ot+'시간','var(--amber)'],['최다 목적지',d.topDest,'var(--green)']].map(([l,v,c])=>`<div style="background:var(--surface2);border-radius:12px;padding:14px"><div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:5px">${l}</div><div style="font-size:var(--fs-lg);font-weight:900;color:${c}">${v}</div></div>`).join('')}
-    </div>
-    <div style="margin:0 14px 16px;background:var(--surface2);border-radius:12px;padding:14px">
-      <div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:6px">일 평균 운행</div>
-      <div style="display:flex;align-items:baseline;gap:8px">
-        <span style="font-size:var(--fs-xl);font-weight:900;color:var(--text)">${(d.trips/(isThis?15:30)).toFixed(1)}</span>
-        <span style="font-size:var(--fs-sm);color:var(--text2)">${t('times')} / 일</span>
-        <span style="margin-left:auto;font-size:var(--fs-sm);font-weight:700;color:var(--text2)">${(d.dist/d.trips).toFixed(1)} km/${t('times')}</span>
-      </div>
-    </div>`;
+  document.querySelectorAll('.month-tab').forEach(function(t,i){t.classList.toggle('active',i===idx);});
+  var d=monthlyData[idx]; var isThis=idx===monthlyData.length-1;
+  document.getElementById('month-detail-card').innerHTML=
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px">'
+    +[['운행 횟수',d.trips+t('times'),'#6c5ce7'],['총 거리',d.dist.toLocaleString()+'km','#6c5ce7'],['초과근무',d.ot+'시간','var(--amber)'],['최다 목적지',d.topDest,'var(--green)']].map(function(r){
+      return '<div style="background:var(--surface2);border-radius:12px;padding:14px"><div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:5px">'+r[0]+'</div><div style="font-size:var(--fs-lg);font-weight:900;color:'+r[2]+'">'+r[1]+'</div></div>';
+    }).join('')
+    +'</div>'
+    +'<div style="margin:0 14px 16px;background:var(--surface2);border-radius:12px;padding:14px">'
+      +'<div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:6px">일 평균 운행</div>'
+      +'<div style="display:flex;align-items:baseline;gap:8px">'
+        +'<span style="font-size:var(--fs-xl);font-weight:900;color:var(--text)">'+(d.trips/(isThis?15:30)).toFixed(1)+'</span>'
+        +'<span style="font-size:var(--fs-sm);color:var(--text2)">'+t('times')+' / 일</span>'
+        +'<span style="margin-left:auto;font-size:var(--fs-sm);font-weight:700;color:var(--text2)">'+(d.dist/d.trips).toFixed(1)+' km/'+t('times')+'</span>'
+      +'</div>'
+    +'</div>'
+    +'<div style="padding:0 14px 16px">'
+      +'<button onclick="openEditModal(null)" style="width:100%;padding:13px;background:var(--surface2);border:1.5px dashed var(--border);border-radius:12px;font-size:15px;font-weight:700;color:var(--accent);cursor:pointer;font-family:inherit">＋ '+t('add_trip')+'</button>'
+    +'</div>';
 }
 
 // ══════════════════════════════════
