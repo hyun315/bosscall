@@ -1306,19 +1306,20 @@ const iconMap={'공항':'✈️','호텔':'🏨','은행':'🏦','IBK':'🏦','�
 function guessIcon(d){for(const[k,v]of Object.entries(iconMap))if(d.includes(k))return v;return '📍';}
 
 function renderTripList(){
-  const card=document.getElementById('trip-list-card');if(!card)return;
-  const total=tripList.reduce((s,t)=>s+parseFloat(t.dist||0),0).toFixed(1);
-  card.innerHTML=tripList.map((t,i)=>`
-    <div class="trip-item" onclick="openEditModal(${i})">
-      <div class="trip-icon">${t.icon||guessIcon(t.dest)}</div>
-      <div class="trip-info"><div class="trip-dest">${t.dest}</div><div class="trip-time">${t.dep} → ${t.arr}</div></div>
-      <div class="trip-dist">${t.dist}km</div>
-    </div>`).join('')+`
-    <div class="trip-item" style="cursor:default;background:var(--surface2)">
-      <div class="trip-icon">📊</div>
-      <div class="trip-info"><div class="trip-dest" style="color:var(--text2)">${t('today_trip')}</div><div class="trip-time">${tripList.length}${t('times')} · ${total}km</div></div>
-      <div class="trip-dist" style="color:var(--accent)">진행중</div>
-    </div>`;
+  var card=document.getElementById('trip-list-card'); if(!card) return;
+  var total=tripList.reduce(function(s,t){return s+parseFloat(t.dist||0);},0).toFixed(1);
+  card.innerHTML=tripList.map(function(t,i){
+    return '<div class="trip-item">'
+      +'<div class="trip-icon">'+(t.icon||guessIcon(t.dest))+'</div>'
+      +'<div class="trip-info"><div class="trip-dest">'+t.dest+'</div><div class="trip-time">'+t.dep+' → '+t.arr+'</div></div>'
+      +'<div class="trip-dist">'+t.dist+'km</div>'
+      +'</div>';
+  }).join('')
+  +'<div class="trip-item" style="cursor:default;background:var(--surface2)">'
+    +'<div class="trip-icon">📊</div>'
+    +'<div class="trip-info"><div class="trip-dest" style="color:var(--text2)">'+t('today_trip')+'</div><div class="trip-time">'+tripList.length+t('times')+' · '+total+'km</div></div>'
+    +'<div class="trip-dist" style="color:var(--accent)">진행중</div>'
+  +'</div>';
 }
 
 let logList=[
