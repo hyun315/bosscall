@@ -10,18 +10,26 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233478f6'/%3E%3Crect x='8' y='36' width='48' height='16' rx='4' fill='white'/%3E%3Cpath d='M14 36l6-12q3-6 10-6h16q7 0 10 6l6 12z' fill='white'/%3E%3Ccircle cx='18' cy='46' r='6' fill='%233478f6'/%3E%3Ccircle cx='18' cy='46' r='3' fill='white'/%3E%3Ccircle cx='46' cy='46' r='6' fill='%233478f6'/%3E%3Ccircle cx='46' cy='46' r='3' fill='white'/%3E%3Cpath d='M48 16q5 5 5 11t-5 11' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233478f6'/%3E%3Crect x='8' y='36' width='48' height='16' rx='4' fill='white'/%3E%3Cpath d='M14 36l6-12q3-6 10-6h16q7 0 10 6l6 12z' fill='white'/%3E%3Ccircle cx='18' cy='46' r='6' fill='%233478f6'/%3E%3Ccircle cx='18' cy='46' r='3' fill='white'/%3E%3Ccircle cx='46' cy='46' r='6' fill='%233478f6'/%3E%3Ccircle cx='46' cy='46' r='3' fill='white'/%3E%3Cpath d='M48 16q5 5 5 11t-5 11' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>
-/* 카카오맵 SDK */
+/* Google Maps + 카카오맵 SDK */
 window.GOOGLE_KEY = 'AIzaSyAYSKFiBMljBYWoyRAoR93XcbYrp65zaVM';
 window.KAKAO_KEY = localStorage.getItem('kakao_api_key') || '383a53cfd4165ce1cd26ed2e3540d7f0';
 window.KAKAO_READY = false;
 window.GOOGLE_PLACES_READY = false;
 
-// Google Places SDK 로드
+// Google Maps 초기화 콜백
+window._googleMapsReady = function(){
+  window.GOOGLE_PLACES_READY = true;
+  console.log('✅ Google Maps 로드 완료');
+};
+
+// Google Maps SDK - async + callback 방식
 (function(){
   var s = document.createElement('script');
-  s.src = 'https://maps.googleapis.com/maps/api/js?key=' + window.GOOGLE_KEY + '&libraries=places&language=id&region=ID';
-  s.onload = function(){ window.GOOGLE_PLACES_READY = true; console.log('✅ Google Places 로드 완료'); };
-  s.onerror = function(){ console.error('❌ Google Places 로드 실패'); };
+  s.src = 'https://maps.googleapis.com/maps/api/js?key=' + window.GOOGLE_KEY
+    + '&libraries=places,geocoding&language=id&region=ID&callback=_googleMapsReady';
+  s.async = true;
+  s.defer = true;
+  s.onerror = function(){ console.error('❌ Google Maps 로드 실패'); };
   document.head.appendChild(s);
 })();
 function loadKakaoSDK(key) {
@@ -315,7 +323,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
 /* 검색 전체화면 */
 #place-search-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:9000;flex-direction:column;font-family:'Noto Sans KR',-apple-system,sans-serif}
 #ps-map-container.on{display:flex!important}
-#kakao-map{width:100%;flex:1;min-height:0}
+#kakao-map{width:100%;flex:1;min-height:0;height:100%}
 /* ══ 온보딩 CSS ══ */
 .ob-pg{width:100%;flex:1;display:none;flex-direction:column;align-items:center;padding:56px 32px 36px}
 .ob-pg.on{display:flex;animation:obUp .3s ease}
@@ -2147,6 +2155,12 @@ function showGoogleMap(lat, lng, name){
     googleMapObj.setCenter(coords);
     googleMarker.setPosition(coords);
   }
+
+  // 컨테이너 크기 반영
+  setTimeout(function(){
+    window.google.maps.event.trigger(googleMapObj, 'resize');
+    googleMapObj.setCenter(coords);
+  }, 100);
 
   // 지도 이동 시 핀 애니메이션
   window.google.maps.event.addListener(googleMapObj, 'dragstart', function(){
