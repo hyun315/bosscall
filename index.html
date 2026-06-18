@@ -1654,6 +1654,7 @@ function renderDriverSlots(){
         +'</div>'
         +'<div style="display:flex;gap:6px">'
           +(driverList.length > 1 && !isActive ? '<button onclick="setActiveDriver('+i+')" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">활성화</button>' : '')
+          +'<button onclick="shareDriverLink('+i+')" style="background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🔗 링크</button>'
           +(driverList.length > 1 ? '<button onclick="removeDriver('+i+')" style="background:rgba(255,59,48,.1);color:#ff3b30;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">삭제</button>' : '')
         +'</div>'
       +'</div>'
@@ -2883,6 +2884,39 @@ function obCopyCode() {
   } else { showToast('코드: ' + code); }
 }
 
+function generateDriverLink(driverIdx){
+  var d = driverList[driverIdx] || {};
+  var bossWa = localStorage.getItem('wa_boss_number') || TEST_WA_NUMBER;
+  var payload = {
+    role: 'driver',
+    driverIdx: driverIdx,
+    driverName: d.name || '',
+    bossWa: bossWa,
+    lang: currentLang
+  };
+  var encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  var url = location.href.split('?')[0] + '?d=' + encoded;
+  return url;
+}
+
+function shareDriverLink(driverIdx){
+  var url = generateDriverLink(driverIdx);
+  var d = driverList[driverIdx] || {};
+  var name = d.name || ('기사 '+(driverIdx+1));
+  var msg = '🚗 BossCall 기사 앱 링크\n'+name+'님, 아래 링크를 탭하면 바로 앱이 열립니다:\n\n'+url+'\n\n별도 로그인 없이 바로 사용 가능합니다.';
+  if(navigator.share){
+    navigator.share({title:'BossCall - '+name, text:msg, url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      showToast('🔗 링크 복사됨!');
+    }).catch(function(){
+      // 클립보드 실패시 WA로 바로 발송
+      var waNum = getWaNumber('driver');
+      window.open('https://wa.me/'+waNum+'?text='+encodeURIComponent(msg), '_blank');
+    });
+  }
+}
+
 function obShareLink() {
   var code = (document.getElementById('ob-inv-code') || {textContent:''}).textContent;
   var url = location.href.split('?')[0] + '?invite=' + code;
@@ -2968,19 +3002,41 @@ function initApp(role) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  // 초대 링크 파라미터 처리
   var params = new URLSearchParams(location.search);
+
+  // 기사 초대 링크 처리 (?d=...)
+  var dParam = params.get('d');
+  if(dParam){
+    try {
+      var payload = JSON.parse(decodeURIComponent(escape(atob(dParam))));
+      if(payload.role === 'driver'){
+        // 기사 데이터 저장
+        if(payload.driverName) localStorage.setItem('driver_name', payload.driverName);
+        if(payload.bossWa) localStorage.setItem('wa_boss_number', payload.bossWa);
+        if(payload.lang) { currentLang = payload.lang; localStorage.setItem('app_lang', payload.lang); }
+        // 온보딩 없이 바로 기사 화면 진입
+        localStorage.setItem('is_logged_in', '1');
+        localStorage.setItem('user_role', 'driver');
+        // URL 정리 (파라미터 제거)
+        history.replaceState(null, '', location.href.split('?')[0]);
+        obLaunch('driver');
+        return;
+      }
+    } catch(e) { console.warn('링크 파싱 실패', e); }
+  }
+
+  // 기존 초대 코드 처리 (?invite=...)
   var inv = params.get('invite');
-  if (inv) {
+  if(inv){
     localStorage.setItem('pending_invite', inv);
     _obRole = 'driver';
     showToast('초대 링크로 접속했습니다 🔗');
   }
+
   // 이미 로그인된 경우 바로 앱 실행
-  if (localStorage.getItem('is_logged_in') === '1') {
+  if(localStorage.getItem('is_logged_in') === '1'){
     obLaunch(localStorage.getItem('user_role') || 'boss');
   }
-  // 아니면 온보딩 화면 표시 (이미 기본 표시 상태)
 });
 </script>
 </body>
