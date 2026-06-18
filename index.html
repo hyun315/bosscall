@@ -2049,7 +2049,7 @@ function openMapScreen(lat,lng,name,addr){
         var ms2=document.getElementById('map-screen');
         if(!ms2||ms2.style.display==='none') return;
         clearTimeout(_mapDragTimer);
-        _mapDragTimer=setTimeout(_geocodeCenter,400);
+        _mapDragTimer=setTimeout(_geocodeCenter,150);
       });
     } else {
       // 기존 지도 재사용 - 중심 이동 + resize
@@ -2089,9 +2089,22 @@ function _geocodeCenter(){
 
 function psConfirmMap(){
   clearTimeout(_mapDragTimer);
-  var a=window._mapSelectedAddr;
-  if(!a||!a.name||a.name==='위치 선택 중...'){showToast('위치를 선택해주세요');return;}
-  psConfirmPlace(a.name,a.addr||a.name);
+  // 지도 중심 좌표 직접 가져오기
+  if(_gMap){
+    var c = _gMap.getCenter();
+    var nameEl = document.getElementById('map-sel-name');
+    var addrEl = document.getElementById('map-sel-addr');
+    var name = nameEl ? nameEl.textContent : '';
+    var addr = addrEl ? addrEl.textContent : '';
+    if(name === '위치 선택 중...' || !name){
+      name = addr || (c.lat().toFixed(5)+', '+c.lng().toFixed(5));
+    }
+    window._mapSelectedAddr = {name:name, addr:addr, lat:c.lat(), lng:c.lng()};
+  }
+  var a = window._mapSelectedAddr;
+  if(!a || !a.lat){ showToast('위치를 선택해주세요'); return; }
+  if(!a.name) a.name = a.addr || (a.lat.toFixed(5)+', '+a.lng.toFixed(5));
+  psConfirmPlace(a.name, a.addr||a.name);
 }
 
 function psConfirmPlace(name,addr){
