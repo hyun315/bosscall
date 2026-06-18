@@ -2075,6 +2075,7 @@ function _openMap(p){
 var _gMap = null;
 var _gGeocoder = null;
 var _mapDragTimer = null;
+var _gListenersAdded = false;
 
 function showMap(lat, lng, name){
   var mapCon = document.getElementById('ps-map-container');
@@ -2090,7 +2091,6 @@ function showMap(lat, lng, name){
   window._mapSelectedAddr = {name:name||'', addr:'', lat:lat||0, lng:lng||0};
 
   if(!window.GOOGLE_READY || !window.google || !window.google.maps){
-    if(nameEl) nameEl.textContent = name||'위치 선택됨';
     return;
   }
 
@@ -2108,32 +2108,29 @@ function showMap(lat, lng, name){
         zoomControlOptions: {position: window.google.maps.ControlPosition.RIGHT_CENTER}
       });
       _gGeocoder = new window.google.maps.Geocoder();
+
+      // 이벤트는 최초 1회만 등록
+      window.google.maps.event.addListener(_gMap, 'dragstart', function(){
+        var pin = document.getElementById('map-center-pin');
+        if(pin) pin.style.transform = 'translate(-50%,-130%)';
+        var ne = document.getElementById('map-sel-name');
+        if(ne) ne.textContent = 'Memilih lokasi...';
+      });
+
+      window.google.maps.event.addListener(_gMap, 'idle', function(){
+        var pin = document.getElementById('map-center-pin');
+        if(pin) pin.style.transform = 'translate(-50%,-100%)';
+        clearTimeout(_mapDragTimer);
+        _mapDragTimer = setTimeout(_geocodeCenterGoogle, 300);
+      });
+
     } else {
       _gMap.setCenter(center);
       _gMap.setZoom(16);
     }
 
-    // resize 트리거
     window.google.maps.event.trigger(_gMap, 'resize');
     _gMap.setCenter(center);
-
-    // 드래그 시작 - 핀 위로
-    window.google.maps.event.addListener(_gMap, 'dragstart', function(){
-      var pin = document.getElementById('map-center-pin');
-      if(pin) pin.style.transform = 'translate(-50%,-130%)';
-      var ne = document.getElementById('map-sel-name');
-      if(ne) ne.textContent = 'Memilih lokasi...';
-    });
-
-    // idle - 드래그 끝 (PC + 모바일 터치 모두)
-    window.google.maps.event.addListener(_gMap, 'idle', function(){
-      var pin = document.getElementById('map-center-pin');
-      if(pin) pin.style.transform = 'translate(-50%,-100%)';
-      clearTimeout(_mapDragTimer);
-      _mapDragTimer = setTimeout(_geocodeCenterGoogle, 300);
-    });
-
-    // 초기 역지오코딩
     _geocodeCenterGoogle();
   }, 100);
 }
