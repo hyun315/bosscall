@@ -10,28 +10,10 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233478f6'/%3E%3Crect x='8' y='36' width='48' height='16' rx='4' fill='white'/%3E%3Cpath d='M14 36l6-12q3-6 10-6h16q7 0 10 6l6 12z' fill='white'/%3E%3Ccircle cx='18' cy='46' r='6' fill='%233478f6'/%3E%3Ccircle cx='18' cy='46' r='3' fill='white'/%3E%3Ccircle cx='46' cy='46' r='6' fill='%233478f6'/%3E%3Ccircle cx='46' cy='46' r='3' fill='white'/%3E%3Cpath d='M48 16q5 5 5 11t-5 11' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233478f6'/%3E%3Crect x='8' y='36' width='48' height='16' rx='4' fill='white'/%3E%3Cpath d='M14 36l6-12q3-6 10-6h16q7 0 10 6l6 12z' fill='white'/%3E%3Ccircle cx='18' cy='46' r='6' fill='%233478f6'/%3E%3Ccircle cx='18' cy='46' r='3' fill='white'/%3E%3Ccircle cx='46' cy='46' r='6' fill='%233478f6'/%3E%3Ccircle cx='46' cy='46' r='3' fill='white'/%3E%3Cpath d='M48 16q5 5 5 11t-5 11' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>
-/* Google Maps + 카카오맵 SDK */
-window.GOOGLE_KEY = 'AIzaSyAYSKFiBMljBYWoyRAoR93XcbYrp65zaVM';
+/* 카카오맵 SDK */
 window.KAKAO_KEY = localStorage.getItem('kakao_api_key') || '383a53cfd4165ce1cd26ed2e3540d7f0';
 window.KAKAO_READY = false;
 window.GOOGLE_PLACES_READY = false;
-
-// Google Maps 초기화 콜백
-window._googleMapsReady = function(){
-  window.GOOGLE_PLACES_READY = true;
-  console.log('✅ Google Maps 로드 완료');
-};
-
-// Google Maps SDK - Places New 버전
-(function(){
-  var s = document.createElement('script');
-  s.src = 'https://maps.googleapis.com/maps/api/js?key=' + window.GOOGLE_KEY
-    + '&libraries=places,geocoding&language=id&region=ID&v=weekly&callback=_googleMapsReady';
-  s.async = true;
-  s.defer = true;
-  s.onerror = function(){ console.error('❌ Google Maps 로드 실패'); };
-  document.head.appendChild(s);
-})();
 function loadKakaoSDK(key) {
   return new Promise(function(resolve, reject) {
     if (window.kakao && window.kakao.maps) { resolve(); return; }
@@ -967,33 +949,22 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
   </div>
 
 
-  <!-- 카카오톡 스타일 지도 선택 화면 -->
+  <!-- 구글맵 지도 선택 화면 -->
   <div id="ps-map-container" style="display:none;flex-direction:column;flex:1;position:relative">
-    <!-- 전체화면 지도 -->
-    <div id="kakao-map" style="width:100%;flex:1;min-height:400px"></div>
 
     <!-- 뒤로가기 버튼 -->
     <button onclick="psMapBack()" style="position:absolute;top:14px;left:14px;width:40px;height:40px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 10px rgba(0,0,0,.15);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1000;pointer-events:all">←</button>
 
-    <!-- 중앙 고정 핀 -->
-    <div id="map-center-pin" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-100%);pointer-events:none;z-index:100;display:flex;flex-direction:column;align-items:center;transition:transform .15s ease">
-      <div style="width:36px;height:36px;border-radius:50% 50% 50% 0;background:#3478f6;transform:rotate(-45deg);box-shadow:0 4px 12px rgba(52,120,246,.4);display:flex;align-items:center;justify-content:center">
-        <div style="width:12px;height:12px;border-radius:50%;background:#fff;transform:rotate(45deg)"></div>
-      </div>
-      <div style="width:8px;height:8px;border-radius:50%;background:rgba(52,120,246,.3);margin-top:2px"></div>
-    </div>
-
-    <!-- 현재위치 버튼 -->
-    <button onclick="psMapGPS()" style="position:absolute;right:14px;bottom:130px;width:44px;height:44px;border-radius:50%;background:#fff;border:none;box-shadow:0 2px 12px rgba(0,0,0,.15);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1000;pointer-events:all">📡</button>
+    <!-- 구글맵 iframe -->
+    <iframe id="google-map-iframe" style="width:100%;flex:1;min-height:400px;border:none" allowfullscreen></iframe>
 
     <!-- 하단 주소 바 -->
     <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.12);z-index:1000;padding:16px 16px 20px;pointer-events:all">
       <div style="width:40px;height:4px;background:#e2e6ef;border-radius:2px;margin:0 auto 14px"></div>
-      <div style="font-size:12px;color:#6b7394;font-weight:700;margin-bottom:6px;letter-spacing:.05em;text-transform:uppercase" id="map-addr-label">선택된 위치</div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
         <span style="font-size:24px">📍</span>
         <div style="flex:1;min-width:0">
-          <div id="map-sel-name" style="font-size:16px;font-weight:700;color:#1a1d2e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">지도를 움직여 위치를 선택하세요</div>
+          <div id="map-sel-name" style="font-size:16px;font-weight:700;color:#1a1d2e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">위치를 확인하세요</div>
           <div id="map-sel-addr" style="font-size:13px;color:#6b7394;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
         </div>
       </div>
@@ -1918,25 +1889,7 @@ function psOnInput(){
 function psClear(){document.getElementById('ps-input').value='';document.getElementById('ps-clear').style.display='none';showPsDefault();document.getElementById('ps-input').focus();}
 
 function psAutoComplete(q){
-  if(window.GOOGLE_PLACES_READY && window.google && window.google.maps && window.google.maps.places){
-    var svc = new window.google.maps.places.AutocompleteService();
-    svc.getPlacePredictions({input:q, language:'id'}, function(predictions, status){
-      if(predictions && predictions.length){
-        window._psAutoList = predictions.map(function(p){
-          return {
-            icon: '📍',
-            name: p.structured_formatting ? p.structured_formatting.main_text : p.description,
-            addr: p.structured_formatting ? (p.structured_formatting.secondary_text||'') : '',
-            dist: '',
-            place_id: p.place_id
-          };
-        });
-        renderAutoList(q);
-      } else {
-        psSearch();
-      }
-    });
-  } else if(window.KAKAO_READY){
+  if(window.KAKAO_READY && window.kakao && window.kakao.maps && window.kakao.maps.services){
     psSearchKakao(q);
   } else {
     psFallback(q);
@@ -1946,27 +1899,7 @@ function psAutoComplete(q){
 function psSearch(){
   var q=document.getElementById('ps-input').value.trim();
   if(!q) return;
-  if(window.GOOGLE_PLACES_READY && window.google && window.google.maps && window.google.maps.places){
-    var service = new window.google.maps.places.PlacesService(document.createElement('div'));
-    service.textSearch({query:q, language:'id'}, function(results, status){
-      if(results && results.length){
-        window._psResultList = results.map(function(p){
-          return {
-            icon: getGoogleIcon(p.types||[]),
-            cat: p.types ? p.types[0].replace(/_/g,' ') : 'Tempat',
-            name: p.name,
-            addr: p.formatted_address||'',
-            dist: '',
-            lat: p.geometry ? p.geometry.location.lat() : 0,
-            lng: p.geometry ? p.geometry.location.lng() : 0
-          };
-        });
-        renderResults(q);
-      } else {
-        psSearchKakao(q);
-      }
-    });
-  } else if(window.KAKAO_READY){
+  if(window.KAKAO_READY && window.kakao && window.kakao.maps && window.kakao.maps.services){
     psSearchKakao(q);
   } else {
     psFallback(q);
@@ -2056,41 +1989,48 @@ function psSelectPlace(idx,from){
   var list = from==='auto' ? window._psAutoList : window._psResultList;
   var p = list[idx]; if(!p) return;
   psSelectedPlace = p;
-  if(p.place_id && window.GOOGLE_PLACES_READY && window.google){
-    var svc = new window.google.maps.places.PlacesService(document.createElement('div'));
-    svc.getDetails({placeId:p.place_id, fields:['geometry','formatted_address','name']}, function(result, status){
-      if(status === window.google.maps.places.PlacesServiceStatus.OK){
-        p.lat = result.geometry.location.lat();
-        p.lng = result.geometry.location.lng();
-        if(result.formatted_address) p.addr = result.formatted_address;
-        _openMap(p);
-      } else _openMap(p);
-    });
-  } else {
-    _openMap(p);
-  }
+  _openMap(p);
 }
 
 function _openMap(p){
-  if(p.lat && p.lng){
-    showMap(p.lat, p.lng, p.name||p.n);
-  } else {
-    showFakemap(p.name||p.n, p.addr||p.a||'');
-  }
+  var name = p.name||p.n||'';
+  var addr = p.addr||p.a||'';
+  showMap(p.lat||0, p.lng||0, name);
+  var nameEl = document.getElementById('map-sel-name');
+  var addrEl = document.getElementById('map-sel-addr');
+  if(nameEl) nameEl.textContent = name;
+  if(addrEl) addrEl.textContent = addr;
+  window._mapSelectedAddr = {name:name, addr:addr, lat:p.lat||0, lng:p.lng||0};
 }
 var _mapDragTimer = null;
 
-var googleMapObj = null;
-var googleMarker = null;
-
 function showMap(lat, lng, name){
-  if(window.GOOGLE_PLACES_READY && window.google && window.google.maps){
-    showGoogleMap(lat, lng, name);
-  } else if(window.KAKAO_READY){
-    showKakaoMap(lat, lng, name);
-  } else {
-    showFakemap(name, '');
+  var mapCon = document.getElementById('ps-map-container');
+  var psCon  = document.getElementById('ps-content');
+  if(mapCon){ mapCon.classList.add('on'); mapCon.style.display='flex'; }
+  if(psCon)  psCon.style.display='none';
+
+  // Google Maps Embed - 검색어 또는 좌표로 표시
+  var iframe = document.getElementById('google-map-iframe');
+  var src = '';
+  if(lat && lng){
+    src = 'https://maps.google.com/maps?q='+lat+','+lng+'&z=16&output=embed&hl=id';
+  } else if(name){
+    src = 'https://maps.google.com/maps?q='+encodeURIComponent(name)+'&output=embed&hl=id';
   }
+  if(iframe && src) iframe.src = src;
+
+  var nameEl = document.getElementById('map-sel-name');
+  var addrEl = document.getElementById('map-sel-addr');
+  if(nameEl) nameEl.textContent = name || 'Lokasi dipilih';
+  if(addrEl) addrEl.textContent = lat && lng ? lat.toFixed(5)+', '+lng.toFixed(5) : '';
+
+  window._mapSelectedAddr = {
+    name: name || '',
+    addr: '',
+    lat: lat || 0,
+    lng: lng || 0
+  };
 }
 
 function showGoogleMap(lat, lng, name){
@@ -2340,11 +2280,8 @@ function psUseGPS(){
   showToast('📡 위치 측위 중…');
   navigator.geolocation.getCurrentPosition(function(pos){
     var lat=pos.coords.latitude, lng=pos.coords.longitude;
-    if(window.KAKAO_READY){
-      showMap(lat,lng,'Lokasi saat ini');
-    } else {
-      showFakemap('현재 위치', lat.toFixed(4)+', '+lng.toFixed(4));
-    }
+    showMap(lat, lng, 'Lokasi saat ini');
+    window._mapSelectedAddr={name:'Lokasi saat ini',addr:lat.toFixed(5)+', '+lng.toFixed(5),lat:lat,lng:lng};
   },function(){ showToast('위치 접근 거부'); });
 }
 function renderPsRecent(){
