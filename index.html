@@ -1675,25 +1675,60 @@ function cancelCall(){
 }
 function acceptCall(){
   document.getElementById('call-alert').style.display='none';
-  // 사장님께 WhatsApp으로 수락 알림
+  clearTimeout(callTimer);
+
   var pickup = document.getElementById('alert-pickup-text').textContent;
   var dest = document.getElementById('alert-dest-text').textContent;
-  var waNum = localStorage.getItem('wa_boss_number') || localStorage.getItem('wa_number') || '';
-  if(waNum){
-    waNum = waNum.replace(/\s+/g,'').replace('+','');
-    var msg = encodeURIComponent('✅ Panggilan DITERIMA!\n📍 Jemput: '+pickup+'\n🚩 Tujuan: '+dest+'\n🚗 Saya sedang dalam perjalanan...');
-    window.open('https://wa.me/'+waNum+'?text='+msg,'_blank');
+  var pickupCoord = window._pickupCoord || null;
+
+  // 기사 현재 GPS 측위 → 픽업까지 거리/시간 계산
+  function sendAccept(etaMin){
+    var etaText = etaMin ? '~'+etaMin+' '+t('min') : '-';
+    // 사장 화면 업데이트
+    document.getElementById('call-msg-text').textContent='✅ '+t('accept');
+    document.getElementById('eta-badge').style.display='inline-flex';
+    document.getElementById('eta-badge').textContent=t('eta')+' '+etaText;
+    document.getElementById('driver-status-text').innerHTML='<span class="status-dot dot-amber"></span>'+t('calling');
+    // WhatsApp 발송
+    var waNum = localStorage.getItem('wa_boss_number') || localStorage.getItem('wa_number') || '';
+    if(waNum){
+      waNum = waNum.replace(/\s+/g,'').replace('+','');
+      var msg = encodeURIComponent('✅ Panggilan DITERIMA!\n📍 Jemput: '+pickup+'\n🚩 Tujuan: '+dest+'\n⏱️ Perkiraan tiba: '+etaText+'\n🚗 Saya sedang dalam perjalanan...');
+      window.open('https://wa.me/'+waNum+'?text='+msg,'_blank');
+    }
+    showToast('✅ '+t('accept')+' · ETA '+etaText);
+    notifLog.unshift({icon:'✅',msg:'호출 수락 · ETA '+etaText+'\n'+pickup+' → '+dest,time:new Date().toLocaleTimeString('id',{hour:'2-digit',minute:'2-digit'}),sent:true});
+    renderNotifLog();
   }
-  // 기사 화면 상태 업데이트
-  document.getElementById('driver-status-text').innerHTML='<span class="status-dot dot-amber"></span>'+t('calling');
-  showToast('✅ '+t('accept'));
-  // 로그 추가
-  notifLog.unshift({icon:'✅',msg:'호출 수락 → WA 발송\n'+pickup+' → '+dest,time:new Date().toLocaleTimeString('id',{hour:'2-digit',minute:'2-digit'}),sent:true});
-  renderNotifLog();
+
+  if(navigator.geolocation && pickupCoord && pickupCoord.lat){
+    navigator.geolocation.getCurrentPosition(function(pos){
+      // Haversine 공식으로 직선 거리 계산
+      var R=6371, lat1=pos.coords.latitude*Math.PI/180, lat2=pickupCoord.lat*Math.PI/180;
+      var dLat=(pickupCoord.lat-pos.coords.latitude)*Math.PI/180;
+      var dLng=(pickupCoord.lng-pos.coords.longitude)*Math.PI/180;
+      var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)*Math.sin(dLng/2);
+      var km=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+      // 평균 시내 속도 30km/h 기준
+      var etaMin = Math.round(km/30*60);
+      if(etaMin < 1) etaMin = 1;
+      if(etaMin > 60) etaMin = '>60';
+      sendAccept(etaMin);
+    }, function(){
+      sendAccept(null);
+    },{timeout:5000});
+  } else {
+    sendAccept(null);
+  }
 }
 
 function declineCall(){
   document.getElementById('call-alert').style.display='none';
+  // callTimer 취소 (사장 화면이 수락으로 바뀌지 않도록)
+  clearTimeout(callTimer);
+  // 사장 화면을 호출 전 상태로 복구
+  document.getElementById('call-btn').style.display='block';
+  document.getElementById('call-status').classList.remove('visible');
   // 사장님께 WhatsApp으로 거절 알림
   var waNum = localStorage.getItem('wa_boss_number') || localStorage.getItem('wa_number') || '';
   if(waNum){
