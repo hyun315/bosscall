@@ -471,7 +471,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
 </div>
 
 <!-- 역할 전환 -->
-<div class="role-switcher" style="margin-top:10px">
+<div class="role-switcher" id="role-switcher" style="margin-top:10px">
   <button class="role-btn active" onclick="switchRole('boss',this)" data-i18n="role_boss">🧑‍💼 사장님</button>
   <button class="role-btn" onclick="switchRole('driver',this)" data-i18n="role_driver">🚗 기사님</button>
 </div>
@@ -560,6 +560,31 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
   </div>
 
   <!-- 통계 탭 -->
+  <!-- 기사 현황 탭 (사장이 기사 화면 조회) -->
+  <div class="tab-panel" id="tab-driver-status">
+    <div class="section-title" data-i18n="role_driver">기사 현황</div>
+    <div class="card">
+      <!-- 출퇴근 상태 -->
+      <div style="padding:16px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:24px">🚗</div>
+          <div>
+            <div style="font-size:16px;font-weight:800;color:var(--text)" id="boss-view-driver-name">김현수 기사님</div>
+            <div id="boss-view-status" style="font-size:13px;color:var(--green);font-weight:700;margin-top:2px">● 대기 중</div>
+          </div>
+        </div>
+        <!-- 오늘 출퇴근 -->
+        <div id="boss-view-log-list"></div>
+      </div>
+    </div>
+
+    <div class="section-title" data-i18n="today_trip">오늘 운행</div>
+    <div class="card" id="boss-view-trip-card" onclick="openTripScreen()" style="cursor:pointer"></div>
+
+    <div class="section-title" data-i18n="tab_fuel">주유 현황</div>
+    <div class="card" id="boss-view-fuel-card"></div>
+  </div>
+
   <div class="tab-panel" id="tab-stats">
     <div class="stat-hero">
       <div><div class="stat-hero-label" data-i18n="year_trips">올해 운행</div><div class="stat-hero-val">1,284<span style="font-size:14px;font-weight:500;opacity:.8" data-i18n="times">회</span></div></div>
@@ -695,6 +720,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
   <div class="bottom-tab">
     <button class="tab-item active" id="btab-home" onclick="switchTab('home')"><span class="tab-icon">🏠</span><span class="tab-label" data-i18n="tab_home">홈</span></button>
     <button class="tab-item" id="btab-fav" onclick="switchTab('fav')"><span class="tab-icon">⭐</span><span class="tab-label" data-i18n="tab_fav">즐겨찾기</span></button>
+    <button class="tab-item" id="btab-driver-status" onclick="switchTab('driver-status')"><span class="tab-icon">🚗</span><span class="tab-label" data-i18n="role_driver">기사현황</span></button>
     <button class="tab-item" id="btab-stats" onclick="switchTab('stats')"><span class="tab-icon">📈</span><span class="tab-label" data-i18n="tab_stats">통계</span></button>
     <button class="tab-item" id="btab-salary-setting" onclick="switchTab('salary-setting')"><span class="tab-icon">⚙️</span><span class="tab-label" data-i18n="tab_salary_set">급여설정</span></button>
     <button class="tab-item" id="btab-fuel" onclick="switchTab('fuel')"><span class="tab-icon">⛽</span><span class="tab-label" data-i18n="tab_fuel">주유</span></button>
@@ -1226,6 +1252,16 @@ function switchRole(role,btn){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   btn.classList.add('active');
   document.getElementById('screen-'+role).classList.add('active');
+  // 기사는 역할 전환 버튼 숨김
+  var switcher = document.getElementById('role-switcher');
+  if(switcher) switcher.style.display = (role==='driver') ? 'none' : '';
+  // 기사 화면 진입 시 출퇴근 버튼 초기화
+  if(role==='driver'){
+    var ci=document.getElementById('checkin-btn');
+    var co=document.getElementById('checkout-btn');
+    if(ci){ci.style.opacity='';ci.style.pointerEvents='';}
+    if(co){co.style.opacity='';co.style.pointerEvents='';}
+  }
 }
 function switchTab(name){
   document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
@@ -1236,6 +1272,7 @@ function switchTab(name){
   if(bt) bt.classList.add('active');
   if(name==='salary-setting') updateSalaryPreview();
   if(name==='fuel'||name==='stats') renderFuelSummary();
+  if(name==='driver-status') renderBossDriverView();
 }
 
 // ══ 토스트 ══
@@ -1591,6 +1628,53 @@ let logList=[
   {date:'6/13',day:'목',in:'09:00',out:'18:05',total:'9:05',ot:'',oting:false},
   {date:'6/12',day:'수',in:'09:10',out:'21:30',total:'12:20',ot:'4:20',oting:false},
 ];
+function renderBossDriverView(){
+  // 출퇴근 로그
+  var logEl = document.getElementById('boss-view-log-list');
+  if(logEl){
+    logEl.innerHTML = logList.slice(0,3).map(function(l){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">'
+        +'<span style="font-size:14px;color:var(--text2)">'+l.date+' ('+l.day+')</span>'
+        +'<span style="font-size:14px;font-weight:700">'
+          +'<span style="color:var(--green)">🟢 '+l.in+'</span>'
+          +(l.out&&!l.oting?' &nbsp; <span style="color:#ff6b6b">🔴 '+l.out+'</span>':'')
+        +'</span>'
+      +'</div>';
+    }).join('');
+  }
+  // 오늘 운행
+  var tripEl = document.getElementById('boss-view-trip-card');
+  if(tripEl){
+    var today = todayStr();
+    var todayTrips = tripList.filter(function(tt){return (tt.date||today)===today;});
+    var totalDist = todayTrips.reduce(function(s,tt){return s+parseFloat(tt.dist||0);},0).toFixed(1);
+    tripEl.innerHTML = todayTrips.length
+      ? todayTrips.slice(0,3).map(function(tt){
+          return '<div class="trip-item" style="pointer-events:none">'
+            +'<div class="trip-icon">'+(tt.icon||'📍')+'</div>'
+            +'<div class="trip-info"><div class="trip-dest">'+tt.dest+'</div><div class="trip-time">'+tt.dep+' → '+tt.arr+'</div></div>'
+            +'<div class="trip-dist">'+tt.dist+'km</div>'
+            +'</div>';
+        }).join('')
+        +'<div style="padding:10px 16px;background:var(--surface2);font-size:13px;font-weight:700;color:var(--accent)">'+todayTrips.length+'회 · '+totalDist+'km →</div>'
+      : '<div style="padding:20px;text-align:center;color:var(--text3)">오늘 운행 없음</div>';
+  }
+  // 주유 현황
+  var fuelEl = document.getElementById('boss-view-fuel-card');
+  if(fuelEl){
+    var fuelList2 = JSON.parse(localStorage.getItem('fuel_list')||'[]');
+    var monthFuel = fuelList2.slice(0,2);
+    fuelEl.innerHTML = monthFuel.length
+      ? monthFuel.map(function(f){
+          return '<div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">'
+            +'<span style="font-size:14px;color:var(--text)">⛽ '+f.date+'</span>'
+            +'<span style="font-size:14px;font-weight:700;color:var(--accent)">'+f.liter+'L · '+formatCurrency(parseFloat(f.liter)*parseFloat(f.unitPrice||8000))+'</span>'
+          +'</div>';
+        }).join('')
+      : '<div style="padding:20px;text-align:center;color:var(--text3)">주유 기록 없음</div>';
+  }
+}
+
 function renderLogList(){
   const card=document.getElementById('log-list-card');if(!card)return;
   card.innerHTML=logList.map((l,i)=>`
