@@ -1813,23 +1813,6 @@ var psRecent=JSON.parse(localStorage.getItem('ps_recent')||'[]');
 var psSelectedPlace=null;
 var _mapDragTimer=null;
 
-var placeDB=[
-  {icon:'🏦',cat:'Bank',name:'Bank BCA KCU Sudirman',addr:'Jl. Jend. Sudirman No.22-23, Jakarta Pusat',dist:'0.5km',lat:-6.2088,lng:106.8227},
-  {icon:'🏦',cat:'Bank',name:'Bank Mandiri Thamrin',addr:'Jl. M.H. Thamrin No.5, Jakarta Pusat',dist:'0.8km',lat:-6.1944,lng:106.8229},
-  {icon:'🏨',cat:'Hotel',name:'Hotel Indonesia Kempinski',addr:'Jl. M.H. Thamrin No.1, Jakarta Pusat',dist:'1.0km',lat:-6.1944,lng:106.8218},
-  {icon:'🏨',cat:'Hotel',name:'Grand Hyatt Jakarta',addr:'Jl. M.H. Thamrin No.28-30, Jakarta Pusat',dist:'1.2km',lat:-6.1958,lng:106.8234},
-  {icon:'✈️',cat:'Bandara',name:'Bandara Soekarno-Hatta T1',addr:'Tangerang, Banten',dist:'28km',lat:-6.1255,lng:106.6559},
-  {icon:'✈️',cat:'Bandara',name:'Bandara Soekarno-Hatta T3',addr:'Tangerang, Banten',dist:'29km',lat:-6.1256,lng:106.6559},
-  {icon:'🚉',cat:'Stasiun',name:'Stasiun Gambir',addr:'Jl. Medan Merdeka Tim., Jakarta Pusat',dist:'2.0km',lat:-6.1766,lng:106.8306},
-  {icon:'🏢',cat:'Bisnis',name:'SCBD Sudirman',addr:'Jl. Jend. Sudirman, Jakarta Selatan',dist:'3.5km',lat:-6.2241,lng:106.8095},
-  {icon:'🛒',cat:'Mall',name:'Grand Indonesia',addr:'Jl. M.H. Thamrin No.1, Jakarta Pusat',dist:'1.0km',lat:-6.1953,lng:106.8212},
-  {icon:'🛒',cat:'Mall',name:'Plaza Indonesia',addr:'Jl. M.H. Thamrin No.28-30, Jakarta Pusat',dist:'1.1km',lat:-6.1929,lng:106.8239},
-  {icon:'🏥',cat:'Rumah Sakit',name:'RS Cipto Mangunkusumo',addr:'Jl. Diponegoro No.71, Jakarta Pusat',dist:'4.0km',lat:-6.1908,lng:106.8457},
-  {icon:'🏛️',cat:'Pemerintahan',name:'Monas',addr:'Gambir, Jakarta Pusat',dist:'1.5km',lat:-6.1754,lng:106.8272},
-  {icon:'🍽️',cat:'Restoran',name:'Restoran Plataran Menteng',addr:'Jl. H.O.S. Cokroaminoto No.42, Jakarta Pusat',dist:'2.5km',lat:-6.1997,lng:106.8316},
-  {icon:'⛽',cat:'SPBU',name:'SPBU Pertamina Thamrin',addr:'Jl. M.H. Thamrin, Jakarta Pusat',dist:'0.9km',lat:-6.1930,lng:106.8230},
-  {icon:'🕌',cat:'Ibadah',name:'Masjid Istiqlal',addr:'Jl. Lapangan Banteng Bar., Jakarta Pusat',dist:'2.2km',lat:-6.1702,lng:106.8310},
-];
 
 function openAddrModal(target){
   psTarget=target;
@@ -1983,10 +1966,7 @@ function psSearchKakao(q){
 
 
 function psFallback(q){
-  var lower=q.toLowerCase();
-  window._psResultList=placeDB.filter(function(p){
-    return p.name.toLowerCase().indexOf(lower)>=0||p.addr.toLowerCase().indexOf(lower)>=0||(p.cat&&p.cat.toLowerCase().indexOf(lower)>=0);
-  });
+  window._psResultList = [];
   renderResults(q);
 }
 
