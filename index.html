@@ -531,9 +531,9 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
     <div class="section-title" data-i18n="navigation">네비게이션</div>
     <div class="navi-buttons">
       <button class="navi-btn" onclick="openNavi('google')"><span>🌐</span><span>Google</span></button>
-      <button class="navi-btn" onclick="openNavi('kakao')"><span>🗺️</span><span>카카오</span></button>
-      <button class="navi-btn" onclick="openNavi('tmap')"><span>📍</span><span>티맵</span></button>
-      <button class="navi-btn" onclick="openNavi('naver')"><span>🧭</span><span>네이버</span></button>
+      <button class="navi-btn" onclick="openNavi('waze')"><span>🚗</span><span>Waze</span></button>
+      <button class="navi-btn" onclick="openNavi('tmap')"><span>📍</span><span>T-map</span></button>
+      <button class="navi-btn" onclick="openNavi('naver')"><span>🧭</span><span>Naver</span></button>
     </div>
 
     <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
@@ -672,6 +672,13 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
           <input class="inp" id="kakao-api-key" data-i18n-ph="wa_placeholder" placeholder="+62 812 3456 7890" style="margin-bottom:0;flex:1" />
         </div>
         <div style="font-size:12px;color:var(--text3);margin-top:8px" data-i18n="wa_format">Format: +62</div>
+        <div style="margin-top:14px">
+          <div class="inp-label">Nomor WhatsApp Bos (untuk notif balasan)</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:20px">👔</span>
+            <input class="inp" id="wa-boss-number" placeholder="+62 812 0000 0000" style="margin-bottom:0;flex:1" />
+          </div>
+        </div>
       </div>
     </div>
     <div class="section-title" data-i18n="wa_notif_setting">Pengaturan Notifikasi</div>
@@ -751,9 +758,9 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
     </div>
     <div class="map-actions">
       <button class="map-btn" onclick="openNavi('google')">🌐 Google</button>
-      <button class="map-btn" onclick="openNavi('kakao')">🗺 카카오</button>
-      <button class="map-btn" onclick="openNavi('tmap')">📍 티맵</button>
-      <button class="map-btn" onclick="openNavi('naver')">🧭 네이버</button>
+      <button class="map-btn" onclick="openNavi('tmap')">📍 T-map</button>
+      <button class="map-btn" onclick="openNavi('naver')">🧭 Naver</button>
+      <button class="map-btn" onclick="openNavi('waze')">🚗 Waze</button>
     </div>
   </div>
 
@@ -1639,12 +1646,25 @@ function callDriver(){
   document.getElementById('eta-badge').style.display='none';
   document.getElementById('alert-pickup-text').textContent=pickup;
   document.getElementById('alert-dest-text').textContent=dest;
-  document.getElementById('map-label-driver').textContent='픽업: '+pickup;
+  document.getElementById('map-label-driver').textContent='📍 '+pickup;
+
+  // WhatsApp으로 기사에게 호출 발송
+  var waNum = localStorage.getItem('wa_number') || '';
+  if(waNum){
+    waNum = waNum.replace(/\s+/g,'').replace('+','');
+    var msg = encodeURIComponent('🚗 PANGGILAN BOSSCALL!\n📍 Jemput: '+pickup+'\n🚩 Tujuan: '+dest+'\n\nMohon konfirmasi segera.');
+    window.open('https://wa.me/'+waNum+'?text='+msg,'_blank');
+  }
+
+  // 알림 로그
+  notifLog.unshift({icon:'📞',msg:'호출 발송\n'+pickup+' → '+dest,time:new Date().toLocaleTimeString('id',{hour:'2-digit',minute:'2-digit'}),sent:true});
+  renderNotifLog();
+
   callTimer=setTimeout(()=>{
     document.getElementById('call-msg-text').textContent='✅ '+t('accept');
     document.getElementById('eta-badge').style.display='inline-flex';
     document.getElementById('driver-status-text').innerHTML=`<span class="status-dot dot-amber"></span>${t('calling')}`;
-    showToast('🚗 기사님 출발!');
+    showToast('🚗 '+t('accept')+'!');
   },3000);
 }
 function cancelCall(){
@@ -1653,8 +1673,38 @@ function cancelCall(){
   document.getElementById('call-status').classList.remove('visible');
   showToast(t('cancel'));
 }
-function acceptCall(){document.getElementById('call-alert').style.display='none';showToast('✅ '+t('accept'));}
-function declineCall(){document.getElementById('call-alert').style.display='none';showToast(t('decline'));}
+function acceptCall(){
+  document.getElementById('call-alert').style.display='none';
+  // 사장님께 WhatsApp으로 수락 알림
+  var pickup = document.getElementById('alert-pickup-text').textContent;
+  var dest = document.getElementById('alert-dest-text').textContent;
+  var waNum = localStorage.getItem('wa_boss_number') || localStorage.getItem('wa_number') || '';
+  if(waNum){
+    waNum = waNum.replace(/\s+/g,'').replace('+','');
+    var msg = encodeURIComponent('✅ Panggilan DITERIMA!\n📍 Jemput: '+pickup+'\n🚩 Tujuan: '+dest+'\n🚗 Saya sedang dalam perjalanan...');
+    window.open('https://wa.me/'+waNum+'?text='+msg,'_blank');
+  }
+  // 기사 화면 상태 업데이트
+  document.getElementById('driver-status-text').innerHTML='<span class="status-dot dot-amber"></span>'+t('calling');
+  showToast('✅ '+t('accept'));
+  // 로그 추가
+  notifLog.unshift({icon:'✅',msg:'호출 수락 → WA 발송\n'+pickup+' → '+dest,time:new Date().toLocaleTimeString('id',{hour:'2-digit',minute:'2-digit'}),sent:true});
+  renderNotifLog();
+}
+
+function declineCall(){
+  document.getElementById('call-alert').style.display='none';
+  // 사장님께 WhatsApp으로 거절 알림
+  var waNum = localStorage.getItem('wa_boss_number') || localStorage.getItem('wa_number') || '';
+  if(waNum){
+    waNum = waNum.replace(/\s+/g,'').replace('+','');
+    var msg = encodeURIComponent('❌ Maaf, panggilan tidak dapat diterima saat ini.\nMohon coba beberapa saat lagi.');
+    window.open('https://wa.me/'+waNum+'?text='+msg,'_blank');
+  }
+  showToast('❌ '+t('decline'));
+  notifLog.unshift({icon:'❌',msg:'호출 거절 → WA 발송',time:new Date().toLocaleTimeString('id',{hour:'2-digit',minute:'2-digit'}),sent:true});
+  renderNotifLog();
+}
 
 // ══ 네비 ══
 function openNavi(app){
@@ -1663,62 +1713,41 @@ function openNavi(app){
   var dest = (document.getElementById('dest-input')&&document.getElementById('dest-input').value)
     || (document.getElementById('alert-dest-text')&&document.getElementById('alert-dest-text').textContent) || '';
 
-  var ep = encodeURIComponent(dest||'목적지');
-  var sp = encodeURIComponent(pickup||'현재위치');
-  var labels = {kakao:'카카오내비',naver:'네이버지도',tmap:'티맵',google:'Google Maps'};
+  var ep = encodeURIComponent(dest||'Tujuan');
+  var sp = encodeURIComponent(pickup||'Lokasi saat ini');
+  var destCoord  = window._destCoord  || null;
+  var pickupCoord = window._pickupCoord || null;
 
-  // 저장된 좌표
-  var destCoord  = window._destCoord  || null; // 목적지 좌표
-  var pickupCoord = window._pickupCoord || null; // 픽업 좌표
-
-  if(app==='kakao'){
-    // 카카오맵 웹으로 바로 열기 (앱 스킴 대신 웹 URL 사용)
-    var webUrl = 'https://map.kakao.com/?target=car&to=' + ep;
-    if(destCoord && destCoord.lat){
-      webUrl = 'https://map.kakao.com/?target=car&toX=' + destCoord.lng + '&toY=' + destCoord.lat + '&to=' + ep;
-    }
-    if(pickupCoord && pickupCoord.lat){
-      webUrl += '&fromX=' + pickupCoord.lng + '&fromY=' + pickupCoord.lat + '&from=' + sp;
-    }
-    window.open(webUrl, '_blank');
-    setTimeout(function(){ showToast('카카오맵'); }, 300);
-    return;
-
-  } else if(app==='naver'){
+  if(app==='naver'){
     var nurl = 'nmap://route/car?';
-    if(pickupCoord && pickupCoord.lat){
-      nurl += 'slng=' + pickupCoord.lng + '&slat=' + pickupCoord.lat + '&sname=' + sp + '&';
-    }
-    if(destCoord && destCoord.lat){
-      nurl += 'dlng=' + destCoord.lng + '&dlat=' + destCoord.lat + '&dname=' + ep;
-    } else {
-      nurl += 'dname=' + ep;
-    }
+    if(pickupCoord && pickupCoord.lat) nurl += 'slng='+pickupCoord.lng+'&slat='+pickupCoord.lat+'&sname='+sp+'&';
+    if(destCoord && destCoord.lat) nurl += 'dlng='+destCoord.lng+'&dlat='+destCoord.lat+'&dname='+ep;
+    else nurl += 'dname='+ep;
     nurl += '&appname=com.bosscall';
     window.location.href = nurl;
-    setTimeout(function(){ window.open('https://map.naver.com/', '_blank'); }, 1500);
+    setTimeout(function(){ window.open('https://map.naver.com/','_blank'); }, 1500);
 
   } else if(app==='tmap'){
-    var turl = 'tmap://route?goalname=' + ep;
-    if(destCoord && destCoord.lat){
-      turl += '&goalx=' + destCoord.lng + '&goaly=' + destCoord.lat;
-    }
-    if(pickupCoord && pickupCoord.lat){
-      turl += '&startx=' + pickupCoord.lng + '&starty=' + pickupCoord.lat + '&startname=' + sp;
-    }
+    var turl = 'tmap://route?goalname='+ep;
+    if(destCoord && destCoord.lat) turl += '&goalx='+destCoord.lng+'&goaly='+destCoord.lat;
+    if(pickupCoord && pickupCoord.lat) turl += '&startx='+pickupCoord.lng+'&starty='+pickupCoord.lat+'&startname='+sp;
     window.location.href = turl;
-    setTimeout(function(){ window.open('https://tmap.co.kr/', '_blank'); }, 1500);
+    setTimeout(function(){ window.open('https://tmap.co.kr/','_blank'); }, 1500);
 
   } else if(app==='google'){
     var gDest = (destCoord && destCoord.lat) ? (destCoord.lat+','+destCoord.lng) : dest;
     var gOrig = (pickupCoord && pickupCoord.lat) ? (pickupCoord.lat+','+pickupCoord.lng) : pickup;
-    window.location.href = 'comgooglemaps://?saddr=' + encodeURIComponent(gOrig) + '&daddr=' + encodeURIComponent(gDest) + '&directionsmode=driving';
+    window.location.href = 'comgooglemaps://?saddr='+encodeURIComponent(gOrig)+'&daddr='+encodeURIComponent(gDest)+'&directionsmode=driving';
     setTimeout(function(){
-      window.open('https://www.google.com/maps/dir/?api=1&origin=' + encodeURIComponent(gOrig) + '&destination=' + encodeURIComponent(gDest) + '&travelmode=driving', '_blank');
+      window.open('https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(gOrig)+'&destination='+encodeURIComponent(gDest)+'&travelmode=driving','_blank');
     }, 1500);
+
+  } else if(app==='waze'){
+    var wDest = (destCoord && destCoord.lat) ? (destCoord.lat+','+destCoord.lng) : dest;
+    window.open('https://waze.com/ul?ll='+encodeURIComponent(wDest)+'&navigate=yes','_blank');
   }
 
-  setTimeout(function(){ showToast(labels[app]); }, 300);
+  setTimeout(function(){ showToast(app.charAt(0).toUpperCase()+app.slice(1)); }, 300);
 }
 
 // ══════════════════════════════════
@@ -1821,15 +1850,20 @@ function renderNotifLog(){
 
 function kakaoLink(){
   var num = (document.getElementById('kakao-api-key').value||'').trim();
-  if(!num){ showToast('Masukkan nomor WhatsApp terlebih dahulu'); return; }
-  // 번호 정규화 (+62로 시작)
+  var bossNum = (document.getElementById('wa-boss-number')||{value:''}).value.trim();
+  if(!num){ showToast(t('wa_number')+' ?'); return; }
   num = num.replace(/\s+/g,'').replace(/^0/,'+62');
   if(!num.startsWith('+')) num = '+62' + num;
   localStorage.setItem('wa_number', num);
+  if(bossNum){
+    bossNum = bossNum.replace(/\s+/g,'').replace(/^0/,'+62');
+    if(!bossNum.startsWith('+')) bossNum = '+62' + bossNum;
+    localStorage.setItem('wa_boss_number', bossNum);
+  }
   document.getElementById('kakao-conn-text').innerHTML='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;vertical-align:middle"></span>'+num;
-  document.getElementById('kakao-conn-sub').textContent='WhatsApp aktif';
-  document.getElementById('kakao-link-btn').textContent='Update';
-  showToast('💬 Nomor WhatsApp disimpan');
+  document.getElementById('kakao-conn-sub').textContent = t('wa_connected');
+  document.getElementById('kakao-link-btn').textContent = t('wa_save');
+  showToast('💬 WhatsApp '+t('wa_connected'));
 }
 
 function sendWhatsappTest(){
