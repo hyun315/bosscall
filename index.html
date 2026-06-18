@@ -13,7 +13,6 @@
 /* 카카오맵 SDK */
 window.KAKAO_KEY = localStorage.getItem('kakao_api_key') || '383a53cfd4165ce1cd26ed2e3540d7f0';
 window.KAKAO_READY = false;
-window.GOOGLE_PLACES_READY = false;
 function loadKakaoSDK(key) {
   return new Promise(function(resolve, reject) {
     if (window.kakao && window.kakao.maps) { resolve(); return; }
@@ -305,7 +304,6 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
 /* 검색 전체화면 */
 #place-search-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:9000;flex-direction:column;font-family:'Noto Sans KR',-apple-system,sans-serif}
 #ps-map-container.on{display:flex!important}
-#kakao-map{width:100%;flex:1;min-height:0;height:100%}
 /* ══ 온보딩 CSS ══ */
 .ob-pg{width:100%;flex:1;display:none;flex-direction:column;align-items:center;padding:56px 32px 36px}
 .ob-pg.on{display:flex;animation:obUp .3s ease}
@@ -1782,7 +1780,6 @@ function saveKakaoConfig(){
     showToast('카카오맵 로드 중 🗺️');
     loadKakaoSDK(key).then(function(){
       window.KAKAO_READY=true;
-      kakaoMapObj=null;
       showToast('✅ 카카오맵 연동 완료! 장소 검색을 이용해보세요');
     }).catch(function(){
       showToast('❌ API 키를 확인하세요 (플랫폼 도메인 등록 필요)');
@@ -1793,13 +1790,12 @@ function saveKakaoConfig(){
 }
 
 // ══════════════════════════════════
-// 🗺️ 장소 검색 (카카오맵 스타일)
+// 🗺️ 장소 검색
 // ══════════════════════════════════
 var psTarget='pickup';
 var psRecent=JSON.parse(localStorage.getItem('ps_recent')||'[]');
 var psSelectedPlace=null;
-var kakaoMapObj=null;
-var kakaoMarker=null;
+var _mapDragTimer=null;
 
 var placeDB=[
   {icon:'🏦',cat:'Bank',name:'Bank BCA KCU Sudirman',addr:'Jl. Jend. Sudirman No.22-23, Jakarta Pusat',dist:'0.5km',lat:-6.2088,lng:106.8227},
@@ -1926,12 +1922,6 @@ function psSearchKakao(q){
   }, {size:15});
 }
 
-function getGoogleIcon(types){
-  if(!types) return '📍';
-  var m={airport:'✈️',lodging:'🏨',restaurant:'🍽️',cafe:'☕',hospital:'🏥',bank:'🏦',shopping_mall:'🛒',store:'🏪',gas_station:'⛽',subway_station:'🚇',train_station:'🚉',mosque:'🕌',church:'⛪',school:'🏫',university:'🎓',park:'🌳',museum:'🏛️',stadium:'🏟️',gym:'💪',pharmacy:'💊',supermarket:'🛒'};
-  for(var i=0;i<types.length;i++){if(m[types[i]])return m[types[i]];}
-  return '📍';
-}
 
 function psFallback(q){
   var lower=q.toLowerCase();
@@ -2002,7 +1992,6 @@ function _openMap(p){
   if(addrEl) addrEl.textContent = addr;
   window._mapSelectedAddr = {name:name, addr:addr, lat:p.lat||0, lng:p.lng||0};
 }
-var _mapDragTimer = null;
 
 function showMap(lat, lng, name){
   var mapCon = document.getElementById('ps-map-container');
@@ -2033,153 +2022,6 @@ function showMap(lat, lng, name){
   };
 }
 
-function showGoogleMap(lat, lng, name){
-  var container = document.getElementById('kakao-map');
-  if(!container) return;
-
-  var mapCon = document.getElementById('ps-map-container');
-  var psCon  = document.getElementById('ps-content');
-  if(mapCon){ mapCon.classList.add('on'); mapCon.style.display='flex'; }
-  if(psCon)  psCon.style.display='none';
-
-  var coords = {lat: lat, lng: lng};
-
-  if(!googleMapObj){
-    googleMapObj = new window.google.maps.Map(container, {
-      center: coords,
-      zoom: 16,
-      disableDefaultUI: false,
-      mapTypeControl: false,
-      streetViewControl: false,
-      fullscreenControl: false
-    });
-    googleMarker = new window.google.maps.Marker({
-      map: googleMapObj,
-      position: coords,
-      title: name
-    });
-  } else {
-    googleMapObj.setCenter(coords);
-    googleMarker.setPosition(coords);
-  }
-
-  // 컨테이너 크기 반영
-  setTimeout(function(){
-    window.google.maps.event.trigger(googleMapObj, 'resize');
-    googleMapObj.setCenter(coords);
-  }, 100);
-
-  // 지도 이동 시 핀 애니메이션
-  window.google.maps.event.addListener(googleMapObj, 'dragstart', function(){
-    var pin = document.getElementById('map-center-pin');
-    if(pin) pin.style.transform = 'translate(-50%,-120%)';
-    var nameEl = document.getElementById('map-sel-name');
-    if(nameEl) nameEl.textContent = 'Memilih lokasi...';
-  });
-
-  // idle - 드래그 끝 (PC + 모바일)
-  window.google.maps.event.addListener(googleMapObj, 'idle', function(){
-    var pin = document.getElementById('map-center-pin');
-    if(pin) pin.style.transform = 'translate(-50%,-100%)';
-    clearTimeout(_mapDragTimer);
-    _mapDragTimer = setTimeout(function(){
-      _geocodeCenterGoogle();
-    }, 300);
-  });
-
-  var nameEl = document.getElementById('map-sel-name');
-  if(nameEl) nameEl.textContent = name || 'Pilih lokasi';
-  _geocodeCenterGoogle();
-}
-
-function _geocodeCenterGoogle(){
-  if(!googleMapObj || !window.GOOGLE_PLACES_READY) return;
-  var center = googleMapObj.getCenter();
-  var geocoder = new window.google.maps.Geocoder();
-  geocoder.geocode({location: {lat: center.lat(), lng: center.lng()}, language: 'id'}, function(results, status){
-    if(status === 'OK' && results[0]){
-      var addr = results[0].formatted_address;
-      var nameEl = document.getElementById('map-sel-name');
-      var addrEl = document.getElementById('map-sel-addr');
-      if(nameEl) nameEl.textContent = results[0].address_components[0] ? results[0].address_components[0].long_name : addr;
-      if(addrEl) addrEl.textContent = addr;
-      window._mapSelectedAddr = {
-        name: nameEl ? nameEl.textContent : addr,
-        addr: addr,
-        lat: center.lat(),
-        lng: center.lng()
-      };
-    }
-  });
-}
-
-function showKakaoMap(lat,lng,name){
-  var container=document.getElementById('kakao-map');
-  if(!container||!window.KAKAO_READY) return;
-
-  var mapCon = document.getElementById('ps-map-container');
-  var psCon  = document.getElementById('ps-content');
-  if(mapCon){ mapCon.classList.add('on'); mapCon.style.display='flex'; }
-  if(psCon)  psCon.style.display='none';
-
-  var coords=new window.kakao.maps.LatLng(lat,lng);
-  if(!kakaoMapObj){
-    kakaoMapObj=new window.kakao.maps.Map(container,{center:coords,level:3});
-  } else {
-    kakaoMapObj.setCenter(coords);
-  }
-
-  setTimeout(function(){
-    kakaoMapObj.relayout();
-    kakaoMapObj.setCenter(coords);
-  }, 100);
-
-  window.kakao.maps.event.addListener(kakaoMapObj,'drag',function(){
-    var pin=document.getElementById('map-center-pin');
-    if(pin) pin.style.transform='translate(-50%,-120%)';
-    var nameEl=document.getElementById('map-sel-name');
-    if(nameEl) nameEl.textContent='위치를 선택하는 중…';
-  });
-
-  window.kakao.maps.event.addListener(kakaoMapObj,'idle',function(){
-    var pin=document.getElementById('map-center-pin');
-    if(pin) pin.style.transform='translate(-50%,-100%)';
-    clearTimeout(_mapDragTimer);
-    _mapDragTimer=setTimeout(function(){ _geocodeCenter(); },100);
-  });
-
-  var nameEl=document.getElementById('map-sel-name');
-  var addrEl=document.getElementById('map-sel-addr');
-  if(nameEl) nameEl.textContent=name||'위치를 선택하세요';
-  if(addrEl) addrEl.textContent='';
-  _geocodeCenter();
-}
-
-function _geocodeCenter(){
-  if(!kakaoMapObj||!window.KAKAO_READY) return;
-  var center=kakaoMapObj.getCenter();
-  var gc=new window.kakao.maps.services.Geocoder();
-  gc.coord2Address(center.getLng(),center.getLat(),function(result,status){
-    if(status===window.kakao.maps.services.Status.OK){
-      var addr=result[0];
-      var roadAddr=addr.road_address?addr.road_address.address_name:'';
-      var jibunAddr=addr.address?addr.address.address_name:'';
-      var displayName=roadAddr||jibunAddr||'선택된 위치';
-      var nameEl=document.getElementById('map-sel-name');
-      var addrEl=document.getElementById('map-sel-addr');
-      if(nameEl) nameEl.textContent=displayName;
-      if(addrEl) addrEl.textContent=roadAddr&&jibunAddr?jibunAddr:'';
-      // 선택된 위치 저장
-      window._mapSelectedAddr={
-        name:displayName,
-        addr:jibunAddr,
-        lat:center.getLat(),
-        lng:center.getLng()
-      };
-    }
-  });
-}
-
 function pickupGPS(){
   if(!navigator.geolocation){ showToast('위치 권한이 필요합니다'); return; }
   showToast('📡 현재 위치 측위 중…');
@@ -2189,12 +2031,7 @@ function pickupGPS(){
     var screen=document.getElementById('place-search-screen');
     screen.style.display='flex';
     psSwitch('pickup',false);
-    if(window.KAKAO_READY){
-      showMap(lat,lng,'Lokasi saat ini');
-    } else {
-      showToast('카카오맵 로드 후 이용 가능합니다');
-      screen.style.display='none';
-    }
+    showMap(lat, lng, 'Lokasi saat ini');
   },function(){
     showToast('위치 접근이 거부되었습니다');
   },{enableHighAccuracy:true,timeout:8000});
@@ -2218,36 +2055,6 @@ function psConfirmMap(){
   if(psCon)  psCon.style.display='block';
 }
 
-function psMapGPS(){
-  if(!navigator.geolocation){ showToast('위치 권한이 필요합니다'); return; }
-  showToast('📡 위치 측위 중…');
-  navigator.geolocation.getCurrentPosition(function(pos){
-    var lat=pos.coords.latitude, lng=pos.coords.longitude;
-    if(kakaoMapObj&&window.KAKAO_READY){
-      kakaoMapObj.setCenter(new window.kakao.maps.LatLng(lat,lng));
-      setTimeout(_geocodeCenter,500);
-    }
-  },function(){ showToast('위치 접근이 거부되었습니다'); });
-}
-
-function showFakemap(name,addr){
-  // API 없을 때 - 간단한 안내
-  var mapCon=document.getElementById('ps-map-container');
-  if(mapCon){ mapCon.classList.add('on'); mapCon.style.display='flex'; }
-  var psCon=document.getElementById('ps-content');
-  if(psCon) psCon.style.display='none';
-  document.getElementById('kakao-map').innerHTML=
-    '<div style="width:100%;height:100%;background:linear-gradient(135deg,#e8f0ff,#d4e3ff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">'
-    +'<div style="font-size:48px">🗺️</div>'
-    +'<div style="font-size:16px;font-weight:700;color:#1a1d2e">'+name+'</div>'
-    +'<div style="font-size:13px;color:#6b7394">'+addr+'</div>'
-    +'<div style="font-size:12px;color:#b0b8d4;margin-top:4px">카카오맵 API 연동 후 실제 지도 표시</div>'
-    +'</div>';
-  var nameEl=document.getElementById('map-sel-name');
-  if(nameEl) nameEl.textContent=name;
-  window._mapSelectedAddr={name:name,addr:addr,lat:0,lng:0};
-}
-function psConfirmSelected(){if(!psSelectedPlace)return;psConfirmPlace(psSelectedPlace.name,psSelectedPlace.addr);}
 function psConfirmPlace(name,addr){
   psRecent=psRecent.filter(function(r){return r.name!==name;});
   psRecent.unshift({name:name,addr:addr,time:Date.now()});
