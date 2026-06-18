@@ -532,8 +532,8 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
     <div class="navi-buttons">
       <button class="navi-btn" onclick="openNavi('google')"><span>🌐</span><span>Google</span></button>
       <button class="navi-btn" onclick="openNavi('waze')"><span>🚗</span><span>Waze</span></button>
+      <button class="navi-btn" onclick="openNavi('kakao')"><span>🗺️</span><span>Kakao</span></button>
       <button class="navi-btn" onclick="openNavi('tmap')"><span>📍</span><span>T-map</span></button>
-      <button class="navi-btn" onclick="openNavi('naver')"><span>🧭</span><span>Naver</span></button>
     </div>
 
     <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
@@ -758,9 +758,9 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
     </div>
     <div class="map-actions">
       <button class="map-btn" onclick="openNavi('google')">🌐 Google</button>
-      <button class="map-btn" onclick="openNavi('tmap')">📍 T-map</button>
-      <button class="map-btn" onclick="openNavi('naver')">🧭 Naver</button>
       <button class="map-btn" onclick="openNavi('waze')">🚗 Waze</button>
+      <button class="map-btn" onclick="openNavi('kakao')">🗺️ Kakao</button>
+      <button class="map-btn" onclick="openNavi('tmap')">📍 T-map</button>
     </div>
   </div>
 
@@ -1753,7 +1753,13 @@ function openNavi(app){
   var destCoord  = window._destCoord  || null;
   var pickupCoord = window._pickupCoord || null;
 
-  if(app==='naver'){
+  if(app==='kakao'){
+    var kakaoUrl = 'https://map.kakao.com/?target=car&to='+ep;
+    if(destCoord && destCoord.lat) kakaoUrl = 'https://map.kakao.com/?target=car&toX='+destCoord.lng+'&toY='+destCoord.lat+'&to='+ep;
+    if(pickupCoord && pickupCoord.lat) kakaoUrl += '&fromX='+pickupCoord.lng+'&fromY='+pickupCoord.lat+'&from='+sp;
+    window.open(kakaoUrl,'_blank');
+
+  } else if(app==='naver'){
     var nurl = 'nmap://route/car?';
     if(pickupCoord && pickupCoord.lat) nurl += 'slng='+pickupCoord.lng+'&slat='+pickupCoord.lat+'&sname='+sp+'&';
     if(destCoord && destCoord.lat) nurl += 'dlng='+destCoord.lng+'&dlat='+destCoord.lat+'&dname='+ep;
