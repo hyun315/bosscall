@@ -318,7 +318,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:#dde3f0;disp
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* 검색 전체화면 */
-#place-search-screen{display:none;position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:var(--bg);z-index:9000;flex-direction:column;font-family:'Noto Sans KR',-apple-system,sans-serif}
+#place-search-screen{display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:var(--bg);z-index:9000;flex-direction:column;font-family:'Noto Sans KR',-apple-system,sans-serif;overflow:hidden}
 #ps-map-container.on{display:flex!important}
 /* ══ 온보딩 CSS ══ */
 .ob-pg{width:100%;flex:1;display:none;flex-direction:column;align-items:center;padding:56px 32px 36px}
@@ -1828,7 +1828,7 @@ var _mapDragTimer=null;
 function openAddrModal(target){
   psTarget=target;
   var screen=document.getElementById('place-search-screen');
-  screen.style.display='flex';
+  screen.style.cssText='display:flex;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9000;flex-direction:column;background:var(--bg);overflow:hidden';
   psSwitch(target,false);
   document.getElementById('ps-map-container').style.display='none';
   document.getElementById('ps-map-container').classList.remove('on');
