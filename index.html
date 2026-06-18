@@ -462,7 +462,6 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
 
 <!-- 상태바 -->
 
-
 <!-- 언어 전환 -->
 <div class="lang-bar">
   <button class="lang-btn" onclick="setLang('ko',this)">한국어</button>
@@ -1062,7 +1061,7 @@ function getWaNumber(type){
   // if(type==='boss') return (localStorage.getItem('wa_boss_number')||'').replace(/\s+|\+/g,'');
   // return (localStorage.getItem('wa_number')||'').replace(/\s+|\+/g,'');
 }
-const i18n = {
+var i18n = {
   ko:{
     role_boss:'🧑‍💼 사장님',role_driver:'🚗 기사님',driver_status:'현재 기사 상태',
     status_standby:'대기 중',checkin_today:'오늘 09:05 출근',salary_check:'이달 급여 확인',
@@ -1207,11 +1206,6 @@ function currency(amount) {
   }
   return amount.toLocaleString() + '원';
 }
-function currencyUnit() {
-  if(currentLang === 'en') return '$';
-  if(currentLang === 'id') return 'Rp';
-  return '원';
-}
 
 function setLang(lang, btn) {
   currentLang = lang;
@@ -1277,14 +1271,14 @@ function switchTab(name){
 
 // ══ 토스트 ══
 function showToast(msg){
-  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
   clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);
 }
 
 // ══════════════════════════════════
 // 💰 급여 설정 & 계산
 // ══════════════════════════════════
-let salaryConfig = JSON.parse(localStorage.getItem('salary_config')||'null') || {
+var salaryConfig = JSON.parse(localStorage.getItem('salary_config')||'null') || {
   base:3500000, otRate:15000, stdHours:8,
   meal:200000, car:200000, bonus:0, insRate:9.4, otHours:12
 };
@@ -1314,18 +1308,18 @@ function getSalaryFromForm(){
 }
 
 function calcSalaryData(cfg){
-  const ot = cfg.otRate * cfg.otHours;
-  const gross = cfg.base + cfg.meal + cfg.car + cfg.bonus + ot;
-  const ins = Math.round(gross * cfg.insRate / 100);
+  var ot = cfg.otRate * cfg.otHours;
+  var gross = cfg.base + cfg.meal + cfg.car + cfg.bonus + ot;
+  var ins = Math.round(gross * cfg.insRate / 100);
   return { base:cfg.base, meal:cfg.meal, car:cfg.car, bonus:cfg.bonus, ot, gross, ins, net:gross-ins };
 }
 
 function fmt(n){ return currency(n); }
 
 function updateSalaryPreview(){
-  const cfg = getSalaryFromForm();
-  const d = calcSalaryData(cfg);
-  const card = document.getElementById('salary-preview-card');
+  var cfg = getSalaryFromForm();
+  var d = calcSalaryData(cfg);
+  var card = document.getElementById('salary-preview-card');
   card.innerHTML = `
     <div style="padding:18px">
       ${row(t('base_pay'), fmt(d.base), '#1a1d2e')}
@@ -1358,7 +1352,7 @@ function saveSalarySettings(){
 }
 
 function updateCalcModal(){
-  const d = calcSalaryData(salaryConfig);
+  var d = calcSalaryData(salaryConfig);
   document.getElementById('r-base').textContent = fmt(d.base);
   document.getElementById('r-meal').textContent = '+'+fmt(d.meal);
   document.getElementById('r-car').textContent = '+'+fmt(d.car);
@@ -1373,7 +1367,7 @@ function openCalc(){ updateCalcModal(); document.getElementById('calc-modal').cl
 // ══════════════════════════════════
 // ⛽ 주유 기록
 // ══════════════════════════════════
-let fuelList = JSON.parse(localStorage.getItem('fuel_list')||'[]');
+var fuelList = JSON.parse(localStorage.getItem('fuel_list')||'[]');
 if(!fuelList.length){
   fuelList = [
     {date:'2025-06-14',liter:50,unitPrice:1680,total:84000,km:450,station:'GS칼텍스 서초IC',memo:''},
@@ -1383,7 +1377,7 @@ if(!fuelList.length){
 }
 
 function openFuelModal(){
-  const today = new Date().toISOString().split('T')[0];
+  var today = new Date().toISOString().split('T')[0];
   document.getElementById('fuel-date').value = today;
   document.getElementById('fuel-liter').value = '';
   document.getElementById('fuel-unit').value = '1680';
@@ -1397,13 +1391,13 @@ function openFuelModal(){
 // 금액 자동계산
 
 function saveFuel(){
-  const liter=parseFloat(document.getElementById('fuel-liter').value)||0;
-  const unitPrice=parseFloat(document.getElementById('fuel-unit').value)||0;
-  const total=parseFloat(document.getElementById('fuel-total').value)||Math.round(liter*unitPrice);
-  const km=parseFloat(document.getElementById('fuel-km').value)||0;
-  const station=document.getElementById('fuel-station').value.trim()||'주유소';
-  const date=document.getElementById('fuel-date').value||new Date().toISOString().split('T')[0];
-  const memo=document.getElementById('fuel-memo').value.trim();
+  var liter=parseFloat(document.getElementById('fuel-liter').value)||0;
+  var unitPrice=parseFloat(document.getElementById('fuel-unit').value)||0;
+  var total=parseFloat(document.getElementById('fuel-total').value)||Math.round(liter*unitPrice);
+  var km=parseFloat(document.getElementById('fuel-km').value)||0;
+  var station=document.getElementById('fuel-station').value.trim()||'주유소';
+  var date=document.getElementById('fuel-date').value||new Date().toISOString().split('T')[0];
+  var memo=document.getElementById('fuel-memo').value.trim();
   if(!liter){showToast('⛽ 주유량을 입력하세요');return;}
   fuelList.unshift({date,liter,unitPrice,total,km,station,memo});
   localStorage.setItem('fuel_list',JSON.stringify(fuelList));
@@ -1412,7 +1406,7 @@ function saveFuel(){
 }
 
 function renderFuelList(){
-  const tmpl = fuelList.map((f,i)=>`
+  var tmpl = fuelList.map((f,i)=>`
     <div class="fuel-row">
       <div class="fuel-icon">⛽</div>
       <div class="fuel-info">
@@ -1424,27 +1418,26 @@ function renderFuelList(){
         <div class="fuel-cost">${currency(f.total)}</div>
       </div>
     </div>`).join('');
-  const empty=`<div style="padding:28px;text-align:center;color:var(--text3);font-size:var(--fs-base)">${t('add_fuel')}</div>`;
-  const boss=document.getElementById('boss-fuel-list');
-  const driver=document.getElementById('driver-fuel-list');
+  var empty=`<div style="padding:28px;text-align:center;color:var(--text3);font-size:var(--fs-base)">${t('add_fuel')}</div>`;
+  var boss=document.getElementById('boss-fuel-list');
+  var driver=document.getElementById('driver-fuel-list');
   if(boss)boss.innerHTML=fuelList.length?tmpl:empty;
   if(driver)driver.innerHTML=fuelList.length?tmpl:empty;
 }
 
 function renderFuelSummary(){
-  const now=new Date();const ym=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const thisMonth=fuelList.filter(f=>f.date.startsWith(ym));
-  const mLiter=thisMonth.reduce((s,f)=>s+f.liter,0);
-  const mCost=thisMonth.reduce((s,f)=>s+f.total,0);
-  const yLiter=fuelList.reduce((s,f)=>s+f.liter,0);
-  const avgPrice=fuelList.length?Math.round(fuelList.reduce((s,f)=>s+(f.unitPrice||0),0)/fuelList.length):0;
+  var now=new Date();var ym=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  var thisMonth=fuelList.filter(f=>f.date.startsWith(ym));
+  var mLiter=thisMonth.reduce((s,f)=>s+f.liter,0);
+  var mCost=thisMonth.reduce((s,f)=>s+f.total,0);
+  var yLiter=fuelList.reduce((s,f)=>s+f.liter,0);
+  var avgPrice=fuelList.length?Math.round(fuelList.reduce((s,f)=>s+(f.unitPrice||0),0)/fuelList.length):0;
   var el2=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
   el2('fuel-month-liter',mLiter.toFixed(1)+'L');
   el2('fuel-month-cost',currency(mCost));
   el2('fuel-year-liter',yLiter.toFixed(1)+'L');
   el2('fuel-avg-price',currency(avgPrice)+'/L');
 }
-
 
 // ══════════════════════════════════
 // 🚗 운행기록
@@ -1622,7 +1615,7 @@ function deleteTrip(idx){
   });
 }
 
-let logList=[
+var logList=[
   {date:'6/15',day:'오늘',in:'09:05',out:'진행중',total:'',ot:'2:23',oting:true},
   {date:'6/14',day:'금',in:'08:52',out:'20:10',total:'11:18',ot:'3:18',oting:false},
   {date:'6/13',day:'목',in:'09:00',out:'18:05',total:'9:05',ot:'',oting:false},
@@ -1676,7 +1669,7 @@ function renderBossDriverView(){
 }
 
 function renderLogList(){
-  const card=document.getElementById('log-list-card');if(!card)return;
+  var card=document.getElementById('log-list-card');if(!card)return;
   card.innerHTML=logList.map((l,i)=>`
     <div class="log-row">
       <div class="log-date">${l.date}<br><span style="color:var(--text3);font-size:12px">${l.day}</span></div>
@@ -1688,7 +1681,6 @@ function renderLogList(){
       ${l.ot?`<div class="log-ot">OT ${l.ot}</div>`:`<div style="font-size:12px;color:var(--text3)">정시</div>`}
     </div>`).join('');
 }
-
 
 // ══ 출퇴근 ══
 function checkIn(){
@@ -1743,10 +1735,10 @@ function confirmCancel(){
 }
 
 // ══ 호출 ══
-let callTimer=null;
+var callTimer=null;
 function callDriver(){
-  const pickup=document.getElementById('pickup-input').value.trim();
-  const dest=document.getElementById('dest-input').value.trim();
+  var pickup=document.getElementById('pickup-input').value.trim();
+  var dest=document.getElementById('dest-input').value.trim();
   if(!pickup){showToast('📍 '+t('pickup_ph'));openAddrModal('pickup');return;}
   if(!dest){showToast('🚩 '+t('dest_ph'));openAddrModal('dest');return;}
   document.getElementById('call-btn').style.display='none';
@@ -1923,26 +1915,26 @@ function renderFavList(){
         <button class="fav-del" onclick="delFav(${i})">✕</button>
       </div>`).join('')
     :`<div style="padding:28px;text-align:center;color:var(--text3);font-size:var(--fs-base)">${t('saved_places')}</div>`;
-  const dr=document.getElementById('dest-quick-row');
+  var dr=document.getElementById('dest-quick-row');
   if(dr)dr.innerHTML=favPlaces.slice(0,5).map(p=>`<button class="quick-chip" onclick="document.getElementById('dest-input').value='${p.name}'">${p.emoji} ${p.name}</button>`).join('');
   if(document.getElementById('ps-fav-list'))renderPsFav();
 }
 function addFavPlace(){
-  const emoji=document.getElementById('fav-emoji-input').value.trim()||'📍';
-  const name=document.getElementById('fav-name-input').value.trim();
-  const addr=document.getElementById('fav-addr-input').value.trim();
+  var emoji=document.getElementById('fav-emoji-input').value.trim()||'📍';
+  var name=document.getElementById('fav-name-input').value.trim();
+  var addr=document.getElementById('fav-addr-input').value.trim();
   if(!name){showToast(t('place_name'));return;}
   favPlaces.unshift({emoji,name,addr});saveFavPlaces();
   ['fav-emoji-input','fav-name-input','fav-addr-input'].forEach(id=>document.getElementById(id).value='');
   renderFavList();showToast(`'${name}' ⭐`);
 }
-function delFav(i){const n=favPlaces[i].name;favPlaces.splice(i,1);saveFavPlaces();renderFavList();showToast(`'${n}' 삭제됨`);}
+function delFav(i){var n=favPlaces[i].name;favPlaces.splice(i,1);saveFavPlaces();renderFavList();showToast(`'${n}' 삭제됨`);}
 function applyFav(i){document.getElementById('dest-input').value=favPlaces[i].name;switchTab('home');showToast(`🚩 ${favPlaces[i].name}`);}
 
 // ══════════════════════════════════
 // 📈 통계
 // ══════════════════════════════════
-const monthlyData=[
+var monthlyData=[
   {m:'1월',trips:198,dist:2840,ot:8,topDest:'IBK 본점'},
   {m:'2월',trips:172,dist:2510,ot:6,topDest:'인천공항'},
   {m:'3월',trips:215,dist:3120,ot:14,topDest:'IBK 본점'},
@@ -1951,15 +1943,15 @@ const monthlyData=[
   {m:'6월',trips:48,dist:712,ot:12,topDest:'IBK 본점'},
 ];
 function renderCharts(){
-  const maxT=Math.max(...monthlyData.map(d=>d.trips));
-  const maxD=Math.max(...monthlyData.map(d=>d.dist));
-  const cols=['#3478f6','#6c5ce7','#00b874','#ff9500','#ff3b30','#3478f6'];
+  var maxT=Math.max(...monthlyData.map(d=>d.trips));
+  var maxD=Math.max(...monthlyData.map(d=>d.dist));
+  var cols=['#3478f6','#6c5ce7','#00b874','#ff9500','#ff3b30','#3478f6'];
   document.getElementById('chart-trips').innerHTML=monthlyData.map((d,i)=>{
-    const pct=Math.round(d.trips/maxT*100);const isThis=i===monthlyData.length-1;
+    var pct=Math.round(d.trips/maxT*100);var isThis=i===monthlyData.length-1;
     return `<div class="chart-month-row"><div class="chart-label">${d.m}</div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${pct}%;background:${isThis?'linear-gradient(90deg,#00b874,#34d399)':`linear-gradient(90deg,${cols[i]},${cols[i]}99)`}">${pct>28?d.trips+t('times'):''}</div></div><div class="chart-val">${isThis?'<span style="color:var(--green)">진행</span>':d.trips+t('times')}</div></div>`;
   }).join('');
   document.getElementById('chart-dist').innerHTML=monthlyData.map((d,i)=>{
-    const pct=Math.round(d.dist/maxD*100);const isThis=i===monthlyData.length-1;
+    var pct=Math.round(d.dist/maxD*100);var isThis=i===monthlyData.length-1;
     return `<div class="chart-month-row"><div class="chart-label">${d.m}</div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${pct}%;background:${isThis?'linear-gradient(90deg,#00b874,#34d399)':'linear-gradient(90deg,#6c5ce7,#a29bfe)'}">${pct>28?d.dist.toLocaleString()+'km':''}</div></div><div class="chart-val" style="font-size:12px">${d.dist.toLocaleString()}</div></div>`;
   }).join('');
   document.getElementById('month-tab-list').innerHTML=monthlyData.map((d,i)=>`<button class="month-tab${i===monthlyData.length-1?' active':''}" onclick="showMonthDetail(${i})">${d.m}</button>`).join('');
@@ -2030,9 +2022,7 @@ function showMonthDetail(idx){
 // ══════════════════════════════════
 // 💬 카카오 알림
 // ══════════════════════════════════
-let kakaoLinked=false;
-let kakaoConfig={apiKey:'',templateCode:'TM_DRIVER_CALL',phone:'010-1234-5678'};
-let notifLog=[
+var notifLog=[
   {icon:'🚗',msg:'기사 호출\n픽업: IBK 을지로 본점\n목적지: 더플라자 호텔',time:'오늘 11:48',sent:true},
   {icon:'✅',msg:'기사님이 호출을 수락했습니다\n예상 도착: 5분',time:'오늘 11:49',sent:true},
   {icon:'🟢',msg:'출근 기록\n김현수 기사님 09:05 출근',time:'오늘 09:05',sent:true},
@@ -2067,11 +2057,6 @@ function sendWhatsappTest(){
   window.open('https://wa.me/'+waNum+'?text='+msg, '_blank');
 }
 
-function saveKakaoConfig(){
-  // 와츠앱 탭에서는 kakaoLink()로 처리
-  kakaoLink();
-}
-
 // ══════════════════════════════════
 // 🗺️ 장소 검색
 // ══════════════════════════════════
@@ -2079,7 +2064,6 @@ var psTarget='pickup';
 var psRecent=JSON.parse(localStorage.getItem('ps_recent')||'[]');
 var psSelectedPlace=null;
 var _mapDragTimer=null;
-
 
 function openAddrModal(target){
   psTarget = target;
@@ -2137,7 +2121,6 @@ function psSwitch(target, doFocus){
 }
 
 function showPsDefault(){document.getElementById('ps-default').style.display='block';document.getElementById('ps-autocomplete').style.display='none';document.getElementById('ps-results').style.display='none';}
-function showPsAuto(){document.getElementById('ps-default').style.display='none';document.getElementById('ps-autocomplete').style.display='block';document.getElementById('ps-results').style.display='none';}
 function showPsResults(){document.getElementById('ps-default').style.display='none';document.getElementById('ps-autocomplete').style.display='none';document.getElementById('ps-results').style.display='block';}
 
 var psTimer=null;
@@ -2193,8 +2176,6 @@ function psSearchKakao(q){
     } else {window._psResultList=[];renderResults(q);}
   },{size:15});
 }
-
-function psFallback(q){window._psResultList=[];renderResults(q);}
 
 function hl(text,q){
   if(!q)return text;
@@ -2377,9 +2358,8 @@ function pickupGPS(){
   },function(){showToast('위치 접근이 거부되었습니다');},{enableHighAccuracy:true,timeout:8000});
 }
 
-function psMapBack(){closeMapScreen();}
 function renderPsRecent(){
-  const el=document.getElementById('ps-recent-list');
+  var el=document.getElementById('ps-recent-list');
   el.innerHTML=psRecent.length
     ?psRecent.slice(0,5).map((r,i)=>`
       <div onclick="psConfirmPlace('${r.name.replace(/'/g,"\\'")}','${(r.addr||'').replace(/'/g,"\\'")}') " style="display:flex;align-items:center;gap:13px;padding:14px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
@@ -2392,7 +2372,7 @@ function renderPsRecent(){
 function psDelRecent(i){psRecent.splice(i,1);localStorage.setItem('ps_recent',JSON.stringify(psRecent));renderPsRecent();}
 function psClearRecent(){psRecent=[];localStorage.setItem('ps_recent',JSON.stringify(psRecent));renderPsRecent();}
 function renderPsFav(){
-  const el=document.getElementById('ps-fav-list');if(!el)return;
+  var el=document.getElementById('ps-fav-list');if(!el)return;
   el.innerHTML=favPlaces.length
     ?favPlaces.slice(0,5).map(p=>`
       <div onclick="psConfirmPlace('${p.name.replace(/'/g,"\\'")}','${(p.addr||'').replace(/'/g,"\\'")}') " style="display:flex;align-items:center;gap:13px;padding:14px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
@@ -2800,7 +2780,6 @@ function initApp(role) {
     if (sd) sd.classList.add('active');
   }
   // 시계 시작
-
 
   // 근무 타이머
   var workSec=7*3600+23*60+14;
