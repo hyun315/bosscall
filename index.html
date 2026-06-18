@@ -840,8 +840,8 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
     <div class="modal-title" id="mo-confirm-title">확인</div>
     <div id="mo-confirm-msg" style="font-size:16px;color:#6b7394;margin-bottom:22px;line-height:1.6"></div>
     <div style="display:flex;gap:10px">
-      <button class="btn btn-ghost" style="flex:1;padding:15px" onclick="confirmCancel()">취소</button>
-      <button class="btn btn-primary" style="flex:1;padding:15px" onclick="confirmOk()">확인</button>
+      <button class="btn btn-ghost" style="flex:1;padding:15px" onclick="confirmCancel()" data-i18n="cancel">취소</button>
+      <button class="btn btn-primary" style="flex:1;padding:15px" onclick="confirmOk()" data-i18n="confirm">확인</button>
     </div>
   </div>
 </div>
@@ -1585,11 +1585,11 @@ function checkIn(){
   var now=new Date();
   var tm=now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
   showConfirm(
-    '🟢 출근 확인',
-    tm+' 에 출근 기록하시겠습니까?',
+    '🟢 '+t('checkin'),
+    tm+' — '+t('checkin')+'?',
     function(){
       logList[0].in=tm; logList[0].oting=true; renderLogList();
-      showToast('🟢 '+t('checkin')+' ✓  '+tm);
+      showToast('🟢 '+t('checkin')+' ✓ '+tm);
       document.getElementById('checkin-btn').style.opacity='.5';
       document.getElementById('checkin-btn').style.pointerEvents='none';
     }
@@ -1599,11 +1599,11 @@ function checkOut(){
   var now=new Date();
   var tm=now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
   showConfirm(
-    '🔴 퇴근 확인',
-    tm+' 에 퇴근 기록하시겠습니까?',
+    '🔴 '+t('checkout'),
+    tm+' — '+t('checkout')+'?',
     function(){
       logList[0].out=tm; logList[0].oting=false; renderLogList();
-      showToast('🔴 '+t('checkout')+' ✓  '+tm);
+      showToast('🔴 '+t('checkout')+' ✓ '+tm);
       document.getElementById('checkout-btn').style.opacity='.5';
       document.getElementById('checkout-btn').style.pointerEvents='none';
     }
