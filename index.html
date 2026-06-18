@@ -1913,95 +1913,50 @@ function psOnInput(){
   document.getElementById('ps-clear').style.display=q?'block':'none';
   clearTimeout(psTimer);
   if(!q){showPsDefault();return;}
-  // 300ms 후 바로 카카오 API 검색
-  psTimer=setTimeout(function(){ psSearch(); },300);
+  psTimer=setTimeout(function(){ psAutoComplete(q); },300);
 }
 function psClear(){document.getElementById('ps-input').value='';document.getElementById('ps-clear').style.display='none';showPsDefault();document.getElementById('ps-input').focus();}
 
 function psAutoComplete(q){
-  // Google Places Autocomplete 우선
   if(window.GOOGLE_PLACES_READY && window.google && window.google.maps && window.google.maps.places){
     var svc = new window.google.maps.places.AutocompleteService();
-    svc.getPlacePredictions({
-      input: q,
-      language: 'id'
-    }, function(predictions, status){
+    svc.getPlacePredictions({input:q, language:'id'}, function(predictions, status){
       if(status === window.google.maps.places.PlacesServiceStatus.OK && predictions && predictions.length){
         window._psAutoList = predictions.map(function(p){
           return {
             icon: '📍',
-            cat: p.types ? p.types[0].replace(/_/g,' ') : 'Tempat',
             name: p.structured_formatting ? p.structured_formatting.main_text : p.description,
-            addr: p.structured_formatting ? p.structured_formatting.secondary_text || '' : '',
+            addr: p.structured_formatting ? (p.structured_formatting.secondary_text||'') : '',
             dist: '',
             place_id: p.place_id
           };
         });
         renderAutoList(q);
       } else {
-        psAutoFallback(q);
+        // Autocomplete 실패시 TextSearch로 폴백
+        psSearch();
       }
     });
+  } else if(window.KAKAO_READY){
+    psSearchKakao(q);
   } else {
-    psAutoFallback(q);
+    psFallback(q);
   }
-}
-
-function psAutoFallback(q){
-  var lower = q.toLowerCase();
-  var matches = placeDB.filter(function(p){
-    return p.name.toLowerCase().indexOf(lower)>=0 || p.addr.toLowerCase().indexOf(lower)>=0 || (p.cat && p.cat.toLowerCase().indexOf(lower)>=0);
-  }).slice(0,6);
-  if(!matches.length){ psSearch(); return; }
-  window._psAutoList = matches;
-  renderAutoList(q);
-}
-
-function renderAutoList(q){
-  var list = window._psAutoList || [];
-  var ac = document.getElementById('ps-autocomplete');
-  if(!ac) return;
-  ac.innerHTML = list.length ? list.map(function(p,i){
-    return '<div onclick="psSelectPlace('+i+',\'auto\')" style="display:flex;align-items:center;gap:13px;padding:16px 20px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--surface);transition:background .12s" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'var(--surface)\'">'
-      +'<div style="width:44px;height:44px;border-radius:12px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">'+(p.icon||'📍')+'</div>'
-      +'<div style="flex:1;min-width:0">'
-        +'<div style="font-size:17px;font-weight:700;color:var(--text)">'+hl(p.name,q)+'</div>'
-        +'<div style="font-size:14px;color:var(--text2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.addr||'')+'</div>'
-      +'</div>'
-      +'<div style="font-size:13px;color:var(--text3);flex-shrink:0">'+(p.dist||'')+'</div>'
-    +'</div>';
-  }).join('')
-  : '<div style="padding:20px;text-align:center;color:var(--text3);font-size:15px">검색 중…</div>';
-  showPsAuto();
-}
-
-function hl(text,q){
-  if(!q)return text;
-  const idx=text.toLowerCase().indexOf(q.toLowerCase());
-  if(idx<0)return text;
-  return text.slice(0,idx)+`<span style="color:var(--accent);font-weight:900">${text.slice(idx,idx+q.length)}</span>`+text.slice(idx+q.length);
 }
 
 function psSearch(){
   var q=document.getElementById('ps-input').value.trim();
   if(!q) return;
-
-  // Google Places API 우선 (인도네시아 데이터 풍부)
   if(window.GOOGLE_PLACES_READY && window.google && window.google.maps && window.google.maps.places){
     var service = new window.google.maps.places.PlacesService(document.createElement('div'));
-    // 자카르타 중심 바이어스
-    var request = {
-      query: q,
-      language: 'id'
-    };
-    service.textSearch(request, function(results, status){
+    service.textSearch({query:q, language:'id'}, function(results, status){
       if(status === window.google.maps.places.PlacesServiceStatus.OK && results.length){
         window._psResultList = results.map(function(p){
           return {
             icon: getGoogleIcon(p.types),
             cat: p.types ? p.types[0].replace(/_/g,' ') : 'Tempat',
             name: p.name,
-            addr: p.formatted_address || '',
+            addr: p.formatted_address||'',
             dist: '',
             lat: p.geometry.location.lat(),
             lng: p.geometry.location.lng()
@@ -2009,11 +1964,10 @@ function psSearch(){
         });
         renderResults(q);
       } else {
-        // Google 실패 시 카카오 폴백
         psSearchKakao(q);
       }
     });
-  } else if(window.KAKAO_READY && window.kakao && window.kakao.maps && window.kakao.maps.services){
+  } else if(window.KAKAO_READY){
     psSearchKakao(q);
   } else {
     psFallback(q);
@@ -2027,10 +1981,10 @@ function psSearchKakao(q){
       window._psResultList = data.map(function(p){
         return {
           icon: getCatIcon(p.category_group_code),
-          cat: p.category_group_name || '장소',
+          cat: p.category_group_name||'장소',
           name: p.place_name,
-          addr: p.road_address_name || p.address_name,
-          dist: p.distance ? (p.distance >= 1000 ? (p.distance/1000).toFixed(1)+'km' : p.distance+'m') : '',
+          addr: p.road_address_name||p.address_name,
+          dist: p.distance?(p.distance>=1000?(p.distance/1000).toFixed(1)+'km':p.distance+'m'):'',
           lat: parseFloat(p.y),
           lng: parseFloat(p.x)
         };
@@ -2042,52 +1996,70 @@ function psSearchKakao(q){
 
 function getGoogleIcon(types){
   if(!types) return '📍';
-  var m = {
-    airport:'✈️', lodging:'🏨', restaurant:'🍽️', cafe:'☕',
-    hospital:'🏥', bank:'🏦', shopping_mall:'🛒', store:'🏪',
-    gas_station:'⛽', subway_station:'🚇', train_station:'🚉',
-    mosque:'🕌', church:'⛪', school:'🏫', university:'🎓',
-    park:'🌳', museum:'🏛️', stadium:'🏟️', gym:'💪',
-    pharmacy:'💊', supermarket:'🛒', convenience_store:'🏪'
-  };
-  for(var i=0; i<types.length; i++){
-    if(m[types[i]]) return m[types[i]];
-  }
+  var m={airport:'✈️',lodging:'🏨',restaurant:'🍽️',cafe:'☕',hospital:'🏥',bank:'🏦',shopping_mall:'🛒',store:'🏪',gas_station:'⛽',subway_station:'🚇',train_station:'🚉',mosque:'🕌',church:'⛪',school:'🏫',university:'🎓',park:'🌳',museum:'🏛️',stadium:'🏟️',gym:'💪',pharmacy:'💊',supermarket:'🛒'};
+  for(var i=0;i<types.length;i++){if(m[types[i]])return m[types[i]];}
   return '📍';
 }
+
 function psFallback(q){
-  const lower=q.toLowerCase();
-  window._psResultList=placeDB.filter(p=>p.name.toLowerCase().includes(lower)||p.addr.toLowerCase().includes(lower)||p.cat.toLowerCase().includes(lower));
+  var lower=q.toLowerCase();
+  window._psResultList=placeDB.filter(function(p){
+    return p.name.toLowerCase().indexOf(lower)>=0||p.addr.toLowerCase().indexOf(lower)>=0||(p.cat&&p.cat.toLowerCase().indexOf(lower)>=0);
+  });
   renderResults(q);
 }
+
+function renderAutoList(q){
+  var list = window._psAutoList||[];
+  var ac = document.getElementById('ps-autocomplete');
+  if(!ac) return;
+  ac.innerHTML = list.length ? list.map(function(p,i){
+    return '<div onclick="psSelectPlace('+i+',\'auto\')" style="display:flex;align-items:center;gap:13px;padding:14px 20px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--surface)" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'var(--surface)\'">'
+      +'<div style="width:40px;height:40px;border-radius:11px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📍</div>'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:16px;font-weight:700;color:var(--text)">'+hl(p.name,q)+'</div>'
+        +'<div style="font-size:13px;color:var(--text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.addr||'')+'</div>'
+      +'</div></div>';
+  }).join('')+'<div onclick="psSearch()" style="padding:14px 20px;cursor:pointer;color:var(--accent);font-size:14px;font-weight:700;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--surface)">🔍 "'+q+'" 전체 검색</div>'
+  : '<div style="padding:20px;text-align:center;color:var(--text3)">검색 중…</div>';
+  showPsAuto();
+}
+
+function hl(text,q){
+  if(!q) return text;
+  var idx=text.toLowerCase().indexOf(q.toLowerCase());
+  if(idx<0) return text;
+  return text.slice(0,idx)+'<span style="color:var(--accent);font-weight:900">'+text.slice(idx,idx+q.length)+'</span>'+text.slice(idx+q.length);
+}
+
 function renderResults(q){
-  const list=window._psResultList||[];
-  document.getElementById('ps-result-count').textContent=`"${q}" ${list.length}건${window.KAKAO_READY?'':' (내장 DB)'}`;
+  var list=window._psResultList||[];
+  document.getElementById('ps-result-count').textContent='"'+q+'" '+list.length+'건';
   document.getElementById('ps-result-list').innerHTML=list.length
-    ?list.map((p,i)=>`
-      <div onclick="psSelectPlace(${i},'result')" style="display:flex;align-items:center;gap:13px;padding:18px 20px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--surface);transition:background .12s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'">
-        <div style="width:48px;height:48px;border-radius:14px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${p.icon}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:17px;font-weight:700;color:var(--text)">${hl(p.name,q)}</div>
-          <div style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600">${p.cat}</div>
-          <div style="font-size:14px;color:var(--text2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.addr}</div>
-        </div>
-        <div style="font-size:13px;color:var(--text3);flex-shrink:0">${p.dist||''}</div>
-      </div>`).join('')
-    :`<div style="padding:48px 20px;text-align:center;background:var(--surface)"><div style="font-size:40px;margin-bottom:12px">🔍</div><div style="font-size:17px;font-weight:700;color:var(--text2)">'${q}' 결과 없음</div></div>`;
+    ?list.map(function(p,i){
+      return '<div onclick="psSelectPlace('+i+',\'result\')" style="display:flex;align-items:center;gap:13px;padding:18px 20px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--surface)" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'var(--surface)\'">'
+        +'<div style="width:48px;height:48px;border-radius:14px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">'+(p.icon||'📍')+'</div>'
+        +'<div style="flex:1;min-width:0">'
+          +'<div style="font-size:17px;font-weight:700;color:var(--text)">'+hl(p.name,q)+'</div>'
+          +'<div style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600">'+(p.cat||'')+'</div>'
+          +'<div style="font-size:13px;color:var(--text2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.addr||'')+'</div>'
+        +'</div>'
+        +'<div style="font-size:13px;color:var(--text3);flex-shrink:0">'+(p.dist||'')+'</div>'
+      +'</div>';
+    }).join('')
+    :'<div style="padding:48px 20px;text-align:center"><div style="font-size:40px;margin-bottom:12px">🔍</div><div style="font-size:17px;font-weight:700;color:var(--text2)">"'+q+'" 결과 없음</div></div>';
   showPsResults();
 }
-function getCatIcon(code){const m={MT1:'🛒',CS2:'🏪',BK9:'🏦',CT1:'🎭',PO3:'🏛️',AT4:'🗺️',AD5:'🏨',FD6:'🍽️',CE7:'☕',HP8:'🏥',OL7:'⛽',SW8:'🚇',PK6:'🅿️'};return m[code]||'📍';}
+
+function getCatIcon(code){var m={MT1:'🛒',CS2:'🏪',BK9:'🏦',CT1:'🎭',PO3:'🏛️',AT4:'🗺️',AD5:'🏨',FD6:'🍽️',CE7:'☕',HP8:'🏥',OL7:'⛽',SW8:'🚇',PK6:'🅿️'};return m[code]||'📍';}
 
 function psSelectPlace(idx,from){
   var list = from==='auto' ? window._psAutoList : window._psResultList;
   var p = list[idx]; if(!p) return;
   psSelectedPlace = p;
-
-  // Google place_id가 있으면 상세 좌표 가져오기
   if(p.place_id && window.GOOGLE_PLACES_READY && window.google){
     var svc = new window.google.maps.places.PlacesService(document.createElement('div'));
-    svc.getDetails({placeId: p.place_id, fields:['geometry','formatted_address','name']}, function(result, status){
+    svc.getDetails({placeId:p.place_id, fields:['geometry','formatted_address','name']}, function(result, status){
       if(status === window.google.maps.places.PlacesServiceStatus.OK){
         p.lat = result.geometry.location.lat();
         p.lng = result.geometry.location.lng();
