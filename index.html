@@ -723,7 +723,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);ma
       <div style="font-size:var(--fs-xs);color:var(--accent);font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px" data-i18n="dest_loc">🚩 목적지</div>
       <div class="alert-dest" id="alert-dest-text">더플라자 호텔</div>
       <div class="alert-meta" data-i18n="eta_3min">📍 현재 위치에서 약 3분 · 사장님 요청</div>
-      <div class="alert-actions">
+      <div class="alert-actions" id="call-alert-actions">
         <button class="btn btn-success" style="width:100%;font-size:18px;padding:16px" onclick="acceptCall()">👍 OK BOSS!</button>
       </div>
     </div>
@@ -1668,7 +1668,11 @@ function cancelCall(){
   showToast(t('cancel'));
 }
 function acceptCall(){
-  document.getElementById('call-alert').style.display='none';
+  // 카드는 유지, 버튼만 숨기고 헤더 변경
+  var actions = document.getElementById('call-alert-actions');
+  if(actions) actions.style.display='none';
+  var header = document.querySelector('#call-alert .alert-header span:last-child');
+  if(header) header.textContent='👍 OK BOSS! — '+t('calling');
   clearTimeout(callTimer);
 
   var pickup = document.getElementById('alert-pickup-text').textContent;
