@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>BossCall</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BossCall">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS (Uber-style: white, high-contrast black) ============ */
+:root{
+  --ink:#FFFFFF;
+  --surface:#F6F6F6;
+  --surface-raised:#FFFFFF;
+  --surface-hi:#EDEDED;
+  --line:#DDDDDD;
+  --line-soft:#E9E9E9;
+  --text:#161616;
+  --text-muted:#6B6B6B;
+  --text-dim:#9B9B9B;
+  --signal:#0A0A0A;
+  --signal-dim:#3A3A3A;
+  --signal-glow:rgba(0,0,0,0.14);
+  --ok:#03823B;
+  --ok-dim:#E3F5EA;
+  --alert:#B25E00;
+  --alert-dim:#FDF0DE;
+  --danger:#C6270E;
+  --radius:14px;
+  --radius-sm:9px;
+  --font-display:'Inter',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px);
+  --safe-r:env(safe-area-inset-right,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--ink);
+  color:var(--text);
+  font-family:var(--font-body);
+  overflow:hidden;
+  position:fixed;
+  inset:0;
+  -webkit-user-select:none;
+  user-select:none;
+}
+input,textarea{-webkit-user-select:text;user-select:text;}
+button{font-family:inherit;}
+::-webkit-scrollbar{display:none;}
+
+#app{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;
+  z-index:1;
+}
+
+/* ============ TOP BAR ============ */
+.topbar{
+  padding:calc(var(--safe-t) + 12px) 18px 12px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+  background:var(--ink);
+  border-bottom:1px solid var(--line-soft);
+}
+.brand{
+  display:flex;align-items:center;gap:9px;
+}
+.brand-mark{
+  width:30px;height:30px;border-radius:8px;
+  background:var(--signal);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-weight:700;font-size:13px;
+  color:#FFFFFF;
+}
+.brand-name{font-family:var(--font-display);font-weight:800;font-size:16.5px;letter-spacing:-0.2px;}
+.brand-role{
+  font-family:var(--font-mono);font-size:9.5px;color:var(--text-dim);
+  letter-spacing:1.2px;text-transform:uppercase;margin-top:-1px;
+}
+.topbar-actions{display:flex;gap:8px;align-items:center;}
+
+.icon-btn{
+  width:34px;height:34px;border-radius:10px;
+  background:var(--surface);border:1px solid var(--line-soft);
+  color:var(--text-muted);display:flex;align-items:center;justify-content:center;
+  font-size:15px;cursor:pointer;
+}
+.icon-btn:active{background:var(--surface-hi);}
+.lang-pill{
+  font-family:var(--font-mono);font-size:10.5px;font-weight:600;
+  padding:8px 10px;border-radius:10px;background:var(--surface);
+  border:1px solid var(--line-soft);color:var(--text-muted);letter-spacing:0.5px;
+  cursor:pointer;
+}
+
+/* ============ SCREENS ============ */
+.screen{
+  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:0 18px calc(96px + var(--safe-b)) 18px;
+  display:none;
+}
+.screen.active{display:block;}
+.section-label{
+  font-family:var(--font-mono);font-size:10.5px;letter-spacing:1.6px;
+  text-transform:uppercase;color:var(--text-dim);
+  margin:22px 0 10px 2px;display:flex;align-items:center;gap:8px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--line-soft);}
+
+/* ============ DISPATCH TICKET (signature element) ============ */
+.ticket{
+  position:relative;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+  margin-top:10px;
+}
+.ticket-top{
+  padding:18px 18px 16px;
+}
+.ticket-status{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--font-mono);font-size:10.5px;font-weight:600;
+  letter-spacing:1px;text-transform:uppercase;
+  color:var(--text-dim);margin-bottom:14px;
+}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--text-dim);}
+.ticket-status.pending .dot{background:var(--alert);box-shadow:0 0 0 4px var(--alert-dim);animation:pulse 1.4s infinite;}
+.ticket-status.pending{color:var(--alert);}
+.ticket-status.accepted .dot{background:var(--ok);box-shadow:0 0 0 4px var(--ok-dim);}
+.ticket-status.accepted{color:var(--ok);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+.route-row{display:flex;gap:12px;align-items:stretch;}
+.route-line{display:flex;flex-direction:column;align-items:center;padding-top:4px;width:14px;}
+.route-node{width:9px;height:9px;border-radius:50%;border:2px solid var(--signal);background:var(--ink);flex-shrink:0;}
+.route-node.end{border-color:var(--ok);}
+.route-track{width:1.5px;flex:1;background:repeating-linear-gradient(180deg,var(--line) 0 4px,transparent 4px 8px);margin:2px 0;}
+.route-fields{flex:1;display:flex;flex-direction:column;gap:16px;}
+.route-field label{
+  display:block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;
+}
+.route-field input{
+  width:100%;background:transparent;border:none;color:var(--text);
+  font-family:var(--font-body);font-size:15px;font-weight:500;padding:0;
+  border-bottom:1px solid transparent;
+}
+.route-field input:focus{outline:none;border-bottom-color:var(--signal);}
+.route-field input::placeholder{color:var(--text-dim);font-weight:400;}
+.field-actions{display:flex;gap:6px;margin-top:6px;}
+.chip-btn{
+  font-family:var(--font-mono);font-size:10.5px;font-weight:500;
+  padding:6px 10px;border-radius:20px;background:var(--surface-raised);
+  border:1px solid var(--line-soft);color:var(--text-muted);
+  display:inline-flex;align-items:center;gap:5px;cursor:pointer;
+}
+.chip-btn:active{background:var(--surface-hi);}
+
+.ticket-perf{
+  height:0;border-top:1.5px dashed var(--line);position:relative;
+  margin:0 -1px;
+}
+.ticket-perf::before,.ticket-perf::after{
+  content:'';position:absolute;top:-9px;width:18px;height:18px;
+  border-radius:50%;background:var(--ink);
+}
+.ticket-perf::before{left:-9px;}
+.ticket-perf::after{right:-9px;}
+
+.ticket-bottom{
+  padding:14px 18px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.ticket-driver{display:flex;align-items:center;gap:9px;}
+.driver-avatar{
+  width:34px;height:34px;border-radius:9px;background:var(--surface-raised);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-weight:700;font-size:13px;color:var(--text-muted);
+  border:1px solid var(--line-soft);
+}
+.driver-meta-name{font-size:13.5px;font-weight:600;}
+.driver-meta-sub{font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-top:1px;}
+.eta-badge{
+  font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--ok);
+  background:var(--ok-dim);padding:5px 10px;border-radius:8px;border:1px solid rgba(3,130,59,0.2);
+}
+
+.call-btn{
+  width:100%;margin-top:16px;
+  padding:17px;border-radius:13px;border:none;
+  background:var(--signal);
+  color:#FFFFFF;font-family:var(--font-display);font-weight:700;font-size:15.5px;
+  letter-spacing:0.2px;
+  box-shadow:0 6px 16px -6px var(--signal-glow);
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  cursor:pointer;
+}
+.call-btn:active{transform:scale(0.98);}
+.call-btn:disabled{opacity:0.4;box-shadow:none;}
+.call-btn.secondary{
+  background:var(--surface-raised);color:var(--text);
+  box-shadow:none;border:1px solid var(--line-soft);
+}
+
+/* ============ CARDS / LISTS ============ */
+.card{
+  background:var(--surface);border:1px solid var(--line-soft);
+  border-radius:var(--radius);padding:16px;margin-bottom:10px;
+}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.row + .row{margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft);}
+.list-item{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 0;border-bottom:1px solid var(--line-soft);
+}
+.list-item:last-child{border-bottom:none;}
+.list-icon{
+  width:36px;height:36px;border-radius:10px;background:var(--surface-raised);
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
+  border:1px solid var(--line-soft);
+}
+.list-body{flex:1;min-width:0;}
+.list-title{font-size:14px;font-weight:600;}
+.list-sub{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);margin-top:2px;}
+.list-value{font-family:var(--font-mono);font-size:13px;color:var(--text-muted);text-align:right;flex-shrink:0;}
+.badge{
+  font-family:var(--font-mono);font-size:9.5px;font-weight:600;letter-spacing:0.5px;
+  padding:3px 8px;border-radius:6px;text-transform:uppercase;
+}
+.badge.active{background:var(--ok-dim);color:var(--ok);}
+.badge.idle{background:var(--surface-raised);color:var(--text-dim);}
+
+/* driver slots */
+.driver-slot{
+  display:flex;align-items:center;gap:12px;padding:13px 14px;
+  background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;margin-bottom:9px;
+  cursor:pointer;
+}
+.driver-slot.selected{border-color:var(--signal);background:rgba(0,0,0,0.035);}
+.driver-slot .driver-avatar{width:38px;height:38px;}
+.slot-link-btn{
+  width:34px;height:34px;border-radius:9px;background:var(--surface-raised);
+  border:1px solid var(--line-soft);color:var(--text-muted);
+  display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;
+}
+
+/* ============ FORM ELEMENTS ============ */
+.field{margin-bottom:14px;}
+.field label{
+  display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:0.8px;
+  text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;
+}
+.field input,.field select{
+  width:100%;padding:12px 13px;border-radius:10px;
+  background:var(--surface-raised);border:1px solid var(--line-soft);
+  color:var(--text);font-size:14.5px;font-family:var(--font-body);
+}
+.field input:focus,.field select:focus{outline:none;border-color:var(--signal);}
+.field-row{display:flex;gap:10px;}
+.field-row .field{flex:1;}
+.btn{
+  padding:12px 16px;border-radius:11px;border:1px solid var(--line-soft);
+  background:var(--surface-raised);color:var(--text);font-weight:600;font-size:13.5px;
+  cursor:pointer;display:inline-flex;align-items:center;gap:7px;justify-content:center;
+}
+.btn.primary{background:var(--signal);color:#FFFFFF;border-color:transparent;}
+.btn.full{width:100%;}
+.btn.ghost{background:transparent;color:var(--text-muted);}
+.btn.danger-ghost{background:transparent;color:var(--danger);border-color:rgba(198,39,14,0.25);}
+
+.toggle{
+  width:44px;height:26px;border-radius:20px;background:var(--surface-raised);
+  border:1px solid var(--line-soft);position:relative;cursor:pointer;flex-shrink:0;
+}
+.toggle::after{
+  content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+  background:var(--text-dim);transition:transform .15s;
+}
+.toggle.on{background:rgba(0,0,0,0.08);border-color:var(--signal);}
+.toggle.on::after{transform:translateX(18px);background:var(--signal);}
+
+/* nav grid (4 nav apps) */
+.nav-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px;}
+.nav-app{
+  background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;
+  padding:12px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  cursor:pointer;
+}
+.nav-app:active{background:var(--surface-hi);}
+.nav-app-icon{font-size:19px;}
+.nav-app-label{font-family:var(--font-mono);font-size:9.5px;color:var(--text-muted);}
+
+/* tabs (favorites/search results) */
+.search-result{
+  display:flex;align-items:center;gap:11px;padding:12px 0;
+  border-bottom:1px solid var(--line-soft);cursor:pointer;
+}
+.search-result:last-child{border-bottom:none;}
+.search-result:active{opacity:0.7;}
+
+/* stats bars */
+.bar-row{display:flex;align-items:center;gap:10px;padding:8px 0;}
+.bar-label{font-family:var(--font-mono);font-size:11px;color:var(--text-muted);width:38px;flex-shrink:0;}
+.bar-track{flex:1;height:7px;border-radius:4px;background:var(--surface-raised);overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--signal-dim),var(--signal));}
+.bar-value{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);width:44px;text-align:right;flex-shrink:0;}
+
+.stat-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+.stat-tile{
+  background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:14px;
+}
+.stat-tile-num{font-family:var(--font-display);font-size:22px;font-weight:700;}
+.stat-tile-label{font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-top:3px;text-transform:uppercase;letter-spacing:0.5px;}
+
+.empty-state{
+  text-align:center;padding:36px 20px;color:var(--text-dim);
+}
+.empty-state-icon{font-size:26px;margin-bottom:10px;opacity:0.6;}
+.empty-state-text{font-size:13px;line-height:1.5;}
+
+/* ============ BOTTOM TAB BAR ============ */
+.tabbar{
+  position:fixed;left:0;right:0;bottom:0;
+  padding:8px calc(10px + var(--safe-l)) calc(10px + var(--safe-b)) calc(10px + var(--safe-r));
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--line-soft);
+  display:flex;justify-content:space-around;z-index:20;
+}
+.tab-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 10px;color:var(--text-dim);cursor:pointer;flex:1;
+}
+.tab-item.active{color:var(--signal);}
+.tab-icon{font-size:19px;}
+.tab-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.3px;}
+
+/* ============ MODAL / SHEET ============ */
+.sheet-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:50;
+  display:none;align-items:flex-end;
+}
+.sheet-backdrop.open{display:flex;}
+.sheet{
+  background:var(--ink);width:100%;border-radius:20px 20px 0 0;
+  padding:10px 20px calc(22px + var(--safe-b));
+  max-height:82vh;overflow-y:auto;
+  border-top:1px solid var(--line-soft);
+  animation:sheetUp .22s ease-out;
+}
+@keyframes sheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.sheet-handle{width:36px;height:4px;background:var(--line);border-radius:3px;margin:6px auto 16px;}
+.sheet-title{font-family:var(--font-display);font-weight:700;font-size:17px;margin-bottom:14px;}
+
+/* map iframe */
+.map-frame{
+  width:100%;height:220px;border-radius:12px;border:1px solid var(--line-soft);
+  margin-top:10px;background:var(--surface-raised);
+}
+
+/* toast: kept dark for legibility as a floating overlay regardless of theme */
+.toast{
+  position:fixed;left:50%;bottom:calc(100px + var(--safe-b));transform:translateX(-50%) translateY(20px);
+  background:#161616;border:1px solid #2A2A2A;color:#FFFFFF;
+  padding:12px 18px;border-radius:12px;font-size:13.5px;font-weight:500;
+  z-index:100;opacity:0;pointer-events:none;transition:all .25s;
+  display:flex;align-items:center;gap:8px;box-shadow:0 10px 30px -8px rgba(0,0,0,0.35);
+  max-width:86vw;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* driver mode: full dispatch screen */
+.driver-hero{
+  margin-top:14px;text-align:center;padding:34px 20px;
+  background:var(--surface);border:1px solid var(--line-soft);border-radius:18px;
+}
+.driver-hero.calling{border-color:var(--signal);background:rgba(0,0,0,0.025);}
+.driver-hero-icon{font-size:34px;margin-bottom:12px;}
+.driver-hero-title{font-family:var(--font-display);font-weight:700;font-size:19px;}
+.driver-hero-sub{font-family:var(--font-mono);font-size:11.5px;color:var(--text-dim);margin-top:6px;}
+.ok-boss-btn{
+  width:100%;margin-top:20px;padding:20px;border-radius:16px;border:none;
+  background:var(--ok);color:#FFFFFF;
+  font-family:var(--font-display);font-weight:700;font-size:17px;
+  box-shadow:0 8px 20px -8px rgba(3,130,59,0.4);cursor:pointer;
+}
+.ok-boss-btn:active{transform:scale(0.98);}
+
+.timer-display{
+  font-family:var(--font-mono);font-size:38px;font-weight:600;text-align:center;
+  padding:20px 0 6px;letter-spacing:1px;
+}
+
+/* onboarding screen */
+.onboard-wrap{
+  position:fixed;inset:0;z-index:5;background:var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0 30px;text-align:center;
+}
+.onboard-mark{
+  width:64px;height:64px;border-radius:18px;
+  background:var(--signal);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-weight:700;font-size:26px;color:#FFFFFF;
+  box-shadow:0 10px 26px -8px var(--signal-glow);margin-bottom:22px;
+}
+.onboard-title{font-family:var(--font-display);font-weight:700;font-size:22px;}
+.onboard-sub{color:var(--text-muted);font-size:14px;margin-top:8px;line-height:1.5;max-width:280px;}
+
+.link{color:var(--signal);text-decoration:none;font-weight:600;}
+</style>
+</head>
+<body>
+
+<div id="onboardScreen" class="onboard-wrap" style="display:none;">
+  <div class="onboard-mark">BC</div>
+  <div class="onboard-title" data-i18n="onboard_title">Welcome</div>
+  <div class="onboard-sub" data-i18n="onboard_sub">Setting up...</div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">BC</div>
+      <div>
+        <div class="brand-name">BossCall</div>
+        <div class="brand-role" id="roleLabel">BOSS MODE</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <div class="lang-pill" id="langBtn">EN</div>
+      <div class="icon-btn" id="darkToggleBtn">◐</div>
+    </div>
+  </div>
+
+  <!-- ===== CALL / DISPATCH SCREEN (boss) ===== -->
+  <div class="screen active" id="screen-call">
+    <div class="section-label" data-i18n="lbl_dispatch">Dispatch</div>
+
+    <div class="ticket">
+      <div class="ticket-top">
+        <div class="ticket-status pending" id="callStatusRow" style="display:none;">
+          <span class="dot"></span><span id="callStatusText" data-i18n="status_calling">Calling...</span>
+        </div>
+        <div class="route-row">
+          <div class="route-line">
+            <div class="route-node"></div>
+            <div class="route-track"></div>
+            <div class="route-node end"></div>
+          </div>
+          <div class="route-fields">
+            <div class="route-field">
+              <label data-i18n="lbl_pickup">Pickup</label>
+              <input type="text" id="pickupInput" data-i18n-ph="ph_pickup" placeholder="Where to pick up">
+              <div class="field-actions">
+                <div class="chip-btn" id="gpsBtn">📡 <span data-i18n="btn_gps">Current location</span></div>
+                <div class="chip-btn" id="pickupMapBtn">🗺️ <span data-i18n="btn_map_pick">Pick on map</span></div>
+                <div class="chip-btn" id="droppedBtn">🚗 <span data-i18n="btn_dropped">Set drop-off</span></div>
+              </div>
+            </div>
+            <div class="route-field">
+              <label data-i18n="lbl_destination">Destination</label>
+              <input type="text" id="destInput" data-i18n-ph="ph_destination" placeholder="Where to">
+              <div class="field-actions">
+                <div class="chip-btn" id="searchPlaceBtn">🔍 <span data-i18n="btn_search_place">Search place</span></div>
+                <div class="chip-btn" id="destMapBtn">🗺️ <span data-i18n="btn_map_pick">Pick on map</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ticket-perf"></div>
+
+      <div class="ticket-bottom">
+        <div class="ticket-driver">
+          <div class="driver-avatar" id="activeDriverInitial">–</div>
+          <div>
+            <div class="driver-meta-name" id="activeDriverName" data-i18n="no_driver">No driver selected</div>
+            <div class="driver-meta-sub" id="activeDriverSub">—</div>
+          </div>
+        </div>
+        <div class="eta-badge" id="etaBadge" style="display:none;">ETA —</div>
+      </div>
+    </div>
+
+    <button class="call-btn" id="callDriverBtn">
+      📲 <span data-i18n="btn_call_driver">Call driver</span>
+    </button>
+
+    <div class="section-label" data-i18n="lbl_navigate">Navigate</div>
+    <div class="nav-grid">
+      <div class="nav-app" data-nav="google"><div class="nav-app-icon">🗺️</div><div class="nav-app-label">Google</div></div>
+      <div class="nav-app" data-nav="waze"><div class="nav-app-icon">🚦</div><div class="nav-app-label">Waze</div></div>
+    </div>
+
+    <div class="section-label" data-i18n="lbl_recent">Recent searches</div>
+    <div id="recentList" class="card"></div>
+  </div>
+
+  <!-- ===== DRIVERS SCREEN ===== -->
+  <div class="screen" id="screen-drivers">
+    <div class="section-label" data-i18n="lbl_roster">Driver roster</div>
+    <div id="driverList"></div>
+    <button class="btn full" id="addDriverBtn" style="margin-top:6px;">＋ <span data-i18n="btn_add_driver">Add driver</span></button>
+
+    <div class="section-label" data-i18n="lbl_today_activity">Today's activity</div>
+    <div class="stat-tiles">
+      <div class="stat-tile">
+        <div class="stat-tile-num" id="todayRidesNum">0</div>
+        <div class="stat-tile-label" data-i18n="lbl_rides_today">Rides today</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile-num" id="clockStatusNum">–</div>
+        <div class="stat-tile-label" data-i18n="lbl_clock_status">Clock status</div>
+      </div>
+    </div>
+
+    <div class="section-label" data-i18n="lbl_ride_log">Ride log (today)</div>
+    <div id="todayRideLog"></div>
+  </div>
+
+  <!-- ===== FAVORITES SCREEN ===== -->
+  <div class="screen" id="screen-favorites">
+    <div class="section-label" data-i18n="lbl_favorites">Favorite places</div>
+    <div id="favoritesList"></div>
+    <button class="btn full" id="addFavoriteBtn" style="margin-top:6px;">＋ <span data-i18n="btn_add_favorite">Add favorite</span></button>
+  </div>
+
+  <!-- ===== STATS SCREEN ===== -->
+  <div class="screen" id="screen-stats">
+    <div class="section-label" data-i18n="lbl_monthly">Monthly overview</div>
+    <div id="monthTiles" class="stat-tiles"></div>
+    <div class="section-label" data-i18n="lbl_month_detail">Select a month for daily detail</div>
+    <div id="monthBars" class="card"></div>
+    <div id="dayDetail"></div>
+  </div>
+
+  <!-- ===== MORE / SETTINGS SCREEN ===== -->
+  <div class="screen" id="screen-more">
+    <div class="section-label" data-i18n="lbl_payroll">Payroll settings</div>
+    <div class="card" id="payrollCard">
+      <div class="field"><label data-i18n="lbl_base_pay">Base pay</label><input type="number" id="payBase" placeholder="0"></div>
+      <div class="field-row">
+        <div class="field"><label data-i18n="lbl_overtime">Overtime rate</label><input type="number" id="payOT" placeholder="0"></div>
+        <div class="field"><label data-i18n="lbl_meal">Meal allowance</label><input type="number" id="payMeal" placeholder="0"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label data-i18n="lbl_vehicle">Vehicle allowance</label><input type="number" id="payVehicle" placeholder="0"></div>
+        <div class="field"><label data-i18n="lbl_bonus">Bonus</label><input type="number" id="payBonus" placeholder="0"></div>
+      </div>
+      <div class="field"><label data-i18n="lbl_insurance">Insurance</label><input type="number" id="payInsurance" placeholder="0"></div>
+      <div class="row" style="margin-top:4px;">
+        <span data-i18n="lbl_preview_total" style="font-weight:600;font-size:13.5px;">Estimated total</span>
+        <span class="eta-badge" id="payrollPreview">0</span>
+      </div>
+    </div>
+
+    <div class="section-label" data-i18n="lbl_fuel">Fuel log</div>
+    <div class="card">
+      <div class="row">
+        <span data-i18n="lbl_fuel_month" style="font-size:13.5px;">This month</span>
+        <span class="list-value" id="fuelSummary">0 L · 0</span>
+      </div>
+    </div>
+    <div id="fuelList"></div>
+    <button class="btn full" id="addFuelBtn" style="margin-top:6px;">⛽ <span data-i18n="btn_add_fuel">Add fuel entry</span></button>
+
+    <div class="section-label" data-i18n="lbl_whatsapp">WhatsApp</div>
+    <div class="card">
+      <div class="field"><label data-i18n="lbl_boss_wa">Boss WhatsApp number</label><input type="tel" id="bossWaInput" placeholder="+62 8xx xxxx xxxx"></div>
+      <div class="row"><span data-i18n="notify_call" style="font-size:13.5px;">Notify on call</span><div class="toggle on" data-notify="call"></div></div>
+      <div class="row"><span data-i18n="notify_accept" style="font-size:13.5px;">Notify on accept</span><div class="toggle on" data-notify="accept"></div></div>
+      <div class="row"><span data-i18n="notify_clock" style="font-size:13.5px;">Notify on clock in/out</span><div class="toggle" data-notify="clock"></div></div>
+      <div class="row"><span data-i18n="notify_fuel" style="font-size:13.5px;">Notify on fuel entry</span><div class="toggle" data-notify="fuel"></div></div>
+      <button class="btn full ghost" id="testWaBtn" style="margin-top:12px;">✉️ <span data-i18n="btn_test_wa">Send test message</span></button>
+    </div>
+
+    <div class="section-label" data-i18n="lbl_api">Google Maps API key</div>
+    <div class="card">
+      <div class="field" style="margin-bottom:8px;"><input type="text" id="apiKeyInput" placeholder="AIza..."></div>
+      <div class="list-sub" data-i18n="api_hint">Used for place search and maps. Stored only on this device.</div>
+    </div>
+
+    <div class="section-label" data-i18n="lbl_role_switch">Mode</div>
+    <div class="card">
+      <div class="row">
+        <span data-i18n="lbl_current_mode" style="font-size:13.5px;">View as</span>
+        <button class="btn ghost" id="switchModeBtn" data-i18n="btn_switch_driver">Switch to driver view</button>
+      </div>
+    </div>
+
+    <div style="height:10px;"></div>
+    <button class="btn full danger-ghost" id="resetDataBtn">🗑 <span data-i18n="btn_reset">Reset all data</span></button>
+    <div style="height:20px;"></div>
+  </div>
+
+  <!-- ===== DRIVER VIEW ===== -->
+  <div class="screen" id="screen-driver-home">
+    <div id="driverHeroWrap"></div>
+
+    <div class="section-label" data-i18n="lbl_navigate">Navigate</div>
+    <div class="nav-grid">
+      <div class="nav-app" data-nav="google"><div class="nav-app-icon">🗺️</div><div class="nav-app-label">Google</div></div>
+      <div class="nav-app" data-nav="waze"><div class="nav-app-icon">🚦</div><div class="nav-app-label">Waze</div></div>
+    </div>
+
+    <div class="section-label" data-i18n="lbl_clock">Clock</div>
+    <div class="card">
+      <div class="timer-display" id="workTimerDisplay">00:00:00</div>
+      <button class="btn full primary" id="clockBtn" data-i18n="btn_clock_in">Clock in</button>
+    </div>
+
+    <div class="section-label" data-i18n="lbl_ride_log">Ride log</div>
+    <div id="driverRideLog"></div>
+  </div>
+
+  <div class="tabbar" id="bossTabbar">
+    <div class="tab-item active" data-tab="screen-call"><div class="tab-icon">📲</div><div class="tab-label" data-i18n="tab_call">Call</div></div>
+    <div class="tab-item" data-tab="screen-drivers"><div class="tab-icon">🧑‍✈️</div><div class="tab-label" data-i18n="tab_drivers">Drivers</div></div>
+    <div class="tab-item" data-tab="screen-favorites"><div class="tab-icon">⭐</div><div class="tab-label" data-i18n="tab_favorites">Favorites</div></div>
+    <div class="tab-item" data-tab="screen-stats"><div class="tab-icon">📊</div><div class="tab-label" data-i18n="tab_stats">Stats</div></div>
+    <div class="tab-item" data-tab="screen-more"><div class="tab-icon">⚙️</div><div class="tab-label" data-i18n="tab_more">More</div></div>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="sheetBackdrop">
+  <div class="sheet" id="sheetContent"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   I18N
+=============================================================== */
+const I18N = {
+  id:{
+    onboard_title:"Selamat Datang", onboard_sub:"Menyiapkan tampilan sopir Anda...",
+    lbl_dispatch:"Panggilan", lbl_pickup:"Jemput", lbl_destination:"Tujuan",
+    ph_pickup:"Lokasi jemput", ph_destination:"Ke mana", btn_gps:"Lokasi saat ini",
+    btn_search_place:"Cari tempat", btn_dropped:"Set titik turun", btn_map_pick:"Pilih di peta",
+    sheet_map_pick:"Pilih lokasi di peta", map_drag_hint:"Geser pin atau ketuk peta untuk memindahkan",
+    map_confirm:"Gunakan lokasi ini", map_locating:"Mencari alamat...", no_driver:"Belum ada sopir dipilih",
+    btn_call_driver:"Panggil sopir", status_calling:"Memanggil...", status_accepted:"Diterima",
+    lbl_navigate:"Navigasi", lbl_recent:"Pencarian terakhir", lbl_roster:"Daftar sopir",
+    btn_add_driver:"Tambah sopir", lbl_today_activity:"Aktivitas hari ini", lbl_rides_today:"Perjalanan hari ini",
+    lbl_clock_status:"Status absen", lbl_ride_log:"Riwayat perjalanan", lbl_favorites:"Tempat favorit",
+    btn_add_favorite:"Tambah favorit", lbl_monthly:"Ringkasan bulanan", lbl_month_detail:"Pilih bulan untuk detail harian",
+    lbl_payroll:"Pengaturan gaji", lbl_base_pay:"Gaji pokok", lbl_overtime:"Lembur", lbl_meal:"Uang makan",
+    lbl_vehicle:"Tunjangan kendaraan", lbl_bonus:"Bonus", lbl_insurance:"Asuransi", lbl_preview_total:"Perkiraan total",
+    lbl_fuel:"Catatan bensin", lbl_fuel_month:"Bulan ini", btn_add_fuel:"Tambah catatan bensin",
+    lbl_whatsapp:"WhatsApp", lbl_boss_wa:"Nomor WA Bos", notify_call:"Notifikasi saat panggilan",
+    notify_accept:"Notifikasi saat diterima", notify_clock:"Notifikasi absen masuk/keluar", notify_fuel:"Notifikasi catatan bensin",
+    btn_test_wa:"Kirim pesan tes", lbl_api:"Kunci API Google Maps", api_hint:"Digunakan untuk pencarian tempat dan peta. Hanya disimpan di perangkat ini.",
+    lbl_role_switch:"Mode", lbl_current_mode:"Tampilan sebagai", btn_switch_driver:"Beralih ke tampilan sopir",
+    btn_switch_boss:"Beralih ke tampilan bos", btn_reset:"Hapus semua data",
+    tab_call:"Panggil", tab_drivers:"Sopir", tab_favorites:"Favorit", tab_stats:"Statistik", tab_more:"Lainnya",
+    lbl_clock:"Absen", btn_clock_in:"Absen masuk", btn_clock_out:"Absen keluar",
+    driver_idle_title:"Menunggu panggilan", driver_idle_sub:"Anda akan diberitahu saat Bos memanggil",
+    driver_calling_title:"Bos memanggil!", driver_calling_sub:"Ketuk untuk konfirmasi",
+    ok_boss:"👍 SIAP BOS!", toast_call_sent:"Panggilan terkirim via WhatsApp",
+    toast_saved:"Tersimpan", toast_deleted:"Dihapus", toast_link_copied:"Tautan disalin",
+    toast_ok_sent:"Konfirmasi terkirim ke Bos", empty_drivers:"Belum ada sopir. Tambahkan sopir pertama Anda.",
+    empty_favorites:"Belum ada favorit tersimpan.", empty_rides:"Belum ada perjalanan hari ini.",
+    empty_fuel:"Belum ada catatan bensin.", confirm_reset:"Hapus semua data aplikasi? Tindakan ini tidak bisa dibatalkan.",
+    confirm_delete_driver:"Hapus sopir ini?", sheet_add_driver:"Sopir baru", sheet_driver_name:"Nama sopir",
+    sheet_driver_wa:"Nomor WhatsApp", sheet_save:"Simpan", sheet_cancel:"Batal", sheet_invite_link:"Tautan undangan",
+    sheet_send_invite:"Kirim via WhatsApp", sheet_copy_link:"Salin tautan", sheet_add_favorite:"Favorit baru",
+    sheet_favorite_name:"Nama tempat", sheet_favorite_addr:"Alamat", sheet_add_fuel:"Catatan bensin",
+    fuel_liters:"Liter", fuel_cost:"Biaya", sheet_search_place:"Cari tempat",
+    search_placeholder:"Ketik nama tempat...", need_api_key:"Masukkan kunci API Google Maps di Lainnya untuk mengaktifkan pencarian.",
+    clocked_in_since:"Absen sejak", clock_status_in:"Masuk", clock_status_out:"Belum absen",
+    driver_meta_offline:"Offline"
+  },
+  ko:{
+    onboard_title:"환영합니다", onboard_sub:"기사님 화면을 준비하고 있어요...",
+    lbl_dispatch:"호출", lbl_pickup:"픽업 위치", lbl_destination:"목적지",
+    ph_pickup:"픽업 위치 입력", ph_destination:"목적지 입력", btn_gps:"현위치",
+    btn_search_place:"장소 검색", btn_dropped:"내려준 곳", btn_map_pick:"지도에서 선택",
+    sheet_map_pick:"지도에서 위치 선택", map_drag_hint:"핀을 드래그하거나 지도를 눌러 위치를 옮기세요",
+    map_confirm:"이 위치로 설정", map_locating:"주소 확인 중...", no_driver:"선택된 기사 없음",
+    btn_call_driver:"기사 호출", status_calling:"호출중...", status_accepted:"확인됨",
+    lbl_navigate:"네비게이션", lbl_recent:"최근 검색", lbl_roster:"기사 목록",
+    btn_add_driver:"기사 추가", lbl_today_activity:"오늘 현황", lbl_rides_today:"오늘 운행",
+    lbl_clock_status:"출퇴근 상태", lbl_ride_log:"운행 기록", lbl_favorites:"즐겨찾기",
+    btn_add_favorite:"즐겨찾기 추가", lbl_monthly:"월별 현황", lbl_month_detail:"일별 상세를 보려면 월을 선택하세요",
+    lbl_payroll:"급여 설정", lbl_base_pay:"기본급", lbl_overtime:"시간외수당", lbl_meal:"식대",
+    lbl_vehicle:"차량유지비", lbl_bonus:"상여금", lbl_insurance:"보험", lbl_preview_total:"예상 총액",
+    lbl_fuel:"주유 기록", lbl_fuel_month:"이번 달", btn_add_fuel:"주유 기록 추가",
+    lbl_whatsapp:"WhatsApp", lbl_boss_wa:"사장 WA 번호", notify_call:"호출 시 알림",
+    notify_accept:"수락 시 알림", notify_clock:"출퇴근 시 알림", notify_fuel:"주유 기록 시 알림",
+    btn_test_wa:"테스트 메시지 발송", lbl_api:"Google Maps API 키", api_hint:"장소 검색 및 지도 표시에 사용됩니다. 이 기기에만 저장됩니다.",
+    lbl_role_switch:"모드", lbl_current_mode:"보기 모드", btn_switch_driver:"기사 화면으로 전환",
+    btn_switch_boss:"사장 화면으로 전환", btn_reset:"전체 데이터 초기화",
+    tab_call:"호출", tab_drivers:"기사", tab_favorites:"즐겨찾기", tab_stats:"통계", tab_more:"더보기",
+    lbl_clock:"출퇴근", btn_clock_in:"출근", btn_clock_out:"퇴근",
+    driver_idle_title:"호출 대기중", driver_idle_sub:"사장님이 호출하면 알려드릴게요",
+    driver_calling_title:"사장님이 호출했어요!", driver_calling_sub:"눌러서 확인하세요",
+    ok_boss:"👍 확인했어요 사장님!", toast_call_sent:"WhatsApp으로 호출을 보냈습니다",
+    toast_saved:"저장되었습니다", toast_deleted:"삭제되었습니다", toast_link_copied:"링크가 복사되었습니다",
+    toast_ok_sent:"사장님께 확인 메시지를 보냈습니다", empty_drivers:"등록된 기사가 없습니다. 첫 기사를 추가해보세요.",
+    empty_favorites:"저장된 즐겨찾기가 없습니다.", empty_rides:"오늘 운행 기록이 없습니다.",
+    empty_fuel:"주유 기록이 없습니다.", confirm_reset:"모든 앱 데이터를 삭제할까요? 이 작업은 되돌릴 수 없습니다.",
+    confirm_delete_driver:"이 기사를 삭제할까요?", sheet_add_driver:"기사 추가", sheet_driver_name:"기사 이름",
+    sheet_driver_wa:"WhatsApp 번호", sheet_save:"저장", sheet_cancel:"취소", sheet_invite_link:"초대 링크",
+    sheet_send_invite:"WhatsApp으로 보내기", sheet_copy_link:"링크 복사", sheet_add_favorite:"즐겨찾기 추가",
+    sheet_favorite_name:"장소 이름", sheet_favorite_addr:"주소", sheet_add_fuel:"주유 기록 추가",
+    fuel_liters:"주유량(L)", fuel_cost:"비용", sheet_search_place:"장소 검색",
+    search_placeholder:"장소 이름을 입력하세요...", need_api_key:"장소 검색을 사용하려면 [더보기]에서 Google Maps API 키를 입력하세요.",
+    clocked_in_since:"출근 시각", clock_status_in:"근무중", clock_status_out:"미출근",
+    driver_meta_offline:"오프라인"
+  },
+  en:{
+    onboard_title:"Welcome", onboard_sub:"Setting up your driver view...",
+    lbl_dispatch:"Dispatch", lbl_pickup:"Pickup", lbl_destination:"Destination",
+    ph_pickup:"Where to pick up", ph_destination:"Where to", btn_gps:"Current location",
+    btn_search_place:"Search place", btn_dropped:"Set drop-off", btn_map_pick:"Pick on map",
+    sheet_map_pick:"Choose location on map", map_drag_hint:"Drag the pin or tap the map to move it",
+    map_confirm:"Use this location", map_locating:"Finding address...", no_driver:"No driver selected",
+    btn_call_driver:"Call driver", status_calling:"Calling...", status_accepted:"Accepted",
+    lbl_navigate:"Navigate", lbl_recent:"Recent searches", lbl_roster:"Driver roster",
+    btn_add_driver:"Add driver", lbl_today_activity:"Today's activity", lbl_rides_today:"Rides today",
+    lbl_clock_status:"Clock status", lbl_ride_log:"Ride log", lbl_favorites:"Favorite places",
+    btn_add_favorite:"Add favorite", lbl_monthly:"Monthly overview", lbl_month_detail:"Select a month for daily detail",
+    lbl_payroll:"Payroll settings", lbl_base_pay:"Base pay", lbl_overtime:"Overtime rate", lbl_meal:"Meal allowance",
+    lbl_vehicle:"Vehicle allowance", lbl_bonus:"Bonus", lbl_insurance:"Insurance", lbl_preview_total:"Estimated total",
+    lbl_fuel:"Fuel log", lbl_fuel_month:"This month", btn_add_fuel:"Add fuel entry",
+    lbl_whatsapp:"WhatsApp", lbl_boss_wa:"Boss WhatsApp number", notify_call:"Notify on call",
+    notify_accept:"Notify on accept", notify_clock:"Notify on clock in/out", notify_fuel:"Notify on fuel entry",
+    btn_test_wa:"Send test message", lbl_api:"Google Maps API key", api_hint:"Used for place search and maps. Stored only on this device.",
+    lbl_role_switch:"Mode", lbl_current_mode:"View as", btn_switch_driver:"Switch to driver view",
+    btn_switch_boss:"Switch to boss view", btn_reset:"Reset all data",
+    tab_call:"Call", tab_drivers:"Drivers", tab_favorites:"Favorites", tab_stats:"Stats", tab_more:"More",
+    lbl_clock:"Clock", btn_clock_in:"Clock in", btn_clock_out:"Clock out",
+    driver_idle_title:"Waiting for call", driver_idle_sub:"You'll be notified when Boss calls",
+    driver_calling_title:"Boss is calling!", driver_calling_sub:"Tap to confirm",
+    ok_boss:"👍 OK BOSS!", toast_call_sent:"Call sent via WhatsApp",
+    toast_saved:"Saved", toast_deleted:"Deleted", toast_link_copied:"Link copied",
+    toast_ok_sent:"Confirmation sent to Boss", empty_drivers:"No drivers yet. Add your first driver.",
+    empty_favorites:"No favorites saved yet.", empty_rides:"No rides logged today.",
+    empty_fuel:"No fuel entries yet.", confirm_reset:"Delete all app data? This cannot be undone.",
+    confirm_delete_driver:"Delete this driver?", sheet_add_driver:"New driver", sheet_driver_name:"Driver name",
+    sheet_driver_wa:"WhatsApp number", sheet_save:"Save", sheet_cancel:"Cancel", sheet_invite_link:"Invite link",
+    sheet_send_invite:"Send via WhatsApp", sheet_copy_link:"Copy link", sheet_add_favorite:"New favorite",
+    sheet_favorite_name:"Place name", sheet_favorite_addr:"Address", sheet_add_fuel:"Add fuel entry",
+    fuel_liters:"Liters", fuel_cost:"Cost", sheet_search_place:"Search place",
+    search_placeholder:"Type a place name...", need_api_key:"Enter a Google Maps API key in More to enable search.",
+    clocked_in_since:"Clocked in since", clock_status_in:"On duty", clock_status_out:"Not clocked in",
+    driver_meta_offline:"Offline"
+  }
+};
+
+/* ============================================================
+   STATE
+=============================================================== */
+const DB_KEY = "bosscall_v2";
+function loadState(){
+  try{
+    const raw = localStorage.getItem(DB_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {
+    lang:"id",
+    dark:true,
+    role:"boss", // boss | driver
+    bossWa:"",
+    apiKey:"",
+    drivers:[], // {id,name,wa,active}
+    activeDriverId:null,
+    favorites:[],
+    recent:[],
+    rides:[], // {id,driverId,pickup,dest,ts,status,eta,dropoffTs}
+    fuel:[], // {id,liters,cost,ts}
+    payroll:{base:0,ot:0,meal:0,vehicle:0,bonus:0,insurance:0},
+    notify:{call:true,accept:true,clock:false,fuel:false},
+    clock:{status:"out", since:null}, // driver clock state
+    pendingCall:null // {pickup,dest,ts} for driver view
+  };
+}
+let state = loadState();
+function save(){ localStorage.setItem(DB_KEY, JSON.stringify(state)); }
+function t(key){
+  const lang = state.lang || "id";
+  return (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
+}
+
+/* ============================================================
+   URL PARAMS (driver onboarding link)
+=============================================================== */
+function parseUrlParams(){
+  const params = new URLSearchParams(window.location.search);
+  if(params.has("driver")){
+    // onboarding as a driver: ?driver=NAME&boss=WA&id=DRIVERID
+    const name = params.get("driver");
+    const bossWa = params.get("boss") || "";
+    const did = params.get("id") || ("d_"+Date.now());
+    state.role = "driver";
+    state.bossWa = bossWa;
+    state.myDriverProfile = { id: did, name: decodeURIComponent(name) };
+    save();
+    showOnboard();
+  }
+}
+
+function showOnboard(){
+  document.getElementById("onboardScreen").style.display = "flex";
+  applyI18nStatic();
+  setTimeout(()=>{
+    document.getElementById("onboardScreen").style.display = "none";
+    render();
+  }, 1400);
+}
+
+/* ============================================================
+   TOAST
+=============================================================== */
+let toastTimer=null;
+function toast(msg){
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove("show"), 2200);
+}
+
+/* ============================================================
+   SHEET (bottom modal)
+=============================================================== */
+function openSheet(html, onOpen){
+  document.getElementById("sheetContent").innerHTML = '<div class="sheet-handle"></div>' + html;
+  document.getElementById("sheetBackdrop").classList.add("open");
+  if(onOpen) onOpen();
+}
+function closeSheet(){
+  document.getElementById("sheetBackdrop").classList.remove("open");
+}
+document.getElementById("sheetBackdrop").addEventListener("click", (e)=>{
+  if(e.target.id === "sheetBackdrop") closeSheet();
+});
+
+/* ============================================================
+   UTIL
+=============================================================== */
+function uid(prefix){ return prefix + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function initials(name){
+  if(!name) return "?";
+  return name.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase();
+}
+function fmtNum(n){ return (n||0).toLocaleString(); }
+function waLink(number, message){
+  const clean = (number||"").replace(/[^\d+]/g,"").replace(/^\+/,"");
+  return "https://wa.me/" + clean + "?text=" + encodeURIComponent(message);
+}
+function haversineKm(lat1,lon1,lat2,lon2){
+  const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+function estimateEtaMin(km){ return Math.max(2, Math.round(km / 28 * 60)); } // ~28km/h avg city traffic
+
+let lastCoords = null; // {lat,lng} of pickup for eta calc
+
+function getGeo(){
+  return new Promise((resolve,reject)=>{
+    if(!navigator.geolocation){ reject("no geo"); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({lat:pos.coords.latitude, lng:pos.coords.longitude}),
+      err => reject(err),
+      {enableHighAccuracy:true, timeout:8000}
+    );
+  });
+}
+
+/* ============================================================
+   I18N APPLY
+=============================================================== */
+function applyI18nStatic(){
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    el.textContent = t(el.getAttribute("data-i18n"));
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el=>{
+    el.placeholder = t(el.getAttribute("data-i18n-ph"));
+  });
+  document.getElementById("langBtn").textContent = state.lang.toUpperCase();
+  document.getElementById("roleLabel").textContent = state.role === "boss" ? "BOSS MODE" : "DRIVER MODE";
+}
+
+/* ============================================================
+   NAVIGATION (tab switching)
+=============================================================== */
+document.querySelectorAll("#bossTabbar .tab-item").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll("#bossTabbar .tab-item").forEach(x=>x.classList.remove("active"));
+    tab.classList.add("active");
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    document.getElementById(tab.getAttribute("data-tab")).classList.add("active");
+    if(tab.getAttribute("data-tab")==="screen-stats") renderStats();
+  });
+});
+
+document.getElementById("langBtn").addEventListener("click", ()=>{
+  const order = ["id","ko","en"];
+  const idx = order.indexOf(state.lang);
+  state.lang = order[(idx+1) % order.length];
+  save();
+  render();
+});
+
+document.getElementById("darkToggleBtn").addEventListener("click", ()=>{
+  toast(state.lang==="ko" ? "다크 모드는 항상 켜져 있어요" : state.lang==="id" ? "Mode gelap selalu aktif" : "Dark mode is always on");
+});
+
+/* ============================================================
+   BOSS: CALL SCREEN
+=============================================================== */
+document.getElementById("gpsBtn").addEventListener("click", async ()=>{
+  try{
+    toast(t("btn_gps")+"...");
+    const coords = await getGeo();
+    lastCoords = coords;
+    document.getElementById("pickupInput").value = coords.lat.toFixed(5)+", "+coords.lng.toFixed(5);
+  }catch(e){
+    toast("GPS error");
+  }
+});
+
+document.getElementById("droppedBtn").addEventListener("click", ()=>{
+  document.getElementById("pickupInput").focus();
+});
+
+document.getElementById("searchPlaceBtn").addEventListener("click", ()=>{
+  openPlaceSearchSheet("dest");
+});
+
+document.getElementById("pickupMapBtn").addEventListener("click", ()=>{
+  openMapPickerSheet("pickup");
+});
+document.getElementById("destMapBtn").addEventListener("click", ()=>{
+  openMapPickerSheet("dest");
+});
+
+/* ---------- Google Maps picker (drag pin + reverse geocode) ---------- */
+let mapsLoadPromise = null;
+function loadGoogleMaps(){
+  if(mapsLoadPromise) return mapsLoadPromise;
+  mapsLoadPromise = new Promise((resolve,reject)=>{
+    if(window.google && window.google.maps){ resolve(); return; }
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(state.apiKey)}&v=weekly`;
+    script.async = true;
+    script.onload = ()=>resolve();
+    script.onerror = ()=>{ mapsLoadPromise = null; reject(new Error("maps load failed")); };
+    document.head.appendChild(script);
+  });
+  return mapsLoadPromise;
+}
+
+async function reverseGeocode(lat, lng){
+  try{
+    const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${encodeURIComponent(state.apiKey)}`);
+    const data = await res.json();
+    if(data.results && data.results.length){
+      return data.results[0].formatted_address;
+    }
+  }catch(e){}
+  return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+}
+
+async function openMapPickerSheet(targetField){
+  if(!state.apiKey){
+    openSheet(`
+      <div class="sheet-title">${t("sheet_map_pick")}</div>
+      <div class="empty-state">
+        <div class="empty-state-icon">🔑</div>
+        <div class="empty-state-text">${t("need_api_key")}</div>
+      </div>
+      <button class="btn full ghost" onclick="window.__bc.closeSheet()">${t("sheet_cancel")}</button>
+    `);
+    return;
+  }
+
+  openSheet(`
+    <div class="sheet-title">${t("sheet_map_pick")}</div>
+    <div class="list-sub" style="margin-bottom:10px;">${t("map_drag_hint")}</div>
+    <div id="mapPickerCanvas" class="map-frame" style="height:300px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:13px;">…</div>
+    <div class="card" style="margin-top:10px;">
+      <div class="list-sub" id="mapPickerAddress">${t("map_locating")}</div>
+    </div>
+    <button class="btn full primary" id="mapPickerConfirmBtn" style="margin-top:4px;">${t("map_confirm")}</button>
+  `, async ()=>{
+    try{
+      await loadGoogleMaps();
+    }catch(e){
+      document.getElementById("mapPickerCanvas").textContent = "Failed to load map — check API key";
+      return;
+    }
+    initMapPicker(targetField);
+  });
+}
+
+function initMapPicker(targetField){
+  const canvas = document.getElementById("mapPickerCanvas");
+  if(!canvas) return;
+  canvas.textContent = "";
+  canvas.style.display = "block";
+
+  let center = { lat:-6.2088, lng:106.8456 }; // default Jakarta
+  if(lastCoords) center = lastCoords;
+
+  const finish = (map, marker) => {
+    const setup = (c)=>{
+      map.setCenter(c);
+      marker.setPosition(c);
+      updateAddressFromLatLng(c.lat, c.lng);
+    };
+    if(!lastCoords && navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(
+        pos => setup({lat:pos.coords.latitude, lng:pos.coords.longitude}),
+        () => updateAddressFromLatLng(center.lat, center.lng),
+        {timeout:5000}
+      );
+    } else {
+      updateAddressFromLatLng(center.lat, center.lng);
+    }
+  };
+
+  const map = new google.maps.Map(canvas, {
+    center, zoom:15, disableDefaultUI:true, zoomControl:true, gestureHandling:"greedy"
+  });
+  const marker = new google.maps.Marker({ position:center, map, draggable:true });
+
+  let currentLatLng = center;
+  async function updateAddressFromLatLng(lat,lng){
+    currentLatLng = {lat,lng};
+    const addrEl = document.getElementById("mapPickerAddress");
+    if(addrEl) addrEl.textContent = t("map_locating");
+    const addr = await reverseGeocode(lat,lng);
+    if(addrEl) addrEl.textContent = addr;
+  }
+
+  marker.addListener("dragend", ()=>{
+    const pos = marker.getPosition();
+    updateAddressFromLatLng(pos.lat(), pos.lng());
+  });
+  map.addListener("click", (e)=>{
+    marker.setPosition(e.latLng);
+    updateAddressFromLatLng(e.latLng.lat(), e.latLng.lng());
+  });
+
+  finish(map, marker);
+
+  const confirmBtn = document.getElementById("mapPickerConfirmBtn");
+  if(confirmBtn){
+    confirmBtn.onclick = ()=>{
+      const addr = document.getElementById("mapPickerAddress").textContent;
+      const field = document.getElementById(targetField==="dest" ? "destInput" : "pickupInput");
+      field.value = addr;
+      if(targetField==="pickup"){ lastCoords = currentLatLng; }
+      state.recent.unshift({label:addr, ts:Date.now()});
+      state.recent = state.recent.slice(0,8);
+      save();
+      renderRecent();
+      closeSheet();
+    };
+  }
+}
+
+function openPlaceSearchSheet(targetField){
+  if(!state.apiKey){
+    openSheet(`
+      <div class="sheet-title">${t("sheet_search_place")}</div>
+      <div class="empty-state">
+        <div class="empty-state-icon">🔑</div>
+        <div class="empty-state-text">${t("need_api_key")}</div>
+      </div>
+      <button class="btn full ghost" onclick="window.__bc.closeSheet()">${t("sheet_cancel")}</button>
+    `);
+    return;
+  }
+  openSheet(`
+    <div class="sheet-title">${t("sheet_search_place")}</div>
+    <div class="field"><input type="text" id="placeSearchInput" placeholder="${t('search_placeholder')}"></div>
+    <div id="placeSearchResults"></div>
+  `, ()=>{
+    const input = document.getElementById("placeSearchInput");
+    input.focus();
+    let debounceTimer;
+    input.addEventListener("input", ()=>{
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(()=>doPlaceSearch(input.value, targetField), 380);
+    });
+  });
+}
+
+async function doPlaceSearch(query, targetField){
+  const resultsEl = document.getElementById("placeSearchResults");
+  if(!resultsEl) return;
+  if(!query || query.trim().length < 2){ resultsEl.innerHTML=""; return; }
+  resultsEl.innerHTML = `<div class="empty-state"><div class="empty-state-text">…</div></div>`;
+  try{
+    const res = await fetch(`https://places.googleapis.com/v1/places:searchText`, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "X-Goog-Api-Key": state.apiKey,
+        "X-Goog-FieldMask":"places.displayName,places.formattedAddress,places.location"
+      },
+      body: JSON.stringify({ textQuery: query })
+    });
+    const data = await res.json();
+    if(!data.places || !data.places.length){
+      resultsEl.innerHTML = `<div class="empty-state"><div class="empty-state-text">No results</div></div>`;
+      return;
+    }
+    resultsEl.innerHTML = data.places.map((p,i)=>`
+      <div class="search-result" data-idx="${i}">
+        <div class="list-icon">📍</div>
+        <div class="list-body">
+          <div class="list-title">${escapeHtml(p.displayName?.text||"")}</div>
+          <div class="list-sub">${escapeHtml(p.formattedAddress||"")}</div>
+        </div>
+      </div>
+    `).join("");
+    resultsEl.querySelectorAll(".search-result").forEach(el=>{
+      el.addEventListener("click", ()=>{
+        const p = data.places[parseInt(el.getAttribute("data-idx"))];
+        const label = (p.displayName?.text||"") + (p.formattedAddress ? (" — "+p.formattedAddress) : "");
+        document.getElementById(targetField==="dest" ? "destInput" : "pickupInput").value = label;
+        if(p.location){
+          if(targetField==="dest"){ /* store for potential eta refinement */ }
+        }
+        state.recent.unshift({label, ts:Date.now()});
+        state.recent = state.recent.slice(0,8);
+        save();
+        renderRecent();
+        closeSheet();
+      });
+    });
+  }catch(e){
+    resultsEl.innerHTML = `<div class="empty-state"><div class="empty-state-text">Search failed — check API key</div></div>`;
+  }
+}
+
+function escapeHtml(s){
+  const d = document.createElement("div"); d.textContent = s||""; return d.innerHTML;
+}
+
+document.getElementById("callDriverBtn").addEventListener("click", async ()=>{
+  const pickup = document.getElementById("pickupInput").value.trim();
+  const dest = document.getElementById("destInput").value.trim();
+  const driver = state.drivers.find(d=>d.id===state.activeDriverId);
+  if(!driver){
+    toast(state.lang==="ko"?"먼저 기사를 선택하세요":state.lang==="id"?"Pilih sopir terlebih dahulu":"Select a driver first");
+    return;
+  }
+  if(!pickup || !dest){
+    toast(state.lang==="ko"?"픽업/목적지를 입력하세요":state.lang==="id"?"Isi lokasi jemput & tujuan":"Enter pickup and destination");
+    return;
+  }
+  const ride = { id: uid("r"), driverId: driver.id, pickup, dest, ts: Date.now(), status:"calling", eta:null };
+  state.rides.unshift(ride);
+  state.pendingCall = { pickup, dest, ts: ride.ts };
+  save();
+
+  const msg = (state.lang==="ko" ? `🚕 호출!\n픽업: ${pickup}\n목적지: ${dest}` :
+    state.lang==="id" ? `🚕 Panggilan!\nJemput: ${pickup}\nTujuan: ${dest}` :
+    `🚕 Call!\nPickup: ${pickup}\nDestination: ${dest}`);
+
+  document.getElementById("callStatusRow").style.display = "inline-flex";
+  document.getElementById("callStatusRow").className = "ticket-status pending";
+  document.getElementById("callStatusText").textContent = t("status_calling");
+
+  if(driver.wa){
+    window.open(waLink(driver.wa, msg), "_blank");
+  }
+  toast(t("toast_call_sent"));
+  renderTodayRides();
+});
+
+/* Navigation deep links */
+document.querySelectorAll(".nav-app").forEach(el=>{
+  el.addEventListener("click", ()=>{
+    const dest = state.role==="boss"
+      ? document.getElementById("destInput")?.value.trim()
+      : (state.pendingCall?.dest || "");
+    if(!dest){
+      toast(state.lang==="ko"?"목적지를 먼저 입력하세요":state.lang==="id"?"Isi tujuan dulu":"Enter a destination first");
+      return;
+    }
+    const q = encodeURIComponent(dest);
+    const app = el.getAttribute("data-nav");
+    let url;
+    if(app==="google") url = `https://www.google.com/maps/dir/?api=1&destination=${q}`;
+    else if(app==="waze") url = `https://waze.com/ul?q=${q}&navigate=yes`;
+    window.open(url, "_blank");
+  });
+});
+
+function renderRecent(){
+  const el = document.getElementById("recentList");
+  if(!state.recent.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🕘</div><div class="empty-state-text">—</div></div>`;
+    return;
+  }
+  el.innerHTML = state.recent.map(r=>`
+    <div class="list-item" data-recent="${escapeHtml(r.label)}">
+      <div class="list-icon">🕘</div>
+      <div class="list-body"><div class="list-title">${escapeHtml(r.label)}</div></div>
+    </div>
+  `).join("");
+  el.querySelectorAll("[data-recent]").forEach(item=>{
+    item.addEventListener("click", ()=>{
+      document.getElementById("destInput").value = item.getAttribute("data-recent");
+    });
+  });
+}
+
+/* ============================================================
+   DRIVERS SCREEN
+=============================================================== */
+function renderDriverList(){
+  const el = document.getElementById("driverList");
+  if(!state.drivers.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🧑‍✈️</div><div class="empty-state-text">${t("empty_drivers")}</div></div>`;
+    updateActiveDriverTicket();
+    return;
+  }
+  el.innerHTML = state.drivers.map(d=>`
+    <div class="driver-slot ${d.id===state.activeDriverId ? 'selected':''}" data-driver="${d.id}">
+      <div class="driver-avatar">${initials(d.name)}</div>
+      <div style="flex:1;">
+        <div class="driver-meta-name">${escapeHtml(d.name)}</div>
+        <div class="driver-meta-sub">${escapeHtml(d.wa||"—")}</div>
+      </div>
+      <div class="slot-link-btn" data-invite="${d.id}">🔗</div>
+    </div>
+  `).join("");
+  el.querySelectorAll("[data-driver]").forEach(slot=>{
+    slot.addEventListener("click", (e)=>{
+      if(e.target.closest("[data-invite]")) return;
+      state.activeDriverId = slot.getAttribute("data-driver");
+      save();
+      renderDriverList();
+      updateActiveDriverTicket();
+    });
+  });
+  el.querySelectorAll("[data-invite]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const driver = state.drivers.find(d=>d.id===btn.getAttribute("data-invite"));
+      openInviteSheet(driver);
+    });
+  });
+  updateActiveDriverTicket();
+}
+
+function openInviteSheet(driver){
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.searchParams.set("driver", encodeURIComponent(driver.name));
+  url.searchParams.set("boss", state.bossWa || "");
+  url.searchParams.set("id", driver.id);
+  const link = url.toString();
+  openSheet(`
+    <div class="sheet-title">${t("sheet_invite_link")}</div>
+    <div class="card"><div class="list-sub" style="word-break:break-all;">${escapeHtml(link)}</div></div>
+    <button class="btn full primary" id="sendInviteBtn" style="margin-bottom:8px;">💬 ${t("sheet_send_invite")}</button>
+    <button class="btn full ghost" id="copyInviteBtn">${t("sheet_copy_link")}</button>
+  `, ()=>{
+    document.getElementById("sendInviteBtn").addEventListener("click", ()=>{
+      const msg = (state.lang==="ko" ? `BossCall 초대\n${link}` : state.lang==="id" ? `Undangan BossCall\n${link}` : `BossCall invite\n${link}`);
+      window.open(waLink(driver.wa, msg), "_blank");
+    });
+    document.getElementById("copyInviteBtn").addEventListener("click", ()=>{
+      navigator.clipboard?.writeText(link).then(()=>toast(t("toast_link_copied")));
+    });
+  });
+}
+
+function updateActiveDriverTicket(){
+  const driver = state.drivers.find(d=>d.id===state.activeDriverId);
+  document.getElementById("activeDriverInitial").textContent = driver ? initials(driver.name) : "–";
+  document.getElementById("activeDriverName").textContent = driver ? driver.name : t("no_driver");
+  document.getElementById("activeDriverSub").textContent = driver ? (driver.wa || "—") : "—";
+}
+
+document.getElementById("addDriverBtn").addEventListener("click", ()=>{
+  openSheet(`
+    <div class="sheet-title">${t("sheet_add_driver")}</div>
+    <div class="field"><label>${t("sheet_driver_name")}</label><input type="text" id="newDriverName"></div>
+    <div class="field"><label>${t("sheet_driver_wa")}</label><input type="tel" id="newDriverWa" placeholder="+62 8xx xxxx xxxx"></div>
+    <button class="btn full primary" id="saveDriverBtn">${t("sheet_save")}</button>
+  `, ()=>{
+    document.getElementById("newDriverName").focus();
+    document.getElementById("saveDriverBtn").addEventListener("click", ()=>{
+      const name = document.getElementById("newDriverName").value.trim();
+      const wa = document.getElementById("newDriverWa").value.trim();
+      if(!name) return;
+      const d = { id: uid("drv"), name, wa };
+      state.drivers.push(d);
+      if(!state.activeDriverId) state.activeDriverId = d.id;
+      save();
+      closeSheet();
+      renderDriverList();
+      toast(t("toast_saved"));
+    });
+  });
+});
+
+function renderTodayRides(){
+  const el = document.getElementById("todayRideLog");
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todays = state.rides.filter(r=>r.ts >= today.getTime());
+  document.getElementById("todayRidesNum").textContent = todays.length;
+  const clocked = state.clock.status === "in";
+  document.getElementById("clockStatusNum").textContent = clocked ? "🟢" : "⚪";
+  if(!todays.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🚕</div><div class="empty-state-text">${t("empty_rides")}</div></div>`;
+    return;
+  }
+  el.innerHTML = todays.map(r=>{
+    const driver = state.drivers.find(d=>d.id===r.driverId);
+    const time = new Date(r.ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    return `
+    <div class="list-item">
+      <div class="list-icon">${r.status==='accepted' ? '✅':'📞'}</div>
+      <div class="list-body">
+        <div class="list-title">${escapeHtml(r.pickup)} → ${escapeHtml(r.dest)}</div>
+        <div class="list-sub">${escapeHtml(driver?.name||'—')} · ${time}</div>
+      </div>
+      <div class="list-value">${r.eta ? r.eta+'min' : ''}</div>
+    </div>`;
+  }).join("");
+}
+
+/* ============================================================
+   FAVORITES
+=============================================================== */
+function renderFavorites(){
+  const el = document.getElementById("favoritesList");
+  if(!state.favorites.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⭐</div><div class="empty-state-text">${t("empty_favorites")}</div></div>`;
+    return;
+  }
+  el.innerHTML = state.favorites.map(f=>`
+    <div class="list-item" data-fav="${f.id}">
+      <div class="list-icon">⭐</div>
+      <div class="list-body">
+        <div class="list-title">${escapeHtml(f.name)}</div>
+        <div class="list-sub">${escapeHtml(f.addr||'')}</div>
+      </div>
+      <div class="slot-link-btn" data-fav-del="${f.id}" style="border-color:transparent;">✕</div>
+    </div>
+  `).join("");
+  el.querySelectorAll("[data-fav]").forEach(item=>{
+    item.addEventListener("click", (e)=>{
+      if(e.target.closest("[data-fav-del]")) return;
+      const fav = state.favorites.find(f=>f.id===item.getAttribute("data-fav"));
+      document.getElementById("destInput").value = fav.addr || fav.name;
+      document.querySelectorAll("#bossTabbar .tab-item").forEach(x=>x.classList.remove("active"));
+      document.querySelector('[data-tab="screen-call"]').classList.add("active");
+      document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+      document.getElementById("screen-call").classList.add("active");
+    });
+  });
+  el.querySelectorAll("[data-fav-del]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      state.favorites = state.favorites.filter(f=>f.id!==btn.getAttribute("data-fav-del"));
+      save(); renderFavorites();
+      toast(t("toast_deleted"));
+    });
+  });
+}
+
+document.getElementById("addFavoriteBtn").addEventListener("click", ()=>{
+  openSheet(`
+    <div class="sheet-title">${t("sheet_add_favorite")}</div>
+    <div class="field"><label>${t("sheet_favorite_name")}</label><input type="text" id="favName"></div>
+    <div class="field"><label>${t("sheet_favorite_addr")}</label><input type="text" id="favAddr"></div>
+    <button class="btn full primary" id="saveFavBtn">${t("sheet_save")}</button>
+  `, ()=>{
+    document.getElementById("favName").focus();
+    document.getElementById("saveFavBtn").addEventListener("click", ()=>{
+      const name = document.getElementById("favName").value.trim();
+      const addr = document.getElementById("favAddr").value.trim();
+      if(!name) return;
+      state.favorites.push({id: uid("fav"), name, addr});
+      save(); closeSheet(); renderFavorites();
+      toast(t("toast_saved"));
+    });
+  });
+});
+
+/* ============================================================
+   STATS
+=============================================================== */
+function renderStats(){
+  const el = document.getElementById("monthTiles");
+  const now = new Date();
+  const byMonth = {};
+  state.rides.forEach(r=>{
+    const d = new Date(r.ts);
+    const key = d.getFullYear()+"-"+(d.getMonth()+1);
+    byMonth[key] = (byMonth[key]||0)+1;
+  });
+  const thisKey = now.getFullYear()+"-"+(now.getMonth()+1);
+  const thisCount = byMonth[thisKey] || 0;
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  const lastKey = lastMonthDate.getFullYear()+"-"+(lastMonthDate.getMonth()+1);
+  const lastCount = byMonth[lastKey] || 0;
+
+  el.innerHTML = `
+    <div class="stat-tile"><div class="stat-tile-num">${thisCount}</div><div class="stat-tile-label">${state.lang==='ko'?'이번 달':state.lang==='id'?'Bulan ini':'This month'}</div></div>
+    <div class="stat-tile"><div class="stat-tile-num">${lastCount}</div><div class="stat-tile-label">${state.lang==='ko'?'지난 달':state.lang==='id'?'Bulan lalu':'Last month'}</div></div>
+  `;
+
+  // last 6 months bar chart
+  const bars = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const key = d.getFullYear()+"-"+(d.getMonth()+1);
+    bars.push({label: d.toLocaleDateString([], {month:'short'}), count: byMonth[key]||0, key});
+  }
+  const max = Math.max(1, ...bars.map(b=>b.count));
+  document.getElementById("monthBars").innerHTML = bars.map(b=>`
+    <div class="bar-row" data-month="${b.key}" style="cursor:pointer;">
+      <div class="bar-label">${b.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(b.count/max*100)}%"></div></div>
+      <div class="bar-value">${b.count}</div>
+    </div>
+  `).join("");
+  document.querySelectorAll("[data-month]").forEach(row=>{
+    row.addEventListener("click", ()=>renderDayDetail(row.getAttribute("data-month")));
+  });
+}
+
+function renderDayDetail(monthKey){
+  const [y,m] = monthKey.split("-").map(Number);
+  const rides = state.rides.filter(r=>{
+    const d = new Date(r.ts);
+    return d.getFullYear()===y && (d.getMonth()+1)===m;
+  });
+  const byDay = {};
+  rides.forEach(r=>{
+    const d = new Date(r.ts).getDate();
+    byDay[d] = (byDay[d]||0)+1;
+  });
+  const days = Object.keys(byDay).sort((a,b)=>b-a);
+  const el = document.getElementById("dayDetail");
+  if(!days.length){ el.innerHTML=""; return; }
+  el.innerHTML = `<div class="card">` + days.map(d=>`
+    <div class="row"><span style="font-size:13.5px;">${m}/${d}</span><span class="list-value">${byDay[d]} ${state.lang==='ko'?'건':state.lang==='id'?'perjalanan':'rides'}</span></div>
+  `).join("") + `</div>`;
+}
+
+/* ============================================================
+   PAYROLL / FUEL / WHATSAPP / SETTINGS
+=============================================================== */
+function bindPayrollInputs(){
+  const ids = ["payBase","payOT","payMeal","payVehicle","payBonus","payInsurance"];
+  const map = {payBase:"base",payOT:"ot",payMeal:"meal",payVehicle:"vehicle",payBonus:"bonus",payInsurance:"insurance"};
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    el.value = state.payroll[map[id]] || "";
+    el.addEventListener("input", ()=>{
+      state.payroll[map[id]] = parseFloat(el.value)||0;
+      save();
+      updatePayrollPreview();
+    });
+  });
+  updatePayrollPreview();
+}
+function updatePayrollPreview(){
+  const p = state.payroll;
+  const total = (p.base||0)+(p.ot||0)+(p.meal||0)+(p.vehicle||0)+(p.bonus||0)+(p.insurance||0);
+  document.getElementById("payrollPreview").textContent = fmtNum(total);
+}
+
+function renderFuel(){
+  const now = new Date();
+  const thisMonth = state.fuel.filter(f=>{
+    const d = new Date(f.ts);
+    return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+  });
+  const liters = thisMonth.reduce((s,f)=>s+(f.liters||0),0);
+  const cost = thisMonth.reduce((s,f)=>s+(f.cost||0),0);
+  document.getElementById("fuelSummary").textContent = `${liters} L · ${fmtNum(cost)}`;
+
+  const el = document.getElementById("fuelList");
+  if(!state.fuel.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⛽</div><div class="empty-state-text">${t("empty_fuel")}</div></div>`;
+    return;
+  }
+  el.innerHTML = state.fuel.slice(0,10).map(f=>`
+    <div class="list-item">
+      <div class="list-icon">⛽</div>
+      <div class="list-body">
+        <div class="list-title">${f.liters} L</div>
+        <div class="list-sub">${new Date(f.ts).toLocaleDateString()}</div>
+      </div>
+      <div class="list-value">${fmtNum(f.cost)}</div>
+    </div>
+  `).join("");
+}
+
+document.getElementById("addFuelBtn").addEventListener("click", ()=>{
+  openSheet(`
+    <div class="sheet-title">${t("sheet_add_fuel")}</div>
+    <div class="field-row">
+      <div class="field"><label>${t("fuel_liters")}</label><input type="number" id="fuelLiters"></div>
+      <div class="field"><label>${t("fuel_cost")}</label><input type="number" id="fuelCost"></div>
+    </div>
+    <button class="btn full primary" id="saveFuelBtn">${t("sheet_save")}</button>
+  `, ()=>{
+    document.getElementById("saveFuelBtn").addEventListener("click", ()=>{
+      const liters = parseFloat(document.getElementById("fuelLiters").value)||0;
+      const cost = parseFloat(document.getElementById("fuelCost").value)||0;
+      if(!liters && !cost) return;
+      state.fuel.unshift({id:uid("fuel"), liters, cost, ts:Date.now()});
+      save(); closeSheet(); renderFuel();
+      toast(t("toast_saved"));
+      if(state.notify.fuel && state.bossWa && state.role==="driver"){
+        const msg = state.lang==='ko' ? `⛽ 주유 ${liters}L / ${cost}` : state.lang==='id' ? `⛽ Isi bensin ${liters}L / ${cost}` : `⛽ Fuel ${liters}L / ${cost}`;
+        window.open(waLink(state.bossWa, msg), "_blank");
+      }
+    });
+  });
+});
+
+document.getElementById("bossWaInput").addEventListener("input", (e)=>{
+  state.bossWa = e.target.value; save();
+});
+document.getElementById("apiKeyInput").addEventListener("input", (e)=>{
+  state.apiKey = e.target.value.trim(); save();
+});
+document.querySelectorAll("[data-notify]").forEach(tg=>{
+  tg.addEventListener("click", ()=>{
+    const key = tg.getAttribute("data-notify");
+    state.notify[key] = !state.notify[key];
+    tg.classList.toggle("on", state.notify[key]);
+    save();
+  });
+});
+document.getElementById("testWaBtn").addEventListener("click", ()=>{
+  const target = state.role==="boss" ? (state.drivers.find(d=>d.id===state.activeDriverId)?.wa) : state.bossWa;
+  if(!target){ toast("No number set"); return; }
+  const msg = "BossCall test message ✅";
+  window.open(waLink(target, msg), "_blank");
+});
+
+document.getElementById("switchModeBtn").addEventListener("click", ()=>{
+  state.role = state.role === "boss" ? "driver" : "boss";
+  save();
+  render();
+});
+
+document.getElementById("resetDataBtn").addEventListener("click", ()=>{
+  if(confirm(t("confirm_reset"))){
+    localStorage.removeItem(DB_KEY);
+    state = loadState();
+    render();
+  }
+});
+
+/* ============================================================
+   DRIVER VIEW
+=============================================================== */
+let workTimerInterval = null;
+
+function renderDriverHome(){
+  const wrap = document.getElementById("driverHeroWrap");
+  const pending = state.pendingCall;
+  const isCalling = !!pending;
+
+  if(isCalling){
+    wrap.innerHTML = `
+      <div class="driver-hero calling">
+        <div class="driver-hero-icon">📲</div>
+        <div class="driver-hero-title">${t("driver_calling_title")}</div>
+        <div class="driver-hero-sub">${escapeHtml(pending.pickup)} → ${escapeHtml(pending.dest)}</div>
+        <button class="ok-boss-btn" id="okBossBtn">${t("ok_boss")}</button>
+      </div>
+    `;
+    document.getElementById("okBossBtn").addEventListener("click", handleOkBoss);
+  } else {
+    wrap.innerHTML = `
+      <div class="driver-hero">
+        <div class="driver-hero-icon">☁️</div>
+        <div class="driver-hero-title">${t("driver_idle_title")}</div>
+        <div class="driver-hero-sub">${t("driver_idle_sub")}</div>
+      </div>
+    `;
+  }
+}
+
+async function handleOkBoss(){
+  const pending = state.pendingCall;
+  if(!pending) return;
+  let etaText = "—";
+  try{
+    const coords = await getGeo();
+    // crude eta estimate vs pickup text isn't geocoded; just show distance-free confirmation
+    etaText = "~10 min";
+  }catch(e){}
+
+  const msg = state.lang==='ko' ? `👍 확인했습니다! 예상 도착: ${etaText}` :
+    state.lang==='id' ? `👍 Siap! Estimasi tiba: ${etaText}` :
+    `👍 Confirmed! ETA: ${etaText}`;
+  if(state.bossWa){
+    window.open(waLink(state.bossWa, msg), "_blank");
+  }
+  // mark matching ride accepted
+  const ride = state.rides.find(r=>r.ts===pending.ts);
+  if(ride){ ride.status = "accepted"; ride.eta = 10; }
+  state.pendingCall = null;
+  save();
+  toast(t("toast_ok_sent"));
+  renderDriverHome();
+  renderDriverRideLog();
+}
+
+document.getElementById("clockBtn").addEventListener("click", ()=>{
+  if(state.clock.status === "out"){
+    state.clock = {status:"in", since: Date.now()};
+    if(state.notify.clock && state.bossWa){
+      const msg = state.lang==='ko'?'🟢 출근했습니다':state.lang==='id'?'🟢 Absen masuk':'🟢 Clocked in';
+      window.open(waLink(state.bossWa, msg), "_blank");
+    }
+  } else {
+    state.clock = {status:"out", since:null};
+    if(state.notify.clock && state.bossWa){
+      const msg = state.lang==='ko'?'⚪ 퇴근했습니다':state.lang==='id'?'⚪ Absen keluar':'⚪ Clocked out';
+      window.open(waLink(state.bossWa, msg), "_blank");
+    }
+    clearInterval(workTimerInterval);
+    document.getElementById("workTimerDisplay").textContent = "00:00:00";
+  }
+  save();
+  updateClockUi();
+});
+
+function updateClockUi(){
+  const btn = document.getElementById("clockBtn");
+  btn.textContent = state.clock.status === "in" ? t("btn_clock_out") : t("btn_clock_in");
+  clearInterval(workTimerInterval);
+  if(state.clock.status === "in" && state.clock.since){
+    workTimerInterval = setInterval(()=>{
+      const secs = Math.floor((Date.now()-state.clock.since)/1000);
+      const h = String(Math.floor(secs/3600)).padStart(2,"0");
+      const m = String(Math.floor((secs%3600)/60)).padStart(2,"0");
+      const s = String(secs%60).padStart(2,"0");
+      document.getElementById("workTimerDisplay").textContent = `${h}:${m}:${s}`;
+    }, 1000);
+  }
+}
+
+function renderDriverRideLog(){
+  const el = document.getElementById("driverRideLog");
+  const mine = state.rides.slice(0,15);
+  if(!mine.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🚕</div><div class="empty-state-text">${t("empty_rides")}</div></div>`;
+    return;
+  }
+  el.innerHTML = mine.map(r=>{
+    const time = new Date(r.ts).toLocaleDateString([], {month:'short',day:'numeric'});
+    return `
+    <div class="list-item">
+      <div class="list-icon">${r.status==='accepted' ? '✅':'📞'}</div>
+      <div class="list-body">
+        <div class="list-title">${escapeHtml(r.pickup)} → ${escapeHtml(r.dest)}</div>
+        <div class="list-sub">${time}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+/* ============================================================
+   MASTER RENDER
+=============================================================== */
+function render(){
+  applyI18nStatic();
+
+  document.getElementById("bossTabbar").style.display = state.role === "boss" ? "flex" : "none";
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+
+  if(state.role === "boss"){
+    document.getElementById("screen-call").classList.add("active");
+    document.querySelectorAll("#bossTabbar .tab-item").forEach(x=>x.classList.remove("active"));
+    document.querySelector('[data-tab="screen-call"]').classList.add("active");
+    renderDriverList();
+    renderFavorites();
+    renderRecent();
+    renderTodayRides();
+    bindPayrollInputs();
+    renderFuel();
+    document.getElementById("bossWaInput").value = state.bossWa || "";
+    document.getElementById("apiKeyInput").value = state.apiKey || "";
+    document.querySelectorAll("[data-notify]").forEach(tg=>{
+      tg.classList.toggle("on", !!state.notify[tg.getAttribute("data-notify")]);
+    });
+    document.getElementById("switchModeBtn").textContent = t("btn_switch_driver");
+  } else {
+    document.getElementById("screen-driver-home").classList.add("active");
+    renderDriverHome();
+    updateClockUi();
+    renderDriverRideLog();
+    document.getElementById("bossWaInput") && (document.getElementById("bossWaInput").value = state.bossWa || "");
+  }
+}
+
+/* expose minimal API for inline sheet handlers */
+window.__bc = { closeSheet };
+
+/* ============================================================
+   INIT
+=============================================================== */
+parseUrlParams();
+if(document.getElementById("onboardScreen").style.display !== "flex"){
+  render();
+}
+
+// simulate driver receiving a call in real time when boss calls (same-device demo / same localStorage only)
+window.addEventListener("storage", (e)=>{
+  if(e.key === DB_KEY){
+    state = loadState();
+    render();
+  }
+});
+
+})();
+</script>
+</body>
+</html>
