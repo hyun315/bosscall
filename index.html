@@ -441,6 +441,7 @@ button{font-family:inherit;}
     </div>
     <div class="topbar-actions">
       <div class="lang-pill" id="langBtn">EN</div>
+      <div class="icon-btn" id="driverSettingsBtn" style="display:none;">⚙️</div>
       <div class="icon-btn" id="darkToggleBtn">◐</div>
     </div>
   </div>
@@ -620,7 +621,10 @@ button{font-family:inherit;}
     <div class="section-label" data-i18n="lbl_clock">Clock</div>
     <div class="card">
       <div class="timer-display" id="workTimerDisplay">00:00:00</div>
-      <button class="btn full primary" id="clockBtn" data-i18n="btn_clock_in">Clock in</button>
+      <div class="field-row" style="margin-top:8px;">
+        <button class="btn primary" id="clockInBtn" style="flex:1;" data-i18n="btn_clock_in">Clock in</button>
+        <button class="btn" id="clockOutBtn" style="flex:1;" data-i18n="btn_clock_out">Clock out</button>
+      </div>
     </div>
 
     <div class="section-label" data-i18n="lbl_ride_log">Ride log</div>
@@ -680,7 +684,11 @@ const I18N = {
     empty_favorites:"Belum ada favorit tersimpan.", empty_rides:"Belum ada perjalanan hari ini.",
     empty_fuel:"Belum ada catatan bensin.", confirm_reset:"Hapus semua data aplikasi? Tindakan ini tidak bisa dibatalkan.",
     confirm_delete_driver:"Hapus sopir ini?", sheet_add_driver:"Sopir baru", sheet_driver_name:"Nama sopir",
-    sheet_driver_wa:"Nomor WhatsApp", sheet_save:"Simpan", sheet_cancel:"Batal", sheet_invite_link:"Tautan undangan",
+    sheet_driver_wa:"Nomor WhatsApp", sheet_save:"Simpan", sheet_cancel:"Batal", sheet_confirm:"Konfirmasi", sheet_invite_link:"Tautan undangan",
+    confirm_clock_in_title:"Absen masuk?", confirm_clock_in_desc:"Ini akan mencatat waktu masuk Anda sekarang.",
+    confirm_clock_out_title:"Absen keluar?", confirm_clock_out_desc:"Ini akan mengakhiri jam kerja Anda hari ini.",
+    driver_settings_title:"Pengaturan", already_clocked_in:"Anda sudah absen masuk", already_clocked_out:"Anda belum absen masuk",
+    lbl_active_trip:"Perjalanan aktif", btn_end_trip:"Selesaikan perjalanan", toast_trip_ended:"Perjalanan selesai",
     sheet_send_invite:"Kirim via WhatsApp", sheet_copy_link:"Salin tautan", sheet_add_favorite:"Favorit baru",
     sheet_favorite_name:"Nama tempat", sheet_favorite_addr:"Alamat", sheet_add_fuel:"Catatan bensin",
     fuel_liters:"Liter", fuel_cost:"Biaya", sheet_search_place:"Cari tempat",
@@ -718,7 +726,11 @@ const I18N = {
     empty_favorites:"저장된 즐겨찾기가 없습니다.", empty_rides:"오늘 운행 기록이 없습니다.",
     empty_fuel:"주유 기록이 없습니다.", confirm_reset:"모든 앱 데이터를 삭제할까요? 이 작업은 되돌릴 수 없습니다.",
     confirm_delete_driver:"이 기사를 삭제할까요?", sheet_add_driver:"기사 추가", sheet_driver_name:"기사 이름",
-    sheet_driver_wa:"WhatsApp 번호", sheet_save:"저장", sheet_cancel:"취소", sheet_invite_link:"초대 링크",
+    sheet_driver_wa:"WhatsApp 번호", sheet_save:"저장", sheet_cancel:"취소", sheet_confirm:"확인", sheet_invite_link:"초대 링크",
+    confirm_clock_in_title:"출근 처리할까요?", confirm_clock_in_desc:"지금 시각으로 출근 기록이 저장됩니다.",
+    confirm_clock_out_title:"퇴근 처리할까요?", confirm_clock_out_desc:"오늘 근무가 종료 처리됩니다.",
+    driver_settings_title:"설정", already_clocked_in:"이미 출근 상태입니다", already_clocked_out:"아직 출근하지 않았습니다",
+    lbl_active_trip:"진행중 운행", btn_end_trip:"운행 종료", toast_trip_ended:"운행이 종료되었습니다",
     sheet_send_invite:"WhatsApp으로 보내기", sheet_copy_link:"링크 복사", sheet_add_favorite:"즐겨찾기 추가",
     sheet_favorite_name:"장소 이름", sheet_favorite_addr:"주소", sheet_add_fuel:"주유 기록 추가",
     fuel_liters:"주유량(L)", fuel_cost:"비용", sheet_search_place:"장소 검색",
@@ -756,7 +768,11 @@ const I18N = {
     empty_favorites:"No favorites saved yet.", empty_rides:"No rides logged today.",
     empty_fuel:"No fuel entries yet.", confirm_reset:"Delete all app data? This cannot be undone.",
     confirm_delete_driver:"Delete this driver?", sheet_add_driver:"New driver", sheet_driver_name:"Driver name",
-    sheet_driver_wa:"WhatsApp number", sheet_save:"Save", sheet_cancel:"Cancel", sheet_invite_link:"Invite link",
+    sheet_driver_wa:"WhatsApp number", sheet_save:"Save", sheet_cancel:"Cancel", sheet_confirm:"Confirm", sheet_invite_link:"Invite link",
+    confirm_clock_in_title:"Clock in?", confirm_clock_in_desc:"This will record your start time now.",
+    confirm_clock_out_title:"Clock out?", confirm_clock_out_desc:"This will end your shift for today.",
+    driver_settings_title:"Settings", already_clocked_in:"Already clocked in", already_clocked_out:"Not clocked in yet",
+    lbl_active_trip:"Active trip", btn_end_trip:"End trip", toast_trip_ended:"Trip ended",
     sheet_send_invite:"Send via WhatsApp", sheet_copy_link:"Copy link", sheet_add_favorite:"New favorite",
     sheet_favorite_name:"Place name", sheet_favorite_addr:"Address", sheet_add_fuel:"Add fuel entry",
     fuel_liters:"Liters", fuel_cost:"Cost", sheet_search_place:"Search place",
@@ -790,7 +806,8 @@ function loadState(){
     payroll:{base:0,ot:0,meal:0,vehicle:0,bonus:0,insurance:0},
     notify:{call:true,accept:true,clock:false,fuel:false},
     clock:{status:"out", since:null}, // driver clock state
-    pendingCall:null // {pickup,dest,ts} for driver view
+    pendingCall:null, // {pickup,dest,ts} for driver view
+    activeRide:null // {pickup,dest} current accepted ride for driver nav
   };
 }
 let state = loadState();
@@ -926,6 +943,24 @@ document.getElementById("darkToggleBtn").addEventListener("click", ()=>{
   toast(state.lang==="ko" ? "다크 모드는 항상 켜져 있어요" : state.lang==="id" ? "Mode gelap selalu aktif" : "Dark mode is always on");
 });
 
+document.getElementById("driverSettingsBtn").addEventListener("click", ()=>{
+  openSheet(`
+    <div class="sheet-title">${t("driver_settings_title")}</div>
+    <div class="field"><label>${t("lbl_boss_wa")}</label><input type="tel" id="driverBossWaInput" placeholder="+62 8xx xxxx xxxx"></div>
+    <button class="btn full primary" id="driverSwitchBossBtn">${t("btn_switch_boss")}</button>
+  `, ()=>{
+    const input = document.getElementById("driverBossWaInput");
+    input.value = state.bossWa || "";
+    input.addEventListener("input", ()=>{ state.bossWa = input.value; save(); });
+    document.getElementById("driverSwitchBossBtn").addEventListener("click", ()=>{
+      state.role = "boss";
+      save();
+      closeSheet();
+      render();
+    });
+  });
+});
+
 /* ============================================================
    BOSS: CALL SCREEN
 =============================================================== */
@@ -934,7 +969,13 @@ document.getElementById("gpsBtn").addEventListener("click", async ()=>{
     toast(t("btn_gps")+"...");
     const coords = await getGeo();
     lastCoords = coords;
-    document.getElementById("pickupInput").value = coords.lat.toFixed(5)+", "+coords.lng.toFixed(5);
+    if(state.apiKey){
+      const addr = await reverseGeocode(coords.lat, coords.lng);
+      document.getElementById("pickupInput").value = addr;
+    }else{
+      document.getElementById("pickupInput").value = coords.lat.toFixed(5)+", "+coords.lng.toFixed(5);
+      toast(t("need_api_key"));
+    }
   }catch(e){
     toast("GPS error");
   }
@@ -1198,7 +1239,7 @@ document.querySelectorAll(".nav-app").forEach(el=>{
   el.addEventListener("click", ()=>{
     const dest = state.role==="boss"
       ? document.getElementById("destInput")?.value.trim()
-      : (state.pendingCall?.dest || "");
+      : (state.pendingCall?.dest || state.activeRide?.dest || "");
     if(!dest){
       toast(state.lang==="ko"?"목적지를 먼저 입력하세요":state.lang==="id"?"Isi tujuan dulu":"Enter a destination first");
       return;
@@ -1599,6 +1640,22 @@ function renderDriverHome(){
       </div>
     `;
     document.getElementById("okBossBtn").addEventListener("click", handleOkBoss);
+  } else if(state.activeRide){
+    const ride = state.activeRide;
+    wrap.innerHTML = `
+      <div class="driver-hero calling">
+        <div class="driver-hero-icon">🚕</div>
+        <div class="driver-hero-title">${t("lbl_active_trip")}</div>
+        <div class="driver-hero-sub">${escapeHtml(ride.pickup)} → ${escapeHtml(ride.dest)}</div>
+        <button class="ok-boss-btn" id="endTripBtn" style="background:var(--signal);">${t("btn_end_trip")}</button>
+      </div>
+    `;
+    document.getElementById("endTripBtn").addEventListener("click", ()=>{
+      state.activeRide = null;
+      save();
+      toast(t("toast_trip_ended"));
+      renderDriverHome();
+    });
   } else {
     wrap.innerHTML = `
       <div class="driver-hero">
@@ -1629,6 +1686,7 @@ async function handleOkBoss(){
   // mark matching ride accepted
   const ride = state.rides.find(r=>r.ts===pending.ts);
   if(ride){ ride.status = "accepted"; ride.eta = 10; }
+  state.activeRide = { pickup: pending.pickup, dest: pending.dest };
   state.pendingCall = null;
   save();
   toast(t("toast_ok_sent"));
@@ -1636,29 +1694,58 @@ async function handleOkBoss(){
   renderDriverRideLog();
 }
 
-document.getElementById("clockBtn").addEventListener("click", ()=>{
-  if(state.clock.status === "out"){
-    state.clock = {status:"in", since: Date.now()};
-    if(state.notify.clock && state.bossWa){
-      const msg = state.lang==='ko'?'🟢 출근했습니다':state.lang==='id'?'🟢 Absen masuk':'🟢 Clocked in';
-      window.open(waLink(state.bossWa, msg), "_blank");
-    }
-  } else {
-    state.clock = {status:"out", since:null};
-    if(state.notify.clock && state.bossWa){
-      const msg = state.lang==='ko'?'⚪ 퇴근했습니다':state.lang==='id'?'⚪ Absen keluar':'⚪ Clocked out';
-      window.open(waLink(state.bossWa, msg), "_blank");
-    }
-    clearInterval(workTimerInterval);
-    document.getElementById("workTimerDisplay").textContent = "00:00:00";
+function openClockConfirm(action){
+  const titleKey = action==="in" ? "confirm_clock_in_title" : "confirm_clock_out_title";
+  const descKey = action==="in" ? "confirm_clock_in_desc" : "confirm_clock_out_desc";
+  openSheet(`
+    <div class="sheet-title">${t(titleKey)}</div>
+    <div class="list-sub" style="margin-bottom:16px;">${t(descKey)}</div>
+    <button class="btn full primary" id="clockConfirmBtn" style="margin-bottom:8px;">${t("sheet_confirm")}</button>
+    <button class="btn full ghost" id="clockCancelBtn">${t("sheet_cancel")}</button>
+  `, ()=>{
+    document.getElementById("clockConfirmBtn").addEventListener("click", ()=>{
+      if(action==="in") doClockIn(); else doClockOut();
+      closeSheet();
+    });
+    document.getElementById("clockCancelBtn").addEventListener("click", closeSheet);
+  });
+}
+
+function doClockIn(){
+  if(state.clock.status === "in"){ toast(t("already_clocked_in")); return; }
+  state.clock = {status:"in", since: Date.now()};
+  if(state.notify.clock && state.bossWa){
+    const msg = state.lang==='ko'?'🟢 출근했습니다':state.lang==='id'?'🟢 Absen masuk':'🟢 Clocked in';
+    window.open(waLink(state.bossWa, msg), "_blank");
   }
   save();
   updateClockUi();
-});
+}
+
+function doClockOut(){
+  if(state.clock.status === "out"){ toast(t("already_clocked_out")); return; }
+  state.clock = {status:"out", since:null};
+  if(state.notify.clock && state.bossWa){
+    const msg = state.lang==='ko'?'⚪ 퇴근했습니다':state.lang==='id'?'⚪ Absen keluar':'⚪ Clocked out';
+    window.open(waLink(state.bossWa, msg), "_blank");
+  }
+  clearInterval(workTimerInterval);
+  document.getElementById("workTimerDisplay").textContent = "00:00:00";
+  save();
+  updateClockUi();
+}
+
+document.getElementById("clockInBtn").addEventListener("click", ()=>openClockConfirm("in"));
+document.getElementById("clockOutBtn").addEventListener("click", ()=>openClockConfirm("out"));
 
 function updateClockUi(){
-  const btn = document.getElementById("clockBtn");
-  btn.textContent = state.clock.status === "in" ? t("btn_clock_out") : t("btn_clock_in");
+  const inBtn = document.getElementById("clockInBtn");
+  const outBtn = document.getElementById("clockOutBtn");
+  if(inBtn && outBtn){
+    const isIn = state.clock.status === "in";
+    inBtn.style.opacity = isIn ? "0.45" : "1";
+    outBtn.style.opacity = !isIn ? "0.45" : "1";
+  }
   clearInterval(workTimerInterval);
   if(state.clock.status === "in" && state.clock.since){
     workTimerInterval = setInterval(()=>{
@@ -1698,6 +1785,7 @@ function render(){
   applyI18nStatic();
 
   document.getElementById("bossTabbar").style.display = state.role === "boss" ? "flex" : "none";
+  document.getElementById("driverSettingsBtn").style.display = state.role === "driver" ? "flex" : "none";
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
 
   if(state.role === "boss"){
