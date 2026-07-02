@@ -474,6 +474,7 @@ body::before{
               <input type="text" id="pickupInput" data-i18n-ph="ph_pickup" placeholder="Where to pick up">
               <div class="field-actions">
                 <div class="chip-btn" id="gpsBtn">📡 <span data-i18n="btn_gps">Current location</span></div>
+                <div class="chip-btn" id="pickupMapBtn">🗺️ <span data-i18n="btn_map_pick">Pick on map</span></div>
               </div>
             </div>
             <div class="route-field">
@@ -481,6 +482,7 @@ body::before{
               <input type="text" id="destInput" data-i18n-ph="ph_destination" placeholder="Where to">
               <div class="field-actions">
                 <div class="chip-btn" id="searchPlaceBtn">🔍 <span data-i18n="btn_search_place">Search place</span></div>
+                <div class="chip-btn" id="destMapBtn">🗺️ <span data-i18n="btn_map_pick">Pick on map</span></div>
                 <div class="chip-btn" id="droppedBtn">🚗 <span data-i18n="btn_dropped">Set drop-off</span></div>
               </div>
             </div>
@@ -664,7 +666,9 @@ const I18N = {
     onboard_title:"Selamat Datang", onboard_sub:"Menyiapkan tampilan sopir Anda...",
     lbl_dispatch:"Panggilan", lbl_pickup:"Jemput", lbl_destination:"Tujuan",
     ph_pickup:"Lokasi jemput", ph_destination:"Ke mana", btn_gps:"Lokasi saat ini",
-    btn_search_place:"Cari tempat", btn_dropped:"Set titik turun", no_driver:"Belum ada sopir dipilih",
+    btn_search_place:"Cari tempat", btn_dropped:"Set titik turun", btn_map_pick:"Pilih di peta",
+    sheet_map_pick:"Pilih lokasi di peta", map_drag_hint:"Geser pin atau ketuk peta untuk memindahkan",
+    map_confirm:"Gunakan lokasi ini", map_locating:"Mencari alamat...", no_driver:"Belum ada sopir dipilih",
     btn_call_driver:"Panggil sopir", status_calling:"Memanggil...", status_accepted:"Diterima",
     lbl_navigate:"Navigasi", lbl_recent:"Pencarian terakhir", lbl_roster:"Daftar sopir",
     btn_add_driver:"Tambah sopir", lbl_today_activity:"Aktivitas hari ini", lbl_rides_today:"Perjalanan hari ini",
@@ -700,7 +704,9 @@ const I18N = {
     onboard_title:"환영합니다", onboard_sub:"기사님 화면을 준비하고 있어요...",
     lbl_dispatch:"호출", lbl_pickup:"픽업 위치", lbl_destination:"목적지",
     ph_pickup:"픽업 위치 입력", ph_destination:"목적지 입력", btn_gps:"현위치",
-    btn_search_place:"장소 검색", btn_dropped:"내려준 곳", no_driver:"선택된 기사 없음",
+    btn_search_place:"장소 검색", btn_dropped:"내려준 곳", btn_map_pick:"지도에서 선택",
+    sheet_map_pick:"지도에서 위치 선택", map_drag_hint:"핀을 드래그하거나 지도를 눌러 위치를 옮기세요",
+    map_confirm:"이 위치로 설정", map_locating:"주소 확인 중...", no_driver:"선택된 기사 없음",
     btn_call_driver:"기사 호출", status_calling:"호출중...", status_accepted:"확인됨",
     lbl_navigate:"네비게이션", lbl_recent:"최근 검색", lbl_roster:"기사 목록",
     btn_add_driver:"기사 추가", lbl_today_activity:"오늘 현황", lbl_rides_today:"오늘 운행",
@@ -736,7 +742,9 @@ const I18N = {
     onboard_title:"Welcome", onboard_sub:"Setting up your driver view...",
     lbl_dispatch:"Dispatch", lbl_pickup:"Pickup", lbl_destination:"Destination",
     ph_pickup:"Where to pick up", ph_destination:"Where to", btn_gps:"Current location",
-    btn_search_place:"Search place", btn_dropped:"Set drop-off", no_driver:"No driver selected",
+    btn_search_place:"Search place", btn_dropped:"Set drop-off", btn_map_pick:"Pick on map",
+    sheet_map_pick:"Choose location on map", map_drag_hint:"Drag the pin or tap the map to move it",
+    map_confirm:"Use this location", map_locating:"Finding address...", no_driver:"No driver selected",
     btn_call_driver:"Call driver", status_calling:"Calling...", status_accepted:"Accepted",
     lbl_navigate:"Navigate", lbl_recent:"Recent searches", lbl_roster:"Driver roster",
     btn_add_driver:"Add driver", lbl_today_activity:"Today's activity", lbl_rides_today:"Rides today",
@@ -951,6 +959,139 @@ document.getElementById("droppedBtn").addEventListener("click", ()=>{
 document.getElementById("searchPlaceBtn").addEventListener("click", ()=>{
   openPlaceSearchSheet("dest");
 });
+
+document.getElementById("pickupMapBtn").addEventListener("click", ()=>{
+  openMapPickerSheet("pickup");
+});
+document.getElementById("destMapBtn").addEventListener("click", ()=>{
+  openMapPickerSheet("dest");
+});
+
+/* ---------- Google Maps picker (drag pin + reverse geocode) ---------- */
+let mapsLoadPromise = null;
+function loadGoogleMaps(){
+  if(mapsLoadPromise) return mapsLoadPromise;
+  mapsLoadPromise = new Promise((resolve,reject)=>{
+    if(window.google && window.google.maps){ resolve(); return; }
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(state.apiKey)}&v=weekly`;
+    script.async = true;
+    script.onload = ()=>resolve();
+    script.onerror = ()=>{ mapsLoadPromise = null; reject(new Error("maps load failed")); };
+    document.head.appendChild(script);
+  });
+  return mapsLoadPromise;
+}
+
+async function reverseGeocode(lat, lng){
+  try{
+    const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${encodeURIComponent(state.apiKey)}`);
+    const data = await res.json();
+    if(data.results && data.results.length){
+      return data.results[0].formatted_address;
+    }
+  }catch(e){}
+  return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+}
+
+async function openMapPickerSheet(targetField){
+  if(!state.apiKey){
+    openSheet(`
+      <div class="sheet-title">${t("sheet_map_pick")}</div>
+      <div class="empty-state">
+        <div class="empty-state-icon">🔑</div>
+        <div class="empty-state-text">${t("need_api_key")}</div>
+      </div>
+      <button class="btn full ghost" onclick="window.__bc.closeSheet()">${t("sheet_cancel")}</button>
+    `);
+    return;
+  }
+
+  openSheet(`
+    <div class="sheet-title">${t("sheet_map_pick")}</div>
+    <div class="list-sub" style="margin-bottom:10px;">${t("map_drag_hint")}</div>
+    <div id="mapPickerCanvas" class="map-frame" style="height:300px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:13px;">…</div>
+    <div class="card" style="margin-top:10px;">
+      <div class="list-sub" id="mapPickerAddress">${t("map_locating")}</div>
+    </div>
+    <button class="btn full primary" id="mapPickerConfirmBtn" style="margin-top:4px;">${t("map_confirm")}</button>
+  `, async ()=>{
+    try{
+      await loadGoogleMaps();
+    }catch(e){
+      document.getElementById("mapPickerCanvas").textContent = "Failed to load map — check API key";
+      return;
+    }
+    initMapPicker(targetField);
+  });
+}
+
+function initMapPicker(targetField){
+  const canvas = document.getElementById("mapPickerCanvas");
+  if(!canvas) return;
+  canvas.textContent = "";
+  canvas.style.display = "block";
+
+  let center = { lat:-6.2088, lng:106.8456 }; // default Jakarta
+  if(lastCoords) center = lastCoords;
+
+  const finish = (map, marker) => {
+    const setup = (c)=>{
+      map.setCenter(c);
+      marker.setPosition(c);
+      updateAddressFromLatLng(c.lat, c.lng);
+    };
+    if(!lastCoords && navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(
+        pos => setup({lat:pos.coords.latitude, lng:pos.coords.longitude}),
+        () => updateAddressFromLatLng(center.lat, center.lng),
+        {timeout:5000}
+      );
+    } else {
+      updateAddressFromLatLng(center.lat, center.lng);
+    }
+  };
+
+  const map = new google.maps.Map(canvas, {
+    center, zoom:15, disableDefaultUI:true, zoomControl:true, gestureHandling:"greedy"
+  });
+  const marker = new google.maps.Marker({ position:center, map, draggable:true });
+
+  let currentLatLng = center;
+  async function updateAddressFromLatLng(lat,lng){
+    currentLatLng = {lat,lng};
+    const addrEl = document.getElementById("mapPickerAddress");
+    if(addrEl) addrEl.textContent = t("map_locating");
+    const addr = await reverseGeocode(lat,lng);
+    if(addrEl) addrEl.textContent = addr;
+  }
+
+  marker.addListener("dragend", ()=>{
+    const pos = marker.getPosition();
+    updateAddressFromLatLng(pos.lat(), pos.lng());
+  });
+  map.addListener("click", (e)=>{
+    marker.setPosition(e.latLng);
+    updateAddressFromLatLng(e.latLng.lat(), e.latLng.lng());
+  });
+
+  finish(map, marker);
+
+  const confirmBtn = document.getElementById("mapPickerConfirmBtn");
+  if(confirmBtn){
+    confirmBtn.onclick = ()=>{
+      const addr = document.getElementById("mapPickerAddress").textContent;
+      const field = document.getElementById(targetField==="dest" ? "destInput" : "pickupInput");
+      field.value = addr;
+      if(targetField==="pickup"){ lastCoords = currentLatLng; }
+      state.recent.unshift({label:addr, ts:Date.now()});
+      state.recent = state.recent.slice(0,8);
+      save();
+      renderRecent();
+      closeSheet();
+    };
+  }
+}
 
 function openPlaceSearchSheet(targetField){
   if(!state.apiKey){
