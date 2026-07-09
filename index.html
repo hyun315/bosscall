@@ -662,7 +662,9 @@ button{font-family:inherit;}
 
     <div class="section-label" data-i18n="lbl_clock">Clock</div>
     <div class="card">
-      <div class="timer-display" id="workTimerDisplay">00:00:00</div>
+      <div id="workTimerLabel" style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:4px;"></div>
+      <div class="timer-display" id="workTimerDisplay" style="text-align:center;">00:00:00</div>
+      <div id="shiftBreakdown" class="list-sub" style="text-align:center;margin-top:4px;"></div>
       <div class="field-row" style="margin-top:8px;">
         <button class="btn primary" id="clockInBtn" style="flex:1;" data-i18n="btn_clock_in">Clock in</button>
         <button class="btn" id="clockOutBtn" style="flex:1;" data-i18n="btn_clock_out">Clock out</button>
@@ -717,7 +719,7 @@ const I18N = {
     driver_idle_title:"Menunggu panggilan", driver_idle_sub:"Anda akan diberitahu saat Bos memanggil",
     driver_calling_title:"Bos memanggil!", driver_calling_sub:"Ketuk untuk konfirmasi",
     ok_boss:"👍 SIAP BOS!", toast_call_sent:"Panggilan terkirim via WhatsApp",
-    toast_saved:"Tersimpan", toast_deleted:"Dihapus", toast_link_copied:"Tautan disalin",
+    toast_saved:"Tersimpan", toast_deleted:"Dihapus", toast_link_copied:"Tautan disalin", toast_dest_set:"Tujuan diatur",
     toast_ok_sent:"Konfirmasi terkirim ke Bos", empty_drivers:"Belum ada sopir. Tambahkan sopir pertama Anda.",
     empty_favorites:"Belum ada favorit tersimpan.", empty_rides:"Belum ada perjalanan hari ini.",
     empty_fuel:"Belum ada catatan bensin.", confirm_reset:"Hapus semua data aplikasi? Tindakan ini tidak bisa dibatalkan.",
@@ -727,6 +729,7 @@ const I18N = {
     confirm_clock_out_title:"Absen keluar?", confirm_clock_out_desc:"Ini akan mengakhiri jam kerja Anda hari ini.",
     driver_settings_title:"Pengaturan", already_clocked_in:"Anda sudah absen masuk", already_clocked_out:"Anda belum absen masuk",
     lbl_active_trip:"Perjalanan aktif", btn_end_trip:"Selesaikan perjalanan", toast_trip_ended:"Perjalanan selesai",
+    lbl_current_time:"Waktu sekarang", lbl_total_worked:"Total jam kerja", lbl_regular_hours:"Reguler", lbl_overtime_hours:"Lembur",
     sheet_send_invite:"Kirim via WhatsApp", sheet_copy_link:"Salin tautan", sheet_add_favorite:"Favorit baru",
     sheet_favorite_name:"Nama tempat", sheet_favorite_addr:"Alamat", sheet_add_fuel:"Catatan bensin",
     fuel_liters:"Liter", fuel_cost:"Biaya", sheet_search_place:"Cari tempat",
@@ -759,7 +762,7 @@ const I18N = {
     driver_idle_title:"호출 대기중", driver_idle_sub:"사장님이 호출하면 알려드릴게요",
     driver_calling_title:"사장님이 호출했어요!", driver_calling_sub:"눌러서 확인하세요",
     ok_boss:"👍 확인했어요 사장님!", toast_call_sent:"WhatsApp으로 호출을 보냈습니다",
-    toast_saved:"저장되었습니다", toast_deleted:"삭제되었습니다", toast_link_copied:"링크가 복사되었습니다",
+    toast_saved:"저장되었습니다", toast_deleted:"삭제되었습니다", toast_link_copied:"링크가 복사되었습니다", toast_dest_set:"목적지로 설정했어요",
     toast_ok_sent:"사장님께 확인 메시지를 보냈습니다", empty_drivers:"등록된 기사가 없습니다. 첫 기사를 추가해보세요.",
     empty_favorites:"저장된 즐겨찾기가 없습니다.", empty_rides:"오늘 운행 기록이 없습니다.",
     empty_fuel:"주유 기록이 없습니다.", confirm_reset:"모든 앱 데이터를 삭제할까요? 이 작업은 되돌릴 수 없습니다.",
@@ -769,6 +772,7 @@ const I18N = {
     confirm_clock_out_title:"퇴근 처리할까요?", confirm_clock_out_desc:"오늘 근무가 종료 처리됩니다.",
     driver_settings_title:"설정", already_clocked_in:"이미 출근 상태입니다", already_clocked_out:"아직 출근하지 않았습니다",
     lbl_active_trip:"진행중 운행", btn_end_trip:"운행 종료", toast_trip_ended:"운행이 종료되었습니다",
+    lbl_current_time:"현재 시각", lbl_total_worked:"총 근무시간", lbl_regular_hours:"정규", lbl_overtime_hours:"초과근무",
     sheet_send_invite:"WhatsApp으로 보내기", sheet_copy_link:"링크 복사", sheet_add_favorite:"즐겨찾기 추가",
     sheet_favorite_name:"장소 이름", sheet_favorite_addr:"주소", sheet_add_fuel:"주유 기록 추가",
     fuel_liters:"주유량(L)", fuel_cost:"비용", sheet_search_place:"장소 검색",
@@ -801,7 +805,7 @@ const I18N = {
     driver_idle_title:"Waiting for call", driver_idle_sub:"You'll be notified when Boss calls",
     driver_calling_title:"Boss is calling!", driver_calling_sub:"Tap to confirm",
     ok_boss:"👍 OK BOSS!", toast_call_sent:"Call sent via WhatsApp",
-    toast_saved:"Saved", toast_deleted:"Deleted", toast_link_copied:"Link copied",
+    toast_saved:"Saved", toast_deleted:"Deleted", toast_link_copied:"Link copied", toast_dest_set:"Destination set",
     toast_ok_sent:"Confirmation sent to Boss", empty_drivers:"No drivers yet. Add your first driver.",
     empty_favorites:"No favorites saved yet.", empty_rides:"No rides logged today.",
     empty_fuel:"No fuel entries yet.", confirm_reset:"Delete all app data? This cannot be undone.",
@@ -811,6 +815,7 @@ const I18N = {
     confirm_clock_out_title:"Clock out?", confirm_clock_out_desc:"This will end your shift for today.",
     driver_settings_title:"Settings", already_clocked_in:"Already clocked in", already_clocked_out:"Not clocked in yet",
     lbl_active_trip:"Active trip", btn_end_trip:"End trip", toast_trip_ended:"Trip ended",
+    lbl_current_time:"Current time", lbl_total_worked:"Total worked", lbl_regular_hours:"Regular", lbl_overtime_hours:"Overtime",
     sheet_send_invite:"Send via WhatsApp", sheet_copy_link:"Copy link", sheet_add_favorite:"New favorite",
     sheet_favorite_name:"Place name", sheet_favorite_addr:"Address", sheet_add_fuel:"Add fuel entry",
     fuel_liters:"Liters", fuel_cost:"Cost", sheet_search_place:"Search place",
@@ -842,7 +847,7 @@ function loadState(){
     fuel:[], // {id,liters,cost,ts}
     payroll:{base:0,ot:0,meal:0,vehicle:0,bonus:0,insurance:0},
     notify:{call:true,accept:true,clock:true,fuel:false},
-    clock:{status:"out", since:null}, // driver clock state
+    clock:{status:"out", since:null, lastSummary:null}, // driver clock state
     pendingCall:null, // {pickup,dest,ts} for driver view
     activeRide:null // {pickup,dest} current accepted ride for driver nav
   };
@@ -1358,9 +1363,9 @@ function renderAdList(){
   const el = document.getElementById("adList");
   if(!el) return;
   const shuffled = [...AD_RESTAURANTS].sort(()=>Math.random()-0.5).slice(0,5);
-  el.innerHTML = shuffled.map(r=>`
-    <div class="list-item">
-      <div class="list-icon">🍽️</div>
+  el.innerHTML = shuffled.map((r,i)=>`
+    <div class="list-item" data-ad="${i}">
+      <div class="list-icon" style="background:#FCE8E6;">🍽️</div>
       <div class="list-body">
         <div class="list-title">${escapeHtml(r.name)}</div>
         <div class="list-sub">${escapeHtml(r.addr)}</div>
@@ -1368,6 +1373,13 @@ function renderAdList(){
       <div class="list-value">★ ${r.rating}</div>
     </div>
   `).join("");
+  el.querySelectorAll("[data-ad]").forEach(item=>{
+    item.addEventListener("click", ()=>{
+      const r = shuffled[parseInt(item.getAttribute("data-ad"))];
+      document.getElementById("destInput").value = `${r.name}, ${r.addr}`;
+      toast(t("toast_dest_set"));
+    });
+  });
 }
 
 function renderCallFavorites(){
@@ -1535,6 +1547,18 @@ document.getElementById("addFavoriteBtn").addEventListener("click", ()=>{
     <button class="btn full primary" id="saveFavBtn">${t("sheet_save")}</button>
   `, ()=>{
     document.getElementById("favName").focus();
+    if(state.apiKey){
+      loadGoogleMaps().then(()=>{
+        if(window.google && window.google.maps && window.google.maps.places){
+          bindAutocomplete("favAddr", (place)=>{
+            const nameInput = document.getElementById("favName");
+            if(!nameInput.value.trim() && place.name){
+              nameInput.value = place.name;
+            }
+          });
+        }
+      }).catch(()=>{});
+    }
     document.getElementById("saveFavBtn").addEventListener("click", ()=>{
       const name = document.getElementById("favName").value.trim();
       const addr = document.getElementById("favAddr").value.trim();
@@ -1811,9 +1835,19 @@ function openClockConfirm(action){
   });
 }
 
+function formatHMS(ms){
+  const secs = Math.max(0, Math.floor(ms/1000));
+  const h = String(Math.floor(secs/3600)).padStart(2,"0");
+  const m = String(Math.floor((secs%3600)/60)).padStart(2,"0");
+  const s = String(secs%60).padStart(2,"0");
+  return `${h}:${m}:${s}`;
+}
+
+const REGULAR_SHIFT_MS = 8 * 3600 * 1000; // 8-hour regular shift threshold
+
 function doClockIn(){
   if(state.clock.status === "in"){ toast(t("already_clocked_in")); return; }
-  state.clock = {status:"in", since: Date.now()};
+  state.clock = {status:"in", since: Date.now(), lastSummary:null};
   if(state.notify.clock && state.bossWa){
     const msg = state.lang==='ko'?'🟢 출근했습니다':state.lang==='id'?'🟢 Absen masuk':'🟢 Clocked in';
     window.open(waLink(state.bossWa, msg), "_blank");
@@ -1824,13 +1858,17 @@ function doClockIn(){
 
 function doClockOut(){
   if(state.clock.status === "out"){ toast(t("already_clocked_out")); return; }
-  state.clock = {status:"out", since:null};
+  const start = state.clock.since;
+  const totalMs = start ? (Date.now() - start) : 0;
+  const regularMs = Math.min(totalMs, REGULAR_SHIFT_MS);
+  const overtimeMs = Math.max(0, totalMs - REGULAR_SHIFT_MS);
+  state.clock = {status:"out", since:null, lastSummary:{totalMs, regularMs, overtimeMs}};
   if(state.notify.clock && state.bossWa){
-    const msg = state.lang==='ko'?'⚪ 퇴근했습니다':state.lang==='id'?'⚪ Absen keluar':'⚪ Clocked out';
+    const msg = state.lang==='ko' ? `⚪ 퇴근했습니다 (근무 ${formatHMS(totalMs)})` :
+      state.lang==='id' ? `⚪ Absen keluar (kerja ${formatHMS(totalMs)})` :
+      `⚪ Clocked out (worked ${formatHMS(totalMs)})`;
     window.open(waLink(state.bossWa, msg), "_blank");
   }
-  clearInterval(workTimerInterval);
-  document.getElementById("workTimerDisplay").textContent = "00:00:00";
   save();
   updateClockUi();
 }
@@ -1847,14 +1885,37 @@ function updateClockUi(){
     outBtn.style.opacity = !isIn ? "0.45" : "1";
   }
   clearInterval(workTimerInterval);
-  if(state.clock.status === "in" && state.clock.since){
-    workTimerInterval = setInterval(()=>{
-      const secs = Math.floor((Date.now()-state.clock.since)/1000);
-      const h = String(Math.floor(secs/3600)).padStart(2,"0");
-      const m = String(Math.floor((secs%3600)/60)).padStart(2,"0");
-      const s = String(secs%60).padStart(2,"0");
-      document.getElementById("workTimerDisplay").textContent = `${h}:${m}:${s}`;
-    }, 1000);
+  const display = document.getElementById("workTimerDisplay");
+  const label = document.getElementById("workTimerLabel");
+  const breakdown = document.getElementById("shiftBreakdown");
+  if(!display) return;
+
+  if(state.clock.status === "in"){
+    // Show live current time (not an elapsed counter) while on duty
+    if(label) label.textContent = t("lbl_current_time");
+    if(breakdown) breakdown.textContent = "";
+    const tick = ()=>{ display.textContent = new Date().toLocaleTimeString([], {hour12:false}); };
+    tick();
+    workTimerInterval = setInterval(tick, 1000);
+  } else if(state.clock.lastSummary){
+    // Show total worked time from the shift just ended, split regular vs overtime
+    const s = state.clock.lastSummary;
+    if(label) label.textContent = t("lbl_total_worked");
+    display.textContent = formatHMS(s.totalMs);
+    if(breakdown){
+      if(s.overtimeMs > 0){
+        breakdown.textContent = `${t("lbl_regular_hours")} ${formatHMS(s.regularMs)} · ${t("lbl_overtime_hours")} ${formatHMS(s.overtimeMs)}`;
+      }else{
+        breakdown.textContent = `${t("lbl_regular_hours")} ${formatHMS(s.regularMs)}`;
+      }
+    }
+  } else {
+    // Not clocked in yet, no completed shift today — just show current time
+    if(label) label.textContent = t("lbl_current_time");
+    if(breakdown) breakdown.textContent = "";
+    const tick = ()=>{ display.textContent = new Date().toLocaleTimeString([], {hour12:false}); };
+    tick();
+    workTimerInterval = setInterval(tick, 1000);
   }
 }
 
