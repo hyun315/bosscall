@@ -285,7 +285,7 @@ button{font-family:inherit;}
 .toggle.on::after{transform:translateX(18px);background:var(--signal);}
 
 /* nav grid (4 nav apps) */
-.nav-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px;}
+.nav-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px;}
 .nav-app{
   background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;
   padding:12px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;
@@ -551,11 +551,14 @@ button{font-family:inherit;}
     <div class="section-label" data-i18n="lbl_navigate">Navigate</div>
     <div class="nav-grid">
       <div class="nav-app" data-nav="google"><div class="nav-app-icon">🗺️</div><div class="nav-app-label">Google</div></div>
-      <div class="nav-app" data-nav="waze"><div class="nav-app-icon">🚦</div><div class="nav-app-label">Waze</div></div>
     </div>
 
     <div class="section-label" data-i18n="lbl_favorites">Favorites</div>
     <div id="callFavoritesList" class="card"></div>
+    <button class="btn full" id="addFavoriteBtn" style="margin-top:6px;">＋ <span data-i18n="btn_add_favorite">Add favorite</span></button>
+
+    <div class="section-label" data-i18n="lbl_ad">Sponsored</div>
+    <div id="adList" class="card"></div>
   </div>
 
   <!-- ===== DRIVERS SCREEN ===== -->
@@ -578,13 +581,6 @@ button{font-family:inherit;}
 
     <div class="section-label" data-i18n="lbl_ride_log">Ride log (today)</div>
     <div id="todayRideLog"></div>
-  </div>
-
-  <!-- ===== FAVORITES SCREEN ===== -->
-  <div class="screen" id="screen-favorites">
-    <div class="section-label" data-i18n="lbl_favorites">Favorite places</div>
-    <div id="favoritesList"></div>
-    <button class="btn full" id="addFavoriteBtn" style="margin-top:6px;">＋ <span data-i18n="btn_add_favorite">Add favorite</span></button>
   </div>
 
   <!-- ===== STATS SCREEN ===== -->
@@ -662,7 +658,6 @@ button{font-family:inherit;}
     <div class="section-label" data-i18n="lbl_navigate">Navigate</div>
     <div class="nav-grid">
       <div class="nav-app" data-nav="google"><div class="nav-app-icon">🗺️</div><div class="nav-app-label">Google</div></div>
-      <div class="nav-app" data-nav="waze"><div class="nav-app-icon">🚦</div><div class="nav-app-label">Waze</div></div>
     </div>
 
     <div class="section-label" data-i18n="lbl_clock">Clock</div>
@@ -673,15 +668,11 @@ button{font-family:inherit;}
         <button class="btn" id="clockOutBtn" style="flex:1;" data-i18n="btn_clock_out">Clock out</button>
       </div>
     </div>
-
-    <div class="section-label" data-i18n="lbl_ride_log">Ride log</div>
-    <div id="driverRideLog"></div>
   </div>
 
   <div class="tabbar" id="bossTabbar">
     <div class="tab-item active" data-tab="screen-call"><div class="tab-icon">📲</div><div class="tab-label" data-i18n="tab_call">Call</div></div>
     <div class="tab-item" data-tab="screen-drivers"><div class="tab-icon">🧑‍✈️</div><div class="tab-label" data-i18n="tab_drivers">Drivers</div></div>
-    <div class="tab-item" data-tab="screen-favorites"><div class="tab-icon">⭐</div><div class="tab-label" data-i18n="tab_favorites">Favorites</div></div>
     <div class="tab-item" data-tab="screen-stats"><div class="tab-icon">📊</div><div class="tab-label" data-i18n="tab_stats">Stats</div></div>
     <div class="tab-item" data-tab="screen-more"><div class="tab-icon">⚙️</div><div class="tab-label" data-i18n="tab_more">More</div></div>
   </div>
@@ -709,7 +700,7 @@ const I18N = {
     sheet_map_pick:"Pilih lokasi di peta", map_drag_hint:"Geser pin atau ketuk peta untuk memindahkan",
     map_confirm:"Gunakan lokasi ini", map_locating:"Mencari alamat...", no_driver:"Belum ada sopir dipilih",
     btn_call_driver:"Panggil sopir", status_calling:"Memanggil...", status_accepted:"Diterima",
-    lbl_navigate:"Navigasi", lbl_recent:"Pencarian terakhir", lbl_roster:"Daftar sopir",
+    lbl_navigate:"Lihat rute", lbl_ad:"Sponsor", lbl_roster:"Daftar sopir",
     btn_add_driver:"Tambah sopir", lbl_today_activity:"Aktivitas hari ini", lbl_rides_today:"Perjalanan hari ini",
     lbl_clock_status:"Status absen", lbl_ride_log:"Riwayat perjalanan", lbl_favorites:"Tempat favorit",
     btn_add_favorite:"Tambah favorit", lbl_monthly:"Ringkasan bulanan", lbl_month_detail:"Pilih bulan untuk detail harian",
@@ -721,7 +712,7 @@ const I18N = {
     btn_test_wa:"Kirim pesan tes", lbl_api:"Kunci API Google Maps", api_hint:"Digunakan untuk pencarian tempat dan peta. Hanya disimpan di perangkat ini.",
     lbl_role_switch:"Mode", lbl_current_mode:"Tampilan sebagai", btn_switch_driver:"Beralih ke tampilan sopir",
     btn_switch_boss:"Beralih ke tampilan bos", btn_reset:"Hapus semua data",
-    tab_call:"Panggil", tab_drivers:"Sopir", tab_favorites:"Favorit", tab_stats:"Statistik", tab_more:"Lainnya",
+    tab_call:"Panggil", tab_drivers:"Sopir", tab_stats:"Statistik", tab_more:"Lainnya",
     lbl_clock:"Absen", btn_clock_in:"Absen masuk", btn_clock_out:"Absen keluar",
     driver_idle_title:"Menunggu panggilan", driver_idle_sub:"Anda akan diberitahu saat Bos memanggil",
     driver_calling_title:"Bos memanggil!", driver_calling_sub:"Ketuk untuk konfirmasi",
@@ -751,7 +742,7 @@ const I18N = {
     sheet_map_pick:"지도에서 위치 선택", map_drag_hint:"핀을 드래그하거나 지도를 눌러 위치를 옮기세요",
     map_confirm:"이 위치로 설정", map_locating:"주소 확인 중...", no_driver:"선택된 기사 없음",
     btn_call_driver:"기사 호출", status_calling:"호출중...", status_accepted:"확인됨",
-    lbl_navigate:"네비게이션", lbl_recent:"최근 검색", lbl_roster:"기사 목록",
+    lbl_navigate:"경로보기", lbl_ad:"광고", lbl_roster:"기사 목록",
     btn_add_driver:"기사 추가", lbl_today_activity:"오늘 현황", lbl_rides_today:"오늘 운행",
     lbl_clock_status:"출퇴근 상태", lbl_ride_log:"운행 기록", lbl_favorites:"즐겨찾기",
     btn_add_favorite:"즐겨찾기 추가", lbl_monthly:"월별 현황", lbl_month_detail:"일별 상세를 보려면 월을 선택하세요",
@@ -763,7 +754,7 @@ const I18N = {
     btn_test_wa:"테스트 메시지 발송", lbl_api:"Google Maps API 키", api_hint:"장소 검색 및 지도 표시에 사용됩니다. 이 기기에만 저장됩니다.",
     lbl_role_switch:"모드", lbl_current_mode:"보기 모드", btn_switch_driver:"기사 화면으로 전환",
     btn_switch_boss:"사장 화면으로 전환", btn_reset:"전체 데이터 초기화",
-    tab_call:"호출", tab_drivers:"기사", tab_favorites:"즐겨찾기", tab_stats:"통계", tab_more:"더보기",
+    tab_call:"호출", tab_drivers:"기사", tab_stats:"통계", tab_more:"더보기",
     lbl_clock:"출퇴근", btn_clock_in:"출근", btn_clock_out:"퇴근",
     driver_idle_title:"호출 대기중", driver_idle_sub:"사장님이 호출하면 알려드릴게요",
     driver_calling_title:"사장님이 호출했어요!", driver_calling_sub:"눌러서 확인하세요",
@@ -793,7 +784,7 @@ const I18N = {
     sheet_map_pick:"Choose location on map", map_drag_hint:"Drag the pin or tap the map to move it",
     map_confirm:"Use this location", map_locating:"Finding address...", no_driver:"No driver selected",
     btn_call_driver:"Call driver", status_calling:"Calling...", status_accepted:"Accepted",
-    lbl_navigate:"Navigate", lbl_recent:"Recent searches", lbl_roster:"Driver roster",
+    lbl_navigate:"Route", lbl_ad:"Sponsored", lbl_roster:"Driver roster",
     btn_add_driver:"Add driver", lbl_today_activity:"Today's activity", lbl_rides_today:"Rides today",
     lbl_clock_status:"Clock status", lbl_ride_log:"Ride log", lbl_favorites:"Favorite places",
     btn_add_favorite:"Add favorite", lbl_monthly:"Monthly overview", lbl_month_detail:"Select a month for daily detail",
@@ -805,7 +796,7 @@ const I18N = {
     btn_test_wa:"Send test message", lbl_api:"Google Maps API key", api_hint:"Used for place search and maps. Stored only on this device.",
     lbl_role_switch:"Mode", lbl_current_mode:"View as", btn_switch_driver:"Switch to driver view",
     btn_switch_boss:"Switch to boss view", btn_reset:"Reset all data",
-    tab_call:"Call", tab_drivers:"Drivers", tab_favorites:"Favorites", tab_stats:"Stats", tab_more:"More",
+    tab_call:"Call", tab_drivers:"Drivers", tab_stats:"Stats", tab_more:"More",
     lbl_clock:"Clock", btn_clock_in:"Clock in", btn_clock_out:"Clock out",
     driver_idle_title:"Waiting for call", driver_idle_sub:"You'll be notified when Boss calls",
     driver_calling_title:"Boss is calling!", driver_calling_sub:"Tap to confirm",
@@ -850,7 +841,7 @@ function loadState(){
     rides:[], // {id,driverId,pickup,dest,ts,status,eta,dropoffTs}
     fuel:[], // {id,liters,cost,ts}
     payroll:{base:0,ot:0,meal:0,vehicle:0,bonus:0,insurance:0},
-    notify:{call:true,accept:true,clock:false,fuel:false},
+    notify:{call:true,accept:true,clock:true,fuel:false},
     clock:{status:"out", since:null}, // driver clock state
     pendingCall:null, // {pickup,dest,ts} for driver view
     activeRide:null // {pickup,dest} current accepted ride for driver nav
@@ -1346,6 +1337,39 @@ document.querySelectorAll(".nav-app").forEach(el=>{
   });
 });
 
+/* ============================================================
+   SPONSORED (dev-stage placeholder: real Jakarta Korean restaurants,
+   5 picked at random from a pool each render)
+=============================================================== */
+const AD_RESTAURANTS = [
+  { name:"Saemaeul Original Korean BBQ SCBD", addr:"SCBD Lot 8, Senayan, Kebayoran Baru, Jakarta Selatan", rating:4.9 },
+  { name:"Doma Resto", addr:"Jl. Wolter Monginsidi No.83, Kebayoran Baru, Jakarta Selatan", rating:4.9 },
+  { name:"Chadol Gujeolpan Pakubuwono Korean Flame BBQ", addr:"Jl. Hang Lekir X No.20, Kebayoran Baru, Jakarta Selatan", rating:4.9 },
+  { name:"Gangnam Korean BBQ Restaurant", addr:"Mal Ciputra, Jl. Letjen S. Parman, Jakarta Barat", rating:4.8 },
+  { name:"Hwaro Korean Steakhouse", addr:"Jl. Suryo No.56, Kebayoran Baru, Jakarta Selatan", rating:4.8 },
+  { name:"DaSotBap Rice Lab", addr:"Jl. Yusuf Adiwinata No.29, Menteng, Jakarta Pusat", rating:4.6 },
+  { name:"Bornga", addr:"Jl. Wolter Monginsidi No.24, Kebayoran Baru, Jakarta Selatan", rating:4.7 },
+  { name:"Magal Signature One Satrio", addr:"One Satrio, Kuningan, Jakarta Selatan", rating:4.8 },
+  { name:"Mokja Resto Korean Street Food", addr:"Jl. Kembangan Baru No.1, Jakarta Barat", rating:4.9 },
+  { name:"DEUSEYO Korean BBQ & Jjigae", addr:"Raffles Square, Jl. Ir. H. Juanda, Jakarta Pusat", rating:4.8 }
+];
+
+function renderAdList(){
+  const el = document.getElementById("adList");
+  if(!el) return;
+  const shuffled = [...AD_RESTAURANTS].sort(()=>Math.random()-0.5).slice(0,5);
+  el.innerHTML = shuffled.map(r=>`
+    <div class="list-item">
+      <div class="list-icon">🍽️</div>
+      <div class="list-body">
+        <div class="list-title">${escapeHtml(r.name)}</div>
+        <div class="list-sub">${escapeHtml(r.addr)}</div>
+      </div>
+      <div class="list-value">★ ${r.rating}</div>
+    </div>
+  `).join("");
+}
+
 function renderCallFavorites(){
   const el = document.getElementById("callFavoritesList");
   if(!state.favorites.length){
@@ -1359,12 +1383,22 @@ function renderCallFavorites(){
         <div class="list-title">${escapeHtml(f.name)}</div>
         <div class="list-sub">${escapeHtml(f.addr||'')}</div>
       </div>
+      <div class="slot-link-btn" data-fav-del="${f.id}" style="border-color:transparent;">✕</div>
     </div>
   `).join("");
   el.querySelectorAll("[data-fav-quick]").forEach(item=>{
-    item.addEventListener("click", ()=>{
+    item.addEventListener("click", (e)=>{
+      if(e.target.closest("[data-fav-del]")) return;
       const fav = state.favorites.find(f=>f.id===item.getAttribute("data-fav-quick"));
       document.getElementById("destInput").value = fav.addr || fav.name;
+    });
+  });
+  el.querySelectorAll("[data-fav-del]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      state.favorites = state.favorites.filter(f=>f.id!==btn.getAttribute("data-fav-del"));
+      save(); renderCallFavorites();
+      toast(t("toast_deleted"));
     });
   });
 }
@@ -1490,43 +1524,9 @@ function renderTodayRides(){
 /* ============================================================
    FAVORITES
 =============================================================== */
-function renderFavorites(){
-  const el = document.getElementById("favoritesList");
-  if(!state.favorites.length){
-    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⭐</div><div class="empty-state-text">${t("empty_favorites")}</div></div>`;
-    return;
-  }
-  el.innerHTML = state.favorites.map(f=>`
-    <div class="list-item" data-fav="${f.id}">
-      <div class="list-icon">⭐</div>
-      <div class="list-body">
-        <div class="list-title">${escapeHtml(f.name)}</div>
-        <div class="list-sub">${escapeHtml(f.addr||'')}</div>
-      </div>
-      <div class="slot-link-btn" data-fav-del="${f.id}" style="border-color:transparent;">✕</div>
-    </div>
-  `).join("");
-  el.querySelectorAll("[data-fav]").forEach(item=>{
-    item.addEventListener("click", (e)=>{
-      if(e.target.closest("[data-fav-del]")) return;
-      const fav = state.favorites.find(f=>f.id===item.getAttribute("data-fav"));
-      document.getElementById("destInput").value = fav.addr || fav.name;
-      document.querySelectorAll("#bossTabbar .tab-item").forEach(x=>x.classList.remove("active"));
-      document.querySelector('[data-tab="screen-call"]').classList.add("active");
-      document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-      document.getElementById("screen-call").classList.add("active");
-    });
-  });
-  el.querySelectorAll("[data-fav-del]").forEach(btn=>{
-    btn.addEventListener("click", (e)=>{
-      e.stopPropagation();
-      state.favorites = state.favorites.filter(f=>f.id!==btn.getAttribute("data-fav-del"));
-      save(); renderFavorites(); renderCallFavorites();
-      toast(t("toast_deleted"));
-    });
-  });
-}
-
+/* ============================================================
+   FAVORITES (add sheet — list rendering lives in renderCallFavorites)
+=============================================================== */
 document.getElementById("addFavoriteBtn").addEventListener("click", ()=>{
   openSheet(`
     <div class="sheet-title">${t("sheet_add_favorite")}</div>
@@ -1540,7 +1540,7 @@ document.getElementById("addFavoriteBtn").addEventListener("click", ()=>{
       const addr = document.getElementById("favAddr").value.trim();
       if(!name) return;
       state.favorites.push({id: uid("fav"), name, addr});
-      save(); closeSheet(); renderFavorites(); renderCallFavorites();
+      save(); closeSheet(); renderCallFavorites();
       toast(t("toast_saved"));
     });
   });
@@ -1792,7 +1792,6 @@ async function handleOkBoss(){
   save();
   toast(t("toast_ok_sent"));
   renderDriverHome();
-  renderDriverRideLog();
 }
 
 function openClockConfirm(action){
@@ -1859,25 +1858,7 @@ function updateClockUi(){
   }
 }
 
-function renderDriverRideLog(){
-  const el = document.getElementById("driverRideLog");
-  const mine = state.rides.slice(0,15);
-  if(!mine.length){
-    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🚕</div><div class="empty-state-text">${t("empty_rides")}</div></div>`;
-    return;
-  }
-  el.innerHTML = mine.map(r=>{
-    const time = new Date(r.ts).toLocaleDateString([], {month:'short',day:'numeric'});
-    return `
-    <div class="list-item">
-      <div class="list-icon">${r.status==='accepted' ? '✅':'📞'}</div>
-      <div class="list-body">
-        <div class="list-title">${routeLabel(r.pickup, r.dest)}</div>
-        <div class="list-sub">${time}</div>
-      </div>
-    </div>`;
-  }).join("");
-}
+/* driverRideLog removed per request */
 
 /* ============================================================
    MASTER RENDER
@@ -1894,8 +1875,8 @@ function render(){
     document.querySelectorAll("#bossTabbar .tab-item").forEach(x=>x.classList.remove("active"));
     document.querySelector('[data-tab="screen-call"]').classList.add("active");
     renderDriverList();
-    renderFavorites();
     renderCallFavorites();
+    renderAdList();
     renderTodayRides();
     bindPayrollInputs();
     renderFuel();
@@ -1909,7 +1890,6 @@ function render(){
     document.getElementById("screen-driver-home").classList.add("active");
     renderDriverHome();
     updateClockUi();
-    renderDriverRideLog();
     document.getElementById("bossWaInput") && (document.getElementById("bossWaInput").value = state.bossWa || "");
   }
 }
