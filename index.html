@@ -707,6 +707,7 @@ const I18N = {
     lbl_dispatch:"Panggilan", lbl_pickup:"Jemput", lbl_destination:"Tujuan (opsional)",
     ph_pickup:"Lokasi jemput", ph_destination:"Ke mana (opsional)", btn_gps:"Lokasi saat ini",
     btn_search_place:"Cari tempat", btn_dropped:"Set titik turun", btn_map_pick:"Pilih di peta",
+    phrase_dropped_off:"Titik turun terakhir",
     sheet_map_pick:"Pilih lokasi di peta", map_drag_hint:"Geser pin atau ketuk peta untuk memindahkan",
     map_confirm:"Gunakan lokasi ini", map_locating:"Mencari alamat...", no_driver:"Belum ada sopir dipilih",
     btn_call_driver:"Panggil sopir", status_calling:"Memanggil...", status_accepted:"Diterima",
@@ -754,6 +755,7 @@ const I18N = {
     lbl_dispatch:"호출", lbl_pickup:"픽업 위치", lbl_destination:"목적지 (선택)",
     ph_pickup:"픽업 위치 입력", ph_destination:"목적지 입력 (선택)", btn_gps:"현위치",
     btn_search_place:"장소 검색", btn_dropped:"내려준 곳", btn_map_pick:"지도에서 선택",
+    phrase_dropped_off:"내려준 곳",
     sheet_map_pick:"지도에서 위치 선택", map_drag_hint:"핀을 드래그하거나 지도를 눌러 위치를 옮기세요",
     map_confirm:"이 위치로 설정", map_locating:"주소 확인 중...", no_driver:"선택된 기사 없음",
     btn_call_driver:"기사 호출", status_calling:"호출중...", status_accepted:"확인됨",
@@ -801,6 +803,7 @@ const I18N = {
     lbl_dispatch:"Dispatch", lbl_pickup:"Pickup", lbl_destination:"Destination (optional)",
     ph_pickup:"Where to pick up", ph_destination:"Where to (optional)", btn_gps:"Current location",
     btn_search_place:"Search place", btn_dropped:"Set drop-off", btn_map_pick:"Pick on map",
+    phrase_dropped_off:"Where you dropped me off",
     sheet_map_pick:"Choose location on map", map_drag_hint:"Drag the pin or tap the map to move it",
     map_confirm:"Use this location", map_locating:"Finding address...", no_driver:"No driver selected",
     btn_call_driver:"Call driver", status_calling:"Calling...", status_accepted:"Accepted",
@@ -1046,7 +1049,7 @@ document.getElementById("gpsBtn").addEventListener("click", async ()=>{
 });
 
 document.getElementById("droppedBtn").addEventListener("click", ()=>{
-  document.getElementById("pickupInput").focus();
+  document.getElementById("pickupInput").value = t("phrase_dropped_off");
 });
 
 document.getElementById("searchPlaceBtn").addEventListener("click", ()=>{
