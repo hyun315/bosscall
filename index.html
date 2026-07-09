@@ -1065,12 +1065,22 @@ function loadGoogleMaps(){
   return mapsLoadPromise;
 }
 
+let geocoderInstance = null;
 async function reverseGeocode(lat, lng){
   try{
-    const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${encodeURIComponent(state.apiKey)}`);
-    const data = await res.json();
-    if(data.results && data.results.length){
-      return data.results[0].formatted_address;
+    await loadGoogleMaps();
+    if(window.google && window.google.maps){
+      if(!geocoderInstance) geocoderInstance = new google.maps.Geocoder();
+      const address = await new Promise((resolve,reject)=>{
+        geocoderInstance.geocode({ location:{ lat, lng } }, (results, status)=>{
+          if(status === "OK" && results && results.length){
+            resolve(results[0].formatted_address);
+          }else{
+            reject(status);
+          }
+        });
+      });
+      return address;
     }
   }catch(e){}
   return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
