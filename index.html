@@ -557,7 +557,10 @@ button{font-family:inherit;}
     <div id="callFavoritesList" class="card"></div>
     <button class="btn full" id="addFavoriteBtn" style="margin-top:6px;">＋ <span data-i18n="btn_add_favorite">Add favorite</span></button>
 
-    <div class="section-label" data-i18n="lbl_ad">Sponsored</div>
+    <div class="row" style="margin:22px 2px 10px;">
+      <div class="section-label" data-i18n="lbl_ad" style="margin:0;flex:1;">Sponsored</div>
+      <div class="link" id="editAdsBtn" style="font-size:12.5px;cursor:pointer;" data-i18n="btn_edit_ads">Edit</div>
+    </div>
     <div id="adList" class="card"></div>
   </div>
 
@@ -638,6 +641,11 @@ button{font-family:inherit;}
       <div class="list-sub" data-i18n="api_hint">Used for place search and maps. Stored only on this device.</div>
     </div>
 
+    <div class="section-label" data-i18n="lbl_admin_pin">Admin PIN</div>
+    <div class="card">
+      <div class="field"><input type="password" id="adminPinInput2" inputmode="numeric" placeholder="••••"></div>
+    </div>
+
     <div class="section-label" data-i18n="lbl_role_switch">Mode</div>
     <div class="card">
       <div class="row">
@@ -706,6 +714,10 @@ const I18N = {
     btn_add_driver:"Tambah sopir", lbl_today_activity:"Aktivitas hari ini", lbl_rides_today:"Perjalanan hari ini",
     lbl_clock_status:"Status absen", lbl_ride_log:"Riwayat perjalanan", lbl_favorites:"Tempat favorit",
     btn_add_favorite:"Tambah favorit", lbl_monthly:"Ringkasan bulanan", lbl_month_detail:"Pilih bulan untuk detail harian",
+    btn_edit_ads:"Edit", sheet_admin_pin:"PIN Admin", admin_pin_desc:"Masukkan PIN admin untuk mengedit sponsor.",
+    admin_pin_wrong:"PIN salah", admin_pin_not_set:"Belum ada PIN diatur — atur di Lainnya untuk keamanan.",
+    sheet_edit_ads:"Kelola sponsor", sheet_ad_name:"Nama tempat", sheet_ad_addr:"Alamat", sheet_ad_rating:"Rating",
+    btn_add_ad:"Tambah sponsor", lbl_admin_pin:"PIN admin (lindungi edit sponsor)",
     lbl_payroll:"Pengaturan gaji", lbl_base_pay:"Gaji pokok", lbl_overtime:"Lembur", lbl_meal:"Uang makan",
     lbl_vehicle:"Tunjangan kendaraan", lbl_bonus:"Bonus", lbl_insurance:"Asuransi", lbl_preview_total:"Perkiraan total",
     lbl_fuel:"Catatan bensin", lbl_fuel_month:"Bulan ini", btn_add_fuel:"Tambah catatan bensin",
@@ -749,6 +761,10 @@ const I18N = {
     btn_add_driver:"기사 추가", lbl_today_activity:"오늘 현황", lbl_rides_today:"오늘 운행",
     lbl_clock_status:"출퇴근 상태", lbl_ride_log:"운행 기록", lbl_favorites:"즐겨찾기",
     btn_add_favorite:"즐겨찾기 추가", lbl_monthly:"월별 현황", lbl_month_detail:"일별 상세를 보려면 월을 선택하세요",
+    btn_edit_ads:"편집", sheet_admin_pin:"관리자 PIN", admin_pin_desc:"광고를 편집하려면 관리자 PIN을 입력하세요.",
+    admin_pin_wrong:"PIN이 올바르지 않아요", admin_pin_not_set:"설정된 PIN이 없어요 — 더보기에서 보안을 위해 설정해두세요.",
+    sheet_edit_ads:"광고 관리", sheet_ad_name:"장소 이름", sheet_ad_addr:"주소", sheet_ad_rating:"평점",
+    btn_add_ad:"광고 추가", lbl_admin_pin:"관리자 PIN (광고 편집 보호)",
     lbl_payroll:"급여 설정", lbl_base_pay:"기본급", lbl_overtime:"시간외수당", lbl_meal:"식대",
     lbl_vehicle:"차량유지비", lbl_bonus:"상여금", lbl_insurance:"보험", lbl_preview_total:"예상 총액",
     lbl_fuel:"주유 기록", lbl_fuel_month:"이번 달", btn_add_fuel:"주유 기록 추가",
@@ -792,6 +808,10 @@ const I18N = {
     btn_add_driver:"Add driver", lbl_today_activity:"Today's activity", lbl_rides_today:"Rides today",
     lbl_clock_status:"Clock status", lbl_ride_log:"Ride log", lbl_favorites:"Favorite places",
     btn_add_favorite:"Add favorite", lbl_monthly:"Monthly overview", lbl_month_detail:"Select a month for daily detail",
+    btn_edit_ads:"Edit", sheet_admin_pin:"Admin PIN", admin_pin_desc:"Enter the admin PIN to edit sponsored listings.",
+    admin_pin_wrong:"Incorrect PIN", admin_pin_not_set:"No PIN set yet — set one in More for security.",
+    sheet_edit_ads:"Manage sponsored", sheet_ad_name:"Place name", sheet_ad_addr:"Address", sheet_ad_rating:"Rating",
+    btn_add_ad:"Add sponsored listing", lbl_admin_pin:"Admin PIN (protects ad editing)",
     lbl_payroll:"Payroll settings", lbl_base_pay:"Base pay", lbl_overtime:"Overtime rate", lbl_meal:"Meal allowance",
     lbl_vehicle:"Vehicle allowance", lbl_bonus:"Bonus", lbl_insurance:"Insurance", lbl_preview_total:"Estimated total",
     lbl_fuel:"Fuel log", lbl_fuel_month:"This month", btn_add_fuel:"Add fuel entry",
@@ -843,6 +863,8 @@ function loadState(){
     drivers:[], // {id,name,wa,active}
     activeDriverId:null,
     favorites:[],
+    ads:[], // boss-editable sponsored listings; falls back to AD_RESTAURANTS pool when empty
+    adminPin:"",
     rides:[], // {id,driverId,pickup,dest,ts,status,eta,dropoffTs}
     fuel:[], // {id,liters,cost,ts}
     payroll:{base:0,ot:0,meal:0,vehicle:0,bonus:0,insurance:0},
@@ -1359,10 +1381,19 @@ const AD_RESTAURANTS = [
   { name:"DEUSEYO Korean BBQ & Jjigae", addr:"Raffles Square, Jl. Ir. H. Juanda, Jakarta Pusat", rating:4.8 }
 ];
 
+function adPool(){
+  return state.ads.length ? state.ads : AD_RESTAURANTS;
+}
+
 function renderAdList(){
   const el = document.getElementById("adList");
   if(!el) return;
-  const shuffled = [...AD_RESTAURANTS].sort(()=>Math.random()-0.5).slice(0,5);
+  const pool = adPool();
+  const shuffled = [...pool].sort(()=>Math.random()-0.5).slice(0,5);
+  if(!shuffled.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🍽️</div><div class="empty-state-text">${t("empty_favorites")}</div></div>`;
+    return;
+  }
   el.innerHTML = shuffled.map((r,i)=>`
     <div class="list-item" data-ad="${i}">
       <div class="list-icon" style="background:#FCE8E6;">🍽️</div>
@@ -1378,6 +1409,87 @@ function renderAdList(){
       const r = shuffled[parseInt(item.getAttribute("data-ad"))];
       document.getElementById("destInput").value = `${r.name}, ${r.addr}`;
       toast(t("toast_dest_set"));
+    });
+  });
+}
+
+document.getElementById("editAdsBtn").addEventListener("click", ()=>{
+  if(state.adminPin){
+    openSheet(`
+      <div class="sheet-title">${t("sheet_admin_pin")}</div>
+      <div class="list-sub" style="margin-bottom:14px;">${t("admin_pin_desc")}</div>
+      <div class="field"><input type="password" id="adminPinInput" inputmode="numeric" placeholder="••••"></div>
+      <button class="btn full primary" id="adminPinConfirmBtn" style="margin-top:6px;">${t("sheet_confirm")}</button>
+    `, ()=>{
+      const input = document.getElementById("adminPinInput");
+      input.focus();
+      document.getElementById("adminPinConfirmBtn").addEventListener("click", ()=>{
+        if(input.value === state.adminPin){
+          openAdManageSheet();
+        }else{
+          toast(t("admin_pin_wrong"));
+        }
+      });
+    });
+  }else{
+    toast(t("admin_pin_not_set"));
+    openAdManageSheet();
+  }
+});
+
+function openAdManageSheet(){
+  const pool = adPool();
+  const listHtml = pool.length ? pool.map((r,i)=>`
+    <div class="list-item" data-adm="${i}">
+      <div class="list-icon" style="background:#FCE8E6;">🍽️</div>
+      <div class="list-body">
+        <div class="list-title">${escapeHtml(r.name)}</div>
+        <div class="list-sub">${escapeHtml(r.addr)} · ★ ${r.rating}</div>
+      </div>
+      <div class="slot-link-btn" data-adm-del="${i}" style="border-color:transparent;">✕</div>
+    </div>
+  `).join("") : `<div class="empty-state"><div class="empty-state-text">${t("empty_favorites")}</div></div>`;
+
+  openSheet(`
+    <div class="sheet-title">${t("sheet_edit_ads")}</div>
+    <div id="adManageList">${listHtml}</div>
+    <div class="field" style="margin-top:14px;"><label>${t("sheet_ad_name")}</label><input type="text" id="newAdName"></div>
+    <div class="field"><label>${t("sheet_ad_addr")}</label><input type="text" id="newAdAddr"></div>
+    <div class="field"><label>${t("sheet_ad_rating")}</label><input type="number" step="0.1" min="0" max="5" id="newAdRating" placeholder="4.8"></div>
+    <button class="btn full primary" id="saveAdBtn">${t("btn_add_ad")}</button>
+  `, ()=>{
+    if(state.apiKey){
+      loadGoogleMaps().then(()=>{
+        if(window.google && window.google.maps && window.google.maps.places){
+          bindAutocomplete("newAdAddr", (place)=>{
+            const nameInput = document.getElementById("newAdName");
+            if(!nameInput.value.trim() && place.name) nameInput.value = place.name;
+          });
+        }
+      }).catch(()=>{});
+    }
+    document.querySelectorAll("[data-adm-del]").forEach(btn=>{
+      btn.addEventListener("click", (e)=>{
+        e.stopPropagation();
+        if(!state.ads.length) state.ads = [...AD_RESTAURANTS];
+        state.ads.splice(parseInt(btn.getAttribute("data-adm-del")), 1);
+        save();
+        closeSheet();
+        renderAdList();
+        openAdManageSheet();
+      });
+    });
+    document.getElementById("saveAdBtn").addEventListener("click", ()=>{
+      const name = document.getElementById("newAdName").value.trim();
+      const addr = document.getElementById("newAdAddr").value.trim();
+      const rating = parseFloat(document.getElementById("newAdRating").value) || 4.5;
+      if(!name || !addr) return;
+      if(!state.ads.length) state.ads = [...AD_RESTAURANTS];
+      state.ads.push({name, addr, rating});
+      save();
+      closeSheet();
+      renderAdList();
+      toast(t("toast_saved"));
     });
   });
 }
@@ -1403,6 +1515,7 @@ function renderCallFavorites(){
       if(e.target.closest("[data-fav-del]")) return;
       const fav = state.favorites.find(f=>f.id===item.getAttribute("data-fav-quick"));
       document.getElementById("destInput").value = fav.addr || fav.name;
+      toast(t("toast_dest_set"));
     });
   });
   el.querySelectorAll("[data-fav-del]").forEach(btn=>{
@@ -1712,6 +1825,9 @@ document.getElementById("bossWaInput").addEventListener("input", (e)=>{
 document.getElementById("apiKeyInput").addEventListener("input", (e)=>{
   state.apiKey = e.target.value.trim(); save();
 });
+document.getElementById("adminPinInput2").addEventListener("input", (e)=>{
+  state.adminPin = e.target.value.trim(); save();
+});
 document.querySelectorAll("[data-notify]").forEach(tg=>{
   tg.addEventListener("click", ()=>{
     const key = tg.getAttribute("data-notify");
@@ -1943,6 +2059,7 @@ function render(){
     renderFuel();
     document.getElementById("bossWaInput").value = state.bossWa || "";
     document.getElementById("apiKeyInput").value = state.apiKey || "";
+    document.getElementById("adminPinInput2").value = state.adminPin || "";
     document.querySelectorAll("[data-notify]").forEach(tg=>{
       tg.classList.toggle("on", !!state.notify[tg.getAttribute("data-notify")]);
     });
