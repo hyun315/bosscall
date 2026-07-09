@@ -513,9 +513,9 @@ button{font-family:inherit;}
               <label data-i18n="lbl_pickup">Pickup</label>
               <input type="text" id="pickupInput" data-i18n-ph="ph_pickup" placeholder="Where to pick up">
               <div class="field-actions">
+                <div class="chip-btn" id="droppedBtn">🚗 <span data-i18n="btn_dropped">Set drop-off</span></div>
                 <div class="chip-btn" id="gpsBtn">📡 <span data-i18n="btn_gps">Current location</span></div>
                 <div class="chip-btn" id="pickupMapBtn">🗺️ <span data-i18n="btn_map_pick">Pick on map</span></div>
-                <div class="chip-btn" id="droppedBtn">🚗 <span data-i18n="btn_dropped">Set drop-off</span></div>
               </div>
             </div>
             <div class="route-field">
@@ -554,8 +554,8 @@ button{font-family:inherit;}
       <div class="nav-app" data-nav="waze"><div class="nav-app-icon">🚦</div><div class="nav-app-label">Waze</div></div>
     </div>
 
-    <div class="section-label" data-i18n="lbl_recent">Recent searches</div>
-    <div id="recentList" class="card"></div>
+    <div class="section-label" data-i18n="lbl_favorites">Favorites</div>
+    <div id="callFavoritesList" class="card"></div>
   </div>
 
   <!-- ===== DRIVERS SCREEN ===== -->
@@ -703,8 +703,8 @@ button{font-family:inherit;}
 const I18N = {
   id:{
     onboard_title:"Selamat Datang", onboard_sub:"Menyiapkan tampilan sopir Anda...",
-    lbl_dispatch:"Panggilan", lbl_pickup:"Jemput", lbl_destination:"Tujuan",
-    ph_pickup:"Lokasi jemput", ph_destination:"Ke mana", btn_gps:"Lokasi saat ini",
+    lbl_dispatch:"Panggilan", lbl_pickup:"Jemput", lbl_destination:"Tujuan (opsional)",
+    ph_pickup:"Lokasi jemput", ph_destination:"Ke mana (opsional)", btn_gps:"Lokasi saat ini",
     btn_search_place:"Cari tempat", btn_dropped:"Set titik turun", btn_map_pick:"Pilih di peta",
     sheet_map_pick:"Pilih lokasi di peta", map_drag_hint:"Geser pin atau ketuk peta untuk memindahkan",
     map_confirm:"Gunakan lokasi ini", map_locating:"Mencari alamat...", no_driver:"Belum ada sopir dipilih",
@@ -745,8 +745,8 @@ const I18N = {
   },
   ko:{
     onboard_title:"환영합니다", onboard_sub:"기사님 화면을 준비하고 있어요...",
-    lbl_dispatch:"호출", lbl_pickup:"픽업 위치", lbl_destination:"목적지",
-    ph_pickup:"픽업 위치 입력", ph_destination:"목적지 입력", btn_gps:"현위치",
+    lbl_dispatch:"호출", lbl_pickup:"픽업 위치", lbl_destination:"목적지 (선택)",
+    ph_pickup:"픽업 위치 입력", ph_destination:"목적지 입력 (선택)", btn_gps:"현위치",
     btn_search_place:"장소 검색", btn_dropped:"내려준 곳", btn_map_pick:"지도에서 선택",
     sheet_map_pick:"지도에서 위치 선택", map_drag_hint:"핀을 드래그하거나 지도를 눌러 위치를 옮기세요",
     map_confirm:"이 위치로 설정", map_locating:"주소 확인 중...", no_driver:"선택된 기사 없음",
@@ -787,8 +787,8 @@ const I18N = {
   },
   en:{
     onboard_title:"Welcome", onboard_sub:"Setting up your driver view...",
-    lbl_dispatch:"Dispatch", lbl_pickup:"Pickup", lbl_destination:"Destination",
-    ph_pickup:"Where to pick up", ph_destination:"Where to", btn_gps:"Current location",
+    lbl_dispatch:"Dispatch", lbl_pickup:"Pickup", lbl_destination:"Destination (optional)",
+    ph_pickup:"Where to pick up", ph_destination:"Where to (optional)", btn_gps:"Current location",
     btn_search_place:"Search place", btn_dropped:"Set drop-off", btn_map_pick:"Pick on map",
     sheet_map_pick:"Choose location on map", map_drag_hint:"Drag the pin or tap the map to move it",
     map_confirm:"Use this location", map_locating:"Finding address...", no_driver:"No driver selected",
@@ -847,7 +847,6 @@ function loadState(){
     drivers:[], // {id,name,wa,active}
     activeDriverId:null,
     favorites:[],
-    recent:[],
     rides:[], // {id,driverId,pickup,dest,ts,status,eta,dropoffTs}
     fuel:[], // {id,liters,cost,ts}
     payroll:{base:0,ot:0,meal:0,vehicle:0,bonus:0,insurance:0},
@@ -1110,10 +1109,7 @@ function bindAutocomplete(inputId, onPick){
     const label = place.formatted_address || place.name || input.value;
     input.value = label;
     onPick(place);
-    state.recent.unshift({label, ts:Date.now()});
-    state.recent = state.recent.slice(0,8);
     save();
-    renderRecent();
   });
 }
 
@@ -1210,10 +1206,7 @@ function initMapPicker(targetField){
       const field = document.getElementById(targetField==="dest" ? "destInput" : "pickupInput");
       field.value = addr;
       if(targetField==="pickup"){ lastCoords = currentLatLng; }
-      state.recent.unshift({label:addr, ts:Date.now()});
-      state.recent = state.recent.slice(0,8);
       save();
-      renderRecent();
       closeSheet();
     };
   }
@@ -1283,10 +1276,7 @@ async function doPlaceSearch(query, targetField){
         if(p.location){
           if(targetField==="dest"){ /* store for potential eta refinement */ }
         }
-        state.recent.unshift({label, ts:Date.now()});
-        state.recent = state.recent.slice(0,8);
         save();
-        renderRecent();
         closeSheet();
       });
     });
@@ -1298,6 +1288,9 @@ async function doPlaceSearch(query, targetField){
 function escapeHtml(s){
   const d = document.createElement("div"); d.textContent = s||""; return d.innerHTML;
 }
+function routeLabel(pickup, dest){
+  return dest ? `${escapeHtml(pickup)} → ${escapeHtml(dest)}` : escapeHtml(pickup);
+}
 
 document.getElementById("callDriverBtn").addEventListener("click", async ()=>{
   const pickup = document.getElementById("pickupInput").value.trim();
@@ -1307,8 +1300,8 @@ document.getElementById("callDriverBtn").addEventListener("click", async ()=>{
     toast(state.lang==="ko"?"먼저 기사를 선택하세요":state.lang==="id"?"Pilih sopir terlebih dahulu":"Select a driver first");
     return;
   }
-  if(!pickup || !dest){
-    toast(state.lang==="ko"?"픽업/목적지를 입력하세요":state.lang==="id"?"Isi lokasi jemput & tujuan":"Enter pickup and destination");
+  if(!pickup){
+    toast(state.lang==="ko"?"픽업 위치를 입력하세요":state.lang==="id"?"Isi lokasi jemput":"Enter a pickup location");
     return;
   }
   const ride = { id: uid("r"), driverId: driver.id, pickup, dest, ts: Date.now(), status:"calling", eta:null };
@@ -1316,9 +1309,12 @@ document.getElementById("callDriverBtn").addEventListener("click", async ()=>{
   state.pendingCall = { pickup, dest, ts: ride.ts };
   save();
 
-  const msg = (state.lang==="ko" ? `🚕 호출!\n픽업: ${pickup}\n목적지: ${dest}` :
-    state.lang==="id" ? `🚕 Panggilan!\nJemput: ${pickup}\nTujuan: ${dest}` :
-    `🚕 Call!\nPickup: ${pickup}\nDestination: ${dest}`);
+  const destLine = dest
+    ? (state.lang==="ko" ? `목적지: ${dest}\n` : state.lang==="id" ? `Tujuan: ${dest}\n` : `Destination: ${dest}\n`)
+    : "";
+  const msg = (state.lang==="ko" ? `🚕 호출!\n픽업: ${pickup}\n${destLine}` :
+    state.lang==="id" ? `🚕 Panggilan!\nJemput: ${pickup}\n${destLine}` :
+    `🚕 Call!\nPickup: ${pickup}\n${destLine}`);
 
   document.getElementById("callStatusRow").style.display = "inline-flex";
   document.getElementById("callStatusRow").className = "ticket-status pending";
@@ -1350,21 +1346,25 @@ document.querySelectorAll(".nav-app").forEach(el=>{
   });
 });
 
-function renderRecent(){
-  const el = document.getElementById("recentList");
-  if(!state.recent.length){
-    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🕘</div><div class="empty-state-text">—</div></div>`;
+function renderCallFavorites(){
+  const el = document.getElementById("callFavoritesList");
+  if(!state.favorites.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⭐</div><div class="empty-state-text">${t("empty_favorites")}</div></div>`;
     return;
   }
-  el.innerHTML = state.recent.map(r=>`
-    <div class="list-item" data-recent="${escapeHtml(r.label)}">
-      <div class="list-icon">🕘</div>
-      <div class="list-body"><div class="list-title">${escapeHtml(r.label)}</div></div>
+  el.innerHTML = state.favorites.map(f=>`
+    <div class="list-item" data-fav-quick="${f.id}">
+      <div class="list-icon">⭐</div>
+      <div class="list-body">
+        <div class="list-title">${escapeHtml(f.name)}</div>
+        <div class="list-sub">${escapeHtml(f.addr||'')}</div>
+      </div>
     </div>
   `).join("");
-  el.querySelectorAll("[data-recent]").forEach(item=>{
+  el.querySelectorAll("[data-fav-quick]").forEach(item=>{
     item.addEventListener("click", ()=>{
-      document.getElementById("destInput").value = item.getAttribute("data-recent");
+      const fav = state.favorites.find(f=>f.id===item.getAttribute("data-fav-quick"));
+      document.getElementById("destInput").value = fav.addr || fav.name;
     });
   });
 }
@@ -1479,7 +1479,7 @@ function renderTodayRides(){
     <div class="list-item">
       <div class="list-icon">${r.status==='accepted' ? '✅':'📞'}</div>
       <div class="list-body">
-        <div class="list-title">${escapeHtml(r.pickup)} → ${escapeHtml(r.dest)}</div>
+        <div class="list-title">${routeLabel(r.pickup, r.dest)}</div>
         <div class="list-sub">${escapeHtml(driver?.name||'—')} · ${time}</div>
       </div>
       <div class="list-value">${r.eta ? r.eta+'min' : ''}</div>
@@ -1521,7 +1521,7 @@ function renderFavorites(){
     btn.addEventListener("click", (e)=>{
       e.stopPropagation();
       state.favorites = state.favorites.filter(f=>f.id!==btn.getAttribute("data-fav-del"));
-      save(); renderFavorites();
+      save(); renderFavorites(); renderCallFavorites();
       toast(t("toast_deleted"));
     });
   });
@@ -1540,7 +1540,7 @@ document.getElementById("addFavoriteBtn").addEventListener("click", ()=>{
       const addr = document.getElementById("favAddr").value.trim();
       if(!name) return;
       state.favorites.push({id: uid("fav"), name, addr});
-      save(); closeSheet(); renderFavorites();
+      save(); closeSheet(); renderFavorites(); renderCallFavorites();
       toast(t("toast_saved"));
     });
   });
@@ -1732,7 +1732,7 @@ function renderDriverHome(){
       <div class="driver-hero calling">
         <div class="driver-hero-icon">📲</div>
         <div class="driver-hero-title">${t("driver_calling_title")}</div>
-        <div class="driver-hero-sub">${escapeHtml(pending.pickup)} → ${escapeHtml(pending.dest)}</div>
+        <div class="driver-hero-sub">${routeLabel(pending.pickup, pending.dest)}</div>
         <button class="ok-boss-btn" id="okBossBtn">${t("ok_boss")}</button>
       </div>
     `;
@@ -1743,7 +1743,7 @@ function renderDriverHome(){
       <div class="driver-hero calling">
         <div class="driver-hero-icon">🚕</div>
         <div class="driver-hero-title">${t("lbl_active_trip")}</div>
-        <div class="driver-hero-sub">${escapeHtml(ride.pickup)} → ${escapeHtml(ride.dest)}</div>
+        <div class="driver-hero-sub">${routeLabel(ride.pickup, ride.dest)}</div>
         <button class="ok-boss-btn" id="endTripBtn" style="background:var(--signal);">${t("btn_end_trip")}</button>
       </div>
     `;
@@ -1767,18 +1767,22 @@ function renderDriverHome(){
 async function handleOkBoss(){
   const pending = state.pendingCall;
   if(!pending) return;
-  let etaText = "—";
-  try{
-    const coords = await getGeo();
-    // crude eta estimate vs pickup text isn't geocoded; just show distance-free confirmation
-    etaText = "~10 min";
-  }catch(e){}
+  let etaText = "~10 min";
 
-  const msg = state.lang==='ko' ? `👍 확인했습니다! 예상 도착: ${etaText}` :
-    state.lang==='id' ? `👍 Siap! Estimasi tiba: ${etaText}` :
-    `👍 Confirmed! ETA: ${etaText}`;
+  const destLine = pending.dest
+    ? (state.lang==='ko' ? `🚩 목적지: ${pending.dest}\n` : state.lang==='id' ? `🚩 Tujuan: ${pending.dest}\n` : `🚩 Destination: ${pending.dest}\n`)
+    : "";
+
+  const msg = state.lang==='ko'
+    ? `👍 OK BOSS!\n📍 픽업: ${pending.pickup}\n${destLine}⏰ 예상 도착: ${etaText}\n🚗 확인했습니다, 바로 출발합니다!`
+    : state.lang==='id'
+    ? `👍 OK BOSS!\n📍 Jemput: ${pending.pickup}\n${destLine}⏰ Perkiraan tiba: ${etaText}\n🚗 Sudah dilihat, segera berangkat!`
+    : `👍 OK BOSS!\n📍 Pickup: ${pending.pickup}\n${destLine}⏰ ETA: ${etaText}\n🚗 Confirmed, heading out now!`;
+
   if(state.bossWa){
     window.open(waLink(state.bossWa, msg), "_blank");
+  }else{
+    toast(state.lang==='ko' ? "사장 WA 번호가 설정되지 않았어요 (⚙️ 설정)" : state.lang==='id' ? "Nomor WA Bos belum diatur (⚙️ Pengaturan)" : "Boss WhatsApp number not set (⚙️ Settings)");
   }
   // mark matching ride accepted
   const ride = state.rides.find(r=>r.ts===pending.ts);
@@ -1868,7 +1872,7 @@ function renderDriverRideLog(){
     <div class="list-item">
       <div class="list-icon">${r.status==='accepted' ? '✅':'📞'}</div>
       <div class="list-body">
-        <div class="list-title">${escapeHtml(r.pickup)} → ${escapeHtml(r.dest)}</div>
+        <div class="list-title">${routeLabel(r.pickup, r.dest)}</div>
         <div class="list-sub">${time}</div>
       </div>
     </div>`;
@@ -1891,7 +1895,7 @@ function render(){
     document.querySelector('[data-tab="screen-call"]').classList.add("active");
     renderDriverList();
     renderFavorites();
-    renderRecent();
+    renderCallFavorites();
     renderTodayRides();
     bindPayrollInputs();
     renderFuel();
