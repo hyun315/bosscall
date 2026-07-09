@@ -8,32 +8,32 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="BossCall">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#FFFFFF">
+<meta name="theme-color" content="#EEF2F8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ============ TOKENS (Uber-style: white, high-contrast black) ============ */
+/* ============ TOKENS (soft card style: light blue-gray bg, navy text, blue accent) ============ */
 :root{
-  --ink:#FFFFFF;
-  --surface:#F6F6F6;
+  --ink:#EEF2F8;
+  --surface:#FFFFFF;
   --surface-raised:#FFFFFF;
-  --surface-hi:#EDEDED;
-  --line:#DDDDDD;
-  --line-soft:#E9E9E9;
-  --text:#161616;
-  --text-muted:#6B6B6B;
-  --text-dim:#9B9B9B;
-  --signal:#0A0A0A;
-  --signal-dim:#3A3A3A;
-  --signal-glow:rgba(0,0,0,0.14);
-  --ok:#03823B;
-  --ok-dim:#E3F5EA;
+  --surface-hi:#F3F6FB;
+  --line:#E1E7F0;
+  --line-soft:#EAEFF6;
+  --text:#15213D;
+  --text-muted:#57678A;
+  --text-dim:#8A97B4;
+  --signal:#2F6FED;
+  --signal-dim:#1D4ED8;
+  --signal-glow:rgba(47,111,237,0.22);
+  --ok:#0E9F6E;
+  --ok-dim:#E3F9F0;
   --alert:#B25E00;
   --alert-dim:#FDF0DE;
-  --danger:#C6270E;
-  --radius:14px;
-  --radius-sm:9px;
+  --danger:#DC2626;
+  --radius:20px;
+  --radius-sm:14px;
   --font-display:'Inter',sans-serif;
   --font-body:'Inter',sans-serif;
   --font-mono:'IBM Plex Mono',monospace;
@@ -420,6 +420,59 @@ button{font-family:inherit;}
 .onboard-sub{color:var(--text-muted);font-size:14px;margin-top:8px;line-height:1.5;max-width:280px;}
 
 .link{color:var(--signal);text-decoration:none;font-weight:600;}
+
+/* ============ READABILITY BOOST + SOFT CARD STYLE ============ */
+.card,.ticket,.driver-slot,.nav-app,.stat-tile,.driver-hero,.map-frame{
+  border-radius:20px !important;
+  box-shadow:0 1px 3px rgba(21,33,61,0.06), 0 1px 2px rgba(21,33,61,0.04) !important;
+}
+.driver-avatar,.list-icon,.slot-link-btn,.icon-btn{border-radius:16px !important;}
+.chip-btn{border-radius:22px !important;font-size:13px !important;padding:9px 13px !important;font-weight:600 !important;}
+.btn{border-radius:14px !important;font-size:15.5px !important;padding:14px 18px !important;}
+.call-btn{border-radius:18px !important;font-size:17.5px !important;padding:19px !important;}
+.ok-boss-btn{border-radius:18px !important;font-size:19px !important;}
+.route-field input{font-size:18px !important;font-weight:600 !important;}
+.route-field label{font-size:11.5px !important;}
+.list-title{font-size:16px !important;font-weight:600 !important;}
+.list-sub{font-size:12.5px !important;}
+.list-value{font-size:14.5px !important;}
+.card{padding:18px !important;}
+.section-label{font-size:12.5px !important;letter-spacing:1px !important;color:var(--text-muted) !important;}
+.field label{font-size:11.5px !important;}
+.field input,.field select{font-size:16.5px !important;padding:14px 15px !important;border-radius:14px !important;}
+.driver-meta-name{font-size:15.5px !important;}
+.driver-meta-sub{font-size:11.5px !important;}
+.eta-badge{font-size:13.5px !important;border-radius:10px !important;}
+.badge{font-size:10.5px !important;}
+.nav-app-label{font-size:11.5px !important;font-weight:600 !important;}
+.nav-app-icon{font-size:23px !important;}
+.stat-tile-num{font-size:27px !important;}
+.stat-tile-label{font-size:11px !important;}
+.empty-state-text{font-size:14.5px !important;}
+.tab-label{font-size:10.5px !important;font-weight:600 !important;}
+.tab-icon{font-size:21px !important;}
+.sheet-title{font-size:19px !important;font-weight:800 !important;}
+.toast{font-size:15px !important;}
+.driver-hero-title{font-size:21px !important;}
+.driver-hero-sub{font-size:13px !important;}
+.timer-display{font-size:42px !important;}
+.brand-name{font-size:19px !important;font-weight:800 !important;}
+.brand-role{font-size:10.5px !important;}
+.onboard-title{font-size:24px !important;}
+.onboard-sub{font-size:16px !important;}
+.driver-slot{padding:15px 16px !important;}
+.ticket-top{padding:20px 20px 18px !important;}
+.ticket-bottom{padding:16px 20px 20px !important;}
+
+/* Google Places autocomplete dropdown styling */
+.pac-container{
+  border-radius:16px !important;margin-top:6px !important;
+  border:1px solid var(--line) !important;box-shadow:0 8px 24px -8px rgba(21,33,61,0.18) !important;
+  font-family:var(--font-body) !important;overflow:hidden;
+}
+.pac-item{padding:11px 14px !important;font-size:14.5px !important;color:var(--text) !important;border-color:var(--line-soft) !important;}
+.pac-item-query{font-size:15.5px !important;font-weight:600 !important;color:var(--text) !important;}
+.pac-icon{margin-top:4px !important;}
 </style>
 </head>
 <body>
@@ -1003,7 +1056,7 @@ function loadGoogleMaps(){
   mapsLoadPromise = new Promise((resolve,reject)=>{
     if(window.google && window.google.maps){ resolve(); return; }
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(state.apiKey)}&v=weekly`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(state.apiKey)}&libraries=places&v=weekly`;
     script.async = true;
     script.onload = ()=>resolve();
     script.onerror = ()=>{ mapsLoadPromise = null; reject(new Error("maps load failed")); };
@@ -1022,6 +1075,46 @@ async function reverseGeocode(lat, lng){
   }catch(e){}
   return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 }
+
+/* ---------- Inline Google Places Autocomplete on the pickup/destination fields ---------- */
+let autocompleteReady = false;
+async function ensureAutocomplete(){
+  if(autocompleteReady || !state.apiKey) return;
+  try{
+    await loadGoogleMaps();
+  }catch(e){ return; }
+  if(!(window.google && window.google.maps && window.google.maps.places)) return;
+  autocompleteReady = true;
+  bindAutocomplete("pickupInput", (place)=>{
+    if(place.geometry && place.geometry.location){
+      lastCoords = { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() };
+    }
+  });
+  bindAutocomplete("destInput", ()=>{});
+}
+
+function bindAutocomplete(inputId, onPick){
+  const input = document.getElementById(inputId);
+  if(!input || input.__acBound) return;
+  input.__acBound = true;
+  const ac = new google.maps.places.Autocomplete(input, {
+    fields:["formatted_address","name","geometry"]
+  });
+  ac.addListener("place_changed", ()=>{
+    const place = ac.getPlace();
+    if(!place) return;
+    const label = place.formatted_address || place.name || input.value;
+    input.value = label;
+    onPick(place);
+    state.recent.unshift({label, ts:Date.now()});
+    state.recent = state.recent.slice(0,8);
+    save();
+    renderRecent();
+  });
+}
+
+document.getElementById("pickupInput").addEventListener("focus", ensureAutocomplete, {once:false});
+document.getElementById("destInput").addEventListener("focus", ensureAutocomplete, {once:false});
 
 async function openMapPickerSheet(targetField){
   if(!state.apiKey){
