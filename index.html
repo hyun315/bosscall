@@ -820,12 +820,24 @@ function playAlertSound(){
   }catch(e){}
 }
 
-function fireAlert(title, body){
+function fireAlert(title, body, onClick){
   playAlertSound();
   if(navigator.vibrate){ navigator.vibrate([200,100,200,100,200]); }
   if("Notification" in window && Notification.permission === "granted"){
-    try{ new Notification(title, {body}); }catch(e){}
+    try{
+      const notif = new Notification(title, {body, tag:"bosscall-alert", renotify:true});
+      notif.onclick = ()=>{
+        try{ window.focus(); }catch(e){}
+        if(onClick) onClick();
+        notif.close();
+      };
+    }catch(e){ console.error("Notification failed", e); }
   }
+}
+
+function isStandaloneApp(){
+  return window.navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
 }
 
 /* Call right after a manual role switch (boss<->driver on the same device)
@@ -839,7 +851,10 @@ function syncDispatchNow(){
     if(state.role === "driver" && data){
       state.pendingCall = { pickup: data.pickup, dest: data.dest, ts: data.ts };
       save();
-      fireAlert(t("driver_calling_title"), data.pickup + (data.dest ? (" → " + data.dest) : ""));
+      fireAlert(t("driver_calling_title"), data.pickup + (data.dest ? (" → " + data.dest) : ""), ()=>{
+        closeSheet();
+        render();
+      });
       if(document.getElementById("driverHeroWrap")) renderDriverHome();
     }
   });
@@ -874,7 +889,10 @@ function setupFirebaseListeners(){
       state.pendingCall = { pickup: data.pickup, dest: data.dest, ts: data.ts };
       save();
       if(isNew){
-        fireAlert(t("driver_calling_title"), data.pickup + (data.dest ? (" → " + data.dest) : ""));
+        fireAlert(t("driver_calling_title"), data.pickup + (data.dest ? (" → " + data.dest) : ""), ()=>{
+          closeSheet();
+          render();
+        });
       }
       if(document.getElementById("driverHeroWrap")) renderDriverHome();
     }else if(state.pendingCall){
@@ -897,7 +915,17 @@ function setupFirebaseListeners(){
     if(isNew){
       fireAlert(
         state.lang==='ko' ? "기사님이 응답했어요" : state.lang==='id' ? "Sopir merespons" : "Driver responded",
-        t("status_driver_coming")
+        t("status_driver_coming"),
+        ()=>{
+          closeSheet();
+          document.querySelectorAll("#bossTabbar .tab-item").forEach(x=>x.classList.remove("active"));
+          const callTab = document.querySelector('[data-tab="screen-call"]');
+          if(callTab) callTab.classList.add("active");
+          document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+          const callScreen = document.getElementById("screen-call");
+          if(callScreen) callScreen.classList.add("active");
+          render();
+        }
       );
     }
     updateCallStatusUi();
@@ -954,6 +982,7 @@ const I18N = {
     lbl_boss_pin:"Kata sandi beralih ke Bos", boss_pin_hint:"Sopir harus memasukkan ini untuk beralih dari tampilan sopir ke tampilan Bos. Atur di sini — otomatis tersinkron ke sopir yang berpasangan.",
     boss_pin_not_set:"Bos belum mengatur kata sandi beralih.",
     btn_enable_alerts:"Aktifkan alarm", btn_test_alert:"Tes alarm", alerts_enabled:"Alarm aktif", alerts_denied:"Izin notifikasi ditolak — aktifkan di pengaturan browser",
+    need_homescreen_install:"Tambahkan ke Layar Utama dulu agar notifikasi berfungsi di iOS.",
     notify_accept:"Notifikasi saat diterima", notify_clock:"Notifikasi absen masuk/keluar", notify_fuel:"Notifikasi catatan bensin",
     btn_test_wa:"Kirim pesan tes", lbl_api:"Kunci API Google Maps", api_hint:"Digunakan untuk pencarian tempat dan peta. Hanya disimpan di perangkat ini.",
     lbl_role_switch:"Mode", lbl_current_mode:"Tampilan sebagai", btn_switch_driver:"Beralih ke tampilan sopir",
@@ -1018,6 +1047,7 @@ const I18N = {
     lbl_boss_pin:"사장 전환 암호", boss_pin_hint:"기사가 기사 화면에서 사장 화면으로 넘어갈 때 이 암호를 입력해야 해요. 여기서 설정하면 짝지어진 기사에게 자동으로 동기화됩니다.",
     boss_pin_not_set:"사장님이 아직 전환 암호를 설정하지 않았어요.",
     btn_enable_alerts:"알림 켜기", btn_test_alert:"테스트 알람", alerts_enabled:"알림이 켜졌어요", alerts_denied:"알림 권한이 거부됐어요 — 브라우저 설정에서 허용해주세요",
+    need_homescreen_install:"iOS에서 알림이 뜨려면 먼저 홈 화면에 추가해야 해요.",
     notify_accept:"수락 시 알림", notify_clock:"출퇴근 시 알림", notify_fuel:"주유 기록 시 알림",
     btn_test_wa:"테스트 메시지 발송", lbl_api:"Google Maps API 키", api_hint:"장소 검색 및 지도 표시에 사용됩니다. 이 기기에만 저장됩니다.",
     lbl_role_switch:"모드", lbl_current_mode:"보기 모드", btn_switch_driver:"기사 화면으로 전환",
@@ -1082,6 +1112,7 @@ const I18N = {
     lbl_boss_pin:"Boss switch password", boss_pin_hint:"A driver must enter this to switch from driver view back to boss view. Set it here — it syncs to the paired driver automatically.",
     boss_pin_not_set:"Boss hasn't set a switch password yet.",
     btn_enable_alerts:"Enable alerts", btn_test_alert:"Test alert", alerts_enabled:"Alerts enabled", alerts_denied:"Notification permission denied — enable it in browser settings",
+    need_homescreen_install:"Add to Home Screen first for notifications to work on iOS.",
     notify_accept:"Notify on accept", notify_clock:"Notify on clock in/out", notify_fuel:"Notify on fuel entry",
     btn_test_wa:"Send test message", lbl_api:"Google Maps API key", api_hint:"Used for place search and maps. Stored only on this device.",
     lbl_role_switch:"Mode", lbl_current_mode:"View as", btn_switch_driver:"Switch to driver view",
@@ -2540,9 +2571,15 @@ document.getElementById("testWaBtn").addEventListener("click", ()=>{
 });
 
 document.getElementById("enableNotifyBtn").addEventListener("click", async ()=>{
+  if(!isStandaloneApp()){
+    toast(t("need_homescreen_install"));
+  }
   const granted = await requestNotifyPermission();
   toast(granted ? t("alerts_enabled") : t("alerts_denied"));
-  if(granted) playAlertSound();
+  if(granted){
+    playAlertSound();
+    fireAlert("BossCall", t("alerts_enabled"));
+  }
 });
 
 document.getElementById("testAlertBtn").addEventListener("click", ()=>{
