@@ -1,0 +1,3209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>BossCall</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BossCall">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F8F9FA">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js"></script>
+<style>
+/* ============ TOKENS (Google Material style: white, standard blue, Roboto) ============ */
+:root{
+  --ink:#F8F9FA;
+  --surface:#FFFFFF;
+  --surface-raised:#FFFFFF;
+  --surface-hi:#F1F3F4;
+  --line:#DADCE0;
+  --line-soft:#E8EAED;
+  --text:#202124;
+  --text-muted:#5F6368;
+  --text-dim:#80868B;
+  --signal:#1A73E8;
+  --signal-dim:#1558B0;
+  --signal-glow:rgba(26,115,232,0.24);
+  --ok:#188038;
+  --ok-dim:#E6F4EA;
+  --alert:#B06000;
+  --alert-dim:#FEF7E0;
+  --danger:#D93025;
+  --radius:12px;
+  --radius-sm:8px;
+  --font-display:'Roboto',sans-serif;
+  --font-body:'Roboto',sans-serif;
+  --font-mono:'Roboto Mono',monospace;
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px);
+  --safe-r:env(safe-area-inset-right,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--ink);
+  color:var(--text);
+  font-family:var(--font-body);
+  overflow:hidden;
+  position:fixed;
+  inset:0;
+  -webkit-user-select:none;
+  user-select:none;
+}
+input,textarea{-webkit-user-select:text;user-select:text;}
+button{font-family:inherit;}
+::-webkit-scrollbar{display:none;}
+
+#app{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;
+  z-index:1;
+}
+
+/* ============ TOP BAR ============ */
+.topbar{
+  padding:calc(var(--safe-t) + 12px) 18px 12px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+  background:var(--ink);
+  border-bottom:1px solid var(--line-soft);
+}
+.brand{
+  display:flex;align-items:center;gap:9px;
+}
+.brand-mark{
+  width:30px;height:30px;border-radius:8px;
+  background:var(--signal);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-weight:700;font-size:13px;
+  color:#FFFFFF;
+}
+.brand-name{font-family:var(--font-display);font-weight:800;font-size:16.5px;letter-spacing:-0.2px;}
+.brand-role{
+  font-family:var(--font-mono);font-size:9.5px;color:var(--text-dim);
+  letter-spacing:1.2px;text-transform:uppercase;margin-top:-1px;
+}
+.topbar-actions{display:flex;gap:8px;align-items:center;}
+
+.icon-btn{
+  width:34px;height:34px;border-radius:10px;
+  background:var(--surface);border:1px solid var(--line-soft);
+  color:var(--text-muted);display:flex;align-items:center;justify-content:center;
+  font-size:15px;cursor:pointer;
+}
+.icon-btn:active{background:var(--surface-hi);}
+.lang-pill{
+  font-family:var(--font-mono);font-size:10.5px;font-weight:600;
+  padding:8px 10px;border-radius:10px;background:var(--surface);
+  border:1px solid var(--line-soft);color:var(--text-muted);letter-spacing:0.5px;
+  cursor:pointer;
+}
+
+/* ============ SCREENS ============ */
+.screen{
+  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:0 18px calc(96px + var(--safe-b)) 18px;
+  display:none;
+}
+.screen.active{display:block;}
+.section-label{
+  font-family:var(--font-mono);font-size:10.5px;letter-spacing:1.6px;
+  text-transform:uppercase;color:var(--text-dim);
+  margin:22px 0 10px 2px;display:flex;align-items:center;gap:8px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--line-soft);}
+
+/* ============ DISPATCH TICKET (signature element) ============ */
+.ticket{
+  position:relative;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+  margin-top:10px;
+}
+.ticket-top{
+  padding:18px 18px 16px;
+}
+.ticket-status{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--font-mono);font-size:10.5px;font-weight:600;
+  letter-spacing:1px;text-transform:uppercase;
+  color:var(--text-dim);margin-bottom:14px;
+}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--text-dim);}
+.ticket-status.pending .dot{background:var(--alert);box-shadow:0 0 0 4px var(--alert-dim);animation:pulse 1.4s infinite;}
+.ticket-status.pending{color:var(--alert);}
+.ticket-status.accepted .dot{background:var(--ok);box-shadow:0 0 0 4px var(--ok-dim);}
+.ticket-status.accepted{color:var(--ok);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+.route-row{display:flex;gap:12px;align-items:stretch;}
+.route-line{display:flex;flex-direction:column;align-items:center;padding-top:6px;width:14px;}
+.route-node{width:10px;height:10px;border-radius:50%;background:var(--signal);flex-shrink:0;}
+.route-node.end{background:var(--ok);border-radius:3px;}
+.route-track{width:2px;flex:1;background:var(--line);margin:4px 0;}
+.route-fields{flex:1;display:flex;flex-direction:column;gap:16px;}
+.route-field label{
+  display:block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;
+}
+.route-field input{
+  width:100%;background:transparent;border:none;color:var(--text);
+  font-family:var(--font-body);font-size:15px;font-weight:500;padding:0;
+  border-bottom:1px solid transparent;
+}
+.route-field input:focus{outline:none;border-bottom-color:var(--signal);}
+.route-field input::placeholder{color:var(--text-dim);font-weight:400;}
+.field-actions{display:flex;gap:6px;margin-top:6px;}
+.chip-btn{
+  font-family:var(--font-mono);font-size:10.5px;font-weight:500;
+  padding:6px 10px;border-radius:20px;background:var(--surface-raised);
+  border:1px solid var(--line-soft);color:var(--text-muted);
+  display:inline-flex;align-items:center;gap:5px;cursor:pointer;
+}
+.chip-btn:active{background:var(--surface-hi);}
+
+.ticket-perf{
+  height:1px;background:var(--line-soft);margin:0;
+}
+
+.ticket-bottom{
+  padding:14px 18px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.ticket-driver{display:flex;align-items:center;gap:9px;}
+.driver-avatar{
+  width:34px;height:34px;border-radius:9px;background:var(--surface-raised);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-weight:700;font-size:13px;color:var(--text-muted);
+  border:1px solid var(--line-soft);
+}
+.driver-meta-name{font-size:13.5px;font-weight:600;}
+.driver-meta-sub{font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-top:1px;}
+.eta-badge{
+  font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--ok);
+  background:var(--ok-dim);padding:5px 10px;border-radius:8px;border:1px solid rgba(3,130,59,0.2);
+}
+
+.call-btn{
+  width:100%;margin-top:16px;
+  padding:17px;border-radius:13px;border:none;
+  background:var(--signal);
+  color:#FFFFFF;font-family:var(--font-display);font-weight:700;font-size:15.5px;
+  letter-spacing:0.2px;
+  box-shadow:0 6px 16px -6px var(--signal-glow);
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  cursor:pointer;
+}
+.call-btn:active{transform:scale(0.98);}
+.call-btn:disabled{opacity:0.4;box-shadow:none;}
+.call-btn.secondary{
+  background:var(--surface-raised);color:var(--text);
+  box-shadow:none;border:1px solid var(--line-soft);
+}
+
+/* ============ CARDS / LISTS ============ */
+.card{
+  background:var(--surface);border:1px solid var(--line-soft);
+  border-radius:var(--radius);padding:16px;margin-bottom:10px;
+}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.row + .row{margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft);}
+.list-item{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 0;border-bottom:1px solid var(--line-soft);
+}
+.list-item:last-child{border-bottom:none;}
+.list-icon{
+  width:36px;height:36px;border-radius:10px;background:var(--surface-raised);
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
+  border:1px solid var(--line-soft);
+}
+.list-body{flex:1;min-width:0;}
+.list-title{font-size:14px;font-weight:600;}
+.list-sub{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);margin-top:2px;}
+.list-value{font-family:var(--font-mono);font-size:13px;color:var(--text-muted);text-align:right;flex-shrink:0;}
+.badge{
+  font-family:var(--font-mono);font-size:9.5px;font-weight:600;letter-spacing:0.5px;
+  padding:3px 8px;border-radius:6px;text-transform:uppercase;
+}
+.badge.active{background:var(--ok-dim);color:var(--ok);}
+.badge.idle{background:var(--surface-raised);color:var(--text-dim);}
+
+/* driver slots */
+.driver-slot{
+  display:flex;align-items:center;gap:12px;padding:13px 14px;
+  background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;margin-bottom:9px;
+  cursor:pointer;
+}
+.driver-slot.selected{border-color:var(--signal);background:rgba(0,0,0,0.035);}
+.driver-slot .driver-avatar{width:38px;height:38px;}
+.slot-link-btn{
+  width:34px;height:34px;border-radius:9px;background:var(--surface-raised);
+  border:1px solid var(--line-soft);color:var(--text-muted);
+  display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;
+}
+
+/* ============ FORM ELEMENTS ============ */
+.field{margin-bottom:14px;}
+.field label{
+  display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:0.8px;
+  text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;
+}
+.field input,.field select{
+  width:100%;padding:12px 13px;border-radius:10px;
+  background:var(--surface-raised);border:1px solid var(--line-soft);
+  color:var(--text);font-size:14.5px;font-family:var(--font-body);
+}
+.field input:focus,.field select:focus{outline:none;border-color:var(--signal);}
+.field-row{display:flex;gap:10px;}
+.field-row .field{flex:1;}
+.btn{
+  padding:12px 16px;border-radius:11px;border:1px solid var(--line-soft);
+  background:var(--surface-raised);color:var(--text);font-weight:600;font-size:13.5px;
+  cursor:pointer;display:inline-flex;align-items:center;gap:7px;justify-content:center;
+}
+.btn.primary{background:var(--signal);color:#FFFFFF;border-color:transparent;}
+.btn.full{width:100%;}
+.btn.ghost{background:transparent;color:var(--text-muted);}
+.btn.danger-ghost{background:transparent;color:var(--danger);border-color:rgba(198,39,14,0.25);}
+
+.toggle{
+  width:44px;height:26px;border-radius:20px;background:var(--surface-raised);
+  border:1px solid var(--line-soft);position:relative;cursor:pointer;flex-shrink:0;
+}
+.toggle::after{
+  content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+  background:var(--text-dim);transition:transform .15s;
+}
+.toggle.on{background:rgba(0,0,0,0.08);border-color:var(--signal);}
+.toggle.on::after{transform:translateX(18px);background:var(--signal);}
+
+/* nav grid (4 nav apps) */
+.nav-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px;}
+.nav-app{
+  background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;
+  padding:12px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  cursor:pointer;
+}
+.nav-app:active{background:var(--surface-hi);}
+.nav-app-icon{font-size:19px;}
+.nav-app-label{font-family:var(--font-mono);font-size:9.5px;color:var(--text-muted);}
+
+/* tabs (favorites/search results) */
+.search-result{
+  display:flex;align-items:center;gap:11px;padding:12px 0;
+  border-bottom:1px solid var(--line-soft);cursor:pointer;
+}
+.search-result:last-child{border-bottom:none;}
+.search-result:active{opacity:0.7;}
+
+/* stats bars */
+.bar-row{display:flex;align-items:center;gap:10px;padding:8px 0;}
+.bar-label{font-family:var(--font-mono);font-size:11px;color:var(--text-muted);width:38px;flex-shrink:0;}
+.bar-track{flex:1;height:7px;border-radius:4px;background:var(--surface-raised);overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--signal-dim),var(--signal));}
+.bar-value{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);width:44px;text-align:right;flex-shrink:0;}
+
+.stat-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+.stat-tile{
+  background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:14px;
+}
+.stat-tile-num{font-family:var(--font-display);font-size:22px;font-weight:700;}
+.stat-tile-label{font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-top:3px;text-transform:uppercase;letter-spacing:0.5px;}
+
+.empty-state{
+  text-align:center;padding:36px 20px;color:var(--text-dim);
+}
+.empty-state-icon{font-size:26px;margin-bottom:10px;opacity:0.6;}
+.empty-state-text{font-size:13px;line-height:1.5;}
+
+/* ============ BOTTOM TAB BAR ============ */
+.tabbar{
+  position:fixed;left:0;right:0;bottom:0;
+  padding:8px calc(10px + var(--safe-l)) calc(10px + var(--safe-b)) calc(10px + var(--safe-r));
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--line-soft);
+  display:flex;justify-content:space-around;z-index:20;
+}
+.tab-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 10px;color:var(--text-dim);cursor:pointer;flex:1;
+}
+.tab-item.active{color:var(--signal);}
+.tab-icon{font-size:19px;}
+.tab-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.3px;}
+
+/* ============ MODAL / SHEET ============ */
+.sheet-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:50;
+  display:none;align-items:flex-end;
+}
+.sheet-backdrop.open{display:flex;}
+.sheet{
+  background:var(--ink);width:100%;border-radius:20px 20px 0 0;
+  padding:10px 20px calc(22px + var(--safe-b));
+  max-height:82vh;overflow-y:auto;
+  border-top:1px solid var(--line-soft);
+  animation:sheetUp .22s ease-out;
+}
+@keyframes sheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.sheet-handle{width:36px;height:4px;background:var(--line);border-radius:3px;margin:6px auto 16px;}
+.sheet-title{font-family:var(--font-display);font-weight:700;font-size:17px;margin-bottom:14px;}
+
+/* map iframe */
+.map-frame{
+  width:100%;height:220px;border-radius:12px;border:1px solid var(--line-soft);
+  margin-top:10px;background:var(--surface-raised);
+}
+
+/* toast: kept dark for legibility as a floating overlay regardless of theme */
+.toast{
+  position:fixed;left:50%;bottom:calc(100px + var(--safe-b));transform:translateX(-50%) translateY(20px);
+  background:#161616;border:1px solid #2A2A2A;color:#FFFFFF;
+  padding:12px 18px;border-radius:12px;font-size:13.5px;font-weight:500;
+  z-index:100;opacity:0;pointer-events:none;transition:all .25s;
+  display:flex;align-items:center;gap:8px;box-shadow:0 10px 30px -8px rgba(0,0,0,0.35);
+  max-width:86vw;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* driver mode: full dispatch screen */
+.driver-hero{
+  margin-top:14px;text-align:center;padding:34px 20px;
+  background:var(--surface);border:1px solid var(--line-soft);border-radius:18px;
+}
+.driver-hero.calling{border-color:var(--signal);background:rgba(0,0,0,0.025);}
+.driver-hero-icon{font-size:34px;margin-bottom:12px;}
+.driver-hero-title{font-family:var(--font-display);font-weight:700;font-size:19px;}
+.driver-hero-sub{font-family:var(--font-mono);font-size:11.5px;color:var(--text-dim);margin-top:6px;}
+.ok-boss-btn{
+  width:100%;margin-top:20px;padding:20px;border-radius:16px;border:none;
+  background:var(--ok);color:#FFFFFF;
+  font-family:var(--font-display);font-weight:700;font-size:17px;
+  box-shadow:0 8px 20px -8px rgba(3,130,59,0.4);cursor:pointer;
+}
+.ok-boss-btn:active{transform:scale(0.98);}
+
+.timer-display{
+  font-family:var(--font-mono);font-size:38px;font-weight:600;text-align:center;
+  padding:20px 0 6px;letter-spacing:1px;
+}
+
+/* onboarding screen */
+.onboard-wrap{
+  position:fixed;inset:0;z-index:5;background:var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0 30px;text-align:center;
+}
+.onboard-mark{
+  width:64px;height:64px;border-radius:18px;
+  background:var(--signal);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-weight:700;font-size:26px;color:#FFFFFF;
+  box-shadow:0 10px 26px -8px var(--signal-glow);margin-bottom:22px;
+}
+.onboard-title{font-family:var(--font-display);font-weight:700;font-size:22px;}
+.onboard-sub{color:var(--text-muted);font-size:14px;margin-top:8px;line-height:1.5;max-width:280px;}
+
+.link{color:var(--signal);text-decoration:none;font-weight:600;}
+
+/* ============ MATERIAL-STYLE SIZING ============ */
+.card,.ticket,.driver-slot,.nav-app,.stat-tile,.driver-hero,.map-frame{
+  border-radius:12px !important;
+  box-shadow:0 1px 2px rgba(60,64,67,0.08), 0 1px 3px rgba(60,64,67,0.08) !important;
+}
+.driver-avatar,.list-icon,.slot-link-btn,.icon-btn{border-radius:8px !important;}
+.chip-btn{border-radius:8px !important;font-size:13px !important;padding:9px 13px !important;font-weight:500 !important;background:var(--surface-hi) !important;border-color:transparent !important;}
+.btn{border-radius:8px !important;font-size:14.5px !important;font-weight:500 !important;padding:13px 18px !important;}
+.call-btn{border-radius:24px !important;font-size:16px !important;font-weight:500 !important;padding:17px !important;letter-spacing:0 !important;}
+.ok-boss-btn{border-radius:24px !important;font-size:17px !important;font-weight:500 !important;}
+.route-field input{font-size:16.5px !important;font-weight:400 !important;}
+.route-field label{font-size:12px !important;font-weight:400 !important;}
+.list-title{font-size:15px !important;font-weight:500 !important;}
+.list-sub{font-size:12.5px !important;}
+.list-value{font-size:14px !important;}
+.card{padding:16px !important;}
+.section-label{font-size:12px !important;letter-spacing:0.3px !important;color:var(--text-muted) !important;font-weight:500 !important;text-transform:none !important;}
+.field label{font-size:12px !important;font-weight:400 !important;}
+.field input,.field select{font-size:15.5px !important;padding:13px 14px !important;border-radius:8px !important;}
+.driver-meta-name{font-size:15px !important;font-weight:500 !important;}
+.driver-meta-sub{font-size:12px !important;}
+.eta-badge{font-size:13px !important;border-radius:6px !important;font-weight:500 !important;}
+.badge{font-size:10.5px !important;border-radius:4px !important;}
+.nav-app-label{font-size:12px !important;font-weight:400 !important;}
+.nav-app-icon{font-size:22px !important;}
+.stat-tile-num{font-size:24px !important;font-weight:500 !important;}
+.stat-tile-label{font-size:11px !important;text-transform:none !important;}
+.empty-state-text{font-size:14px !important;}
+.tab-label{font-size:10.5px !important;font-weight:500 !important;letter-spacing:0 !important;}
+.tab-icon{font-size:20px !important;}
+.sheet-title{font-size:18px !important;font-weight:500 !important;}
+.toast{font-size:14.5px !important;border-radius:8px !important;}
+.driver-hero-title{font-size:19px !important;font-weight:500 !important;}
+.driver-hero-sub{font-size:13px !important;}
+.timer-display{font-size:38px !important;font-weight:400 !important;}
+.brand-name{font-size:18px !important;font-weight:500 !important;letter-spacing:0 !important;}
+.brand-role{font-size:10.5px !important;letter-spacing:0.5px !important;}
+.onboard-title{font-size:22px !important;font-weight:500 !important;}
+.onboard-sub{font-size:15px !important;}
+.driver-slot{padding:14px 16px !important;}
+.ticket-top{padding:18px 18px 16px !important;}
+.ticket-bottom{padding:14px 18px 18px !important;}
+.brand-mark{border-radius:8px !important;}
+
+/* Google Places autocomplete dropdown styling */
+.pac-container{
+  border-radius:8px !important;margin-top:4px !important;
+  border:1px solid var(--line) !important;box-shadow:0 1px 6px rgba(60,64,67,0.28) !important;
+  font-family:var(--font-body) !important;overflow:hidden;
+}
+.pac-item{padding:10px 14px !important;font-size:14px !important;color:var(--text) !important;border-color:var(--line-soft) !important;}
+.pac-item-query{font-size:15px !important;font-weight:400 !important;color:var(--text) !important;}
+.pac-icon{margin-top:4px !important;}
+</style>
+</head>
+<body>
+
+<div id="onboardScreen" class="onboard-wrap" style="display:none;">
+  <div class="onboard-mark">BC</div>
+  <div class="onboard-title" data-i18n="onboard_title">Welcome</div>
+  <div class="onboard-sub" data-i18n="onboard_sub">Setting up...</div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">BC</div>
+      <div>
+        <div class="brand-name">BossCall</div>
+        <div class="brand-role" id="roleLabel">BOSS MODE</div>
+        <div id="pairCodeBadge" style="font-family:var(--font-mono);font-size:10.5px;color:var(--signal);letter-spacing:1px;margin-top:1px;"></div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <div class="lang-pill" id="langBtn">EN</div>
+      <div class="icon-btn" id="driverSettingsBtn" style="display:none;">⚙️</div>
+      <div class="icon-btn" id="adminModeBtn" style="display:none;">🔑</div>
+    </div>
+  </div>
+
+  <!-- ===== CALL / DISPATCH SCREEN (boss) ===== -->
+  <div class="screen active" id="screen-call">
+    <div class="section-label" data-i18n="lbl_dispatch">Dispatch</div>
+
+    <div class="ticket">
+      <div class="ticket-top">
+        <div class="ticket-status pending" id="callStatusRow" style="display:none;">
+          <span class="dot"></span><span id="callStatusText" data-i18n="status_calling">Calling...</span>
+        </div>
+        <div class="route-row">
+          <div class="route-line">
+            <div class="route-node"></div>
+            <div class="route-track"></div>
+            <div class="route-node end"></div>
+          </div>
+          <div class="route-fields">
+            <div class="route-field">
+              <label data-i18n="lbl_pickup">Pickup</label>
+              <input type="text" id="pickupInput" data-i18n-ph="ph_pickup" placeholder="Where to pick up">
+              <div class="field-actions">
+                <div class="chip-btn" id="droppedBtn">🚗 <span data-i18n="btn_dropped">Set drop-off</span></div>
+                <div class="chip-btn" id="gpsBtn">📡 <span data-i18n="btn_gps">Current location</span></div>
+                <div class="chip-btn" id="pickupMapBtn">🗺️ <span data-i18n="btn_map_pick">Pick on map</span></div>
+              </div>
+            </div>
+            <div class="route-field">
+              <label data-i18n="lbl_destination">Destination</label>
+              <input type="text" id="destInput" data-i18n-ph="ph_destination" placeholder="Where to">
+              <div class="field-actions">
+                <div class="chip-btn" id="searchPlaceBtn">🔍 <span data-i18n="btn_search_place">Search place</span></div>
+                <div class="chip-btn" id="destMapBtn">🗺️ <span data-i18n="btn_map_pick">Pick on map</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ticket-perf"></div>
+
+      <div class="ticket-bottom">
+        <div class="ticket-driver">
+          <div class="driver-avatar" id="activeDriverInitial">–</div>
+          <div>
+            <div class="driver-meta-name" id="activeDriverName" data-i18n="no_driver">No driver selected</div>
+            <div class="driver-meta-sub" id="activeDriverSub">—</div>
+          </div>
+        </div>
+        <div class="eta-badge" id="etaBadge" style="display:none;">ETA —</div>
+      </div>
+    </div>
+
+    <button class="call-btn" id="callDriverBtn">
+      📲 <span data-i18n="btn_call_driver">Call driver</span>
+    </button>
+
+    <div class="section-label" data-i18n="lbl_navigate">Navigate</div>
+    <div class="nav-grid">
+      <div class="nav-app" data-nav="google"><div class="nav-app-icon">🗺️</div><div class="nav-app-label">Google</div></div>
+    </div>
+
+    <div class="section-label" data-i18n="lbl_favorites">Favorites</div>
+    <div id="callFavoritesList" class="card"></div>
+    <button class="btn full" id="addFavoriteBtn" style="margin-top:6px;">＋ <span data-i18n="btn_add_favorite">Add favorite</span></button>
+
+    <div class="section-label" data-i18n="lbl_ad">Sponsored</div>
+    <div id="adList"></div>
+  </div>
+
+  <!-- ===== DRIVERS SCREEN ===== -->
+  <div class="screen" id="screen-drivers">
+    <div class="section-label" data-i18n="lbl_roster">Driver roster</div>
+    <div id="driverList"></div>
+    <button class="btn full" id="addDriverBtn" style="margin-top:6px;">＋ <span data-i18n="btn_add_driver">Add driver</span></button>
+
+    <div class="section-label" data-i18n="lbl_today_activity">Today's activity</div>
+    <div class="stat-tiles">
+      <div class="stat-tile">
+        <div class="stat-tile-num" id="todayRidesNum">0</div>
+        <div class="stat-tile-label" data-i18n="lbl_rides_today">Rides today</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile-num" id="clockStatusNum">–</div>
+        <div class="stat-tile-label" data-i18n="lbl_clock_status">Clock status</div>
+      </div>
+    </div>
+
+    <div class="section-label" data-i18n="lbl_daily_hours">Daily work hours</div>
+    <div id="dailyHoursList"></div>
+  </div>
+
+  <!-- ===== STATS SCREEN ===== -->
+  <div class="screen" id="screen-stats">
+    <div class="section-label" data-i18n="lbl_monthly">Monthly overview</div>
+    <div id="monthTiles" class="stat-tiles"></div>
+    <div class="section-label" data-i18n="lbl_month_detail">Select a month for daily detail</div>
+    <div id="monthBars" class="card"></div>
+    <div id="dayDetail"></div>
+  </div>
+
+  <!-- ===== MORE / SETTINGS SCREEN ===== -->
+  <div class="screen" id="screen-more">
+    <div class="section-label" data-i18n="lbl_payroll">Payroll settings</div>
+    <div class="card" id="payrollCard">
+      <div class="field"><label data-i18n="lbl_base_pay">Base pay</label><input type="number" id="payBase" placeholder="0"></div>
+      <div class="field-row">
+        <div class="field"><label data-i18n="lbl_overtime">Overtime rate</label><input type="number" id="payOT" placeholder="0"></div>
+        <div class="field"><label data-i18n="lbl_meal">Meal allowance</label><input type="number" id="payMeal" placeholder="0"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label data-i18n="lbl_vehicle">Vehicle allowance</label><input type="number" id="payVehicle" placeholder="0"></div>
+        <div class="field"><label data-i18n="lbl_bonus">Bonus</label><input type="number" id="payBonus" placeholder="0"></div>
+      </div>
+      <div class="field"><label data-i18n="lbl_insurance">Insurance</label><input type="number" id="payInsurance" placeholder="0"></div>
+    </div>
+
+    <div class="section-label" data-i18n="lbl_estimated_pay">Estimated pay</div>
+    <div class="card" id="estimatedPayCard"></div>
+
+    <div class="section-label" data-i18n="lbl_fuel">Fuel log</div>
+    <div class="card">
+      <div class="row">
+        <span data-i18n="lbl_fuel_month" style="font-size:13.5px;">This month</span>
+        <span class="list-value" id="fuelSummary">0 L · 0</span>
+      </div>
+    </div>
+    <div id="fuelList"></div>
+    <button class="btn full" id="addFuelBtn" style="margin-top:6px;">⛽ <span data-i18n="btn_add_fuel">Add fuel entry</span></button>
+
+    <div class="section-label" data-i18n="lbl_whatsapp">WhatsApp</div>
+    <div class="card">
+      <div class="field"><label data-i18n="lbl_boss_wa">Boss WhatsApp number</label><input type="tel" id="bossWaInput" placeholder="+62 8xx xxxx xxxx"></div>
+      <div class="row"><span data-i18n="notify_call" style="font-size:13.5px;">Notify on call</span><div class="toggle on" data-notify="call"></div></div>
+      <div class="row"><span data-i18n="notify_accept" style="font-size:13.5px;">Notify on accept</span><div class="toggle on" data-notify="accept"></div></div>
+      <div class="row"><span data-i18n="notify_clock" style="font-size:13.5px;">Notify on clock in/out</span><div class="toggle" data-notify="clock"></div></div>
+      <div class="row"><span data-i18n="notify_fuel" style="font-size:13.5px;">Notify on fuel entry</span><div class="toggle" data-notify="fuel"></div></div>
+      <button class="btn full ghost" id="testWaBtn" style="margin-top:12px;">✉️ <span data-i18n="btn_test_wa">Send test message</span></button>
+    </div>
+
+    <div class="section-label" data-i18n="lbl_app_alerts">App alerts</div>
+    <div class="card">
+      <div class="list-sub" style="margin-bottom:12px;" data-i18n="app_alerts_desc">Get a sound, vibration, and notification the instant a call or response arrives — even across two different phones.</div>
+      <button class="btn full primary" id="enableNotifyBtn" style="margin-bottom:8px;">🔔 <span data-i18n="btn_enable_alerts">Enable alerts</span></button>
+      <button class="btn full ghost" id="testAlertBtn">🔊 <span data-i18n="btn_test_alert">Test alert</span></button>
+    </div>
+
+    <div class="section-label" data-i18n="lbl_boss_pin">Boss switch password</div>
+    <div class="card">
+      <div class="field"><input type="password" id="bossPinInput" placeholder="••••••"></div>
+      <div class="list-sub" data-i18n="boss_pin_hint">A driver must enter this to switch from driver view back to boss view. Set it here — it syncs to the paired driver automatically.</div>
+    </div>
+
+    <div class="section-label" data-i18n="lbl_role_switch">Mode</div>
+    <div class="card">
+      <div class="row">
+        <span data-i18n="lbl_current_mode" style="font-size:13.5px;">View as</span>
+        <button class="btn ghost" id="switchModeBtn" data-i18n="btn_switch_driver">Switch to driver view</button>
+      </div>
+    </div>
+
+    <div style="height:10px;"></div>
+    <button class="btn full danger-ghost" id="resetDataBtn">🗑 <span data-i18n="btn_reset">Reset all data</span></button>
+    <div style="height:20px;"></div>
+  </div>
+
+  <!-- ===== DRIVER VIEW ===== -->
+  <div class="screen" id="screen-driver-home">
+    <div id="driverHeroWrap"></div>
+
+    <div class="section-label" data-i18n="lbl_navigate">Navigate</div>
+    <div class="nav-grid">
+      <div class="nav-app" data-nav="google"><div class="nav-app-icon">🗺️</div><div class="nav-app-label">Google</div></div>
+    </div>
+
+    <div class="section-label" data-i18n="lbl_clock">Clock</div>
+    <div class="card">
+      <div id="workTimerLabel" style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:4px;"></div>
+      <div class="timer-display" id="workTimerDisplay" style="text-align:center;">00:00:00</div>
+      <div id="shiftBreakdown" class="list-sub" style="text-align:center;margin-top:4px;"></div>
+      <div class="field-row" style="margin-top:8px;">
+        <button class="btn primary" id="clockInBtn" style="flex:1;" data-i18n="btn_clock_in">Clock in</button>
+        <button class="btn" id="clockOutBtn" style="flex:1;" data-i18n="btn_clock_out">Clock out</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabbar" id="bossTabbar">
+    <div class="tab-item active" data-tab="screen-call"><div class="tab-icon">📲</div><div class="tab-label" data-i18n="tab_call">Call</div></div>
+    <div class="tab-item" data-tab="screen-drivers"><div class="tab-icon">🧑‍✈️</div><div class="tab-label" data-i18n="tab_drivers">Drivers</div></div>
+    <div class="tab-item" data-tab="screen-stats"><div class="tab-icon">📊</div><div class="tab-label" data-i18n="tab_stats">Stats</div></div>
+    <div class="tab-item" data-tab="screen-more"><div class="tab-icon">⚙️</div><div class="tab-label" data-i18n="tab_more">More</div></div>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="sheetBackdrop">
+  <div class="sheet" id="sheetContent"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   FIREBASE REALTIME SYNC (cross-device call + response + alerts)
+=============================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyC_BLG_30vhNNBeaP-WV9cXDTWgVEf2PMU",
+  authDomain: "bosscall-c1644.firebaseapp.com",
+  databaseURL: "https://bosscall-c1644-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "bosscall-c1644",
+  storageBucket: "bosscall-c1644.firebasestorage.app",
+  messagingSenderId: "790009415217",
+  appId: "1:790009415217:web:1cf42cde760972b982f710"
+};
+
+let fbDb = null;
+function initFirebase(){
+  if(fbDb) return fbDb;
+  try{
+    if(typeof firebase === "undefined") return null;
+    if(!firebase.apps || !firebase.apps.length){
+      firebase.initializeApp(firebaseConfig);
+    }
+    fbDb = firebase.database();
+  }catch(e){ console.error("Firebase init failed", e); }
+  return fbDb;
+}
+
+/* Upload a banner image file to Firebase Storage and return its public URL.
+   Requires Storage to be enabled in the Firebase console for this project. */
+
+
+function ensurePairId(){
+  if(!state.pairId){
+    state.pairId = Math.random().toString(36).slice(2,8).toUpperCase();
+    save();
+  }
+  return state.pairId;
+}
+
+function dispatchRef(){
+  const db = initFirebase();
+  if(!db) return null;
+  const pairId = ensurePairId();
+  return db.ref("dispatch/" + pairId);
+}
+
+/* Admin-managed GLOBAL config — the Google Maps API key and the sponsored
+   ad list are set once by the developer and must reach every boss/driver
+   using this app, not just the developer's own device. Unlike dispatch
+   data (scoped per pairId, private to one boss<->driver pair), these live
+   at a single fixed path shared by everyone. */
+function adminConfigRef(){
+  const db = initFirebase();
+  return db ? db.ref("admin/config") : null;
+}
+function adminAdsRef(){
+  const db = initFirebase();
+  return db ? db.ref("admin/ads") : null;
+}
+
+/* The boss's own switch-back password ("사장 전환 암호"), set by each boss in
+   their own Settings screen. It must also be checkable from the driver's
+   separate device (different localStorage entirely) when they try to
+   switch to the boss view, so mirror it into Firebase, scoped by the same
+   pairId used for call/response sync — this is completely separate from
+   the developer-only admin password below. */
+function bossPinRef(){
+  const db = initFirebase();
+  if(!db) return null;
+  return db.ref("dispatch/" + ensurePairId() + "/bossPin");
+}
+
+/* Admin screen credentials — gates the developer-only 🔑 screen (API key,
+   ad/banner management). These are NOT the boss's password and are never
+   shown or settable anywhere in the UI; only someone with access to this
+   source code (i.e. the developer) knows them. Change them here directly
+   if you want different values. */
+const ADMIN_DEV_ID = "hyunjik";
+const ADMIN_DEV_PASSWORD = "BossCall!2026";
+
+async function requestNotifyPermission(){
+  if(!("Notification" in window)) return false;
+  if(Notification.permission === "granted") return true;
+  if(Notification.permission === "denied") return false;
+  try{
+    const perm = await Notification.requestPermission();
+    return perm === "granted";
+  }catch(e){ return false; }
+}
+
+/* ============================================================
+   REAL BACKGROUND PUSH (FCM) — works even with the screen locked
+   or the app fully closed, unlike the in-app Notification() alerts
+   above which only fire while BossCall is actively open.
+=============================================================== */
+const FCM_VAPID_KEY = "BLYhLzWdr6LGBvajZrGzWJDv0nto0Zr4wEuBrPNeQwC4qZDdmNemQ-XYZh0Lf6DBGIdKYwUEJLJwSIgat7T0g1U";
+
+let fcmMessaging = null;
+let swRegistration = null;
+
+async function registerServiceWorker(){
+  if(!("serviceWorker" in navigator)) return null;
+  try{
+    swRegistration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+    return swRegistration;
+  }catch(e){
+    console.error("Service worker registration failed", e);
+    return null;
+  }
+}
+
+function tokenRef(){
+  const db = initFirebase();
+  if(!db) return null;
+  return db.ref("dispatch/" + ensurePairId() + "/tokens/" + state.role);
+}
+
+/* Called from the "🔔 알림 켜기" button — sets up everything needed for
+   real push: permission, service worker, FCM token, and publishes that
+   token to Firebase so the other side (boss<->driver) knows where to send
+   pushes. */
+async function setupPushNotifications(){
+  const granted = await requestNotifyPermission();
+  if(!granted) return false;
+  const reg = await registerServiceWorker();
+  if(!reg) return false;
+  try{
+    initFirebase();
+    if(!fcmMessaging) fcmMessaging = firebase.messaging();
+    const token = await fcmMessaging.getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: reg });
+    if(token){
+      state.fcmToken = token;
+      save();
+      const ref = tokenRef();
+      if(ref) ref.set(token);
+      return true;
+    }
+  }catch(e){
+    console.error("FCM token failed", e);
+  }
+  return false;
+}
+
+/* Sends a real push to whichever role is NOT the caller (boss->driver or
+   driver->boss), via our own tiny Vercel function — this is what lets the
+   push arrive even when the recipient's phone is locked. Fails silently
+   (the in-app Notification()/sound alert still covers the "app is open"
+   case regardless). */
+async function sendPushToOther(targetRole, title, body, url){
+  try{
+    const db = initFirebase();
+    if(!db) return;
+    const snap = await db.ref("dispatch/" + ensurePairId() + "/tokens/" + targetRole).once("value");
+    const token = snap.val();
+    if(!token) return;
+    await fetch("/api/send-push", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, title, body, url: url || "/" })
+    });
+  }catch(e){
+    console.error("sendPushToOther failed", e);
+  }
+}
+
+/* iOS/Safari only allows starting audio inside a direct user-gesture handler.
+   Create the AudioContext once on first tap anywhere, then reuse it for every
+   later alert — including ones triggered by async Firebase callbacks. */
+let sharedAudioCtx = null;
+function unlockAudio(){
+  try{
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!Ctx) return;
+    if(!sharedAudioCtx) sharedAudioCtx = new Ctx();
+    if(sharedAudioCtx.state === "suspended") sharedAudioCtx.resume();
+  }catch(e){}
+}
+document.addEventListener("touchend", unlockAudio, {once:true, passive:true});
+document.addEventListener("click", unlockAudio, {once:true});
+
+function playAlertSound(){
+  try{
+    if(!sharedAudioCtx) unlockAudio();
+    const ctx = sharedAudioCtx;
+    if(!ctx) return;
+    if(ctx.state === "suspended") ctx.resume();
+    const beep = (freq, start, dur)=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = freq;
+      osc.connect(gain); gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.001, ctx.currentTime+start);
+      gain.gain.exponentialRampToValueAtTime(0.28, ctx.currentTime+start+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+start+dur);
+      osc.start(ctx.currentTime+start);
+      osc.stop(ctx.currentTime+start+dur+0.05);
+    };
+    beep(880, 0, 0.18);
+    beep(1180, 0.22, 0.22);
+  }catch(e){}
+}
+
+function fireAlert(title, body, onClick){
+  playAlertSound();
+  if(navigator.vibrate){ navigator.vibrate([200,100,200,100,200]); }
+  if("Notification" in window && Notification.permission === "granted"){
+    try{
+      const notif = new Notification(title, {body, tag:"bosscall-alert", renotify:true});
+      notif.onclick = ()=>{
+        try{ window.focus(); }catch(e){}
+        if(onClick) onClick();
+        notif.close();
+      };
+    }catch(e){ console.error("Notification failed", e); }
+  }
+}
+
+function isStandaloneApp(){
+  return window.navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+}
+
+/* Call right after a manual role switch (boss<->driver on the same device)
+   so an already-fired Firebase event isn't missed — .on() only notifies
+   listeners that are relevant to the role active *at that moment*. */
+function syncDispatchNow(){
+  const ref = dispatchRef();
+  if(!ref) return;
+  ref.child("pendingCall").once("value").then(snap=>{
+    const data = snap.val();
+    if(state.role === "driver" && data){
+      state.pendingCall = { pickup: data.pickup, dest: data.dest, ts: data.ts };
+      save();
+      fireAlert(t("driver_calling_title"), data.pickup + (data.dest ? (" → " + data.dest) : ""), ()=>{
+        closeSheet();
+        render();
+      });
+      if(document.getElementById("driverHeroWrap")) renderDriverHome();
+    }
+  });
+  ref.child("response").once("value").then(snap=>{
+    const data = snap.val();
+    if(state.role === "boss" && data){
+      state.driverEnRoute = { pickup: data.pickup, dest: data.dest, ts: data.ts };
+      save();
+      updateCallStatusUi();
+    }
+  });
+  ref.child("clockStatus").once("value").then(snap=>{
+    if(state.role === "boss"){
+      state.driverClockStatus = snap.val() || {status:"out", since:null};
+      save();
+      renderTodayStats();
+    }
+  });
+}
+
+/* Runs once at load, independent of pairId — every device (boss, driver,
+   or a fresh install nobody has onboarded yet) picks up whatever API key
+   and ad list the developer has configured, automatically and live. */
+function setupAdminConfigSync(){
+  const acRef = adminConfigRef();
+  if(acRef){
+    acRef.child("apiKey").on("value", (snap)=>{
+      const key = snap.val();
+      if(key && key !== state.apiKey){
+        state.apiKey = key;
+        save();
+      }
+    });
+  }
+  const adsRef = adminAdsRef();
+  if(adsRef){
+    adsRef.on("value", (snap)=>{
+      const val = snap.val();
+      if(val){
+        state.ads = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
+        save();
+        renderAdList();
+      }
+    });
+  }
+}
+
+let activeDispatchRef = null;
+function setupFirebaseListeners(){
+  // Re-subscribing (e.g. after the pair code changes) must first detach the
+  // old listeners, otherwise they stay bound to the stale pairId forever
+  // and calls/responses silently stop arriving.
+  if(activeDispatchRef){
+    activeDispatchRef.child("pendingCall").off();
+    activeDispatchRef.child("response").off();
+    activeDispatchRef.child("clockEvent").off();
+    activeDispatchRef.child("clockStatus").off();
+  }
+  const ref = dispatchRef();
+  if(!ref) return;
+  activeDispatchRef = ref;
+
+  ref.child("pendingCall").on("value", (snap)=>{
+    const data = snap.val();
+    if(state.role !== "driver") return;
+    if(data){
+      const isNew = !state.pendingCall || state.pendingCall.ts !== data.ts;
+      state.pendingCall = { pickup: data.pickup, dest: data.dest, ts: data.ts };
+      save();
+      if(isNew){
+        fireAlert(t("driver_calling_title"), data.pickup + (data.dest ? (" → " + data.dest) : ""), ()=>{
+          closeSheet();
+          render();
+        });
+      }
+      if(document.getElementById("driverHeroWrap")) renderDriverHome();
+    }else if(state.pendingCall){
+      state.pendingCall = null;
+      save();
+      if(document.getElementById("driverHeroWrap")) renderDriverHome();
+    }
+  });
+
+  ref.child("response").on("value", (snap)=>{
+    const data = snap.val();
+    if(state.role !== "boss") return;
+    if(!data) return;
+    const isNew = state.__lastResponseTs !== data.ts;
+    state.__lastResponseTs = data.ts;
+    const ride = state.rides.find(r=>r.ts===data.ts);
+    if(ride){ ride.status = "accepted"; }
+    state.driverEnRoute = { pickup: data.pickup, dest: data.dest, ts: data.ts };
+    save();
+    if(isNew){
+      fireAlert(
+        state.lang==='ko' ? "기사님이 응답했어요" : state.lang==='id' ? "Sopir merespons" : "Driver responded",
+        t("status_driver_coming"),
+        ()=>{
+          closeSheet();
+          document.querySelectorAll("#bossTabbar .tab-item").forEach(x=>x.classList.remove("active"));
+          const callTab = document.querySelector('[data-tab="screen-call"]');
+          if(callTab) callTab.classList.add("active");
+          document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+          const callScreen = document.getElementById("screen-call");
+          if(callScreen) callScreen.classList.add("active");
+          render();
+        }
+      );
+    }
+    updateCallStatusUi();
+    renderTodayStats();
+  });
+
+  ref.child("clockEvent").on("value", (snap)=>{
+    const data = snap.val();
+    if(state.role !== "boss" || !data) return;
+    const isNew = state.__lastClockEventTs !== data.ts;
+    state.__lastClockEventTs = data.ts;
+    if(isNew){
+      const title = data.type === "in"
+        ? (state.lang==='ko' ? "기사님이 출근했어요" : state.lang==='id' ? "Sopir absen masuk" : "Driver clocked in")
+        : (state.lang==='ko' ? "기사님이 퇴근했어요" : state.lang==='id' ? "Sopir absen keluar" : "Driver clocked out");
+      const body = data.type === "out" && data.totalMs
+        ? (state.lang==='ko' ? `근무 ${formatHMS(data.totalMs)}` : state.lang==='id' ? `Kerja ${formatHMS(data.totalMs)}` : `Worked ${formatHMS(data.totalMs)}`)
+        : "";
+      fireAlert(title, body, ()=>{
+        closeSheet();
+        document.querySelectorAll("#bossTabbar .tab-item").forEach(x=>x.classList.remove("active"));
+        const driversTab = document.querySelector('[data-tab="screen-drivers"]');
+        if(driversTab) driversTab.classList.add("active");
+        document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+        const driversScreen = document.getElementById("screen-drivers");
+        if(driversScreen) driversScreen.classList.add("active");
+        render();
+      });
+      renderTodayStats();
+      renderDailyHours();
+    }
+  });
+
+  ref.child("clockStatus").on("value", (snap)=>{
+    const data = snap.val();
+    if(state.role !== "boss") return;
+    state.driverClockStatus = data || {status:"out", since:null};
+    save();
+    renderTodayStats();
+  });
+}
+
+function updateCallStatusUi(){
+  const row = document.getElementById("callStatusRow");
+  const text = document.getElementById("callStatusText");
+  if(!row || !text) return;
+  if(state.driverEnRoute){
+    row.style.display = "inline-flex";
+    row.className = "ticket-status accepted";
+    text.textContent = t("status_driver_coming");
+  }
+}
+
+/* ============================================================
+   I18N
+=============================================================== */
+const I18N = {
+  id:{
+    onboard_title:"Selamat Datang", onboard_sub:"Menyiapkan tampilan sopir Anda...",
+    lbl_dispatch:"Panggilan", lbl_pickup:"Jemput", lbl_destination:"Tujuan (opsional)",
+    ph_pickup:"Cari atau ketik alamat", ph_destination:"Cari atau ketik alamat", btn_gps:"Lokasi saat ini",
+    btn_search_place:"Cari tempat", btn_dropped:"Set titik turun", btn_map_pick:"Pilih di peta",
+    phrase_dropped_off:"Titik turun terakhir",
+    sheet_map_pick:"Pilih lokasi di peta", map_drag_hint:"Geser pin atau ketuk peta untuk memindahkan",
+    map_confirm:"Gunakan lokasi ini", map_locating:"Mencari alamat...", no_driver:"Belum ada sopir dipilih",
+    btn_call_driver:"Panggil sopir", status_calling:"Memanggil...", status_accepted:"Diterima", status_driver_coming:"Sopir sedang menuju lokasi",
+    lbl_navigate:"Lihat rute", lbl_ad:"Sponsor", lbl_roster:"Daftar sopir",
+    btn_add_driver:"Tambah sopir", lbl_today_activity:"Aktivitas hari ini", lbl_rides_today:"Perjalanan hari ini",
+    lbl_clock_status:"Status absen", lbl_ride_log:"Riwayat perjalanan", lbl_favorites:"Tempat favorit",
+    lbl_daily_hours:"Jam kerja harian", lbl_estimated_pay:"Perkiraan gaji", lbl_as_of:"Per tanggal",
+    lbl_ot_hours_month:"Lembur bulan ini", lbl_fixed_allowance:"Tunjangan tetap", lbl_est_total:"Perkiraan total",
+    empty_shifts:"Belum ada riwayat jam kerja.",
+    btn_add_favorite:"Tambah favorit", lbl_monthly:"Ringkasan bulanan", lbl_month_detail:"Pilih bulan untuk detail harian",
+    btn_edit_ads:"Edit", sheet_admin_pin:"PIN Admin", admin_pin_desc:"Masukkan PIN admin untuk mengedit sponsor.",
+    admin_pin_wrong:"PIN salah", admin_pin_not_set:"Belum ada PIN diatur — atur di Lainnya untuk keamanan.",
+    admin_mode_on:"Mode admin aktif", admin_mode_off:"Mode admin nonaktif",
+    sheet_edit_ads:"Kelola sponsor", sheet_ad_name:"Nama tempat", sheet_ad_addr:"Alamat", sheet_ad_rating:"Rating",
+    sheet_ad_image:"URL gambar banner (opsional)",
+    image_url_hint:"Atau tempel tautan gambar yang sudah ada online.",
+    btn_upload_photo:"Pilih foto dari galeri", uploading_photo:"Memproses foto...",
+    upload_done:"Foto siap ✓", upload_failed:"Gagal memproses foto",
+    admin_settings_moved:"Kunci API Google Maps dan PIN Admin dipindah ke layar 🔑 Admin (kanan atas).",
+    sheet_admin_title:"Layar Admin", lbl_admin_ads:"Kelola sponsor",
+    btn_add_ad:"Tambah sponsor", lbl_admin_pin:"PIN admin (lindungi edit sponsor)", lbl_admin_id:"ID admin", btn_save_exit:"Simpan & Keluar",
+    lbl_payroll:"Pengaturan gaji", lbl_base_pay:"Gaji pokok", lbl_overtime:"Lembur (per jam)", lbl_meal:"Uang makan",
+    lbl_vehicle:"Tunjangan kendaraan", lbl_bonus:"Bonus", lbl_insurance:"Asuransi", lbl_preview_total:"Perkiraan total",
+    lbl_fuel:"Catatan bensin", lbl_fuel_month:"Bulan ini", btn_add_fuel:"Tambah catatan bensin",
+    lbl_whatsapp:"WhatsApp", lbl_boss_wa:"Nomor WA Bos", notify_call:"Notifikasi saat panggilan",
+    lbl_app_alerts:"Alarm aplikasi", app_alerts_desc:"Dapatkan suara, getaran, dan notifikasi begitu ada panggilan atau respons — bahkan di dua HP berbeda.",
+    lbl_boss_pin:"Kata sandi beralih ke Bos", boss_pin_hint:"Sopir harus memasukkan ini untuk beralih dari tampilan sopir ke tampilan Bos. Atur di sini — otomatis tersinkron ke sopir yang berpasangan.",
+    boss_pin_not_set:"Bos belum mengatur kata sandi beralih.",
+    btn_enable_alerts:"Aktifkan alarm", btn_test_alert:"Tes alarm", alerts_enabled:"Alarm aktif", alerts_denied:"Izin notifikasi ditolak — aktifkan di pengaturan browser",
+    need_homescreen_install:"Tambahkan ke Layar Utama dulu agar notifikasi berfungsi di iOS.",
+    notify_accept:"Notifikasi saat diterima", notify_clock:"Notifikasi absen masuk/keluar", notify_fuel:"Notifikasi catatan bensin",
+    btn_test_wa:"Kirim pesan tes", lbl_api:"Kunci API Google Maps", api_hint:"Digunakan untuk pencarian tempat dan peta. Hanya disimpan di perangkat ini.",
+    lbl_role_switch:"Mode", lbl_current_mode:"Tampilan sebagai", btn_switch_driver:"Beralih ke tampilan sopir",
+    btn_switch_boss:"Beralih ke tampilan bos", btn_reset:"Hapus semua data",
+    tab_call:"Panggil", tab_drivers:"Sopir", tab_stats:"Statistik", tab_more:"Pengaturan",
+    lbl_clock:"Absen", btn_clock_in:"Absen masuk", btn_clock_out:"Absen keluar",
+    driver_idle_title:"Menunggu panggilan", driver_idle_sub:"Anda akan diberitahu saat Bos memanggil",
+    driver_calling_title:"Bos memanggil!", driver_calling_sub:"Ketuk untuk konfirmasi",
+    ok_boss:"👍 SIAP BOS!", toast_call_sent:"Panggilan terkirim via WhatsApp",
+    toast_saved:"Tersimpan", toast_deleted:"Dihapus", toast_link_copied:"Tautan disalin", toast_dest_set:"Tujuan diatur",
+    toast_ok_sent:"Konfirmasi terkirim ke Bos", empty_drivers:"Belum ada sopir. Tambahkan sopir pertama Anda.",
+    empty_favorites:"Belum ada favorit tersimpan.", empty_rides:"Belum ada perjalanan hari ini.",
+    empty_fuel:"Belum ada catatan bensin.", confirm_reset:"Hapus semua data aplikasi? Tindakan ini tidak bisa dibatalkan.",
+    confirm_delete_driver:"Hapus sopir ini?", sheet_add_driver:"Sopir baru", sheet_edit_driver:"Edit sopir", sheet_driver_name:"Nama sopir",
+    sheet_driver_wa:"Nomor WhatsApp", sheet_save:"Simpan", sheet_cancel:"Batal", sheet_confirm:"Konfirmasi", sheet_invite_link:"Tautan undangan",
+    lbl_pair_code:"Kode pasangan", pair_code_hint:"Bos dan sopir harus punya kode yang sama agar panggilan tersambung.",
+    boss_switch_pin_desc:"Masukkan PIN admin untuk beralih ke tampilan Bos.",
+    confirm_clock_in_title:"Absen masuk?", confirm_clock_in_desc:"Ini akan mencatat waktu masuk Anda sekarang.",
+    confirm_clock_out_title:"Absen keluar?", confirm_clock_out_desc:"Ini akan mengakhiri jam kerja Anda hari ini.",
+    driver_settings_title:"Pengaturan", already_clocked_in:"Anda sudah absen masuk", already_clocked_out:"Anda belum absen masuk",
+    lbl_active_trip:"Perjalanan aktif", btn_end_trip:"Selesaikan perjalanan", toast_trip_ended:"Perjalanan selesai",
+    lbl_current_time:"Waktu sekarang", lbl_total_worked:"Total jam kerja", lbl_regular_hours:"Reguler", lbl_overtime_hours:"Lembur",
+    sheet_send_invite:"Kirim via WhatsApp", sheet_copy_link:"Salin tautan", sheet_add_favorite:"Favorit baru",
+    sheet_edit_favorite:"Edit favorit", btn_delete:"Hapus",
+    sheet_favorite_name:"Nama tempat", sheet_favorite_addr:"Alamat", sheet_add_fuel:"Catatan bensin",
+    fuel_liters:"Liter", fuel_cost:"Biaya", sheet_search_place:"Cari tempat",
+    search_placeholder:"Ketik nama tempat...", need_api_key:"Masukkan kunci API Google Maps di Lainnya untuk mengaktifkan pencarian.",
+    clocked_in_since:"Absen sejak", clock_status_in:"Masuk", clock_status_out:"Belum absen",
+    driver_meta_offline:"Offline"
+  },
+  ko:{
+    onboard_title:"환영합니다", onboard_sub:"기사님 화면을 준비하고 있어요...",
+    lbl_dispatch:"호출", lbl_pickup:"픽업 위치", lbl_destination:"목적지 (선택)",
+    ph_pickup:"주소 검색 또는 입력", ph_destination:"주소 검색 또는 입력", btn_gps:"현위치",
+    btn_search_place:"장소 검색", btn_dropped:"내려준 곳", btn_map_pick:"지도에서 선택",
+    phrase_dropped_off:"내려준 곳",
+    sheet_map_pick:"지도에서 위치 선택", map_drag_hint:"핀을 드래그하거나 지도를 눌러 위치를 옮기세요",
+    map_confirm:"이 위치로 설정", map_locating:"주소 확인 중...", no_driver:"선택된 기사 없음",
+    btn_call_driver:"기사 호출", status_calling:"호출중...", status_accepted:"확인됨", status_driver_coming:"기사님 오는 중",
+    lbl_navigate:"경로보기", lbl_ad:"광고", lbl_roster:"기사 목록",
+    btn_add_driver:"기사 추가", lbl_today_activity:"오늘 현황", lbl_rides_today:"오늘 운행",
+    lbl_clock_status:"출퇴근 상태", lbl_ride_log:"운행 기록", lbl_favorites:"즐겨찾기",
+    lbl_daily_hours:"일별 근무시간", lbl_estimated_pay:"예상급여", lbl_as_of:"조회기준일",
+    lbl_ot_hours_month:"이번 달 초과근무", lbl_fixed_allowance:"고정 수당", lbl_est_total:"예상 총액",
+    empty_shifts:"근무 기록이 없습니다.",
+    btn_add_favorite:"즐겨찾기 추가", lbl_monthly:"월별 현황", lbl_month_detail:"일별 상세를 보려면 월을 선택하세요",
+    btn_edit_ads:"편집", sheet_admin_pin:"관리자 PIN", admin_pin_desc:"광고를 편집하려면 관리자 PIN을 입력하세요.",
+    admin_pin_wrong:"PIN이 올바르지 않아요", admin_pin_not_set:"설정된 PIN이 없어요 — 더보기에서 보안을 위해 설정해두세요.",
+    admin_mode_on:"관리자 모드 켜짐", admin_mode_off:"관리자 모드 꺼짐",
+    sheet_edit_ads:"광고 관리", sheet_ad_name:"장소 이름", sheet_ad_addr:"주소", sheet_ad_rating:"평점",
+    sheet_ad_image:"배너 이미지 URL (선택)",
+    image_url_hint:"또는 이미 온라인에 있는 이미지 링크를 붙여넣어도 돼요.",
+    btn_upload_photo:"갤러리에서 사진 선택", uploading_photo:"사진 처리 중...",
+    upload_done:"사진 준비 완료 ✓", upload_failed:"사진 처리 실패",
+    admin_settings_moved:"Google Maps API 키와 관리자 PIN은 우측 상단 🔑 관리자 화면으로 옮겨졌어요.",
+    sheet_admin_title:"관리자 화면", lbl_admin_ads:"광고 관리",
+    btn_add_ad:"광고 추가", lbl_admin_pin:"관리자 PIN", lbl_admin_id:"관리자 아이디", btn_save_exit:"저장하고 나가기",
+    lbl_payroll:"급여 설정", lbl_base_pay:"기본급", lbl_overtime:"시간외수당(시간당)", lbl_meal:"식대",
+    lbl_vehicle:"차량유지비", lbl_bonus:"상여금", lbl_insurance:"보험", lbl_preview_total:"예상 총액",
+    lbl_fuel:"주유 기록", lbl_fuel_month:"이번 달", btn_add_fuel:"주유 기록 추가",
+    lbl_whatsapp:"WhatsApp", lbl_boss_wa:"사장 WA 번호", notify_call:"호출 시 알림",
+    lbl_app_alerts:"앱 알림", app_alerts_desc:"호출이나 응답이 오는 즉시 소리, 진동, 알림으로 바로 알려드려요 — 서로 다른 두 폰 사이에서도 작동합니다.",
+    lbl_boss_pin:"사장 전환 암호", boss_pin_hint:"기사가 기사 화면에서 사장 화면으로 넘어갈 때 이 암호를 입력해야 해요. 여기서 설정하면 짝지어진 기사에게 자동으로 동기화됩니다.",
+    boss_pin_not_set:"사장님이 아직 전환 암호를 설정하지 않았어요.",
+    btn_enable_alerts:"알림 켜기", btn_test_alert:"테스트 알람", alerts_enabled:"알림이 켜졌어요", alerts_denied:"알림 권한이 거부됐어요 — 브라우저 설정에서 허용해주세요",
+    need_homescreen_install:"iOS에서 알림이 뜨려면 먼저 홈 화면에 추가해야 해요.",
+    notify_accept:"수락 시 알림", notify_clock:"출퇴근 시 알림", notify_fuel:"주유 기록 시 알림",
+    btn_test_wa:"테스트 메시지 발송", lbl_api:"Google Maps API 키", api_hint:"장소 검색 및 지도 표시에 사용됩니다. 이 기기에만 저장됩니다.",
+    lbl_role_switch:"모드", lbl_current_mode:"보기 모드", btn_switch_driver:"기사 화면으로 전환",
+    btn_switch_boss:"사장 화면으로 전환", btn_reset:"전체 데이터 초기화",
+    tab_call:"호출", tab_drivers:"기사", tab_stats:"통계", tab_more:"설정",
+    lbl_clock:"출퇴근", btn_clock_in:"출근", btn_clock_out:"퇴근",
+    driver_idle_title:"호출 대기중", driver_idle_sub:"사장님이 호출하면 알려드릴게요",
+    driver_calling_title:"사장님이 호출했어요!", driver_calling_sub:"눌러서 확인하세요",
+    ok_boss:"👍 확인했어요 사장님!", toast_call_sent:"WhatsApp으로 호출을 보냈습니다",
+    toast_saved:"저장되었습니다", toast_deleted:"삭제되었습니다", toast_link_copied:"링크가 복사되었습니다", toast_dest_set:"목적지로 설정했어요",
+    toast_ok_sent:"사장님께 확인 메시지를 보냈습니다", empty_drivers:"등록된 기사가 없습니다. 첫 기사를 추가해보세요.",
+    empty_favorites:"저장된 즐겨찾기가 없습니다.", empty_rides:"오늘 운행 기록이 없습니다.",
+    empty_fuel:"주유 기록이 없습니다.", confirm_reset:"모든 앱 데이터를 삭제할까요? 이 작업은 되돌릴 수 없습니다.",
+    confirm_delete_driver:"이 기사를 삭제할까요?", sheet_add_driver:"기사 추가", sheet_edit_driver:"기사 편집", sheet_driver_name:"기사 이름",
+    sheet_driver_wa:"WhatsApp 번호", sheet_save:"저장", sheet_cancel:"취소", sheet_confirm:"확인", sheet_invite_link:"초대 링크",
+    lbl_pair_code:"페어 코드", pair_code_hint:"사장과 기사가 같은 코드를 가지고 있어야 호출이 연결돼요.",
+    boss_switch_pin_desc:"사장 화면으로 전환하려면 관리자 PIN을 입력하세요.",
+    confirm_clock_in_title:"출근 처리할까요?", confirm_clock_in_desc:"지금 시각으로 출근 기록이 저장됩니다.",
+    confirm_clock_out_title:"퇴근 처리할까요?", confirm_clock_out_desc:"오늘 근무가 종료 처리됩니다.",
+    driver_settings_title:"설정", already_clocked_in:"이미 출근 상태입니다", already_clocked_out:"아직 출근하지 않았습니다",
+    lbl_active_trip:"진행중 운행", btn_end_trip:"운행 종료", toast_trip_ended:"운행이 종료되었습니다",
+    lbl_current_time:"현재 시각", lbl_total_worked:"총 근무시간", lbl_regular_hours:"정규", lbl_overtime_hours:"초과근무",
+    sheet_send_invite:"WhatsApp으로 보내기", sheet_copy_link:"링크 복사", sheet_add_favorite:"즐겨찾기 추가",
+    sheet_edit_favorite:"즐겨찾기 편집", btn_delete:"삭제",
+    sheet_favorite_name:"장소 이름", sheet_favorite_addr:"주소", sheet_add_fuel:"주유 기록 추가",
+    fuel_liters:"주유량(L)", fuel_cost:"비용", sheet_search_place:"장소 검색",
+    search_placeholder:"장소 이름을 입력하세요...", need_api_key:"장소 검색을 사용하려면 [더보기]에서 Google Maps API 키를 입력하세요.",
+    clocked_in_since:"출근 시각", clock_status_in:"근무중", clock_status_out:"미출근",
+    driver_meta_offline:"오프라인"
+  },
+  en:{
+    onboard_title:"Welcome", onboard_sub:"Setting up your driver view...",
+    lbl_dispatch:"Dispatch", lbl_pickup:"Pickup", lbl_destination:"Destination (optional)",
+    ph_pickup:"Search or type an address", ph_destination:"Search or type an address", btn_gps:"Current location",
+    btn_search_place:"Search place", btn_dropped:"Set drop-off", btn_map_pick:"Pick on map",
+    phrase_dropped_off:"Where you dropped me off",
+    sheet_map_pick:"Choose location on map", map_drag_hint:"Drag the pin or tap the map to move it",
+    map_confirm:"Use this location", map_locating:"Finding address...", no_driver:"No driver selected",
+    btn_call_driver:"Call driver", status_calling:"Calling...", status_accepted:"Accepted", status_driver_coming:"Driver is on the way",
+    lbl_navigate:"Route", lbl_ad:"Sponsored", lbl_roster:"Driver roster",
+    btn_add_driver:"Add driver", lbl_today_activity:"Today's activity", lbl_rides_today:"Rides today",
+    lbl_clock_status:"Clock status", lbl_ride_log:"Ride log", lbl_favorites:"Favorite places",
+    lbl_daily_hours:"Daily work hours", lbl_estimated_pay:"Estimated pay", lbl_as_of:"As of",
+    lbl_ot_hours_month:"Overtime this month", lbl_fixed_allowance:"Fixed allowances", lbl_est_total:"Estimated total",
+    empty_shifts:"No shift history yet.",
+    btn_add_favorite:"Add favorite", lbl_monthly:"Monthly overview", lbl_month_detail:"Select a month for daily detail",
+    btn_edit_ads:"Edit", sheet_admin_pin:"Admin PIN", admin_pin_desc:"Enter the admin PIN to edit sponsored listings.",
+    admin_pin_wrong:"Incorrect PIN", admin_pin_not_set:"No PIN set yet — set one in More for security.",
+    admin_mode_on:"Admin mode on", admin_mode_off:"Admin mode off",
+    sheet_edit_ads:"Manage sponsored", sheet_ad_name:"Place name", sheet_ad_addr:"Address", sheet_ad_rating:"Rating",
+    sheet_ad_image:"Banner image URL (optional)",
+    image_url_hint:"Or paste a link to an image that's already online.",
+    btn_upload_photo:"Choose photo from gallery", uploading_photo:"Processing photo...",
+    upload_done:"Photo ready ✓", upload_failed:"Failed to process photo",
+    admin_settings_moved:"Google Maps API key and Admin PIN moved to the 🔑 Admin screen (top right).",
+    sheet_admin_title:"Admin screen", lbl_admin_ads:"Manage sponsored",
+    btn_add_ad:"Add sponsored listing", lbl_admin_pin:"Admin PIN", lbl_admin_id:"Admin ID", btn_save_exit:"Save & Exit",
+    lbl_payroll:"Payroll settings", lbl_base_pay:"Base pay", lbl_overtime:"Overtime rate", lbl_meal:"Meal allowance",
+    lbl_vehicle:"Vehicle allowance", lbl_bonus:"Bonus", lbl_insurance:"Insurance", lbl_preview_total:"Estimated total",
+    lbl_fuel:"Fuel log", lbl_fuel_month:"This month", btn_add_fuel:"Add fuel entry",
+    lbl_whatsapp:"WhatsApp", lbl_boss_wa:"Boss WhatsApp number", notify_call:"Notify on call",
+    lbl_app_alerts:"App alerts", app_alerts_desc:"Get a sound, vibration, and notification the instant a call or response arrives — even across two different phones.",
+    lbl_boss_pin:"Boss switch password", boss_pin_hint:"A driver must enter this to switch from driver view back to boss view. Set it here — it syncs to the paired driver automatically.",
+    boss_pin_not_set:"Boss hasn't set a switch password yet.",
+    btn_enable_alerts:"Enable alerts", btn_test_alert:"Test alert", alerts_enabled:"Alerts enabled", alerts_denied:"Notification permission denied — enable it in browser settings",
+    need_homescreen_install:"Add to Home Screen first for notifications to work on iOS.",
+    notify_accept:"Notify on accept", notify_clock:"Notify on clock in/out", notify_fuel:"Notify on fuel entry",
+    btn_test_wa:"Send test message", lbl_api:"Google Maps API key", api_hint:"Used for place search and maps. Stored only on this device.",
+    lbl_role_switch:"Mode", lbl_current_mode:"View as", btn_switch_driver:"Switch to driver view",
+    btn_switch_boss:"Switch to boss view", btn_reset:"Reset all data",
+    tab_call:"Call", tab_drivers:"Drivers", tab_stats:"Stats", tab_more:"Settings",
+    lbl_clock:"Clock", btn_clock_in:"Clock in", btn_clock_out:"Clock out",
+    driver_idle_title:"Waiting for call", driver_idle_sub:"You'll be notified when Boss calls",
+    driver_calling_title:"Boss is calling!", driver_calling_sub:"Tap to confirm",
+    ok_boss:"👍 OK BOSS!", toast_call_sent:"Call sent via WhatsApp",
+    toast_saved:"Saved", toast_deleted:"Deleted", toast_link_copied:"Link copied", toast_dest_set:"Destination set",
+    toast_ok_sent:"Confirmation sent to Boss", empty_drivers:"No drivers yet. Add your first driver.",
+    empty_favorites:"No favorites saved yet.", empty_rides:"No rides logged today.",
+    empty_fuel:"No fuel entries yet.", confirm_reset:"Delete all app data? This cannot be undone.",
+    confirm_delete_driver:"Delete this driver?", sheet_add_driver:"New driver", sheet_edit_driver:"Edit driver", sheet_driver_name:"Driver name",
+    sheet_driver_wa:"WhatsApp number", sheet_save:"Save", sheet_cancel:"Cancel", sheet_confirm:"Confirm", sheet_invite_link:"Invite link",
+    lbl_pair_code:"Pair code", pair_code_hint:"Boss and driver need the same code for calls to connect.",
+    boss_switch_pin_desc:"Enter the admin PIN to switch to the Boss view.",
+    confirm_clock_in_title:"Clock in?", confirm_clock_in_desc:"This will record your start time now.",
+    confirm_clock_out_title:"Clock out?", confirm_clock_out_desc:"This will end your shift for today.",
+    driver_settings_title:"Settings", already_clocked_in:"Already clocked in", already_clocked_out:"Not clocked in yet",
+    lbl_active_trip:"Active trip", btn_end_trip:"End trip", toast_trip_ended:"Trip ended",
+    lbl_current_time:"Current time", lbl_total_worked:"Total worked", lbl_regular_hours:"Regular", lbl_overtime_hours:"Overtime",
+    sheet_send_invite:"Send via WhatsApp", sheet_copy_link:"Copy link", sheet_add_favorite:"New favorite",
+    sheet_edit_favorite:"Edit favorite", btn_delete:"Delete",
+    sheet_favorite_name:"Place name", sheet_favorite_addr:"Address", sheet_add_fuel:"Add fuel entry",
+    fuel_liters:"Liters", fuel_cost:"Cost", sheet_search_place:"Search place",
+    search_placeholder:"Type a place name...", need_api_key:"Enter a Google Maps API key in More to enable search.",
+    clocked_in_since:"Clocked in since", clock_status_in:"On duty", clock_status_out:"Not clocked in",
+    driver_meta_offline:"Offline"
+  }
+};
+
+/* ============================================================
+   STATE
+=============================================================== */
+const DB_KEY = "bosscall_v2";
+function loadState(){
+  const defaults = {
+    lang:"id",
+    dark:true,
+    role:"boss", // boss | driver
+    bossWa:"",
+    apiKey:"",
+    drivers:[], // {id,name,wa,active}
+    activeDriverId:null,
+    favorites:[],
+    ads:[], // boss-editable sponsored listings; falls back to AD_RESTAURANTS pool when empty
+    bossPin:"", // boss-set password required for driver→boss switch (synced via Firebase)
+    shifts:[], // {id,clockInTs,clockOutTs,totalMs,regularMs,overtimeMs} completed work shifts
+    driverEnRoute:null, // {pickup,dest,ts} set when driver's Firebase response arrives on boss's device
+    driverClockStatus:null, // {status,since} the driver's actual clock state, synced via Firebase
+    fcmToken:"", // this device's push token, once notifications are enabled
+    pairId:"", // shared code that scopes this boss<->driver pair's Firebase data (prevents cross-tenant mixing)
+    __lastResponseTs:null,
+    rides:[], // {id,driverId,pickup,dest,ts,status,eta,dropoffTs}
+    fuel:[], // {id,liters,cost,ts}
+    payroll:{base:0,ot:0,meal:0,vehicle:0,bonus:0,insurance:0},
+    notify:{call:true,accept:true,clock:true,fuel:false},
+    clock:{status:"out", since:null, lastSummary:null}, // driver clock state
+    pendingCall:null, // {pickup,dest,ts} for driver view
+    activeRide:null // {pickup,dest} current accepted ride for driver nav
+  };
+  try{
+    const raw = localStorage.getItem(DB_KEY);
+    if(raw){
+      const saved = JSON.parse(raw);
+      // merge so fields added in later app versions always exist, even for older saved data
+      return {
+        ...defaults,
+        ...saved,
+        payroll: { ...defaults.payroll, ...(saved.payroll||{}) },
+        notify: { ...defaults.notify, ...(saved.notify||{}) },
+        clock: saved.clock ? { ...defaults.clock, ...saved.clock } : defaults.clock
+      };
+    }
+  }catch(e){}
+  return defaults;
+}
+let state = loadState();
+function save(){ localStorage.setItem(DB_KEY, JSON.stringify(state)); }
+function t(key){
+  const lang = state.lang || "id";
+  return (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
+}
+
+/* ============================================================
+   URL PARAMS (driver onboarding link)
+=============================================================== */
+function parseUrlParams(){
+  const params = new URLSearchParams(window.location.search);
+  if(params.has("driver")){
+    // onboarding as a driver: ?driver=NAME&boss=WA&id=DRIVERID&pair=PAIRID
+    const name = params.get("driver");
+    const bossWa = params.get("boss") || "";
+    const did = params.get("id") || ("d_"+Date.now());
+    const pair = params.get("pair") || "";
+    state.role = "driver";
+    state.bossWa = bossWa;
+    state.myDriverProfile = { id: did, name: decodeURIComponent(name) };
+    if(pair) state.pairId = pair;
+    save();
+    // Deliberately keep the query string in the URL (do NOT strip it here).
+    // "Add to Home Screen" bookmarks whatever URL is in the address bar at
+    // that moment — if we clean it up too early, the resulting home-screen
+    // icon loses the driver/pair info, and since iOS sometimes gives a
+    // standalone home-screen app its own separate storage, the app can
+    // regenerate a brand-new (wrong) pair code on first launch from the
+    // icon. Keeping the params means every launch self-corrects instead.
+    showOnboard();
+  }
+}
+
+function showOnboard(){
+  document.getElementById("onboardScreen").style.display = "flex";
+  applyI18nStatic();
+  setTimeout(()=>{
+    document.getElementById("onboardScreen").style.display = "none";
+    render();
+  }, 1400);
+}
+
+/* ============================================================
+   TOAST
+=============================================================== */
+let toastTimer=null;
+function toast(msg){
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove("show"), 2200);
+}
+
+/* ============================================================
+   SHEET (bottom modal)
+=============================================================== */
+function openSheet(html, onOpen){
+  document.getElementById("sheetContent").innerHTML = '<div class="sheet-handle"></div>' + html;
+  document.getElementById("sheetBackdrop").classList.add("open");
+  if(onOpen) onOpen();
+}
+function closeSheet(){
+  document.getElementById("sheetBackdrop").classList.remove("open");
+}
+document.getElementById("sheetBackdrop").addEventListener("click", (e)=>{
+  if(e.target.id === "sheetBackdrop") closeSheet();
+});
+
+/* ============================================================
+   UTIL
+=============================================================== */
+function uid(prefix){ return prefix + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function initials(name){
+  if(!name) return "?";
+  return name.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase();
+}
+function fmtNum(n){ return (n||0).toLocaleString(); }
+function waLink(number, message){
+  const clean = (number||"").replace(/[^\d+]/g,"").replace(/^\+/,"");
+  return "https://wa.me/" + clean + "?text=" + encodeURIComponent(message);
+}
+/* Use location.href instead of window.open(url, "_blank") for wa.me links.
+   On iOS Safari, "_blank" often spawns a blank new tab instead of properly
+   handing off to the WhatsApp app, which was leaving the app on a blank
+   screen and could interrupt in-flight Firebase writes. */
+function openWhatsApp(url){
+  // In a home-screen-installed PWA (standalone display mode), a full
+  // location.href navigation destroys the app's own running instance and
+  // hands the whole screen off to Safari — that's the "tangled" mess.
+  // window.open(_blank) hands off to WhatsApp/Safari instead while leaving
+  // this app instance alive underneath. In a regular Safari tab (not
+  // installed), location.href is more reliable and avoids spawning a
+  // second blank tab, so keep using it there.
+  const isStandalone = window.navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  if(isStandalone){
+    window.open(url, "_blank");
+  }else{
+    window.location.href = url;
+  }
+}
+function haversineKm(lat1,lon1,lat2,lon2){
+  const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+function estimateEtaMin(km){ return Math.max(2, Math.round(km / 28 * 60)); } // ~28km/h avg city traffic
+
+let lastCoords = null; // {lat,lng} of pickup for eta calc
+
+function getGeo(){
+  return new Promise((resolve,reject)=>{
+    if(!navigator.geolocation){ reject("no geo"); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({lat:pos.coords.latitude, lng:pos.coords.longitude}),
+      err => reject(err),
+      {enableHighAccuracy:true, timeout:8000}
+    );
+  });
+}
+
+/* ============================================================
+   I18N APPLY
+=============================================================== */
+function applyI18nStatic(){
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    el.textContent = t(el.getAttribute("data-i18n"));
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el=>{
+    el.placeholder = t(el.getAttribute("data-i18n-ph"));
+  });
+  document.getElementById("langBtn").textContent = state.lang.toUpperCase();
+  document.getElementById("roleLabel").textContent = state.role === "boss" ? "BOSS MODE" : "DRIVER MODE";
+}
+
+/* ============================================================
+   NAVIGATION (tab switching)
+=============================================================== */
+document.querySelectorAll("#bossTabbar .tab-item").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll("#bossTabbar .tab-item").forEach(x=>x.classList.remove("active"));
+    tab.classList.add("active");
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    document.getElementById(tab.getAttribute("data-tab")).classList.add("active");
+    if(tab.getAttribute("data-tab")==="screen-stats") renderStats();
+  });
+});
+
+document.getElementById("langBtn").addEventListener("click", ()=>{
+  const order = ["id","ko","en"];
+  const idx = order.indexOf(state.lang);
+  state.lang = order[(idx+1) % order.length];
+  save();
+  render();
+});
+
+document.getElementById("driverSettingsBtn").addEventListener("click", ()=>{
+  openSheet(`
+    <div class="sheet-title">${t("driver_settings_title")}</div>
+    <div class="field"><label>${t("lbl_boss_wa")}</label><input type="tel" id="driverBossWaInput" placeholder="+62 8xx xxxx xxxx"></div>
+    <div class="field">
+      <label>${t("lbl_pair_code")}</label>
+      <input type="text" id="driverPairInput" placeholder="ABC123" style="text-transform:uppercase;letter-spacing:2px;">
+      <div class="list-sub" style="margin-top:6px;">${t("pair_code_hint")}</div>
+    </div>
+    <button class="btn full primary" id="driverSwitchBossBtn">${t("btn_switch_boss")}</button>
+    <button class="btn full danger-ghost" id="driverResetBtn" style="margin-top:10px;">🗑 <span data-i18n="btn_reset">Reset all data</span></button>
+  `, ()=>{
+    const input = document.getElementById("driverBossWaInput");
+    input.value = state.bossWa || "";
+    input.addEventListener("input", ()=>{ state.bossWa = input.value; save(); });
+
+    const pairInput = document.getElementById("driverPairInput");
+    pairInput.value = state.pairId || "";
+    pairInput.addEventListener("input", ()=>{
+      state.pairId = pairInput.value.trim().toUpperCase();
+      save();
+      setupFirebaseListeners();
+    });
+
+    document.getElementById("driverResetBtn").addEventListener("click", ()=>{
+      if(confirm(t("confirm_reset"))){
+        const savedApiKey = state.apiKey;
+        const savedPairId = state.pairId;
+        const savedBossPin = state.bossPin;
+        const savedAds = state.ads;
+        localStorage.removeItem(DB_KEY);
+        state = loadState();
+        state.apiKey = savedApiKey;
+        state.pairId = savedPairId;
+        state.bossPin = savedBossPin;
+        state.ads = savedAds;
+        save();
+        closeSheet();
+        render();
+        setupFirebaseListeners();
+      }
+    });
+
+    document.getElementById("driverSwitchBossBtn").addEventListener("click", async ()=>{
+      const bp = bossPinRef();
+      let sharedPin = null;
+      if(bp){
+        try{
+          const snap = await bp.once("value");
+          sharedPin = snap.val();
+        }catch(e){}
+      }
+      if(!sharedPin){
+        // No password set yet anywhere — nothing to protect against, so let
+        // the switch through directly (this is what unblocks first-time setup).
+        state.role = "boss";
+        save();
+        closeSheet();
+        render();
+        syncDispatchNow();
+        toast(t("boss_pin_not_set"));
+        return;
+      }
+      openSheet(`
+        <div class="sheet-title">${t("lbl_boss_pin")}</div>
+        <div class="list-sub" style="margin-bottom:14px;">${t("boss_switch_pin_desc")}</div>
+        <div class="field"><input type="password" id="bossSwitchPinInput" placeholder="••••••"></div>
+        <button class="btn full primary" id="bossSwitchPinConfirmBtn" style="margin-top:6px;">${t("sheet_confirm")}</button>
+      `, ()=>{
+        const pinField = document.getElementById("bossSwitchPinInput");
+        pinField.focus();
+        document.getElementById("bossSwitchPinConfirmBtn").addEventListener("click", ()=>{
+          if(pinField.value === sharedPin){
+            state.role = "boss";
+            save();
+            closeSheet();
+            render();
+            syncDispatchNow();
+          }else{
+            toast(t("admin_pin_wrong"));
+          }
+        });
+      });
+    });
+  });
+});
+
+/* ============================================================
+   BOSS: CALL SCREEN
+=============================================================== */
+document.getElementById("gpsBtn").addEventListener("click", async ()=>{
+  try{
+    toast(t("btn_gps")+"...");
+    const coords = await getGeo();
+    lastCoords = coords;
+    if(state.apiKey){
+      const addr = await reverseGeocode(coords.lat, coords.lng);
+      document.getElementById("pickupInput").value = addr;
+    }else{
+      document.getElementById("pickupInput").value = coords.lat.toFixed(5)+", "+coords.lng.toFixed(5);
+      toast(t("need_api_key"));
+    }
+  }catch(e){
+    toast("GPS error");
+  }
+});
+
+document.getElementById("droppedBtn").addEventListener("click", ()=>{
+  document.getElementById("pickupInput").value = t("phrase_dropped_off");
+});
+
+document.getElementById("searchPlaceBtn").addEventListener("click", ()=>{
+  openPlaceSearchSheet("destInput");
+});
+
+document.getElementById("pickupMapBtn").addEventListener("click", ()=>{
+  openMapPickerSheet("pickupInput", {storeCoords:true});
+});
+document.getElementById("destMapBtn").addEventListener("click", ()=>{
+  openMapPickerSheet("destInput");
+});
+
+/* ---------- Google Maps picker (drag pin + reverse geocode) ---------- */
+let mapsLoadPromise = null;
+function loadGoogleMaps(){
+  if(mapsLoadPromise) return mapsLoadPromise;
+  mapsLoadPromise = new Promise((resolve,reject)=>{
+    if(window.google && window.google.maps){ resolve(); return; }
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(state.apiKey)}&libraries=places&v=weekly`;
+    script.async = true;
+    script.onload = ()=>resolve();
+    script.onerror = ()=>{ mapsLoadPromise = null; reject(new Error("maps load failed")); };
+    document.head.appendChild(script);
+  });
+  return mapsLoadPromise;
+}
+
+let geocoderInstance = null;
+async function reverseGeocode(lat, lng){
+  try{
+    await loadGoogleMaps();
+    if(window.google && window.google.maps){
+      if(!geocoderInstance) geocoderInstance = new google.maps.Geocoder();
+      const address = await new Promise((resolve,reject)=>{
+        geocoderInstance.geocode({ location:{ lat, lng } }, (results, status)=>{
+          if(status === "OK" && results && results.length){
+            resolve(results[0].formatted_address);
+          }else{
+            reject(status);
+          }
+        });
+      });
+      return address;
+    }
+  }catch(e){}
+  return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+}
+
+/* ---------- Inline Google Places Autocomplete on the pickup/destination fields ---------- */
+let autocompleteReady = false;
+async function ensureAutocomplete(){
+  if(autocompleteReady || !state.apiKey) return;
+  try{
+    await loadGoogleMaps();
+  }catch(e){ return; }
+  if(!(window.google && window.google.maps && window.google.maps.places)) return;
+  autocompleteReady = true;
+  bindAutocomplete("pickupInput", (place)=>{
+    if(place.geometry && place.geometry.location){
+      lastCoords = { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() };
+    }
+  });
+  bindAutocomplete("destInput", ()=>{});
+}
+
+async function textSearchTop(query){
+  if(!query || !state.apiKey) return null;
+  try{
+    const res = await fetch(`https://places.googleapis.com/v1/places:searchText`, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "X-Goog-Api-Key": state.apiKey,
+        "X-Goog-FieldMask":"places.displayName,places.formattedAddress,places.location"
+      },
+      body: JSON.stringify({ textQuery: query })
+    });
+    const data = await res.json();
+    if(data.places && data.places.length) return data.places[0];
+  }catch(e){}
+  return null;
+}
+
+function bindAutocomplete(inputId, onPick){
+  const input = document.getElementById(inputId);
+  if(!input || input.__acBound) return;
+  input.__acBound = true;
+  const ac = new google.maps.places.Autocomplete(input, {
+    fields:["formatted_address","name","geometry"]
+  });
+  let justSelected = false;
+  ac.addListener("place_changed", ()=>{
+    const place = ac.getPlace();
+    if(!place || !place.geometry){ return; }
+    justSelected = true;
+    const label = place.formatted_address || place.name || input.value;
+    input.value = label;
+    onPick(place);
+    save();
+  });
+  // Google-Maps-style fallback: if the user just types a query and hits Enter
+  // without picking a dropdown suggestion, run a text search and use the top result.
+  input.addEventListener("keydown", async (e)=>{
+    if(e.key !== "Enter") return;
+    e.preventDefault();
+    if(justSelected){ justSelected = false; return; }
+    const query = input.value.trim();
+    if(!query) return;
+    const result = await textSearchTop(query);
+    if(result){
+      input.value = result.formattedAddress || result.displayName?.text || query;
+      onPick({
+        formatted_address: result.formattedAddress,
+        name: result.displayName?.text,
+        geometry: result.location ? { location: {
+          lat: ()=>result.location.latitude,
+          lng: ()=>result.location.longitude
+        } } : null
+      });
+      save();
+    }
+  });
+}
+
+document.getElementById("pickupInput").addEventListener("focus", ensureAutocomplete, {once:false});
+document.getElementById("destInput").addEventListener("focus", ensureAutocomplete, {once:false});
+
+async function openMapPickerSheet(fieldId, opts={}){
+  if(!state.apiKey){
+    openSheet(`
+      <div class="sheet-title">${t("sheet_map_pick")}</div>
+      <div class="empty-state">
+        <div class="empty-state-icon">🔑</div>
+        <div class="empty-state-text">${t("need_api_key")}</div>
+      </div>
+      <button class="btn full ghost" onclick="window.__bc.closeSheet()">${t("sheet_cancel")}</button>
+    `);
+    return;
+  }
+
+  openSheet(`
+    <div class="sheet-title">${t("sheet_map_pick")}</div>
+    <div class="field" style="margin-bottom:10px;"><input type="text" id="mapPickerSearchInput" placeholder="${t('search_placeholder')}"></div>
+    <div class="list-sub" style="margin-bottom:10px;">${t("map_drag_hint")}</div>
+    <div id="mapPickerCanvas" class="map-frame" style="height:300px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:13px;">…</div>
+    <div class="card" style="margin-top:10px;">
+      <div class="list-sub" id="mapPickerAddress">${t("map_locating")}</div>
+    </div>
+    <button class="btn full primary" id="mapPickerConfirmBtn" style="margin-top:4px;">${t("map_confirm")}</button>
+  `, async ()=>{
+    try{
+      await loadGoogleMaps();
+    }catch(e){
+      document.getElementById("mapPickerCanvas").textContent = "Failed to load map — check API key";
+      return;
+    }
+    initMapPicker(fieldId, opts);
+  });
+}
+
+function initMapPicker(fieldId, opts={}){
+  const canvas = document.getElementById("mapPickerCanvas");
+  if(!canvas) return;
+  canvas.textContent = "";
+  canvas.style.display = "block";
+
+  let center = { lat:-6.2088, lng:106.8456 }; // default Jakarta
+  if(opts.initialCenter) center = opts.initialCenter;
+  else if(lastCoords) center = lastCoords;
+
+  const finish = (map, marker) => {
+    const setup = (c)=>{
+      map.setCenter(c);
+      marker.setPosition(c);
+      updateAddressFromLatLng(c.lat, c.lng);
+    };
+    if(!opts.initialCenter && !lastCoords && navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(
+        pos => setup({lat:pos.coords.latitude, lng:pos.coords.longitude}),
+        () => updateAddressFromLatLng(center.lat, center.lng),
+        {timeout:5000}
+      );
+    } else {
+      updateAddressFromLatLng(center.lat, center.lng);
+    }
+  };
+
+  const map = new google.maps.Map(canvas, {
+    center, zoom:15, disableDefaultUI:true, zoomControl:true, gestureHandling:"greedy"
+  });
+  const marker = new google.maps.Marker({ position:center, map, draggable:true });
+
+  let currentLatLng = center;
+  async function updateAddressFromLatLng(lat,lng){
+    currentLatLng = {lat,lng};
+    const addrEl = document.getElementById("mapPickerAddress");
+    if(addrEl) addrEl.textContent = t("map_locating");
+    const addr = await reverseGeocode(lat,lng);
+    if(addrEl) addrEl.textContent = addr;
+  }
+
+  marker.addListener("dragend", ()=>{
+    const pos = marker.getPosition();
+    updateAddressFromLatLng(pos.lat(), pos.lng());
+  });
+  map.addListener("click", (e)=>{
+    marker.setPosition(e.latLng);
+    updateAddressFromLatLng(e.latLng.lat(), e.latLng.lng());
+  });
+
+  // Search box on top of the map — jumps the pin to whatever place is chosen or typed+Enter
+  bindAutocomplete("mapPickerSearchInput", (place)=>{
+    if(place.geometry && place.geometry.location){
+      const lat = place.geometry.location.lat();
+      const lng = place.geometry.location.lng();
+      map.setCenter({lat,lng});
+      map.setZoom(16);
+      marker.setPosition({lat,lng});
+      updateAddressFromLatLng(lat,lng);
+    }
+  });
+
+  finish(map, marker);
+
+  const confirmBtn = document.getElementById("mapPickerConfirmBtn");
+  if(confirmBtn){
+    confirmBtn.onclick = ()=>{
+      const addr = document.getElementById("mapPickerAddress").textContent;
+      const field = document.getElementById(fieldId);
+      if(field) field.value = addr;
+      if(opts.storeCoords){ lastCoords = currentLatLng; }
+      save();
+      closeSheet();
+      // Run onConfirm AFTER closing this sheet — if it opens a new sheet
+      // (e.g. returning to the favorite/ad form with the address filled
+      // in), the closeSheet() above must not run afterwards and wipe it out.
+      if(opts.onConfirm) opts.onConfirm(addr, currentLatLng);
+    };
+  }
+}
+
+function openPlaceSearchSheet(fieldId, opts={}){
+  if(!state.apiKey){
+    openSheet(`
+      <div class="sheet-title">${t("sheet_search_place")}</div>
+      <div class="empty-state">
+        <div class="empty-state-icon">🔑</div>
+        <div class="empty-state-text">${t("need_api_key")}</div>
+      </div>
+      <button class="btn full ghost" onclick="window.__bc.closeSheet()">${t("sheet_cancel")}</button>
+    `);
+    return;
+  }
+  openSheet(`
+    <div class="sheet-title">${t("sheet_search_place")}</div>
+    <div class="field"><input type="text" id="placeSearchInput" placeholder="${t('search_placeholder')}"></div>
+    <div id="placeSearchResults"></div>
+  `, ()=>{
+    const input = document.getElementById("placeSearchInput");
+    input.focus();
+    let debounceTimer;
+    input.addEventListener("input", ()=>{
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(()=>doPlaceSearch(input.value, fieldId, opts), 380);
+    });
+  });
+}
+
+async function doPlaceSearch(query, fieldId, opts={}){
+  const resultsEl = document.getElementById("placeSearchResults");
+  if(!resultsEl) return;
+  if(!query || query.trim().length < 2){ resultsEl.innerHTML=""; return; }
+  resultsEl.innerHTML = `<div class="empty-state"><div class="empty-state-text">…</div></div>`;
+  try{
+    const res = await fetch(`https://places.googleapis.com/v1/places:searchText`, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "X-Goog-Api-Key": state.apiKey,
+        "X-Goog-FieldMask":"places.displayName,places.formattedAddress,places.location"
+      },
+      body: JSON.stringify({ textQuery: query })
+    });
+    const data = await res.json();
+    if(!data.places || !data.places.length){
+      resultsEl.innerHTML = `<div class="empty-state"><div class="empty-state-text">No results</div></div>`;
+      return;
+    }
+    resultsEl.innerHTML = data.places.map((p,i)=>`
+      <div class="search-result" data-idx="${i}">
+        <div class="list-icon">📍</div>
+        <div class="list-body">
+          <div class="list-title">${escapeHtml(p.displayName?.text||"")}</div>
+          <div class="list-sub">${escapeHtml(p.formattedAddress||"")}</div>
+        </div>
+      </div>
+    `).join("");
+    resultsEl.querySelectorAll(".search-result").forEach(el=>{
+      el.addEventListener("click", ()=>{
+        const p = data.places[parseInt(el.getAttribute("data-idx"))];
+        // Instead of filling the field directly, open the map centered on this
+        // result so the exact pin can be confirmed or fine-tuned — like Google Maps.
+        if(p.location){
+          openMapPickerSheet(fieldId, {
+            ...opts,
+            initialCenter: { lat: p.location.latitude, lng: p.location.longitude }
+          });
+        }else{
+          const label = (p.displayName?.text||"") + (p.formattedAddress ? (" — "+p.formattedAddress) : "");
+          const field = document.getElementById(fieldId);
+          if(field) field.value = label;
+          save();
+          closeSheet();
+        }
+      });
+    });
+  }catch(e){
+    resultsEl.innerHTML = `<div class="empty-state"><div class="empty-state-text">Search failed — check API key</div></div>`;
+  }
+}
+
+/* Resize + compress a picked photo entirely in the browser (canvas), then
+   return it as a compact base64 data URI. No server/Storage needed — the
+   resulting string is small enough to store directly in the free Realtime
+   Database, which is what makes this work without any paid Firebase tier. */
+function compressImageFile(file, maxDim = 800, quality = 0.7){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      img.onload = ()=>{
+        let { width, height } = img;
+        if(width > height && width > maxDim){
+          height = Math.round(height * (maxDim / width));
+          width = maxDim;
+        }else if(height > maxDim){
+          width = Math.round(width * (maxDim / height));
+          height = maxDim;
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function escapeHtml(s){
+  const d = document.createElement("div"); d.textContent = s||""; return d.innerHTML;
+}
+function routeLabel(pickup, dest){
+  return dest ? `${escapeHtml(pickup)} → ${escapeHtml(dest)}` : escapeHtml(pickup);
+}
+
+document.getElementById("callDriverBtn").addEventListener("click", async ()=>{
+  const pickup = document.getElementById("pickupInput").value.trim();
+  const dest = document.getElementById("destInput").value.trim();
+  const driver = state.drivers.find(d=>d.id===state.activeDriverId);
+  if(!driver){
+    toast(state.lang==="ko"?"먼저 기사를 선택하세요":state.lang==="id"?"Pilih sopir terlebih dahulu":"Select a driver first");
+    return;
+  }
+  if(!pickup){
+    toast(state.lang==="ko"?"픽업 위치를 입력하세요":state.lang==="id"?"Isi lokasi jemput":"Enter a pickup location");
+    return;
+  }
+  const ride = { id: uid("r"), driverId: driver.id, pickup, dest, ts: Date.now(), status:"calling", eta:null };
+  state.rides.unshift(ride);
+  state.pendingCall = { pickup, dest, ts: ride.ts };
+  state.driverEnRoute = null;
+  save();
+
+  const fbRef = dispatchRef();
+  if(fbRef){
+    try{
+      await fbRef.child("pendingCall").set({ pickup, dest, ts: ride.ts, driverName: driver.name });
+      await fbRef.child("response").remove();
+    }catch(e){ console.error("Firebase write failed", e); }
+  }
+  sendPushToOther("driver", t("driver_calling_title"), pickup + (dest ? (" → " + dest) : ""));
+
+  const destLine = dest
+    ? (state.lang==="ko" ? `목적지: ${dest}\n` : state.lang==="id" ? `Tujuan: ${dest}\n` : `Destination: ${dest}\n`)
+    : "";
+  const msg = (state.lang==="ko" ? `🚕 호출!\n픽업: ${pickup}\n${destLine}` :
+    state.lang==="id" ? `🚕 Panggilan!\nJemput: ${pickup}\n${destLine}` :
+    `🚕 Call!\nPickup: ${pickup}\n${destLine}`);
+
+  document.getElementById("callStatusRow").style.display = "inline-flex";
+  document.getElementById("callStatusRow").className = "ticket-status pending";
+  document.getElementById("callStatusText").textContent = t("status_calling");
+
+  if(driver.wa){
+    openWhatsApp(waLink(driver.wa, msg));
+  }
+  toast(t("toast_call_sent"));
+  renderTodayStats();
+});
+
+/* Navigation deep links */
+document.querySelectorAll(".nav-app").forEach(el=>{
+  el.addEventListener("click", ()=>{
+    const pickup = state.role==="boss"
+      ? document.getElementById("pickupInput")?.value.trim()
+      : (state.pendingCall?.pickup || state.activeRide?.pickup || "");
+    const dest = state.role==="boss"
+      ? document.getElementById("destInput")?.value.trim()
+      : (state.pendingCall?.dest || state.activeRide?.dest || "");
+    if(!dest){
+      toast(state.lang==="ko"?"목적지를 먼저 입력하세요":state.lang==="id"?"Isi tujuan dulu":"Enter a destination first");
+      return;
+    }
+    const q = encodeURIComponent(dest);
+    const app = el.getAttribute("data-nav");
+    let url;
+    if(app==="google"){
+      url = `https://www.google.com/maps/dir/?api=1&destination=${q}`;
+      if(pickup){
+        url += `&origin=${encodeURIComponent(pickup)}`;
+      }
+    }
+    window.open(url, "_blank");
+  });
+});
+
+/* ============================================================
+   SPONSORED (dev-stage placeholder: real Jakarta Korean restaurants,
+   5 picked at random from a pool each render)
+=============================================================== */
+const AD_RESTAURANTS = [
+  { name:"Saemaeul Original Korean BBQ SCBD", addr:"SCBD Lot 8, Senayan, Kebayoran Baru, Jakarta Selatan", rating:4.9 },
+  { name:"Doma Resto", addr:"Jl. Wolter Monginsidi No.83, Kebayoran Baru, Jakarta Selatan", rating:4.9 },
+  { name:"Chadol Gujeolpan Pakubuwono Korean Flame BBQ", addr:"Jl. Hang Lekir X No.20, Kebayoran Baru, Jakarta Selatan", rating:4.9 },
+  { name:"Gangnam Korean BBQ Restaurant", addr:"Mal Ciputra, Jl. Letjen S. Parman, Jakarta Barat", rating:4.8 },
+  { name:"Hwaro Korean Steakhouse", addr:"Jl. Suryo No.56, Kebayoran Baru, Jakarta Selatan", rating:4.8 },
+  { name:"DaSotBap Rice Lab", addr:"Jl. Yusuf Adiwinata No.29, Menteng, Jakarta Pusat", rating:4.6 },
+  { name:"Bornga", addr:"Jl. Wolter Monginsidi No.24, Kebayoran Baru, Jakarta Selatan", rating:4.7 },
+  { name:"Magal Signature One Satrio", addr:"One Satrio, Kuningan, Jakarta Selatan", rating:4.8 },
+  { name:"Mokja Resto Korean Street Food", addr:"Jl. Kembangan Baru No.1, Jakarta Barat", rating:4.9 },
+  { name:"DEUSEYO Korean BBQ & Jjigae", addr:"Raffles Square, Jl. Ir. H. Juanda, Jakarta Pusat", rating:4.8 }
+];
+
+let editingAdIndex = null;
+let loadAdIntoForm = null;
+
+function adPool(){
+  if(!state.ads.length){
+    // First run (dev-stage placeholder): seed with 5 random Jakarta Korean restaurants and persist them
+    state.ads = [...AD_RESTAURANTS].sort(()=>Math.random()-0.5).slice(0,5);
+    save();
+  }
+  return state.ads;
+}
+
+function adIconHtml(r){
+  if(r.image){
+    return `<img src="${escapeHtml(r.image)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.replaceWith(Object.assign(document.createElement('div'),{textContent:'🍽️',style:'display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:16px;'}))">`;
+  }
+  return "🍽️";
+}
+
+function renderAdList(){
+  const el = document.getElementById("adList");
+  if(!el) return;
+  const list = adPool();
+  if(!list.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🍽️</div><div class="empty-state-text">${t("empty_favorites")}</div></div>`;
+    return;
+  }
+  el.innerHTML = list.map((r,i)=>{
+    if(r.image){
+      // Pure image banner — no text overlay. Tapping it fills the destination,
+      // it never navigates anywhere (not a link/URL action).
+      return `
+        <div class="ad-banner" data-ad="${i}" style="border-radius:12px;overflow:hidden;margin-bottom:10px;cursor:pointer;box-shadow:0 1px 2px rgba(60,64,67,0.08), 0 1px 3px rgba(60,64,67,0.08);">
+          <img src="${escapeHtml(r.image)}" style="width:100%;height:120px;object-fit:cover;display:block;" onerror="this.closest('.ad-banner').style.display='none'">
+        </div>`;
+    }
+    // Fallback while no banner image has been uploaded yet for this ad
+    return `
+      <div class="card" style="margin-bottom:10px;">
+        <div class="list-item" data-ad="${i}" style="padding:0;border-bottom:none;">
+          <div class="list-icon" style="background:#FCE8E6;">🍽️</div>
+          <div class="list-body">
+            <div class="list-title">${escapeHtml(r.name)}</div>
+            <div class="list-sub">${escapeHtml(r.addr)}</div>
+          </div>
+          <div class="list-value">★ ${r.rating}</div>
+        </div>
+      </div>`;
+  }).join("");
+  el.querySelectorAll("[data-ad]").forEach(item=>{
+    item.addEventListener("click", ()=>{
+      const r = list[parseInt(item.getAttribute("data-ad"))];
+      document.getElementById("destInput").value = `${r.name}, ${r.addr}`;
+      toast(t("toast_dest_set"));
+    });
+  });
+}
+
+/* ---------- Admin screen: API key and ad management (developer-only) ---------- */
+document.getElementById("adminModeBtn").addEventListener("click", ()=>{
+  openSheet(`
+    <div class="sheet-title">${t("sheet_admin_pin")}</div>
+    <div class="list-sub" style="margin-bottom:14px;">${t("admin_pin_desc")}</div>
+    <div class="field"><label>${t("lbl_admin_id")}</label><input type="text" id="adminIdCheckInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+    <div class="field"><label>${t("lbl_admin_pin")}</label><input type="password" id="adminPinCheckInput" autocomplete="new-password" placeholder="••••••••"></div>
+    <button class="btn full primary" id="adminPinConfirmBtn" style="margin-top:6px;">${t("sheet_confirm")}</button>
+  `, ()=>{
+    const idInput = document.getElementById("adminIdCheckInput");
+    const pinInput = document.getElementById("adminPinCheckInput");
+    idInput.focus();
+    document.getElementById("adminPinConfirmBtn").addEventListener("click", ()=>{
+      if(idInput.value.trim() === ADMIN_DEV_ID && pinInput.value === ADMIN_DEV_PASSWORD){
+        closeSheet();
+        setTimeout(openAdminSheet, 220);
+      }else{
+        toast(t("admin_pin_wrong"));
+      }
+    });
+  });
+});
+
+function renderAdminAdList(){
+  const el = document.getElementById("adminAdList");
+  if(!el) return;
+  const pool = adPool();
+  el.innerHTML = pool.length ? pool.map((r,i)=>`
+    <div class="list-item" data-adm="${i}">
+      <div class="list-icon" style="background:#FCE8E6;overflow:hidden;">${adIconHtml(r)}</div>
+      <div class="list-body">
+        <div class="list-title">${escapeHtml(r.name)}</div>
+        <div class="list-sub">${escapeHtml(r.addr)} · ★ ${r.rating}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <div class="slot-link-btn" data-adm-up="${i}" style="width:28px;height:24px;font-size:12px;${i===0?'opacity:0.3;':''}">▲</div>
+        <div class="slot-link-btn" data-adm-down="${i}" style="width:28px;height:24px;font-size:12px;${i===pool.length-1?'opacity:0.3;':''}">▼</div>
+      </div>
+      <div class="slot-link-btn" data-adm-edit="${i}" style="border-color:transparent;">✏️</div>
+      <div class="slot-link-btn" data-adm-del="${i}" style="border-color:transparent;">✕</div>
+    </div>
+  `).join("") : `<div class="empty-state"><div class="empty-state-text">${t("empty_favorites")}</div></div>`;
+  el.querySelectorAll("[data-adm-edit]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const i = parseInt(btn.getAttribute("data-adm-edit"));
+      if(typeof loadAdIntoForm === "function") loadAdIntoForm(i);
+    });
+  });
+  el.querySelectorAll("[data-adm-del]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      state.ads.splice(parseInt(btn.getAttribute("data-adm-del")), 1);
+      save();
+      syncAdsToFirebase();
+      renderAdminAdList();
+      renderAdList();
+    });
+  });
+  el.querySelectorAll("[data-adm-up]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const i = parseInt(btn.getAttribute("data-adm-up"));
+      if(i <= 0) return;
+      [state.ads[i-1], state.ads[i]] = [state.ads[i], state.ads[i-1]];
+      save();
+      syncAdsToFirebase();
+      renderAdminAdList();
+      renderAdList();
+    });
+  });
+  el.querySelectorAll("[data-adm-down]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const i = parseInt(btn.getAttribute("data-adm-down"));
+      if(i >= state.ads.length-1) return;
+      [state.ads[i+1], state.ads[i]] = [state.ads[i], state.ads[i+1]];
+      save();
+      syncAdsToFirebase();
+      renderAdminAdList();
+      renderAdList();
+    });
+  });
+}
+
+function syncAdsToFirebase(){
+  const adsRef = adminAdsRef();
+  if(adsRef) adsRef.set(state.ads);
+}
+
+function openAdminSheet(){
+  openSheet(`
+    <div class="sheet-title">${t("sheet_admin_title")}</div>
+
+    <div class="section-label" data-i18n="lbl_api" style="margin-top:0;">Google Maps API key</div>
+    <div class="card">
+      <div class="field" style="margin-bottom:8px;"><input type="text" id="adminApiKeyInput" placeholder="AIza..."></div>
+      <div class="list-sub">${t("api_hint")}</div>
+    </div>
+
+    <div class="section-label">${t("lbl_admin_ads")}</div>
+    <div id="adminAdList" class="card"></div>
+    <div id="adFormTitle" class="list-sub" style="margin:14px 0 4px;font-weight:600;">${t("btn_add_ad")}</div>
+    <div class="field"><label>${t("sheet_ad_name")}</label><input type="text" id="newAdName"></div>
+    <div class="field"><label>${t("sheet_ad_addr")}</label><input type="text" id="newAdAddr"></div>
+    <div class="field"><label>${t("sheet_ad_rating")}</label><input type="number" step="0.1" min="0" max="5" id="newAdRating" placeholder="4.8"></div>
+    <div class="field">
+      <label>${t("sheet_ad_image")}</label>
+      <input type="file" accept="image/*" id="newAdImageFile" style="display:none;">
+      <button class="btn full" id="pickAdImageBtn" type="button">📷 <span>${t("btn_upload_photo")}</span></button>
+      <div id="newAdUploadStatus" class="list-sub" style="margin-top:6px;"></div>
+      <input type="text" id="newAdImage" placeholder="https://..." style="margin-top:8px;">
+      <div class="list-sub" style="margin-top:4px;">${t("image_url_hint")}</div>
+      <div id="newAdImagePreview" style="margin-top:8px;"></div>
+    </div>
+    <button class="btn full primary" id="saveAdBtn">${t("btn_add_ad")}</button>
+    <button class="btn full ghost" id="cancelEditAdBtn" style="margin-top:8px;display:none;">${t("sheet_cancel")}</button>
+
+    <div style="height:16px;"></div>
+    <button class="btn full primary" id="adminExitBtn">✅ ${t("btn_save_exit")}</button>
+  `, ()=>{
+    const apiKeyField = document.getElementById("adminApiKeyInput");
+    apiKeyField.value = state.apiKey || "";
+    apiKeyField.addEventListener("input", ()=>{
+      state.apiKey = apiKeyField.value.trim();
+      save();
+      const acRef = adminConfigRef();
+      if(acRef) acRef.child("apiKey").set(state.apiKey);
+    });
+
+    // First time opening admin after the global-sync feature was added (or
+    // after any local reset): if Firebase's shared ad list is still empty,
+    // push whatever we have locally so every device converges on it.
+    const adsRefCheck = adminAdsRef();
+    if(adsRefCheck){
+      adsRefCheck.once("value").then(snap=>{
+        if(!snap.val()){
+          adPool(); // ensure state.ads is seeded locally first
+          syncAdsToFirebase();
+        }
+      });
+    }
+
+    document.getElementById("adminExitBtn").addEventListener("click", ()=>{
+      // Final explicit save before leaving — pushes the current API key and
+      // ad list to Firebase one more time so nothing is left unsynced.
+      save();
+      const acRef = adminConfigRef();
+      if(acRef) acRef.child("apiKey").set(state.apiKey || "");
+      syncAdsToFirebase();
+      toast(t("toast_saved"));
+      closeSheet();
+    });
+
+    renderAdminAdList();
+
+    const imageInput = document.getElementById("newAdImage");
+    const imagePreview = document.getElementById("newAdImagePreview");
+    const imageFileInput = document.getElementById("newAdImageFile");
+    const pickImageBtn = document.getElementById("pickAdImageBtn");
+    const uploadStatus = document.getElementById("newAdUploadStatus");
+    const nameInputEl = document.getElementById("newAdName");
+    const addrInputEl = document.getElementById("newAdAddr");
+    const ratingInputEl = document.getElementById("newAdRating");
+    const formTitle = document.getElementById("adFormTitle");
+    const saveBtn = document.getElementById("saveAdBtn");
+    const cancelBtn = document.getElementById("cancelEditAdBtn");
+
+    function refreshImagePreview(){
+      const url = imageInput.value.trim();
+      imagePreview.innerHTML = url
+        ? `<img src="${escapeHtml(url)}" style="width:100%;height:110px;object-fit:cover;border-radius:10px;" onerror="this.style.display='none'">`
+        : "";
+    }
+    imageInput.addEventListener("input", refreshImagePreview);
+
+    pickImageBtn.addEventListener("click", ()=> imageFileInput.click());
+    imageFileInput.addEventListener("change", async ()=>{
+      const file = imageFileInput.files[0];
+      if(!file) return;
+      uploadStatus.textContent = t("uploading_photo");
+      try{
+        const dataUri = await compressImageFile(file);
+        imageInput.value = dataUri;
+        refreshImagePreview();
+        uploadStatus.textContent = t("upload_done");
+        // If we're editing an existing ad, save it right away — no
+        // separate "저장" tap required.
+        if(editingAdIndex !== null){
+          state.ads[editingAdIndex] = { ...state.ads[editingAdIndex], image: dataUri };
+          save();
+          syncAdsToFirebase();
+          renderAdminAdList();
+          renderAdList();
+          uploadStatus.textContent = t("upload_done") + " · " + t("toast_saved");
+        }
+      }catch(e){
+        console.error(e);
+        uploadStatus.textContent = t("upload_failed");
+        toast(t("upload_failed"));
+      }
+    });
+
+    editingAdIndex = null;
+    function updateFormMode(){
+      formTitle.textContent = editingAdIndex===null ? t("btn_add_ad") : t("sheet_edit_ads");
+      saveBtn.textContent = editingAdIndex===null ? t("btn_add_ad") : t("sheet_save");
+      cancelBtn.style.display = editingAdIndex===null ? "none" : "block";
+    }
+    function clearAdForm(){
+      nameInputEl.value = ""; addrInputEl.value = ""; ratingInputEl.value = ""; imageInput.value = "";
+      imagePreview.innerHTML = ""; uploadStatus.textContent = "";
+    }
+    loadAdIntoForm = (i)=>{
+      const pool = adPool();
+      const r = pool[i];
+      if(!r) return;
+      editingAdIndex = i;
+      nameInputEl.value = r.name || "";
+      addrInputEl.value = r.addr || "";
+      ratingInputEl.value = r.rating || "";
+      imageInput.value = r.image || "";
+      refreshImagePreview();
+      updateFormMode();
+      nameInputEl.scrollIntoView({behavior:"smooth", block:"center"});
+    };
+    cancelBtn.addEventListener("click", ()=>{
+      editingAdIndex = null;
+      clearAdForm();
+      updateFormMode();
+    });
+
+    if(state.apiKey){
+      loadGoogleMaps().then(()=>{
+        if(window.google && window.google.maps && window.google.maps.places){
+          bindAutocomplete("newAdAddr", (place)=>{
+            if(!nameInputEl.value.trim() && place.name) nameInputEl.value = place.name;
+          });
+        }
+      }).catch(()=>{});
+    }
+    saveBtn.addEventListener("click", ()=>{
+      const name = nameInputEl.value.trim();
+      const addr = addrInputEl.value.trim();
+      const rating = parseFloat(ratingInputEl.value) || 4.5;
+      const image = imageInput.value.trim();
+      if(!name || !addr) return;
+      adPool(); // ensure state.ads is seeded
+      if(editingAdIndex !== null){
+        state.ads[editingAdIndex] = { ...state.ads[editingAdIndex], name, addr, rating, image };
+      }else{
+        state.ads.push({name, addr, rating, image});
+      }
+      save();
+      syncAdsToFirebase();
+      editingAdIndex = null;
+      clearAdForm();
+      updateFormMode();
+      renderAdminAdList();
+      renderAdList();
+      toast(t("toast_saved"));
+    });
+  });
+}
+
+function renderCallFavorites(){
+  const el = document.getElementById("callFavoritesList");
+  if(!state.favorites.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⭐</div><div class="empty-state-text">${t("empty_favorites")}</div></div>`;
+    return;
+  }
+  el.innerHTML = state.favorites.map(f=>`
+    <div class="list-item" data-fav-quick="${f.id}">
+      <div class="list-icon">⭐</div>
+      <div class="list-body">
+        <div class="list-title">${escapeHtml(f.name)}</div>
+      </div>
+      <div class="slot-link-btn" data-fav-edit="${f.id}" style="border-color:transparent;">✏️</div>
+      <div class="slot-link-btn" data-fav-del="${f.id}" style="border-color:transparent;">✕</div>
+    </div>
+  `).join("");
+  el.querySelectorAll("[data-fav-quick]").forEach(item=>{
+    item.addEventListener("click", (e)=>{
+      if(e.target.closest("[data-fav-del]") || e.target.closest("[data-fav-edit]")) return;
+      const fav = state.favorites.find(f=>f.id===item.getAttribute("data-fav-quick"));
+      document.getElementById("destInput").value = fav.addr || fav.name;
+      toast(t("toast_dest_set"));
+    });
+  });
+  el.querySelectorAll("[data-fav-edit]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const fav = state.favorites.find(f=>f.id===btn.getAttribute("data-fav-edit"));
+      if(fav) openFavoriteSheet({ id: fav.id, name: fav.name, addr: fav.addr });
+    });
+  });
+  el.querySelectorAll("[data-fav-del]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      state.favorites = state.favorites.filter(f=>f.id!==btn.getAttribute("data-fav-del"));
+      save(); renderCallFavorites();
+      toast(t("toast_deleted"));
+    });
+  });
+}
+
+/* ============================================================
+   DRIVERS SCREEN
+=============================================================== */
+function renderDriverList(){
+  const el = document.getElementById("driverList");
+  if(!state.drivers.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🧑‍✈️</div><div class="empty-state-text">${t("empty_drivers")}</div></div>`;
+    updateActiveDriverTicket();
+    return;
+  }
+  el.innerHTML = state.drivers.map(d=>`
+    <div class="driver-slot ${d.id===state.activeDriverId ? 'selected':''}" data-driver="${d.id}">
+      <div class="driver-avatar">${initials(d.name)}</div>
+      <div style="flex:1;">
+        <div class="driver-meta-name">${escapeHtml(d.name)}</div>
+        <div class="driver-meta-sub">${escapeHtml(d.wa||"—")}</div>
+      </div>
+      <div class="slot-link-btn" data-invite="${d.id}">🔗</div>
+      <div class="slot-link-btn" data-driver-edit="${d.id}" style="border-color:transparent;">✏️</div>
+      <div class="slot-link-btn" data-driver-del="${d.id}" style="border-color:transparent;">✕</div>
+    </div>
+  `).join("");
+  el.querySelectorAll("[data-driver]").forEach(slot=>{
+    slot.addEventListener("click", (e)=>{
+      if(e.target.closest("[data-invite]") || e.target.closest("[data-driver-edit]") || e.target.closest("[data-driver-del]")) return;
+      state.activeDriverId = slot.getAttribute("data-driver");
+      save();
+      renderDriverList();
+      updateActiveDriverTicket();
+    });
+  });
+  el.querySelectorAll("[data-invite]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const driver = state.drivers.find(d=>d.id===btn.getAttribute("data-invite"));
+      openInviteSheet(driver);
+    });
+  });
+  el.querySelectorAll("[data-driver-edit]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const driver = state.drivers.find(d=>d.id===btn.getAttribute("data-driver-edit"));
+      if(driver) openDriverSheet(driver);
+    });
+  });
+  el.querySelectorAll("[data-driver-del]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      if(!confirm(t("confirm_delete_driver"))) return;
+      const id = btn.getAttribute("data-driver-del");
+      state.drivers = state.drivers.filter(d=>d.id!==id);
+      if(state.activeDriverId === id){
+        state.activeDriverId = state.drivers.length ? state.drivers[0].id : null;
+      }
+      save();
+      renderDriverList();
+    });
+  });
+  updateActiveDriverTicket();
+}
+
+function openInviteSheet(driver){
+  const pairId = ensurePairId();
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.searchParams.set("driver", encodeURIComponent(driver.name));
+  url.searchParams.set("boss", state.bossWa || "");
+  url.searchParams.set("id", driver.id);
+  url.searchParams.set("pair", pairId);
+  const link = url.toString();
+  openSheet(`
+    <div class="sheet-title">${t("sheet_invite_link")}</div>
+    <div class="card"><div class="list-sub" style="word-break:break-all;">${escapeHtml(link)}</div></div>
+    <button class="btn full primary" id="sendInviteBtn" style="margin-bottom:8px;">💬 ${t("sheet_send_invite")}</button>
+    <button class="btn full ghost" id="copyInviteBtn" style="margin-bottom:14px;">${t("sheet_copy_link")}</button>
+    <div class="card">
+      <div class="list-sub" style="margin-bottom:6px;">${t("lbl_pair_code")}</div>
+      <div style="font-family:var(--font-mono);font-size:24px;font-weight:700;letter-spacing:3px;text-align:center;">${pairId}</div>
+      <div class="list-sub" style="margin-top:8px;">${t("pair_code_hint")}</div>
+    </div>
+  `, ()=>{
+    document.getElementById("sendInviteBtn").addEventListener("click", ()=>{
+      const msg = (state.lang==="ko" ? `BossCall 초대\n${link}\n\n페어 코드: ${pairId}` : state.lang==="id" ? `Undangan BossCall\n${link}\n\nKode pasangan: ${pairId}` : `BossCall invite\n${link}\n\nPair code: ${pairId}`);
+      openWhatsApp(waLink(driver.wa, msg));
+    });
+    document.getElementById("copyInviteBtn").addEventListener("click", ()=>{
+      navigator.clipboard?.writeText(link).then(()=>toast(t("toast_link_copied")));
+    });
+  });
+}
+
+function updateActiveDriverTicket(){
+  const driver = state.drivers.find(d=>d.id===state.activeDriverId);
+  document.getElementById("activeDriverInitial").textContent = driver ? initials(driver.name) : "–";
+  document.getElementById("activeDriverName").textContent = driver ? driver.name : t("no_driver");
+  document.getElementById("activeDriverSub").textContent = driver ? (driver.wa || "—") : "—";
+}
+
+function openDriverSheet(driver){
+  const isEdit = !!driver;
+  openSheet(`
+    <div class="sheet-title">${isEdit ? t("sheet_edit_driver") : t("sheet_add_driver")}</div>
+    <div class="field"><label>${t("sheet_driver_name")}</label><input type="text" id="newDriverName" value="${isEdit ? escapeHtml(driver.name) : ''}"></div>
+    <div class="field"><label>${t("sheet_driver_wa")}</label><input type="tel" id="newDriverWa" placeholder="+62 8xx xxxx xxxx" value="${isEdit ? escapeHtml(driver.wa||'') : ''}"></div>
+    <button class="btn full primary" id="saveDriverBtn">${t("sheet_save")}</button>
+    ${isEdit ? `<button class="btn full danger-ghost" id="deleteDriverBtn" style="margin-top:8px;">${t("btn_delete")}</button>` : ""}
+  `, ()=>{
+    const nameInput = document.getElementById("newDriverName");
+    if(!isEdit) nameInput.focus();
+    document.getElementById("saveDriverBtn").addEventListener("click", ()=>{
+      const name = nameInput.value.trim();
+      const wa = document.getElementById("newDriverWa").value.trim();
+      if(!name) return;
+      if(isEdit){
+        driver.name = name;
+        driver.wa = wa;
+      }else{
+        const d = { id: uid("drv"), name, wa };
+        state.drivers.push(d);
+        if(!state.activeDriverId) state.activeDriverId = d.id;
+      }
+      save();
+      closeSheet();
+      renderDriverList();
+      toast(t("toast_saved"));
+    });
+    if(isEdit){
+      document.getElementById("deleteDriverBtn").addEventListener("click", ()=>{
+        if(!confirm(t("confirm_delete_driver"))) return;
+        state.drivers = state.drivers.filter(d=>d.id!==driver.id);
+        if(state.activeDriverId === driver.id){
+          state.activeDriverId = state.drivers.length ? state.drivers[0].id : null;
+        }
+        save();
+        closeSheet();
+        renderDriverList();
+        toast(t("toast_deleted"));
+      });
+    }
+  });
+}
+
+document.getElementById("addDriverBtn").addEventListener("click", ()=>openDriverSheet(null));
+
+function localDateKey(ts){
+  const d = new Date(ts);
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+
+function renderTodayStats(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todays = state.rides.filter(r=>r.ts >= today.getTime());
+  document.getElementById("todayRidesNum").textContent = todays.length;
+  // On the boss's device, "clock status" must reflect the DRIVER's actual
+  // status (synced via Firebase) — the boss's own local state.clock is
+  // always "out" since the boss never personally clocks in themselves.
+  const clocked = state.role === "boss"
+    ? state.driverClockStatus?.status === "in"
+    : state.clock.status === "in";
+  document.getElementById("clockStatusNum").textContent = clocked ? "🟢" : "⚪";
+}
+
+function renderDailyHours(){
+  const el = document.getElementById("dailyHoursList");
+  if(!el) return;
+  const shifts = [...state.shifts].sort((a,b)=>b.clockOutTs-a.clockOutTs).slice(0,20);
+  if(!shifts.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🕘</div><div class="empty-state-text">${t("empty_shifts")}</div></div>`;
+    return;
+  }
+  el.innerHTML = shifts.map(s=>{
+    const dateLabel = new Date(s.clockOutTs).toLocaleDateString([], {month:'short', day:'numeric', weekday:'short'});
+    const breakdown = s.overtimeMs > 0
+      ? `${t("lbl_regular_hours")} ${formatHMS(s.regularMs)} · ${t("lbl_overtime_hours")} ${formatHMS(s.overtimeMs)}`
+      : `${t("lbl_regular_hours")} ${formatHMS(s.regularMs)}`;
+    return `
+    <div class="list-item">
+      <div class="list-icon">${s.overtimeMs > 0 ? '🟠' : '🕘'}</div>
+      <div class="list-body">
+        <div class="list-title">${dateLabel}</div>
+        <div class="list-sub">${breakdown}</div>
+      </div>
+      <div class="list-value">${formatHMS(s.totalMs)}</div>
+    </div>`;
+  }).join("");
+}
+
+/* ============================================================
+   FAVORITES
+=============================================================== */
+/* ============================================================
+   FAVORITES (add sheet — list rendering lives in renderCallFavorites)
+=============================================================== */
+function openFavoriteSheet(prefill={}){
+  openSheet(`
+    <div class="sheet-title">${prefill.id ? t("sheet_edit_favorite") : t("sheet_add_favorite")}</div>
+    <div class="field"><label>${t("sheet_favorite_name")}</label><input type="text" id="favName" value="${escapeHtml(prefill.name||"")}"></div>
+    <div class="field">
+      <label>${t("sheet_favorite_addr")}</label>
+      <input type="text" id="favAddr" value="${escapeHtml(prefill.addr||"")}">
+      <div class="field-actions" style="margin-top:6px;">
+        <div class="chip-btn" id="favSearchBtn">🔍 <span>${t("btn_search_place")}</span></div>
+        <div class="chip-btn" id="favMapPickBtn">🗺️ <span>${t("btn_map_pick")}</span></div>
+      </div>
+    </div>
+    <button class="btn full primary" id="saveFavBtn">${t("sheet_save")}</button>
+    ${prefill.id ? `<button class="btn full danger-ghost" id="deleteFavBtn" style="margin-top:8px;">${t("btn_delete")}</button>` : ""}
+  `, ()=>{
+    const nameInput = document.getElementById("favName");
+    if(!prefill.name) nameInput.focus();
+    if(state.apiKey){
+      loadGoogleMaps().then(()=>{
+        if(window.google && window.google.maps && window.google.maps.places){
+          bindAutocomplete("favAddr", (place)=>{
+            if(!nameInput.value.trim() && place.name){
+              nameInput.value = place.name;
+            }
+          });
+        }
+      }).catch(()=>{});
+    }
+    document.getElementById("favSearchBtn").addEventListener("click", ()=>{
+      openPlaceSearchSheet("favAddr", {
+        onConfirm: (addr)=>{
+          openFavoriteSheet({ id: prefill.id, name: nameInput.value.trim(), addr });
+        }
+      });
+    });
+    document.getElementById("favMapPickBtn").addEventListener("click", ()=>{
+      openMapPickerSheet("favAddr", {
+        onConfirm: (addr)=>{
+          openFavoriteSheet({ id: prefill.id, name: nameInput.value.trim(), addr });
+        }
+      });
+    });
+    document.getElementById("saveFavBtn").addEventListener("click", ()=>{
+      const name = document.getElementById("favName").value.trim();
+      const addr = document.getElementById("favAddr").value.trim();
+      if(!name) return;
+      if(prefill.id){
+        const fav = state.favorites.find(f=>f.id===prefill.id);
+        if(fav){ fav.name = name; fav.addr = addr; }
+      }else{
+        state.favorites.push({id: uid("fav"), name, addr});
+      }
+      save(); closeSheet(); renderCallFavorites();
+      toast(t("toast_saved"));
+    });
+    if(prefill.id){
+      document.getElementById("deleteFavBtn").addEventListener("click", ()=>{
+        state.favorites = state.favorites.filter(f=>f.id!==prefill.id);
+        save(); closeSheet(); renderCallFavorites();
+        toast(t("toast_deleted"));
+      });
+    }
+  });
+}
+
+document.getElementById("addFavoriteBtn").addEventListener("click", ()=>openFavoriteSheet());
+
+/* ============================================================
+   STATS
+=============================================================== */
+function renderStats(){
+  const el = document.getElementById("monthTiles");
+  const now = new Date();
+  const byMonth = {};
+  state.rides.forEach(r=>{
+    const d = new Date(r.ts);
+    const key = d.getFullYear()+"-"+(d.getMonth()+1);
+    byMonth[key] = (byMonth[key]||0)+1;
+  });
+  const thisKey = now.getFullYear()+"-"+(now.getMonth()+1);
+  const thisCount = byMonth[thisKey] || 0;
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  const lastKey = lastMonthDate.getFullYear()+"-"+(lastMonthDate.getMonth()+1);
+  const lastCount = byMonth[lastKey] || 0;
+
+  el.innerHTML = `
+    <div class="stat-tile"><div class="stat-tile-num">${thisCount}</div><div class="stat-tile-label">${state.lang==='ko'?'이번 달':state.lang==='id'?'Bulan ini':'This month'}</div></div>
+    <div class="stat-tile"><div class="stat-tile-num">${lastCount}</div><div class="stat-tile-label">${state.lang==='ko'?'지난 달':state.lang==='id'?'Bulan lalu':'Last month'}</div></div>
+  `;
+
+  // last 6 months bar chart
+  const bars = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const key = d.getFullYear()+"-"+(d.getMonth()+1);
+    bars.push({label: d.toLocaleDateString([], {month:'short'}), count: byMonth[key]||0, key});
+  }
+  const max = Math.max(1, ...bars.map(b=>b.count));
+  document.getElementById("monthBars").innerHTML = bars.map(b=>`
+    <div class="bar-row" data-month="${b.key}" style="cursor:pointer;">
+      <div class="bar-label">${b.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(b.count/max*100)}%"></div></div>
+      <div class="bar-value">${b.count}</div>
+    </div>
+  `).join("");
+  document.querySelectorAll("[data-month]").forEach(row=>{
+    row.addEventListener("click", ()=>renderDayDetail(row.getAttribute("data-month")));
+  });
+}
+
+function renderDayDetail(monthKey){
+  const [y,m] = monthKey.split("-").map(Number);
+  const rides = state.rides.filter(r=>{
+    const d = new Date(r.ts);
+    return d.getFullYear()===y && (d.getMonth()+1)===m;
+  });
+  const byDay = {};
+  rides.forEach(r=>{
+    const d = new Date(r.ts).getDate();
+    byDay[d] = (byDay[d]||0)+1;
+  });
+  const days = Object.keys(byDay).sort((a,b)=>b-a);
+  const el = document.getElementById("dayDetail");
+  if(!days.length){ el.innerHTML=""; return; }
+  el.innerHTML = `<div class="card">` + days.map(d=>`
+    <div class="row"><span style="font-size:13.5px;">${m}/${d}</span><span class="list-value">${byDay[d]} ${state.lang==='ko'?'건':state.lang==='id'?'perjalanan':'rides'}</span></div>
+  `).join("") + `</div>`;
+}
+
+/* ============================================================
+   PAYROLL / FUEL / WHATSAPP / SETTINGS
+=============================================================== */
+function bindPayrollInputs(){
+  const ids = ["payBase","payOT","payMeal","payVehicle","payBonus","payInsurance"];
+  const map = {payBase:"base",payOT:"ot",payMeal:"meal",payVehicle:"vehicle",payBonus:"bonus",payInsurance:"insurance"};
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    el.value = state.payroll[map[id]] || "";
+    el.addEventListener("input", ()=>{
+      state.payroll[map[id]] = parseFloat(el.value)||0;
+      save();
+      renderEstimatedPay();
+    });
+  });
+  renderEstimatedPay();
+}
+
+function monthlyOvertimeMs(){
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  return state.shifts
+    .filter(s=>{ const d = new Date(s.clockOutTs); return d.getFullYear()===y && d.getMonth()===m; })
+    .reduce((sum,s)=> sum + (s.overtimeMs||0), 0);
+}
+
+function renderEstimatedPay(){
+  const el = document.getElementById("estimatedPayCard");
+  if(!el) return;
+  const p = state.payroll;
+  const otMs = monthlyOvertimeMs();
+  const otHours = otMs / 3600000;
+  const otPay = otHours * (p.ot||0);
+  const fixed = (p.base||0) + (p.meal||0) + (p.vehicle||0) + (p.bonus||0) + (p.insurance||0);
+  const total = fixed + otPay;
+  const asOf = new Date().toLocaleDateString([], {month:'short', day:'numeric'});
+  el.innerHTML = `
+    <div class="row">
+      <span style="font-size:13px;color:var(--text-muted);">${t("lbl_as_of")}</span>
+      <span style="font-size:13px;color:var(--text-muted);">${asOf}</span>
+    </div>
+    <div class="row">
+      <span style="font-size:13.5px;">${t("lbl_fixed_allowance")}</span>
+      <span class="list-value">${fmtNum(fixed)}</span>
+    </div>
+    <div class="row">
+      <span style="font-size:13.5px;">${t("lbl_ot_hours_month")}</span>
+      <span class="list-value">${otHours.toFixed(1)}h · ${fmtNum(Math.round(otPay))}</span>
+    </div>
+    <div class="row" style="margin-top:4px;">
+      <span style="font-weight:600;font-size:13.5px;">${t("lbl_est_total")}</span>
+      <span class="eta-badge">${fmtNum(Math.round(total))}</span>
+    </div>
+  `;
+}
+
+function renderFuel(){
+  const now = new Date();
+  const thisMonth = state.fuel.filter(f=>{
+    const d = new Date(f.ts);
+    return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+  });
+  const liters = thisMonth.reduce((s,f)=>s+(f.liters||0),0);
+  const cost = thisMonth.reduce((s,f)=>s+(f.cost||0),0);
+  document.getElementById("fuelSummary").textContent = `${liters} L · ${fmtNum(cost)}`;
+
+  const el = document.getElementById("fuelList");
+  if(!state.fuel.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⛽</div><div class="empty-state-text">${t("empty_fuel")}</div></div>`;
+    return;
+  }
+  el.innerHTML = state.fuel.slice(0,10).map(f=>`
+    <div class="list-item">
+      <div class="list-icon">⛽</div>
+      <div class="list-body">
+        <div class="list-title">${f.liters} L</div>
+        <div class="list-sub">${new Date(f.ts).toLocaleDateString()}</div>
+      </div>
+      <div class="list-value">${fmtNum(f.cost)}</div>
+    </div>
+  `).join("");
+}
+
+document.getElementById("addFuelBtn").addEventListener("click", ()=>{
+  openSheet(`
+    <div class="sheet-title">${t("sheet_add_fuel")}</div>
+    <div class="field-row">
+      <div class="field"><label>${t("fuel_liters")}</label><input type="number" id="fuelLiters"></div>
+      <div class="field"><label>${t("fuel_cost")}</label><input type="number" id="fuelCost"></div>
+    </div>
+    <button class="btn full primary" id="saveFuelBtn">${t("sheet_save")}</button>
+  `, ()=>{
+    document.getElementById("saveFuelBtn").addEventListener("click", ()=>{
+      const liters = parseFloat(document.getElementById("fuelLiters").value)||0;
+      const cost = parseFloat(document.getElementById("fuelCost").value)||0;
+      if(!liters && !cost) return;
+      state.fuel.unshift({id:uid("fuel"), liters, cost, ts:Date.now()});
+      save(); closeSheet(); renderFuel();
+      toast(t("toast_saved"));
+      if(state.notify.fuel && state.bossWa && state.role==="driver"){
+        const msg = state.lang==='ko' ? `⛽ 주유 ${liters}L / ${cost}` : state.lang==='id' ? `⛽ Isi bensin ${liters}L / ${cost}` : `⛽ Fuel ${liters}L / ${cost}`;
+        openWhatsApp(waLink(state.bossWa, msg));
+      }
+    });
+  });
+});
+
+document.getElementById("bossWaInput").addEventListener("input", (e)=>{
+  state.bossWa = e.target.value; save();
+});
+document.querySelectorAll("[data-notify]").forEach(tg=>{
+  tg.addEventListener("click", ()=>{
+    const key = tg.getAttribute("data-notify");
+    state.notify[key] = !state.notify[key];
+    tg.classList.toggle("on", state.notify[key]);
+    save();
+  });
+});
+document.getElementById("testWaBtn").addEventListener("click", ()=>{
+  const target = state.role==="boss" ? (state.drivers.find(d=>d.id===state.activeDriverId)?.wa) : state.bossWa;
+  if(!target){ toast("No number set"); return; }
+  const msg = "BossCall test message ✅";
+  openWhatsApp(waLink(target, msg));
+});
+
+document.getElementById("enableNotifyBtn").addEventListener("click", async ()=>{
+  if(!isStandaloneApp()){
+    toast(t("need_homescreen_install"));
+  }
+  const pushReady = await setupPushNotifications();
+  toast(pushReady ? t("alerts_enabled") : t("alerts_denied"));
+  if(pushReady){
+    playAlertSound();
+    fireAlert("BossCall", t("alerts_enabled"));
+  }
+});
+
+document.getElementById("testAlertBtn").addEventListener("click", ()=>{
+  fireAlert("BossCall", state.lang==='ko' ? "테스트 알람입니다" : state.lang==='id' ? "Ini alarm uji coba" : "This is a test alert");
+});
+
+document.getElementById("bossPinInput").addEventListener("input", (e)=>{
+  state.bossPin = e.target.value.trim();
+  save();
+  const bp = bossPinRef();
+  if(bp) bp.set(state.bossPin);
+});
+
+document.getElementById("switchModeBtn").addEventListener("click", ()=>{
+  state.role = state.role === "boss" ? "driver" : "boss";
+  save();
+  render();
+  syncDispatchNow();
+});
+
+document.getElementById("resetDataBtn").addEventListener("click", ()=>{
+  if(confirm(t("confirm_reset"))){
+    const savedApiKey = state.apiKey;
+    const savedPairId = state.pairId;
+    const savedBossPin = state.bossPin;
+    const savedAds = state.ads;
+    localStorage.removeItem(DB_KEY);
+    state = loadState();
+    state.apiKey = savedApiKey;
+    state.pairId = savedPairId;
+    state.bossPin = savedBossPin;
+    state.ads = savedAds;
+    save();
+    render();
+    setupFirebaseListeners();
+  }
+});
+
+/* ============================================================
+   DRIVER VIEW
+=============================================================== */
+let workTimerInterval = null;
+
+function renderDriverHome(){
+  const wrap = document.getElementById("driverHeroWrap");
+  const pending = state.pendingCall;
+  const isCalling = !!pending;
+
+  if(isCalling){
+    wrap.innerHTML = `
+      <div class="driver-hero calling">
+        <div class="driver-hero-icon">📲</div>
+        <div class="driver-hero-title">${t("driver_calling_title")}</div>
+        <div class="driver-hero-sub">${routeLabel(pending.pickup, pending.dest)}</div>
+        <button class="ok-boss-btn" id="okBossBtn">${t("ok_boss")}</button>
+      </div>
+    `;
+    document.getElementById("okBossBtn").addEventListener("click", handleOkBoss);
+  } else if(state.activeRide){
+    const ride = state.activeRide;
+    wrap.innerHTML = `
+      <div class="driver-hero calling">
+        <div class="driver-hero-icon">🚕</div>
+        <div class="driver-hero-title">${t("lbl_active_trip")}</div>
+        <div class="driver-hero-sub">${routeLabel(ride.pickup, ride.dest)}</div>
+        <button class="ok-boss-btn" id="endTripBtn" style="background:var(--signal);">${t("btn_end_trip")}</button>
+      </div>
+    `;
+    document.getElementById("endTripBtn").addEventListener("click", ()=>{
+      state.activeRide = null;
+      save();
+      toast(t("toast_trip_ended"));
+      renderDriverHome();
+    });
+  } else {
+    wrap.innerHTML = `
+      <div class="driver-hero">
+        <div class="driver-hero-icon">☁️</div>
+        <div class="driver-hero-title">${t("driver_idle_title")}</div>
+        <div class="driver-hero-sub">${t("driver_idle_sub")}</div>
+      </div>
+    `;
+  }
+}
+
+async function handleOkBoss(){
+  const pending = state.pendingCall;
+  if(!pending) return;
+  let etaText = "~10 min";
+
+  const destLine = pending.dest
+    ? (state.lang==='ko' ? `🚩 목적지: ${pending.dest}\n` : state.lang==='id' ? `🚩 Tujuan: ${pending.dest}\n` : `🚩 Destination: ${pending.dest}\n`)
+    : "";
+
+  const msg = state.lang==='ko'
+    ? `👍 OK BOSS!\n📍 픽업: ${pending.pickup}\n${destLine}⏰ 예상 도착: ${etaText}\n🚗 확인했습니다, 바로 출발합니다!`
+    : state.lang==='id'
+    ? `👍 OK BOSS!\n📍 Jemput: ${pending.pickup}\n${destLine}⏰ Perkiraan tiba: ${etaText}\n🚗 Sudah dilihat, segera berangkat!`
+    : `👍 OK BOSS!\n📍 Pickup: ${pending.pickup}\n${destLine}⏰ ETA: ${etaText}\n🚗 Confirmed, heading out now!`;
+
+  // mark matching ride accepted
+  const ride = state.rides.find(r=>r.ts===pending.ts);
+  if(ride){ ride.status = "accepted"; ride.eta = 10; }
+  state.activeRide = { pickup: pending.pickup, dest: pending.dest };
+  state.pendingCall = null;
+  save();
+
+  const fbRef = dispatchRef();
+  if(fbRef){
+    try{
+      await fbRef.child("response").set({ pickup: pending.pickup, dest: pending.dest, ts: pending.ts, respondedAt: Date.now() });
+      await fbRef.child("pendingCall").remove();
+    }catch(e){ console.error("Firebase write failed", e); }
+  }
+  sendPushToOther("boss",
+    state.lang==='ko' ? "기사님이 응답했어요" : state.lang==='id' ? "Sopir merespons" : "Driver responded",
+    t("status_driver_coming")
+  );
+
+  if(state.bossWa){
+    openWhatsApp(waLink(state.bossWa, msg));
+  }else{
+    toast(state.lang==='ko' ? "사장 WA 번호가 설정되지 않았어요 (⚙️ 설정)" : state.lang==='id' ? "Nomor WA Bos belum diatur (⚙️ Pengaturan)" : "Boss WhatsApp number not set (⚙️ Settings)");
+  }
+
+  toast(t("toast_ok_sent"));
+  renderDriverHome();
+}
+
+function openClockConfirm(action){
+  const titleKey = action==="in" ? "confirm_clock_in_title" : "confirm_clock_out_title";
+  const descKey = action==="in" ? "confirm_clock_in_desc" : "confirm_clock_out_desc";
+  openSheet(`
+    <div class="sheet-title">${t(titleKey)}</div>
+    <div class="list-sub" style="margin-bottom:16px;">${t(descKey)}</div>
+    <button class="btn full primary" id="clockConfirmBtn" style="margin-bottom:8px;">${t("sheet_confirm")}</button>
+    <button class="btn full ghost" id="clockCancelBtn">${t("sheet_cancel")}</button>
+  `, ()=>{
+    document.getElementById("clockConfirmBtn").addEventListener("click", ()=>{
+      if(action==="in") doClockIn(); else doClockOut();
+      closeSheet();
+    });
+    document.getElementById("clockCancelBtn").addEventListener("click", closeSheet);
+  });
+}
+
+function formatHMS(ms){
+  const secs = Math.max(0, Math.floor(ms/1000));
+  const h = String(Math.floor(secs/3600)).padStart(2,"0");
+  const m = String(Math.floor((secs%3600)/60)).padStart(2,"0");
+  const s = String(secs%60).padStart(2,"0");
+  return `${h}:${m}:${s}`;
+}
+
+const REGULAR_SHIFT_MS = 8 * 3600 * 1000; // 8-hour regular shift threshold
+
+function doClockIn(){
+  if(state.clock.status === "in"){ toast(t("already_clocked_in")); return; }
+  state.clock = {status:"in", since: Date.now(), lastSummary:null};
+  save();
+  const fbRef = dispatchRef();
+  if(fbRef){
+    fbRef.child("clockEvent").set({ type:"in", ts: Date.now() });
+    fbRef.child("clockStatus").set({ status:"in", since: state.clock.since });
+  }
+  sendPushToOther("boss",
+    state.lang==='ko' ? "기사님이 출근했어요" : state.lang==='id' ? "Sopir absen masuk" : "Driver clocked in",
+    ""
+  );
+  if(state.notify.clock && state.bossWa){
+    const msg = state.lang==='ko'?'🟢 출근했습니다':state.lang==='id'?'🟢 Absen masuk':'🟢 Clocked in';
+    openWhatsApp(waLink(state.bossWa, msg));
+  }
+  updateClockUi();
+}
+
+function doClockOut(){
+  if(state.clock.status === "out"){ toast(t("already_clocked_out")); return; }
+  const start = state.clock.since;
+  const totalMs = start ? (Date.now() - start) : 0;
+  const regularMs = Math.min(totalMs, REGULAR_SHIFT_MS);
+  const overtimeMs = Math.max(0, totalMs - REGULAR_SHIFT_MS);
+  state.clock = {status:"out", since:null, lastSummary:{totalMs, regularMs, overtimeMs}};
+  state.shifts.push({ id: uid("shift"), clockInTs: start, clockOutTs: Date.now(), totalMs, regularMs, overtimeMs });
+  save();
+  const fbRef = dispatchRef();
+  if(fbRef){
+    fbRef.child("clockEvent").set({ type:"out", ts: Date.now(), totalMs });
+    fbRef.child("clockStatus").set({ status:"out", since:null });
+  }
+  sendPushToOther("boss",
+    state.lang==='ko' ? "기사님이 퇴근했어요" : state.lang==='id' ? "Sopir absen keluar" : "Driver clocked out",
+    state.lang==='ko' ? `근무 ${formatHMS(totalMs)}` : state.lang==='id' ? `Kerja ${formatHMS(totalMs)}` : `Worked ${formatHMS(totalMs)}`
+  );
+  if(state.notify.clock && state.bossWa){
+    const msg = state.lang==='ko' ? `⚪ 퇴근했습니다 (근무 ${formatHMS(totalMs)})` :
+      state.lang==='id' ? `⚪ Absen keluar (kerja ${formatHMS(totalMs)})` :
+      `⚪ Clocked out (worked ${formatHMS(totalMs)})`;
+    openWhatsApp(waLink(state.bossWa, msg));
+  }
+  updateClockUi();
+}
+
+document.getElementById("clockInBtn").addEventListener("click", ()=>openClockConfirm("in"));
+document.getElementById("clockOutBtn").addEventListener("click", ()=>openClockConfirm("out"));
+
+function updateClockUi(){
+  const inBtn = document.getElementById("clockInBtn");
+  const outBtn = document.getElementById("clockOutBtn");
+  if(inBtn && outBtn){
+    const isIn = state.clock.status === "in";
+    inBtn.style.opacity = isIn ? "0.45" : "1";
+    outBtn.style.opacity = !isIn ? "0.45" : "1";
+  }
+  clearInterval(workTimerInterval);
+  const display = document.getElementById("workTimerDisplay");
+  const label = document.getElementById("workTimerLabel");
+  const breakdown = document.getElementById("shiftBreakdown");
+  if(!display) return;
+
+  if(state.clock.status === "in"){
+    // Show live current time (not an elapsed counter) while on duty
+    if(label) label.textContent = t("lbl_current_time");
+    if(breakdown) breakdown.textContent = "";
+    const tick = ()=>{ display.textContent = new Date().toLocaleTimeString([], {hour12:false}); };
+    tick();
+    workTimerInterval = setInterval(tick, 1000);
+  } else if(state.clock.lastSummary){
+    // Show total worked time from the shift just ended, split regular vs overtime
+    const s = state.clock.lastSummary;
+    if(label) label.textContent = t("lbl_total_worked");
+    display.textContent = formatHMS(s.totalMs);
+    if(breakdown){
+      if(s.overtimeMs > 0){
+        breakdown.textContent = `${t("lbl_regular_hours")} ${formatHMS(s.regularMs)} · ${t("lbl_overtime_hours")} ${formatHMS(s.overtimeMs)}`;
+      }else{
+        breakdown.textContent = `${t("lbl_regular_hours")} ${formatHMS(s.regularMs)}`;
+      }
+    }
+  } else {
+    // Not clocked in yet, no completed shift today — just show current time
+    if(label) label.textContent = t("lbl_current_time");
+    if(breakdown) breakdown.textContent = "";
+    const tick = ()=>{ display.textContent = new Date().toLocaleTimeString([], {hour12:false}); };
+    tick();
+    workTimerInterval = setInterval(tick, 1000);
+  }
+}
+
+/* driverRideLog removed per request */
+
+/* ============================================================
+   MASTER RENDER
+=============================================================== */
+function render(){
+  applyI18nStatic();
+
+  const badge = document.getElementById("pairCodeBadge");
+  if(badge) badge.textContent = "PAIR: " + ensurePairId();
+
+  document.getElementById("bossTabbar").style.display = state.role === "boss" ? "flex" : "none";
+  document.getElementById("driverSettingsBtn").style.display = state.role === "driver" ? "flex" : "none";
+  document.getElementById("adminModeBtn").style.display = state.role === "boss" ? "flex" : "none";
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+
+  if(state.role === "boss"){
+    document.getElementById("screen-call").classList.add("active");
+    document.querySelectorAll("#bossTabbar .tab-item").forEach(x=>x.classList.remove("active"));
+    document.querySelector('[data-tab="screen-call"]').classList.add("active");
+    renderDriverList();
+    renderCallFavorites();
+    renderAdList();
+    renderTodayStats();
+    renderDailyHours();
+    bindPayrollInputs();
+    renderFuel();
+    updateCallStatusUi();
+    document.getElementById("bossWaInput").value = state.bossWa || "";
+    document.getElementById("bossPinInput").value = state.bossPin || "";
+    document.querySelectorAll("[data-notify]").forEach(tg=>{
+      tg.classList.toggle("on", !!state.notify[tg.getAttribute("data-notify")]);
+    });
+    document.getElementById("switchModeBtn").textContent = t("btn_switch_driver");
+  } else {
+    document.getElementById("screen-driver-home").classList.add("active");
+    renderDriverHome();
+    updateClockUi();
+    document.getElementById("bossWaInput") && (document.getElementById("bossWaInput").value = state.bossWa || "");
+  }
+}
+
+/* expose minimal API for inline sheet handlers */
+window.__bc = { closeSheet };
+
+/* ============================================================
+   INIT
+=============================================================== */
+parseUrlParams();
+if(document.getElementById("onboardScreen").style.display !== "flex"){
+  render();
+}
+setupFirebaseListeners();
+setupAdminConfigSync();
+
+// If notifications were already granted in a previous session, quietly
+// re-register the service worker and refresh the push token on load —
+// no need to make the person tap "알림 켜기" again every time.
+if("Notification" in window && Notification.permission === "granted"){
+  setupPushNotifications().catch(()=>{});
+}
+
+// same-device fallback (same browser, different tab) — Firebase covers cross-device sync
+window.addEventListener("storage", (e)=>{
+  if(e.key === DB_KEY){
+    state = loadState();
+    render();
+  }
+});
+
+})();
+</script>
+</body>
+</html>
