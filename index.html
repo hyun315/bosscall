@@ -707,6 +707,7 @@ const I18N = {
     admin_pin_wrong:"PIN salah", admin_pin_not_set:"Belum ada PIN diatur — atur di Lainnya untuk keamanan.",
     admin_mode_on:"Mode admin aktif", admin_mode_off:"Mode admin nonaktif",
     sheet_edit_ads:"Kelola sponsor", sheet_ad_name:"Nama tempat", sheet_ad_addr:"Alamat", sheet_ad_rating:"Rating",
+    sheet_ad_image:"URL gambar banner (opsional)",
     admin_settings_moved:"Kunci API Google Maps dan PIN Admin dipindah ke layar 🔑 Admin (kanan atas).",
     sheet_admin_title:"Layar Admin", lbl_admin_ads:"Kelola sponsor",
     btn_add_ad:"Tambah sponsor", lbl_admin_pin:"PIN admin (lindungi edit sponsor)",
@@ -762,6 +763,7 @@ const I18N = {
     admin_pin_wrong:"PIN이 올바르지 않아요", admin_pin_not_set:"설정된 PIN이 없어요 — 더보기에서 보안을 위해 설정해두세요.",
     admin_mode_on:"관리자 모드 켜짐", admin_mode_off:"관리자 모드 꺼짐",
     sheet_edit_ads:"광고 관리", sheet_ad_name:"장소 이름", sheet_ad_addr:"주소", sheet_ad_rating:"평점",
+    sheet_ad_image:"배너 이미지 URL (선택)",
     admin_settings_moved:"Google Maps API 키와 관리자 PIN은 우측 상단 🔑 관리자 화면으로 옮겨졌어요.",
     sheet_admin_title:"관리자 화면", lbl_admin_ads:"광고 관리",
     btn_add_ad:"광고 추가", lbl_admin_pin:"관리자 PIN (광고 편집 보호)",
@@ -817,6 +819,7 @@ const I18N = {
     admin_pin_wrong:"Incorrect PIN", admin_pin_not_set:"No PIN set yet — set one in More for security.",
     admin_mode_on:"Admin mode on", admin_mode_off:"Admin mode off",
     sheet_edit_ads:"Manage sponsored", sheet_ad_name:"Place name", sheet_ad_addr:"Address", sheet_ad_rating:"Rating",
+    sheet_ad_image:"Banner image URL (optional)",
     admin_settings_moved:"Google Maps API key and Admin PIN moved to the 🔑 Admin screen (top right).",
     sheet_admin_title:"Admin screen", lbl_admin_ads:"Manage sponsored",
     btn_add_ad:"Add sponsored listing", lbl_admin_pin:"Admin PIN (protects ad editing)",
@@ -1429,6 +1432,9 @@ document.getElementById("callDriverBtn").addEventListener("click", async ()=>{
 /* Navigation deep links */
 document.querySelectorAll(".nav-app").forEach(el=>{
   el.addEventListener("click", ()=>{
+    const pickup = state.role==="boss"
+      ? document.getElementById("pickupInput")?.value.trim()
+      : (state.pendingCall?.pickup || state.activeRide?.pickup || "");
     const dest = state.role==="boss"
       ? document.getElementById("destInput")?.value.trim()
       : (state.pendingCall?.dest || state.activeRide?.dest || "");
@@ -1439,8 +1445,12 @@ document.querySelectorAll(".nav-app").forEach(el=>{
     const q = encodeURIComponent(dest);
     const app = el.getAttribute("data-nav");
     let url;
-    if(app==="google") url = `https://www.google.com/maps/dir/?api=1&destination=${q}`;
-    else if(app==="waze") url = `https://waze.com/ul?q=${q}&navigate=yes`;
+    if(app==="google"){
+      url = `https://www.google.com/maps/dir/?api=1&destination=${q}`;
+      if(pickup){
+        url += `&origin=${encodeURIComponent(pickup)}`;
+      }
+    }
     window.open(url, "_blank");
   });
 });
@@ -1462,6 +1472,9 @@ const AD_RESTAURANTS = [
   { name:"DEUSEYO Korean BBQ & Jjigae", addr:"Raffles Square, Jl. Ir. H. Juanda, Jakarta Pusat", rating:4.8 }
 ];
 
+let editingAdIndex = null;
+let loadAdIntoForm = null;
+
 function adPool(){
   if(!state.ads.length){
     // First run (dev-stage placeholder): seed with 5 random Jakarta Korean restaurants and persist them
@@ -1469,6 +1482,13 @@ function adPool(){
     save();
   }
   return state.ads;
+}
+
+function adIconHtml(r){
+  if(r.image){
+    return `<img src="${escapeHtml(r.image)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.replaceWith(Object.assign(document.createElement('div'),{textContent:'🍽️',style:'display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:16px;'}))">`;
+  }
+  return "🍽️";
 }
 
 function renderAdList(){
@@ -1481,7 +1501,7 @@ function renderAdList(){
   }
   el.innerHTML = list.map((r,i)=>`
     <div class="list-item" data-ad="${i}">
-      <div class="list-icon" style="background:#FCE8E6;">🍽️</div>
+      <div class="list-icon" style="background:#FCE8E6;overflow:hidden;">${adIconHtml(r)}</div>
       <div class="list-body">
         <div class="list-title">${escapeHtml(r.name)}</div>
         <div class="list-sub">${escapeHtml(r.addr)}</div>
@@ -1530,7 +1550,7 @@ function renderAdminAdList(){
   const pool = adPool();
   el.innerHTML = pool.length ? pool.map((r,i)=>`
     <div class="list-item" data-adm="${i}">
-      <div class="list-icon" style="background:#FCE8E6;">🍽️</div>
+      <div class="list-icon" style="background:#FCE8E6;overflow:hidden;">${adIconHtml(r)}</div>
       <div class="list-body">
         <div class="list-title">${escapeHtml(r.name)}</div>
         <div class="list-sub">${escapeHtml(r.addr)} · ★ ${r.rating}</div>
@@ -1539,9 +1559,17 @@ function renderAdminAdList(){
         <div class="slot-link-btn" data-adm-up="${i}" style="width:28px;height:24px;font-size:12px;${i===0?'opacity:0.3;':''}">▲</div>
         <div class="slot-link-btn" data-adm-down="${i}" style="width:28px;height:24px;font-size:12px;${i===pool.length-1?'opacity:0.3;':''}">▼</div>
       </div>
+      <div class="slot-link-btn" data-adm-edit="${i}" style="border-color:transparent;">✏️</div>
       <div class="slot-link-btn" data-adm-del="${i}" style="border-color:transparent;">✕</div>
     </div>
   `).join("") : `<div class="empty-state"><div class="empty-state-text">${t("empty_favorites")}</div></div>`;
+  el.querySelectorAll("[data-adm-edit]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const i = parseInt(btn.getAttribute("data-adm-edit"));
+      if(typeof loadAdIntoForm === "function") loadAdIntoForm(i);
+    });
+  });
   el.querySelectorAll("[data-adm-del]").forEach(btn=>{
     btn.addEventListener("click", (e)=>{
       e.stopPropagation();
@@ -1592,10 +1620,17 @@ function openAdminSheet(){
 
     <div class="section-label">${t("lbl_admin_ads")}</div>
     <div id="adminAdList" class="card"></div>
-    <div class="field" style="margin-top:14px;"><label>${t("sheet_ad_name")}</label><input type="text" id="newAdName"></div>
+    <div id="adFormTitle" class="list-sub" style="margin:14px 0 4px;font-weight:600;">${t("btn_add_ad")}</div>
+    <div class="field"><label>${t("sheet_ad_name")}</label><input type="text" id="newAdName"></div>
     <div class="field"><label>${t("sheet_ad_addr")}</label><input type="text" id="newAdAddr"></div>
     <div class="field"><label>${t("sheet_ad_rating")}</label><input type="number" step="0.1" min="0" max="5" id="newAdRating" placeholder="4.8"></div>
+    <div class="field">
+      <label>${t("sheet_ad_image")}</label>
+      <input type="text" id="newAdImage" placeholder="https://...">
+      <div id="newAdImagePreview" style="margin-top:8px;"></div>
+    </div>
     <button class="btn full primary" id="saveAdBtn">${t("btn_add_ad")}</button>
+    <button class="btn full ghost" id="cancelEditAdBtn" style="margin-top:8px;display:none;">${t("sheet_cancel")}</button>
   `, ()=>{
     const apiKeyField = document.getElementById("adminApiKeyInput");
     apiKeyField.value = state.apiKey || "";
@@ -1607,27 +1642,77 @@ function openAdminSheet(){
 
     renderAdminAdList();
 
+    const imageInput = document.getElementById("newAdImage");
+    const imagePreview = document.getElementById("newAdImagePreview");
+    const nameInputEl = document.getElementById("newAdName");
+    const addrInputEl = document.getElementById("newAdAddr");
+    const ratingInputEl = document.getElementById("newAdRating");
+    const formTitle = document.getElementById("adFormTitle");
+    const saveBtn = document.getElementById("saveAdBtn");
+    const cancelBtn = document.getElementById("cancelEditAdBtn");
+
+    editingAdIndex = null;
+    function updateFormMode(){
+      formTitle.textContent = editingAdIndex===null ? t("btn_add_ad") : t("sheet_edit_ads");
+      saveBtn.textContent = editingAdIndex===null ? t("btn_add_ad") : t("sheet_save");
+      cancelBtn.style.display = editingAdIndex===null ? "none" : "block";
+    }
+    function clearAdForm(){
+      nameInputEl.value = ""; addrInputEl.value = ""; ratingInputEl.value = ""; imageInput.value = "";
+      imagePreview.innerHTML = "";
+    }
+    loadAdIntoForm = (i)=>{
+      const pool = adPool();
+      const r = pool[i];
+      if(!r) return;
+      editingAdIndex = i;
+      nameInputEl.value = r.name || "";
+      addrInputEl.value = r.addr || "";
+      ratingInputEl.value = r.rating || "";
+      imageInput.value = r.image || "";
+      imagePreview.innerHTML = r.image
+        ? `<img src="${escapeHtml(r.image)}" style="width:100%;height:110px;object-fit:cover;border-radius:10px;" onerror="this.style.display='none'">`
+        : "";
+      updateFormMode();
+      nameInputEl.scrollIntoView({behavior:"smooth", block:"center"});
+    };
+    cancelBtn.addEventListener("click", ()=>{
+      editingAdIndex = null;
+      clearAdForm();
+      updateFormMode();
+    });
+
     if(state.apiKey){
       loadGoogleMaps().then(()=>{
         if(window.google && window.google.maps && window.google.maps.places){
           bindAutocomplete("newAdAddr", (place)=>{
-            const nameInput = document.getElementById("newAdName");
-            if(!nameInput.value.trim() && place.name) nameInput.value = place.name;
+            if(!nameInputEl.value.trim() && place.name) nameInputEl.value = place.name;
           });
         }
       }).catch(()=>{});
     }
-    document.getElementById("saveAdBtn").addEventListener("click", ()=>{
-      const name = document.getElementById("newAdName").value.trim();
-      const addr = document.getElementById("newAdAddr").value.trim();
-      const rating = parseFloat(document.getElementById("newAdRating").value) || 4.5;
+    imageInput.addEventListener("input", ()=>{
+      const url = imageInput.value.trim();
+      imagePreview.innerHTML = url
+        ? `<img src="${escapeHtml(url)}" style="width:100%;height:110px;object-fit:cover;border-radius:10px;" onerror="this.style.display='none'">`
+        : "";
+    });
+    saveBtn.addEventListener("click", ()=>{
+      const name = nameInputEl.value.trim();
+      const addr = addrInputEl.value.trim();
+      const rating = parseFloat(ratingInputEl.value) || 4.5;
+      const image = imageInput.value.trim();
       if(!name || !addr) return;
       adPool(); // ensure state.ads is seeded
-      state.ads.push({name, addr, rating});
+      if(editingAdIndex !== null){
+        state.ads[editingAdIndex] = { ...state.ads[editingAdIndex], name, addr, rating, image };
+      }else{
+        state.ads.push({name, addr, rating, image});
+      }
       save();
-      document.getElementById("newAdName").value = "";
-      document.getElementById("newAdAddr").value = "";
-      document.getElementById("newAdRating").value = "";
+      editingAdIndex = null;
+      clearAdForm();
+      updateFormMode();
       renderAdminAdList();
       renderAdList();
       toast(t("toast_saved"));
