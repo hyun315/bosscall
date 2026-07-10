@@ -487,6 +487,7 @@ button{font-family:inherit;}
       <div>
         <div class="brand-name">BossCall</div>
         <div class="brand-role" id="roleLabel">BOSS MODE</div>
+        <div id="pairCodeBadge" style="font-family:var(--font-mono);font-size:10.5px;color:var(--signal);letter-spacing:1px;margin-top:1px;"></div>
       </div>
     </div>
     <div class="topbar-actions">
@@ -1336,8 +1337,13 @@ document.getElementById("driverSettingsBtn").addEventListener("click", ()=>{
 
     document.getElementById("driverResetBtn").addEventListener("click", ()=>{
       if(confirm(t("confirm_reset"))){
+        const savedApiKey = state.apiKey;
+        const savedPairId = state.pairId;
         localStorage.removeItem(DB_KEY);
         state = loadState();
+        state.apiKey = savedApiKey;
+        state.pairId = savedPairId;
+        save();
         closeSheet();
         render();
         setupFirebaseListeners();
@@ -2559,8 +2565,13 @@ document.getElementById("switchModeBtn").addEventListener("click", ()=>{
 
 document.getElementById("resetDataBtn").addEventListener("click", ()=>{
   if(confirm(t("confirm_reset"))){
+    const savedApiKey = state.apiKey;
+    const savedPairId = state.pairId;
     localStorage.removeItem(DB_KEY);
     state = loadState();
+    state.apiKey = savedApiKey;
+    state.pairId = savedPairId;
+    save();
     render();
     setupFirebaseListeners();
   }
@@ -2762,6 +2773,9 @@ function updateClockUi(){
 =============================================================== */
 function render(){
   applyI18nStatic();
+
+  const badge = document.getElementById("pairCodeBadge");
+  if(badge) badge.textContent = "PAIR: " + ensurePairId();
 
   document.getElementById("bossTabbar").style.display = state.role === "boss" ? "flex" : "none";
   document.getElementById("driverSettingsBtn").style.display = state.role === "driver" ? "flex" : "none";
