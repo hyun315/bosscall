@@ -1292,8 +1292,13 @@ function parseUrlParams(){
     state.myDriverProfile = { id: did, name: decodeURIComponent(name) };
     if(pair) state.pairId = pair;
     save();
-    // Strip the query string so a later plain refresh doesn't re-trigger onboarding
-    history.replaceState(null, "", window.location.pathname);
+    // Deliberately keep the query string in the URL (do NOT strip it here).
+    // "Add to Home Screen" bookmarks whatever URL is in the address bar at
+    // that moment — if we clean it up too early, the resulting home-screen
+    // icon loses the driver/pair info, and since iOS sometimes gives a
+    // standalone home-screen app its own separate storage, the app can
+    // regenerate a brand-new (wrong) pair code on first launch from the
+    // icon. Keeping the params means every launch self-corrects instead.
     showOnboard();
   }
 }
@@ -1764,9 +1769,12 @@ function initMapPicker(fieldId, opts={}){
       const field = document.getElementById(fieldId);
       if(field) field.value = addr;
       if(opts.storeCoords){ lastCoords = currentLatLng; }
-      if(opts.onConfirm) opts.onConfirm(addr, currentLatLng);
       save();
       closeSheet();
+      // Run onConfirm AFTER closing this sheet — if it opens a new sheet
+      // (e.g. returning to the favorite/ad form with the address filled
+      // in), the closeSheet() above must not run afterwards and wipe it out.
+      if(opts.onConfirm) opts.onConfirm(addr, currentLatLng);
     };
   }
 }
