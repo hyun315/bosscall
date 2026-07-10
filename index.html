@@ -14,7 +14,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage-compat.js"></script>
 <style>
 /* ============ TOKENS (Google Material style: white, standard blue, Roboto) ============ */
 :root{
@@ -728,15 +727,7 @@ function initFirebase(){
 
 /* Upload a banner image file to Firebase Storage and return its public URL.
    Requires Storage to be enabled in the Firebase console for this project. */
-async function uploadAdImage(file){
-  if(!file) return null;
-  initFirebase();
-  if(typeof firebase === "undefined" || !firebase.storage) throw new Error("Storage not available");
-  const path = `ads/${ensurePairId()}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,"_")}`;
-  const ref = firebase.storage().ref(path);
-  await ref.put(file);
-  return await ref.getDownloadURL();
-}
+
 
 function ensurePairId(){
   if(!state.pairId){
@@ -1054,8 +1045,9 @@ const I18N = {
     admin_mode_on:"Mode admin aktif", admin_mode_off:"Mode admin nonaktif",
     sheet_edit_ads:"Kelola sponsor", sheet_ad_name:"Nama tempat", sheet_ad_addr:"Alamat", sheet_ad_rating:"Rating",
     sheet_ad_image:"URL gambar banner (opsional)",
-    btn_upload_photo:"Unggah foto", or_paste_url:"atau tempel URL gambar", uploading_photo:"Mengunggah...",
-    upload_done:"Foto terunggah ✓", upload_failed:"Unggah gagal — periksa Firebase Storage",
+    image_url_hint:"Atau tempel tautan gambar yang sudah ada online.",
+    btn_upload_photo:"Pilih foto dari galeri", uploading_photo:"Memproses foto...",
+    upload_done:"Foto siap ✓", upload_failed:"Gagal memproses foto",
     admin_settings_moved:"Kunci API Google Maps dan PIN Admin dipindah ke layar 🔑 Admin (kanan atas).",
     sheet_admin_title:"Layar Admin", lbl_admin_ads:"Kelola sponsor",
     btn_add_ad:"Tambah sponsor", lbl_admin_pin:"PIN admin (lindungi edit sponsor)", lbl_admin_id:"ID admin", btn_save_exit:"Simpan & Keluar",
@@ -1119,8 +1111,9 @@ const I18N = {
     admin_mode_on:"관리자 모드 켜짐", admin_mode_off:"관리자 모드 꺼짐",
     sheet_edit_ads:"광고 관리", sheet_ad_name:"장소 이름", sheet_ad_addr:"주소", sheet_ad_rating:"평점",
     sheet_ad_image:"배너 이미지 URL (선택)",
-    btn_upload_photo:"사진 업로드", or_paste_url:"또는 이미지 URL 직접 입력", uploading_photo:"업로드 중...",
-    upload_done:"업로드 완료 ✓", upload_failed:"업로드 실패 — Firebase Storage 설정을 확인하세요",
+    image_url_hint:"또는 이미 온라인에 있는 이미지 링크를 붙여넣어도 돼요.",
+    btn_upload_photo:"갤러리에서 사진 선택", uploading_photo:"사진 처리 중...",
+    upload_done:"사진 준비 완료 ✓", upload_failed:"사진 처리 실패",
     admin_settings_moved:"Google Maps API 키와 관리자 PIN은 우측 상단 🔑 관리자 화면으로 옮겨졌어요.",
     sheet_admin_title:"관리자 화면", lbl_admin_ads:"광고 관리",
     btn_add_ad:"광고 추가", lbl_admin_pin:"관리자 PIN", lbl_admin_id:"관리자 아이디", btn_save_exit:"저장하고 나가기",
@@ -1184,8 +1177,9 @@ const I18N = {
     admin_mode_on:"Admin mode on", admin_mode_off:"Admin mode off",
     sheet_edit_ads:"Manage sponsored", sheet_ad_name:"Place name", sheet_ad_addr:"Address", sheet_ad_rating:"Rating",
     sheet_ad_image:"Banner image URL (optional)",
-    btn_upload_photo:"Upload photo", or_paste_url:"or paste an image URL", uploading_photo:"Uploading...",
-    upload_done:"Uploaded ✓", upload_failed:"Upload failed — check Firebase Storage setup",
+    image_url_hint:"Or paste a link to an image that's already online.",
+    btn_upload_photo:"Choose photo from gallery", uploading_photo:"Processing photo...",
+    upload_done:"Photo ready ✓", upload_failed:"Failed to process photo",
     admin_settings_moved:"Google Maps API key and Admin PIN moved to the 🔑 Admin screen (top right).",
     sheet_admin_title:"Admin screen", lbl_admin_ads:"Manage sponsored",
     btn_add_ad:"Add sponsored listing", lbl_admin_pin:"Admin PIN", lbl_admin_id:"Admin ID", btn_save_exit:"Save & Exit",
@@ -1857,6 +1851,38 @@ async function doPlaceSearch(query, fieldId, opts={}){
   }
 }
 
+/* Resize + compress a picked photo entirely in the browser (canvas), then
+   return it as a compact base64 data URI. No server/Storage needed — the
+   resulting string is small enough to store directly in the free Realtime
+   Database, which is what makes this work without any paid Firebase tier. */
+function compressImageFile(file, maxDim = 800, quality = 0.7){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      img.onload = ()=>{
+        let { width, height } = img;
+        if(width > height && width > maxDim){
+          height = Math.round(height * (maxDim / width));
+          width = maxDim;
+        }else if(height > maxDim){
+          width = Math.round(width * (maxDim / height));
+          height = maxDim;
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function escapeHtml(s){
   const d = document.createElement("div"); d.textContent = s||""; return d.innerHTML;
 }
@@ -2118,10 +2144,10 @@ function openAdminSheet(){
     <div class="field">
       <label>${t("sheet_ad_image")}</label>
       <input type="file" accept="image/*" id="newAdImageFile" style="display:none;">
-      <button class="btn full" id="pickAdImageBtn" type="button">📷 <span data-txt>${t("btn_upload_photo")}</span></button>
+      <button class="btn full" id="pickAdImageBtn" type="button">📷 <span>${t("btn_upload_photo")}</span></button>
       <div id="newAdUploadStatus" class="list-sub" style="margin-top:6px;"></div>
       <input type="text" id="newAdImage" placeholder="https://..." style="margin-top:8px;">
-      <div class="list-sub" style="margin-top:4px;">${t("or_paste_url")}</div>
+      <div class="list-sub" style="margin-top:4px;">${t("image_url_hint")}</div>
       <div id="newAdImagePreview" style="margin-top:8px;"></div>
     </div>
     <button class="btn full primary" id="saveAdBtn">${t("btn_add_ad")}</button>
@@ -2177,20 +2203,28 @@ function openAdminSheet(){
     const saveBtn = document.getElementById("saveAdBtn");
     const cancelBtn = document.getElementById("cancelEditAdBtn");
 
+    function refreshImagePreview(){
+      const url = imageInput.value.trim();
+      imagePreview.innerHTML = url
+        ? `<img src="${escapeHtml(url)}" style="width:100%;height:110px;object-fit:cover;border-radius:10px;" onerror="this.style.display='none'">`
+        : "";
+    }
+    imageInput.addEventListener("input", refreshImagePreview);
+
     pickImageBtn.addEventListener("click", ()=> imageFileInput.click());
     imageFileInput.addEventListener("change", async ()=>{
       const file = imageFileInput.files[0];
       if(!file) return;
       uploadStatus.textContent = t("uploading_photo");
       try{
-        const url = await uploadAdImage(file);
-        imageInput.value = url;
-        imagePreview.innerHTML = `<img src="${escapeHtml(url)}" style="width:100%;height:110px;object-fit:cover;border-radius:10px;">`;
+        const dataUri = await compressImageFile(file);
+        imageInput.value = dataUri;
+        refreshImagePreview();
         uploadStatus.textContent = t("upload_done");
-        // If we're editing an existing ad, save it immediately so the photo
-        // takes effect right away — no separate "저장" tap required.
+        // If we're editing an existing ad, save it right away — no
+        // separate "저장" tap required.
         if(editingAdIndex !== null){
-          state.ads[editingAdIndex] = { ...state.ads[editingAdIndex], image: url };
+          state.ads[editingAdIndex] = { ...state.ads[editingAdIndex], image: dataUri };
           save();
           syncAdsToFirebase();
           renderAdminAdList();
@@ -2223,9 +2257,7 @@ function openAdminSheet(){
       addrInputEl.value = r.addr || "";
       ratingInputEl.value = r.rating || "";
       imageInput.value = r.image || "";
-      imagePreview.innerHTML = r.image
-        ? `<img src="${escapeHtml(r.image)}" style="width:100%;height:110px;object-fit:cover;border-radius:10px;" onerror="this.style.display='none'">`
-        : "";
+      refreshImagePreview();
       updateFormMode();
       nameInputEl.scrollIntoView({behavior:"smooth", block:"center"});
     };
@@ -2244,12 +2276,6 @@ function openAdminSheet(){
         }
       }).catch(()=>{});
     }
-    imageInput.addEventListener("input", ()=>{
-      const url = imageInput.value.trim();
-      imagePreview.innerHTML = url
-        ? `<img src="${escapeHtml(url)}" style="width:100%;height:110px;object-fit:cover;border-radius:10px;" onerror="this.style.display='none'">`
-        : "";
-    });
     saveBtn.addEventListener("click", ()=>{
       const name = nameInputEl.value.trim();
       const addr = addrInputEl.value.trim();
