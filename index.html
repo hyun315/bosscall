@@ -579,8 +579,8 @@ button{font-family:inherit;}
       </div>
     </div>
 
-    <div class="section-label" data-i18n="lbl_ride_log">Ride log (today)</div>
-    <div id="todayRideLog"></div>
+    <div class="section-label" data-i18n="lbl_daily_hours">Daily work hours</div>
+    <div id="dailyHoursList"></div>
   </div>
 
   <!-- ===== STATS SCREEN ===== -->
@@ -606,11 +606,10 @@ button{font-family:inherit;}
         <div class="field"><label data-i18n="lbl_bonus">Bonus</label><input type="number" id="payBonus" placeholder="0"></div>
       </div>
       <div class="field"><label data-i18n="lbl_insurance">Insurance</label><input type="number" id="payInsurance" placeholder="0"></div>
-      <div class="row" style="margin-top:4px;">
-        <span data-i18n="lbl_preview_total" style="font-weight:600;font-size:13.5px;">Estimated total</span>
-        <span class="eta-badge" id="payrollPreview">0</span>
-      </div>
     </div>
+
+    <div class="section-label" data-i18n="lbl_estimated_pay">Estimated pay</div>
+    <div class="card" id="estimatedPayCard"></div>
 
     <div class="section-label" data-i18n="lbl_fuel">Fuel log</div>
     <div class="card">
@@ -691,7 +690,7 @@ const I18N = {
   id:{
     onboard_title:"Selamat Datang", onboard_sub:"Menyiapkan tampilan sopir Anda...",
     lbl_dispatch:"Panggilan", lbl_pickup:"Jemput", lbl_destination:"Tujuan (opsional)",
-    ph_pickup:"Lokasi jemput", ph_destination:"Ke mana (opsional)", btn_gps:"Lokasi saat ini",
+    ph_pickup:"Lokasi jemput", ph_destination:"Ke mana", btn_gps:"Lokasi saat ini",
     btn_search_place:"Cari tempat", btn_dropped:"Set titik turun", btn_map_pick:"Pilih di peta",
     phrase_dropped_off:"Titik turun terakhir",
     sheet_map_pick:"Pilih lokasi di peta", map_drag_hint:"Geser pin atau ketuk peta untuk memindahkan",
@@ -700,6 +699,9 @@ const I18N = {
     lbl_navigate:"Lihat rute", lbl_ad:"Sponsor", lbl_roster:"Daftar sopir",
     btn_add_driver:"Tambah sopir", lbl_today_activity:"Aktivitas hari ini", lbl_rides_today:"Perjalanan hari ini",
     lbl_clock_status:"Status absen", lbl_ride_log:"Riwayat perjalanan", lbl_favorites:"Tempat favorit",
+    lbl_daily_hours:"Jam kerja harian", lbl_estimated_pay:"Perkiraan gaji", lbl_as_of:"Per tanggal",
+    lbl_ot_hours_month:"Lembur bulan ini", lbl_fixed_allowance:"Tunjangan tetap", lbl_est_total:"Perkiraan total",
+    empty_shifts:"Belum ada riwayat jam kerja.",
     btn_add_favorite:"Tambah favorit", lbl_monthly:"Ringkasan bulanan", lbl_month_detail:"Pilih bulan untuk detail harian",
     btn_edit_ads:"Edit", sheet_admin_pin:"PIN Admin", admin_pin_desc:"Masukkan PIN admin untuk mengedit sponsor.",
     admin_pin_wrong:"PIN salah", admin_pin_not_set:"Belum ada PIN diatur — atur di Lainnya untuk keamanan.",
@@ -708,7 +710,7 @@ const I18N = {
     admin_settings_moved:"Kunci API Google Maps dan PIN Admin dipindah ke layar 🔑 Admin (kanan atas).",
     sheet_admin_title:"Layar Admin", lbl_admin_ads:"Kelola sponsor",
     btn_add_ad:"Tambah sponsor", lbl_admin_pin:"PIN admin (lindungi edit sponsor)",
-    lbl_payroll:"Pengaturan gaji", lbl_base_pay:"Gaji pokok", lbl_overtime:"Lembur", lbl_meal:"Uang makan",
+    lbl_payroll:"Pengaturan gaji", lbl_base_pay:"Gaji pokok", lbl_overtime:"Lembur (per jam)", lbl_meal:"Uang makan",
     lbl_vehicle:"Tunjangan kendaraan", lbl_bonus:"Bonus", lbl_insurance:"Asuransi", lbl_preview_total:"Perkiraan total",
     lbl_fuel:"Catatan bensin", lbl_fuel_month:"Bulan ini", btn_add_fuel:"Tambah catatan bensin",
     lbl_whatsapp:"WhatsApp", lbl_boss_wa:"Nomor WA Bos", notify_call:"Notifikasi saat panggilan",
@@ -742,7 +744,7 @@ const I18N = {
   ko:{
     onboard_title:"환영합니다", onboard_sub:"기사님 화면을 준비하고 있어요...",
     lbl_dispatch:"호출", lbl_pickup:"픽업 위치", lbl_destination:"목적지 (선택)",
-    ph_pickup:"픽업 위치 입력", ph_destination:"목적지 입력 (선택)", btn_gps:"현위치",
+    ph_pickup:"픽업 위치 입력", ph_destination:"목적지 입력", btn_gps:"현위치",
     btn_search_place:"장소 검색", btn_dropped:"내려준 곳", btn_map_pick:"지도에서 선택",
     phrase_dropped_off:"내려준 곳",
     sheet_map_pick:"지도에서 위치 선택", map_drag_hint:"핀을 드래그하거나 지도를 눌러 위치를 옮기세요",
@@ -751,6 +753,9 @@ const I18N = {
     lbl_navigate:"경로보기", lbl_ad:"광고", lbl_roster:"기사 목록",
     btn_add_driver:"기사 추가", lbl_today_activity:"오늘 현황", lbl_rides_today:"오늘 운행",
     lbl_clock_status:"출퇴근 상태", lbl_ride_log:"운행 기록", lbl_favorites:"즐겨찾기",
+    lbl_daily_hours:"일별 근무시간", lbl_estimated_pay:"예상급여", lbl_as_of:"조회기준일",
+    lbl_ot_hours_month:"이번 달 초과근무", lbl_fixed_allowance:"고정 수당", lbl_est_total:"예상 총액",
+    empty_shifts:"근무 기록이 없습니다.",
     btn_add_favorite:"즐겨찾기 추가", lbl_monthly:"월별 현황", lbl_month_detail:"일별 상세를 보려면 월을 선택하세요",
     btn_edit_ads:"편집", sheet_admin_pin:"관리자 PIN", admin_pin_desc:"광고를 편집하려면 관리자 PIN을 입력하세요.",
     admin_pin_wrong:"PIN이 올바르지 않아요", admin_pin_not_set:"설정된 PIN이 없어요 — 더보기에서 보안을 위해 설정해두세요.",
@@ -759,7 +764,7 @@ const I18N = {
     admin_settings_moved:"Google Maps API 키와 관리자 PIN은 우측 상단 🔑 관리자 화면으로 옮겨졌어요.",
     sheet_admin_title:"관리자 화면", lbl_admin_ads:"광고 관리",
     btn_add_ad:"광고 추가", lbl_admin_pin:"관리자 PIN (광고 편집 보호)",
-    lbl_payroll:"급여 설정", lbl_base_pay:"기본급", lbl_overtime:"시간외수당", lbl_meal:"식대",
+    lbl_payroll:"급여 설정", lbl_base_pay:"기본급", lbl_overtime:"시간외수당(시간당)", lbl_meal:"식대",
     lbl_vehicle:"차량유지비", lbl_bonus:"상여금", lbl_insurance:"보험", lbl_preview_total:"예상 총액",
     lbl_fuel:"주유 기록", lbl_fuel_month:"이번 달", btn_add_fuel:"주유 기록 추가",
     lbl_whatsapp:"WhatsApp", lbl_boss_wa:"사장 WA 번호", notify_call:"호출 시 알림",
@@ -793,7 +798,7 @@ const I18N = {
   en:{
     onboard_title:"Welcome", onboard_sub:"Setting up your driver view...",
     lbl_dispatch:"Dispatch", lbl_pickup:"Pickup", lbl_destination:"Destination (optional)",
-    ph_pickup:"Where to pick up", ph_destination:"Where to (optional)", btn_gps:"Current location",
+    ph_pickup:"Where to pick up", ph_destination:"Where to", btn_gps:"Current location",
     btn_search_place:"Search place", btn_dropped:"Set drop-off", btn_map_pick:"Pick on map",
     phrase_dropped_off:"Where you dropped me off",
     sheet_map_pick:"Choose location on map", map_drag_hint:"Drag the pin or tap the map to move it",
@@ -802,6 +807,9 @@ const I18N = {
     lbl_navigate:"Route", lbl_ad:"Sponsored", lbl_roster:"Driver roster",
     btn_add_driver:"Add driver", lbl_today_activity:"Today's activity", lbl_rides_today:"Rides today",
     lbl_clock_status:"Clock status", lbl_ride_log:"Ride log", lbl_favorites:"Favorite places",
+    lbl_daily_hours:"Daily work hours", lbl_estimated_pay:"Estimated pay", lbl_as_of:"As of",
+    lbl_ot_hours_month:"Overtime this month", lbl_fixed_allowance:"Fixed allowances", lbl_est_total:"Estimated total",
+    empty_shifts:"No shift history yet.",
     btn_add_favorite:"Add favorite", lbl_monthly:"Monthly overview", lbl_month_detail:"Select a month for daily detail",
     btn_edit_ads:"Edit", sheet_admin_pin:"Admin PIN", admin_pin_desc:"Enter the admin PIN to edit sponsored listings.",
     admin_pin_wrong:"Incorrect PIN", admin_pin_not_set:"No PIN set yet — set one in More for security.",
@@ -859,6 +867,7 @@ function loadState(){
     favorites:[],
     ads:[], // boss-editable sponsored listings; falls back to AD_RESTAURANTS pool when empty
     adminPin:"",
+    shifts:[], // {id,clockInTs,clockOutTs,totalMs,regularMs,overtimeMs} completed work shifts
     rides:[], // {id,driverId,pickup,dest,ts,status,eta,dropoffTs}
     fuel:[], // {id,liters,cost,ts}
     payroll:{base:0,ot:0,meal:0,vehicle:0,bonus:0,insurance:0},
@@ -1347,7 +1356,7 @@ document.getElementById("callDriverBtn").addEventListener("click", async ()=>{
     window.open(waLink(driver.wa, msg), "_blank");
   }
   toast(t("toast_call_sent"));
-  renderTodayRides();
+  renderTodayStats();
 });
 
 /* Navigation deep links */
@@ -1659,28 +1668,40 @@ document.getElementById("addDriverBtn").addEventListener("click", ()=>{
   });
 });
 
-function renderTodayRides(){
-  const el = document.getElementById("todayRideLog");
+function localDateKey(ts){
+  const d = new Date(ts);
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+
+function renderTodayStats(){
   const today = new Date(); today.setHours(0,0,0,0);
   const todays = state.rides.filter(r=>r.ts >= today.getTime());
   document.getElementById("todayRidesNum").textContent = todays.length;
   const clocked = state.clock.status === "in";
   document.getElementById("clockStatusNum").textContent = clocked ? "🟢" : "⚪";
-  if(!todays.length){
-    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🚕</div><div class="empty-state-text">${t("empty_rides")}</div></div>`;
+}
+
+function renderDailyHours(){
+  const el = document.getElementById("dailyHoursList");
+  if(!el) return;
+  const shifts = [...state.shifts].sort((a,b)=>b.clockOutTs-a.clockOutTs).slice(0,20);
+  if(!shifts.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🕘</div><div class="empty-state-text">${t("empty_shifts")}</div></div>`;
     return;
   }
-  el.innerHTML = todays.map(r=>{
-    const driver = state.drivers.find(d=>d.id===r.driverId);
-    const time = new Date(r.ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  el.innerHTML = shifts.map(s=>{
+    const dateLabel = new Date(s.clockOutTs).toLocaleDateString([], {month:'short', day:'numeric', weekday:'short'});
+    const breakdown = s.overtimeMs > 0
+      ? `${t("lbl_regular_hours")} ${formatHMS(s.regularMs)} · ${t("lbl_overtime_hours")} ${formatHMS(s.overtimeMs)}`
+      : `${t("lbl_regular_hours")} ${formatHMS(s.regularMs)}`;
     return `
     <div class="list-item">
-      <div class="list-icon">${r.status==='accepted' ? '✅':'📞'}</div>
+      <div class="list-icon">${s.overtimeMs > 0 ? '🟠' : '🕘'}</div>
       <div class="list-body">
-        <div class="list-title">${routeLabel(r.pickup, r.dest)}</div>
-        <div class="list-sub">${escapeHtml(driver?.name||'—')} · ${time}</div>
+        <div class="list-title">${dateLabel}</div>
+        <div class="list-sub">${breakdown}</div>
       </div>
-      <div class="list-value">${r.eta ? r.eta+'min' : ''}</div>
+      <div class="list-value">${formatHMS(s.totalMs)}</div>
     </div>`;
   }).join("");
 }
@@ -1796,15 +1817,48 @@ function bindPayrollInputs(){
     el.addEventListener("input", ()=>{
       state.payroll[map[id]] = parseFloat(el.value)||0;
       save();
-      updatePayrollPreview();
+      renderEstimatedPay();
     });
   });
-  updatePayrollPreview();
+  renderEstimatedPay();
 }
-function updatePayrollPreview(){
+
+function monthlyOvertimeMs(){
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  return state.shifts
+    .filter(s=>{ const d = new Date(s.clockOutTs); return d.getFullYear()===y && d.getMonth()===m; })
+    .reduce((sum,s)=> sum + (s.overtimeMs||0), 0);
+}
+
+function renderEstimatedPay(){
+  const el = document.getElementById("estimatedPayCard");
+  if(!el) return;
   const p = state.payroll;
-  const total = (p.base||0)+(p.ot||0)+(p.meal||0)+(p.vehicle||0)+(p.bonus||0)+(p.insurance||0);
-  document.getElementById("payrollPreview").textContent = fmtNum(total);
+  const otMs = monthlyOvertimeMs();
+  const otHours = otMs / 3600000;
+  const otPay = otHours * (p.ot||0);
+  const fixed = (p.base||0) + (p.meal||0) + (p.vehicle||0) + (p.bonus||0) + (p.insurance||0);
+  const total = fixed + otPay;
+  const asOf = new Date().toLocaleDateString([], {month:'short', day:'numeric'});
+  el.innerHTML = `
+    <div class="row">
+      <span style="font-size:13px;color:var(--text-muted);">${t("lbl_as_of")}</span>
+      <span style="font-size:13px;color:var(--text-muted);">${asOf}</span>
+    </div>
+    <div class="row">
+      <span style="font-size:13.5px;">${t("lbl_fixed_allowance")}</span>
+      <span class="list-value">${fmtNum(fixed)}</span>
+    </div>
+    <div class="row">
+      <span style="font-size:13.5px;">${t("lbl_ot_hours_month")}</span>
+      <span class="list-value">${otHours.toFixed(1)}h · ${fmtNum(Math.round(otPay))}</span>
+    </div>
+    <div class="row" style="margin-top:4px;">
+      <span style="font-weight:600;font-size:13.5px;">${t("lbl_est_total")}</span>
+      <span class="eta-badge">${fmtNum(Math.round(total))}</span>
+    </div>
+  `;
 }
 
 function renderFuel(){
@@ -2012,6 +2066,7 @@ function doClockOut(){
   const regularMs = Math.min(totalMs, REGULAR_SHIFT_MS);
   const overtimeMs = Math.max(0, totalMs - REGULAR_SHIFT_MS);
   state.clock = {status:"out", since:null, lastSummary:{totalMs, regularMs, overtimeMs}};
+  state.shifts.push({ id: uid("shift"), clockInTs: start, clockOutTs: Date.now(), totalMs, regularMs, overtimeMs });
   if(state.notify.clock && state.bossWa){
     const msg = state.lang==='ko' ? `⚪ 퇴근했습니다 (근무 ${formatHMS(totalMs)})` :
       state.lang==='id' ? `⚪ Absen keluar (kerja ${formatHMS(totalMs)})` :
@@ -2088,7 +2143,8 @@ function render(){
     renderDriverList();
     renderCallFavorites();
     renderAdList();
-    renderTodayRides();
+    renderTodayStats();
+    renderDailyHours();
     bindPayrollInputs();
     renderFuel();
     document.getElementById("bossWaInput").value = state.bossWa || "";
