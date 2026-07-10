@@ -753,6 +753,20 @@ function dispatchRef(){
   return db.ref("dispatch/" + pairId);
 }
 
+/* Admin-managed GLOBAL config — the Google Maps API key and the sponsored
+   ad list are set once by the developer and must reach every boss/driver
+   using this app, not just the developer's own device. Unlike dispatch
+   data (scoped per pairId, private to one boss<->driver pair), these live
+   at a single fixed path shared by everyone. */
+function adminConfigRef(){
+  const db = initFirebase();
+  return db ? db.ref("admin/config") : null;
+}
+function adminAdsRef(){
+  const db = initFirebase();
+  return db ? db.ref("admin/ads") : null;
+}
+
 /* The boss's own switch-back password ("사장 전환 암호"), set by each boss in
    their own Settings screen. It must also be checkable from the driver's
    separate device (different localStorage entirely) when they try to
@@ -866,6 +880,33 @@ function syncDispatchNow(){
       updateCallStatusUi();
     }
   });
+}
+
+/* Runs once at load, independent of pairId — every device (boss, driver,
+   or a fresh install nobody has onboarded yet) picks up whatever API key
+   and ad list the developer has configured, automatically and live. */
+function setupAdminConfigSync(){
+  const acRef = adminConfigRef();
+  if(acRef){
+    acRef.child("apiKey").on("value", (snap)=>{
+      const key = snap.val();
+      if(key && key !== state.apiKey){
+        state.apiKey = key;
+        save();
+      }
+    });
+  }
+  const adsRef = adminAdsRef();
+  if(adsRef){
+    adsRef.on("value", (snap)=>{
+      const val = snap.val();
+      if(val){
+        state.ads = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
+        save();
+        renderAdList();
+      }
+    });
+  }
 }
 
 let activeDispatchRef = null;
@@ -1370,10 +1411,12 @@ document.getElementById("driverSettingsBtn").addEventListener("click", ()=>{
       if(confirm(t("confirm_reset"))){
         const savedApiKey = state.apiKey;
         const savedPairId = state.pairId;
+        const savedBossPin = state.bossPin;
         localStorage.removeItem(DB_KEY);
         state = loadState();
         state.apiKey = savedApiKey;
         state.pairId = savedPairId;
+        state.bossPin = savedBossPin;
         save();
         closeSheet();
         render();
@@ -1973,6 +2016,7 @@ function renderAdminAdList(){
       e.stopPropagation();
       state.ads.splice(parseInt(btn.getAttribute("data-adm-del")), 1);
       save();
+      syncAdsToFirebase();
       renderAdminAdList();
       renderAdList();
     });
@@ -1984,6 +2028,7 @@ function renderAdminAdList(){
       if(i <= 0) return;
       [state.ads[i-1], state.ads[i]] = [state.ads[i], state.ads[i-1]];
       save();
+      syncAdsToFirebase();
       renderAdminAdList();
       renderAdList();
     });
@@ -1995,10 +2040,16 @@ function renderAdminAdList(){
       if(i >= state.ads.length-1) return;
       [state.ads[i+1], state.ads[i]] = [state.ads[i], state.ads[i+1]];
       save();
+      syncAdsToFirebase();
       renderAdminAdList();
       renderAdList();
     });
   });
+}
+
+function syncAdsToFirebase(){
+  const adsRef = adminAdsRef();
+  if(adsRef) adsRef.set(state.ads);
 }
 
 function openAdminSheet(){
@@ -2031,7 +2082,12 @@ function openAdminSheet(){
   `, ()=>{
     const apiKeyField = document.getElementById("adminApiKeyInput");
     apiKeyField.value = state.apiKey || "";
-    apiKeyField.addEventListener("input", ()=>{ state.apiKey = apiKeyField.value.trim(); save(); });
+    apiKeyField.addEventListener("input", ()=>{
+      state.apiKey = apiKeyField.value.trim();
+      save();
+      const acRef = adminConfigRef();
+      if(acRef) acRef.child("apiKey").set(state.apiKey);
+    });
 
     renderAdminAdList();
 
@@ -2122,6 +2178,7 @@ function openAdminSheet(){
         state.ads.push({name, addr, rating, image});
       }
       save();
+      syncAdsToFirebase();
       editingAdIndex = null;
       clearAdForm();
       updateFormMode();
@@ -2604,10 +2661,12 @@ document.getElementById("resetDataBtn").addEventListener("click", ()=>{
   if(confirm(t("confirm_reset"))){
     const savedApiKey = state.apiKey;
     const savedPairId = state.pairId;
+    const savedBossPin = state.bossPin;
     localStorage.removeItem(DB_KEY);
     state = loadState();
     state.apiKey = savedApiKey;
     state.pairId = savedPairId;
+    state.bossPin = savedBossPin;
     save();
     render();
     setupFirebaseListeners();
@@ -2856,6 +2915,7 @@ if(document.getElementById("onboardScreen").style.display !== "flex"){
   render();
 }
 setupFirebaseListeners();
+setupAdminConfigSync();
 
 // same-device fallback (same browser, different tab) — Firebase covers cross-device sync
 window.addEventListener("storage", (e)=>{
