@@ -1173,6 +1173,13 @@ function waLink(number, message){
   const clean = (number||"").replace(/[^\d+]/g,"").replace(/^\+/,"");
   return "https://wa.me/" + clean + "?text=" + encodeURIComponent(message);
 }
+/* Use location.href instead of window.open(url, "_blank") for wa.me links.
+   On iOS Safari, "_blank" often spawns a blank new tab instead of properly
+   handing off to the WhatsApp app, which was leaving the app on a blank
+   screen and could interrupt in-flight Firebase writes. */
+function openWhatsApp(url){
+  window.location.href = url;
+}
 function haversineKm(lat1,lon1,lat2,lon2){
   const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
   const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
@@ -1648,8 +1655,10 @@ document.getElementById("callDriverBtn").addEventListener("click", async ()=>{
 
   const fbRef = dispatchRef();
   if(fbRef){
-    fbRef.child("pendingCall").set({ pickup, dest, ts: ride.ts, driverName: driver.name });
-    fbRef.child("response").remove();
+    try{
+      await fbRef.child("pendingCall").set({ pickup, dest, ts: ride.ts, driverName: driver.name });
+      await fbRef.child("response").remove();
+    }catch(e){ console.error("Firebase write failed", e); }
   }
 
   const destLine = dest
@@ -1664,7 +1673,7 @@ document.getElementById("callDriverBtn").addEventListener("click", async ()=>{
   document.getElementById("callStatusText").textContent = t("status_calling");
 
   if(driver.wa){
-    window.open(waLink(driver.wa, msg), "_blank");
+    openWhatsApp(waLink(driver.wa, msg));
   }
   toast(t("toast_call_sent"));
   renderTodayStats();
@@ -2063,7 +2072,7 @@ function openInviteSheet(driver){
   `, ()=>{
     document.getElementById("sendInviteBtn").addEventListener("click", ()=>{
       const msg = (state.lang==="ko" ? `BossCall 초대\n${link}\n\n페어 코드: ${pairId}` : state.lang==="id" ? `Undangan BossCall\n${link}\n\nKode pasangan: ${pairId}` : `BossCall invite\n${link}\n\nPair code: ${pairId}`);
-      window.open(waLink(driver.wa, msg), "_blank");
+      openWhatsApp(waLink(driver.wa, msg));
     });
     document.getElementById("copyInviteBtn").addEventListener("click", ()=>{
       navigator.clipboard?.writeText(link).then(()=>toast(t("toast_link_copied")));
@@ -2375,7 +2384,7 @@ document.getElementById("addFuelBtn").addEventListener("click", ()=>{
       toast(t("toast_saved"));
       if(state.notify.fuel && state.bossWa && state.role==="driver"){
         const msg = state.lang==='ko' ? `⛽ 주유 ${liters}L / ${cost}` : state.lang==='id' ? `⛽ Isi bensin ${liters}L / ${cost}` : `⛽ Fuel ${liters}L / ${cost}`;
-        window.open(waLink(state.bossWa, msg), "_blank");
+        openWhatsApp(waLink(state.bossWa, msg));
       }
     });
   });
@@ -2396,7 +2405,7 @@ document.getElementById("testWaBtn").addEventListener("click", ()=>{
   const target = state.role==="boss" ? (state.drivers.find(d=>d.id===state.activeDriverId)?.wa) : state.bossWa;
   if(!target){ toast("No number set"); return; }
   const msg = "BossCall test message ✅";
-  window.open(waLink(target, msg), "_blank");
+  openWhatsApp(waLink(target, msg));
 });
 
 document.getElementById("enableNotifyBtn").addEventListener("click", async ()=>{
@@ -2486,11 +2495,6 @@ async function handleOkBoss(){
     ? `👍 OK BOSS!\n📍 Jemput: ${pending.pickup}\n${destLine}⏰ Perkiraan tiba: ${etaText}\n🚗 Sudah dilihat, segera berangkat!`
     : `👍 OK BOSS!\n📍 Pickup: ${pending.pickup}\n${destLine}⏰ ETA: ${etaText}\n🚗 Confirmed, heading out now!`;
 
-  if(state.bossWa){
-    window.open(waLink(state.bossWa, msg), "_blank");
-  }else{
-    toast(state.lang==='ko' ? "사장 WA 번호가 설정되지 않았어요 (⚙️ 설정)" : state.lang==='id' ? "Nomor WA Bos belum diatur (⚙️ Pengaturan)" : "Boss WhatsApp number not set (⚙️ Settings)");
-  }
   // mark matching ride accepted
   const ride = state.rides.find(r=>r.ts===pending.ts);
   if(ride){ ride.status = "accepted"; ride.eta = 10; }
@@ -2500,8 +2504,16 @@ async function handleOkBoss(){
 
   const fbRef = dispatchRef();
   if(fbRef){
-    fbRef.child("response").set({ pickup: pending.pickup, dest: pending.dest, ts: pending.ts, respondedAt: Date.now() });
-    fbRef.child("pendingCall").remove();
+    try{
+      await fbRef.child("response").set({ pickup: pending.pickup, dest: pending.dest, ts: pending.ts, respondedAt: Date.now() });
+      await fbRef.child("pendingCall").remove();
+    }catch(e){ console.error("Firebase write failed", e); }
+  }
+
+  if(state.bossWa){
+    openWhatsApp(waLink(state.bossWa, msg));
+  }else{
+    toast(state.lang==='ko' ? "사장 WA 번호가 설정되지 않았어요 (⚙️ 설정)" : state.lang==='id' ? "Nomor WA Bos belum diatur (⚙️ Pengaturan)" : "Boss WhatsApp number not set (⚙️ Settings)");
   }
 
   toast(t("toast_ok_sent"));
@@ -2540,7 +2552,7 @@ function doClockIn(){
   state.clock = {status:"in", since: Date.now(), lastSummary:null};
   if(state.notify.clock && state.bossWa){
     const msg = state.lang==='ko'?'🟢 출근했습니다':state.lang==='id'?'🟢 Absen masuk':'🟢 Clocked in';
-    window.open(waLink(state.bossWa, msg), "_blank");
+    openWhatsApp(waLink(state.bossWa, msg));
   }
   save();
   updateClockUi();
@@ -2558,7 +2570,7 @@ function doClockOut(){
     const msg = state.lang==='ko' ? `⚪ 퇴근했습니다 (근무 ${formatHMS(totalMs)})` :
       state.lang==='id' ? `⚪ Absen keluar (kerja ${formatHMS(totalMs)})` :
       `⚪ Clocked out (worked ${formatHMS(totalMs)})`;
-    window.open(waLink(state.bossWa, msg), "_blank");
+    openWhatsApp(waLink(state.bossWa, msg));
   }
   save();
   updateClockUi();
