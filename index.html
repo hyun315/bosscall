@@ -1128,6 +1128,24 @@ async function ensureAutocomplete(){
   bindAutocomplete("destInput", ()=>{});
 }
 
+async function textSearchTop(query){
+  if(!query || !state.apiKey) return null;
+  try{
+    const res = await fetch(`https://places.googleapis.com/v1/places:searchText`, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "X-Goog-Api-Key": state.apiKey,
+        "X-Goog-FieldMask":"places.displayName,places.formattedAddress,places.location"
+      },
+      body: JSON.stringify({ textQuery: query })
+    });
+    const data = await res.json();
+    if(data.places && data.places.length) return data.places[0];
+  }catch(e){}
+  return null;
+}
+
 function bindAutocomplete(inputId, onPick){
   const input = document.getElementById(inputId);
   if(!input || input.__acBound) return;
@@ -1135,13 +1153,37 @@ function bindAutocomplete(inputId, onPick){
   const ac = new google.maps.places.Autocomplete(input, {
     fields:["formatted_address","name","geometry"]
   });
+  let justSelected = false;
   ac.addListener("place_changed", ()=>{
     const place = ac.getPlace();
-    if(!place) return;
+    if(!place || !place.geometry){ return; }
+    justSelected = true;
     const label = place.formatted_address || place.name || input.value;
     input.value = label;
     onPick(place);
     save();
+  });
+  // Google-Maps-style fallback: if the user just types a query and hits Enter
+  // without picking a dropdown suggestion, run a text search and use the top result.
+  input.addEventListener("keydown", async (e)=>{
+    if(e.key !== "Enter") return;
+    e.preventDefault();
+    if(justSelected){ justSelected = false; return; }
+    const query = input.value.trim();
+    if(!query) return;
+    const result = await textSearchTop(query);
+    if(result){
+      input.value = result.formattedAddress || result.displayName?.text || query;
+      onPick({
+        formatted_address: result.formattedAddress,
+        name: result.displayName?.text,
+        geometry: result.location ? { location: {
+          lat: ()=>result.location.latitude,
+          lng: ()=>result.location.longitude
+        } } : null
+      });
+      save();
+    }
   });
 }
 
@@ -1163,6 +1205,7 @@ async function openMapPickerSheet(targetField){
 
   openSheet(`
     <div class="sheet-title">${t("sheet_map_pick")}</div>
+    <div class="field" style="margin-bottom:10px;"><input type="text" id="mapPickerSearchInput" placeholder="${t('search_placeholder')}"></div>
     <div class="list-sub" style="margin-bottom:10px;">${t("map_drag_hint")}</div>
     <div id="mapPickerCanvas" class="map-frame" style="height:300px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:13px;">…</div>
     <div class="card" style="margin-top:10px;">
@@ -1227,6 +1270,18 @@ function initMapPicker(targetField){
   map.addListener("click", (e)=>{
     marker.setPosition(e.latLng);
     updateAddressFromLatLng(e.latLng.lat(), e.latLng.lng());
+  });
+
+  // Search box on top of the map — jumps the pin to whatever place is chosen or typed+Enter
+  bindAutocomplete("mapPickerSearchInput", (place)=>{
+    if(place.geometry && place.geometry.location){
+      const lat = place.geometry.location.lat();
+      const lng = place.geometry.location.lng();
+      map.setCenter({lat,lng});
+      map.setZoom(16);
+      marker.setPosition({lat,lng});
+      updateAddressFromLatLng(lat,lng);
+    }
   });
 
   finish(map, marker);
