@@ -14,6 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage-compat.js"></script>
 <style>
 /* ============ TOKENS (Google Material style: white, standard blue, Roboto) ============ */
 :root{
@@ -718,6 +719,18 @@ function initFirebase(){
   return fbDb;
 }
 
+/* Upload a banner image file to Firebase Storage and return its public URL.
+   Requires Storage to be enabled in the Firebase console for this project. */
+async function uploadAdImage(file){
+  if(!file) return null;
+  initFirebase();
+  if(typeof firebase === "undefined" || !firebase.storage) throw new Error("Storage not available");
+  const path = `ads/${ensurePairId()}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,"_")}`;
+  const ref = firebase.storage().ref(path);
+  await ref.put(file);
+  return await ref.getDownloadURL();
+}
+
 function ensurePairId(){
   if(!state.pairId){
     state.pairId = Math.random().toString(36).slice(2,8).toUpperCase();
@@ -731,6 +744,16 @@ function dispatchRef(){
   if(!db) return null;
   const pairId = ensurePairId();
   return db.ref("dispatch/" + pairId);
+}
+
+/* The admin PIN is set on the boss's own device, but must also be checkable
+   from the driver's separate device (different localStorage entirely) when
+   they try to switch to the boss view. Mirror it into Firebase, scoped by
+   the same pairId used for call/response sync, so both devices agree. */
+function pinRef(){
+  const db = initFirebase();
+  if(!db) return null;
+  return db.ref("dispatch/" + ensurePairId() + "/pin");
 }
 
 async function requestNotifyPermission(){
@@ -892,6 +915,8 @@ const I18N = {
     admin_mode_on:"Mode admin aktif", admin_mode_off:"Mode admin nonaktif",
     sheet_edit_ads:"Kelola sponsor", sheet_ad_name:"Nama tempat", sheet_ad_addr:"Alamat", sheet_ad_rating:"Rating",
     sheet_ad_image:"URL gambar banner (opsional)",
+    btn_upload_photo:"Unggah foto", or_paste_url:"atau tempel URL gambar", uploading_photo:"Mengunggah...",
+    upload_done:"Foto terunggah ✓", upload_failed:"Unggah gagal — periksa Firebase Storage",
     admin_settings_moved:"Kunci API Google Maps dan PIN Admin dipindah ke layar 🔑 Admin (kanan atas).",
     sheet_admin_title:"Layar Admin", lbl_admin_ads:"Kelola sponsor",
     btn_add_ad:"Tambah sponsor", lbl_admin_pin:"PIN admin (lindungi edit sponsor)",
@@ -952,6 +977,8 @@ const I18N = {
     admin_mode_on:"관리자 모드 켜짐", admin_mode_off:"관리자 모드 꺼짐",
     sheet_edit_ads:"광고 관리", sheet_ad_name:"장소 이름", sheet_ad_addr:"주소", sheet_ad_rating:"평점",
     sheet_ad_image:"배너 이미지 URL (선택)",
+    btn_upload_photo:"사진 업로드", or_paste_url:"또는 이미지 URL 직접 입력", uploading_photo:"업로드 중...",
+    upload_done:"업로드 완료 ✓", upload_failed:"업로드 실패 — Firebase Storage 설정을 확인하세요",
     admin_settings_moved:"Google Maps API 키와 관리자 PIN은 우측 상단 🔑 관리자 화면으로 옮겨졌어요.",
     sheet_admin_title:"관리자 화면", lbl_admin_ads:"광고 관리",
     btn_add_ad:"광고 추가", lbl_admin_pin:"관리자 PIN (광고 편집 보호)",
@@ -1012,6 +1039,8 @@ const I18N = {
     admin_mode_on:"Admin mode on", admin_mode_off:"Admin mode off",
     sheet_edit_ads:"Manage sponsored", sheet_ad_name:"Place name", sheet_ad_addr:"Address", sheet_ad_rating:"Rating",
     sheet_ad_image:"Banner image URL (optional)",
+    btn_upload_photo:"Upload photo", or_paste_url:"or paste an image URL", uploading_photo:"Uploading...",
+    upload_done:"Uploaded ✓", upload_failed:"Upload failed — check Firebase Storage setup",
     admin_settings_moved:"Google Maps API key and Admin PIN moved to the 🔑 Admin screen (top right).",
     sheet_admin_title:"Admin screen", lbl_admin_ads:"Manage sponsored",
     btn_add_ad:"Add sponsored listing", lbl_admin_pin:"Admin PIN (protects ad editing)",
@@ -1120,6 +1149,8 @@ function parseUrlParams(){
     state.myDriverProfile = { id: did, name: decodeURIComponent(name) };
     if(pair) state.pairId = pair;
     save();
+    // Strip the query string so a later plain refresh doesn't re-trigger onboarding
+    history.replaceState(null, "", window.location.pathname);
     showOnboard();
   }
 }
@@ -1257,8 +1288,16 @@ document.getElementById("driverSettingsBtn").addEventListener("click", ()=>{
       save();
     });
 
-    document.getElementById("driverSwitchBossBtn").addEventListener("click", ()=>{
-      if(!state.adminPin){
+    document.getElementById("driverSwitchBossBtn").addEventListener("click", async ()=>{
+      const pr = pinRef();
+      let sharedPin = null;
+      if(pr){
+        try{
+          const snap = await pr.once("value");
+          sharedPin = snap.val();
+        }catch(e){}
+      }
+      if(!sharedPin){
         toast(t("admin_pin_not_set"));
         return;
       }
@@ -1271,7 +1310,7 @@ document.getElementById("driverSettingsBtn").addEventListener("click", ()=>{
         const pinField = document.getElementById("bossSwitchPinInput");
         pinField.focus();
         document.getElementById("bossSwitchPinConfirmBtn").addEventListener("click", ()=>{
-          if(pinField.value === state.adminPin){
+          if(pinField.value === sharedPin){
             state.role = "boss";
             save();
             closeSheet();
@@ -1888,7 +1927,11 @@ function openAdminSheet(){
     <div class="field"><label>${t("sheet_ad_rating")}</label><input type="number" step="0.1" min="0" max="5" id="newAdRating" placeholder="4.8"></div>
     <div class="field">
       <label>${t("sheet_ad_image")}</label>
-      <input type="text" id="newAdImage" placeholder="https://...">
+      <input type="file" accept="image/*" id="newAdImageFile" style="display:none;">
+      <button class="btn full" id="pickAdImageBtn" type="button">📷 <span data-txt>${t("btn_upload_photo")}</span></button>
+      <div id="newAdUploadStatus" class="list-sub" style="margin-top:6px;"></div>
+      <input type="text" id="newAdImage" placeholder="https://..." style="margin-top:8px;">
+      <div class="list-sub" style="margin-top:4px;">${t("or_paste_url")}</div>
       <div id="newAdImagePreview" style="margin-top:8px;"></div>
     </div>
     <button class="btn full primary" id="saveAdBtn">${t("btn_add_ad")}</button>
@@ -1900,18 +1943,42 @@ function openAdminSheet(){
 
     const pinField = document.getElementById("adminPinFieldInput");
     pinField.value = state.adminPin || "";
-    pinField.addEventListener("input", ()=>{ state.adminPin = pinField.value.trim(); save(); });
+    pinField.addEventListener("input", ()=>{
+      state.adminPin = pinField.value.trim();
+      save();
+      const pr = pinRef();
+      if(pr) pr.set(state.adminPin);
+    });
 
     renderAdminAdList();
 
     const imageInput = document.getElementById("newAdImage");
     const imagePreview = document.getElementById("newAdImagePreview");
+    const imageFileInput = document.getElementById("newAdImageFile");
+    const pickImageBtn = document.getElementById("pickAdImageBtn");
+    const uploadStatus = document.getElementById("newAdUploadStatus");
     const nameInputEl = document.getElementById("newAdName");
     const addrInputEl = document.getElementById("newAdAddr");
     const ratingInputEl = document.getElementById("newAdRating");
     const formTitle = document.getElementById("adFormTitle");
     const saveBtn = document.getElementById("saveAdBtn");
     const cancelBtn = document.getElementById("cancelEditAdBtn");
+
+    pickImageBtn.addEventListener("click", ()=> imageFileInput.click());
+    imageFileInput.addEventListener("change", async ()=>{
+      const file = imageFileInput.files[0];
+      if(!file) return;
+      uploadStatus.textContent = t("uploading_photo");
+      try{
+        const url = await uploadAdImage(file);
+        imageInput.value = url;
+        imagePreview.innerHTML = `<img src="${escapeHtml(url)}" style="width:100%;height:110px;object-fit:cover;border-radius:10px;">`;
+        uploadStatus.textContent = t("upload_done");
+      }catch(e){
+        console.error(e);
+        uploadStatus.textContent = t("upload_failed");
+      }
+    });
 
     editingAdIndex = null;
     function updateFormMode(){
@@ -1921,7 +1988,7 @@ function openAdminSheet(){
     }
     function clearAdForm(){
       nameInputEl.value = ""; addrInputEl.value = ""; ratingInputEl.value = ""; imageInput.value = "";
-      imagePreview.innerHTML = "";
+      imagePreview.innerHTML = ""; uploadStatus.textContent = "";
     }
     loadAdIntoForm = (i)=>{
       const pool = adPool();
