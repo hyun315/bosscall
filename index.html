@@ -1231,7 +1231,20 @@ function waLink(number, message){
    handing off to the WhatsApp app, which was leaving the app on a blank
    screen and could interrupt in-flight Firebase writes. */
 function openWhatsApp(url){
-  window.location.href = url;
+  // In a home-screen-installed PWA (standalone display mode), a full
+  // location.href navigation destroys the app's own running instance and
+  // hands the whole screen off to Safari — that's the "tangled" mess.
+  // window.open(_blank) hands off to WhatsApp/Safari instead while leaving
+  // this app instance alive underneath. In a regular Safari tab (not
+  // installed), location.href is more reliable and avoids spawning a
+  // second blank tab, so keep using it there.
+  const isStandalone = window.navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  if(isStandalone){
+    window.open(url, "_blank");
+  }else{
+    window.location.href = url;
+  }
 }
 function haversineKm(lat1,lon1,lat2,lon2){
   const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
