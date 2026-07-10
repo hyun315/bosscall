@@ -1041,7 +1041,7 @@ const I18N = {
     upload_done:"Foto terunggah ✓", upload_failed:"Unggah gagal — periksa Firebase Storage",
     admin_settings_moved:"Kunci API Google Maps dan PIN Admin dipindah ke layar 🔑 Admin (kanan atas).",
     sheet_admin_title:"Layar Admin", lbl_admin_ads:"Kelola sponsor",
-    btn_add_ad:"Tambah sponsor", lbl_admin_pin:"PIN admin (lindungi edit sponsor)", lbl_admin_id:"ID admin",
+    btn_add_ad:"Tambah sponsor", lbl_admin_pin:"PIN admin (lindungi edit sponsor)", lbl_admin_id:"ID admin", btn_save_exit:"Simpan & Keluar",
     lbl_payroll:"Pengaturan gaji", lbl_base_pay:"Gaji pokok", lbl_overtime:"Lembur (per jam)", lbl_meal:"Uang makan",
     lbl_vehicle:"Tunjangan kendaraan", lbl_bonus:"Bonus", lbl_insurance:"Asuransi", lbl_preview_total:"Perkiraan total",
     lbl_fuel:"Catatan bensin", lbl_fuel_month:"Bulan ini", btn_add_fuel:"Tambah catatan bensin",
@@ -1106,7 +1106,7 @@ const I18N = {
     upload_done:"업로드 완료 ✓", upload_failed:"업로드 실패 — Firebase Storage 설정을 확인하세요",
     admin_settings_moved:"Google Maps API 키와 관리자 PIN은 우측 상단 🔑 관리자 화면으로 옮겨졌어요.",
     sheet_admin_title:"관리자 화면", lbl_admin_ads:"광고 관리",
-    btn_add_ad:"광고 추가", lbl_admin_pin:"관리자 PIN", lbl_admin_id:"관리자 아이디",
+    btn_add_ad:"광고 추가", lbl_admin_pin:"관리자 PIN", lbl_admin_id:"관리자 아이디", btn_save_exit:"저장하고 나가기",
     lbl_payroll:"급여 설정", lbl_base_pay:"기본급", lbl_overtime:"시간외수당(시간당)", lbl_meal:"식대",
     lbl_vehicle:"차량유지비", lbl_bonus:"상여금", lbl_insurance:"보험", lbl_preview_total:"예상 총액",
     lbl_fuel:"주유 기록", lbl_fuel_month:"이번 달", btn_add_fuel:"주유 기록 추가",
@@ -1171,7 +1171,7 @@ const I18N = {
     upload_done:"Uploaded ✓", upload_failed:"Upload failed — check Firebase Storage setup",
     admin_settings_moved:"Google Maps API key and Admin PIN moved to the 🔑 Admin screen (top right).",
     sheet_admin_title:"Admin screen", lbl_admin_ads:"Manage sponsored",
-    btn_add_ad:"Add sponsored listing", lbl_admin_pin:"Admin PIN", lbl_admin_id:"Admin ID",
+    btn_add_ad:"Add sponsored listing", lbl_admin_pin:"Admin PIN", lbl_admin_id:"Admin ID", btn_save_exit:"Save & Exit",
     lbl_payroll:"Payroll settings", lbl_base_pay:"Base pay", lbl_overtime:"Overtime rate", lbl_meal:"Meal allowance",
     lbl_vehicle:"Vehicle allowance", lbl_bonus:"Bonus", lbl_insurance:"Insurance", lbl_preview_total:"Estimated total",
     lbl_fuel:"Fuel log", lbl_fuel_month:"This month", btn_add_fuel:"Add fuel entry",
@@ -1439,11 +1439,13 @@ document.getElementById("driverSettingsBtn").addEventListener("click", ()=>{
         const savedApiKey = state.apiKey;
         const savedPairId = state.pairId;
         const savedBossPin = state.bossPin;
+        const savedAds = state.ads;
         localStorage.removeItem(DB_KEY);
         state = loadState();
         state.apiKey = savedApiKey;
         state.pairId = savedPairId;
         state.bossPin = savedBossPin;
+        state.ads = savedAds;
         save();
         closeSheet();
         render();
@@ -2106,6 +2108,9 @@ function openAdminSheet(){
     </div>
     <button class="btn full primary" id="saveAdBtn">${t("btn_add_ad")}</button>
     <button class="btn full ghost" id="cancelEditAdBtn" style="margin-top:8px;display:none;">${t("sheet_cancel")}</button>
+
+    <div style="height:16px;"></div>
+    <button class="btn full primary" id="adminExitBtn">✅ ${t("btn_save_exit")}</button>
   `, ()=>{
     const apiKeyField = document.getElementById("adminApiKeyInput");
     apiKeyField.value = state.apiKey || "";
@@ -2114,6 +2119,30 @@ function openAdminSheet(){
       save();
       const acRef = adminConfigRef();
       if(acRef) acRef.child("apiKey").set(state.apiKey);
+    });
+
+    // First time opening admin after the global-sync feature was added (or
+    // after any local reset): if Firebase's shared ad list is still empty,
+    // push whatever we have locally so every device converges on it.
+    const adsRefCheck = adminAdsRef();
+    if(adsRefCheck){
+      adsRefCheck.once("value").then(snap=>{
+        if(!snap.val()){
+          adPool(); // ensure state.ads is seeded locally first
+          syncAdsToFirebase();
+        }
+      });
+    }
+
+    document.getElementById("adminExitBtn").addEventListener("click", ()=>{
+      // Final explicit save before leaving — pushes the current API key and
+      // ad list to Firebase one more time so nothing is left unsynced.
+      save();
+      const acRef = adminConfigRef();
+      if(acRef) acRef.child("apiKey").set(state.apiKey || "");
+      syncAdsToFirebase();
+      toast(t("toast_saved"));
+      closeSheet();
     });
 
     renderAdminAdList();
@@ -2689,11 +2718,13 @@ document.getElementById("resetDataBtn").addEventListener("click", ()=>{
     const savedApiKey = state.apiKey;
     const savedPairId = state.pairId;
     const savedBossPin = state.bossPin;
+    const savedAds = state.ads;
     localStorage.removeItem(DB_KEY);
     state = loadState();
     state.apiKey = savedApiKey;
     state.pairId = savedPairId;
     state.bossPin = savedBossPin;
+    state.ads = savedAds;
     save();
     render();
     setupFirebaseListeners();
