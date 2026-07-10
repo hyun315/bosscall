@@ -632,10 +632,6 @@ button{font-family:inherit;}
       <button class="btn full ghost" id="testWaBtn" style="margin-top:12px;">✉️ <span data-i18n="btn_test_wa">Send test message</span></button>
     </div>
 
-    <div class="card">
-      <div class="list-sub" data-i18n="admin_settings_moved">Google Maps API key and Admin PIN moved to the 🔑 Admin screen (top right).</div>
-    </div>
-
     <div class="section-label" data-i18n="lbl_role_switch">Mode</div>
     <div class="card">
       <div class="row">
@@ -720,7 +716,7 @@ const I18N = {
     btn_test_wa:"Kirim pesan tes", lbl_api:"Kunci API Google Maps", api_hint:"Digunakan untuk pencarian tempat dan peta. Hanya disimpan di perangkat ini.",
     lbl_role_switch:"Mode", lbl_current_mode:"Tampilan sebagai", btn_switch_driver:"Beralih ke tampilan sopir",
     btn_switch_boss:"Beralih ke tampilan bos", btn_reset:"Hapus semua data",
-    tab_call:"Panggil", tab_drivers:"Sopir", tab_stats:"Statistik", tab_more:"Lainnya",
+    tab_call:"Panggil", tab_drivers:"Sopir", tab_stats:"Statistik", tab_more:"Pengaturan",
     lbl_clock:"Absen", btn_clock_in:"Absen masuk", btn_clock_out:"Absen keluar",
     driver_idle_title:"Menunggu panggilan", driver_idle_sub:"Anda akan diberitahu saat Bos memanggil",
     driver_calling_title:"Bos memanggil!", driver_calling_sub:"Ketuk untuk konfirmasi",
@@ -771,7 +767,7 @@ const I18N = {
     btn_test_wa:"테스트 메시지 발송", lbl_api:"Google Maps API 키", api_hint:"장소 검색 및 지도 표시에 사용됩니다. 이 기기에만 저장됩니다.",
     lbl_role_switch:"모드", lbl_current_mode:"보기 모드", btn_switch_driver:"기사 화면으로 전환",
     btn_switch_boss:"사장 화면으로 전환", btn_reset:"전체 데이터 초기화",
-    tab_call:"호출", tab_drivers:"기사", tab_stats:"통계", tab_more:"더보기",
+    tab_call:"호출", tab_drivers:"기사", tab_stats:"통계", tab_more:"설정",
     lbl_clock:"출퇴근", btn_clock_in:"출근", btn_clock_out:"퇴근",
     driver_idle_title:"호출 대기중", driver_idle_sub:"사장님이 호출하면 알려드릴게요",
     driver_calling_title:"사장님이 호출했어요!", driver_calling_sub:"눌러서 확인하세요",
@@ -822,7 +818,7 @@ const I18N = {
     btn_test_wa:"Send test message", lbl_api:"Google Maps API key", api_hint:"Used for place search and maps. Stored only on this device.",
     lbl_role_switch:"Mode", lbl_current_mode:"View as", btn_switch_driver:"Switch to driver view",
     btn_switch_boss:"Switch to boss view", btn_reset:"Reset all data",
-    tab_call:"Call", tab_drivers:"Drivers", tab_stats:"Stats", tab_more:"More",
+    tab_call:"Call", tab_drivers:"Drivers", tab_stats:"Stats", tab_more:"Settings",
     lbl_clock:"Clock", btn_clock_in:"Clock in", btn_clock_out:"Clock out",
     driver_idle_title:"Waiting for call", driver_idle_sub:"You'll be notified when Boss calls",
     driver_calling_title:"Boss is calling!", driver_calling_sub:"Tap to confirm",
@@ -852,11 +848,7 @@ const I18N = {
 =============================================================== */
 const DB_KEY = "bosscall_v2";
 function loadState(){
-  try{
-    const raw = localStorage.getItem(DB_KEY);
-    if(raw) return JSON.parse(raw);
-  }catch(e){}
-  return {
+  const defaults = {
     lang:"id",
     dark:true,
     role:"boss", // boss | driver
@@ -875,6 +867,21 @@ function loadState(){
     pendingCall:null, // {pickup,dest,ts} for driver view
     activeRide:null // {pickup,dest} current accepted ride for driver nav
   };
+  try{
+    const raw = localStorage.getItem(DB_KEY);
+    if(raw){
+      const saved = JSON.parse(raw);
+      // merge so fields added in later app versions always exist, even for older saved data
+      return {
+        ...defaults,
+        ...saved,
+        payroll: { ...defaults.payroll, ...(saved.payroll||{}) },
+        notify: { ...defaults.notify, ...(saved.notify||{}) },
+        clock: saved.clock ? { ...defaults.clock, ...saved.clock } : defaults.clock
+      };
+    }
+  }catch(e){}
+  return defaults;
 }
 let state = loadState();
 function save(){ localStorage.setItem(DB_KEY, JSON.stringify(state)); }
