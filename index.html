@@ -880,6 +880,13 @@ function syncDispatchNow(){
       updateCallStatusUi();
     }
   });
+  ref.child("clockStatus").once("value").then(snap=>{
+    if(state.role === "boss"){
+      state.driverClockStatus = snap.val() || {status:"out", since:null};
+      save();
+      renderTodayStats();
+    }
+  });
 }
 
 /* Runs once at load, independent of pairId — every device (boss, driver,
@@ -917,6 +924,8 @@ function setupFirebaseListeners(){
   if(activeDispatchRef){
     activeDispatchRef.child("pendingCall").off();
     activeDispatchRef.child("response").off();
+    activeDispatchRef.child("clockEvent").off();
+    activeDispatchRef.child("clockStatus").off();
   }
   const ref = dispatchRef();
   if(!ref) return;
@@ -998,6 +1007,14 @@ function setupFirebaseListeners(){
       renderTodayStats();
       renderDailyHours();
     }
+  });
+
+  ref.child("clockStatus").on("value", (snap)=>{
+    const data = snap.val();
+    if(state.role !== "boss") return;
+    state.driverClockStatus = data || {status:"out", since:null};
+    save();
+    renderTodayStats();
   });
 }
 
@@ -1231,6 +1248,7 @@ function loadState(){
     bossPin:"", // boss-set password required for driver→boss switch (synced via Firebase)
     shifts:[], // {id,clockInTs,clockOutTs,totalMs,regularMs,overtimeMs} completed work shifts
     driverEnRoute:null, // {pickup,dest,ts} set when driver's Firebase response arrives on boss's device
+    driverClockStatus:null, // {status,since} the driver's actual clock state, synced via Firebase
     pairId:"", // shared code that scopes this boss<->driver pair's Firebase data (prevents cross-tenant mixing)
     __lastResponseTs:null,
     rides:[], // {id,driverId,pickup,dest,ts,status,eta,dropoffTs}
@@ -2169,9 +2187,20 @@ function openAdminSheet(){
         imageInput.value = url;
         imagePreview.innerHTML = `<img src="${escapeHtml(url)}" style="width:100%;height:110px;object-fit:cover;border-radius:10px;">`;
         uploadStatus.textContent = t("upload_done");
+        // If we're editing an existing ad, save it immediately so the photo
+        // takes effect right away — no separate "저장" tap required.
+        if(editingAdIndex !== null){
+          state.ads[editingAdIndex] = { ...state.ads[editingAdIndex], image: url };
+          save();
+          syncAdsToFirebase();
+          renderAdminAdList();
+          renderAdList();
+          uploadStatus.textContent = t("upload_done") + " · " + t("toast_saved");
+        }
       }catch(e){
         console.error(e);
         uploadStatus.textContent = t("upload_failed");
+        toast(t("upload_failed"));
       }
     });
 
@@ -2394,7 +2423,12 @@ function renderTodayStats(){
   const today = new Date(); today.setHours(0,0,0,0);
   const todays = state.rides.filter(r=>r.ts >= today.getTime());
   document.getElementById("todayRidesNum").textContent = todays.length;
-  const clocked = state.clock.status === "in";
+  // On the boss's device, "clock status" must reflect the DRIVER's actual
+  // status (synced via Firebase) — the boss's own local state.clock is
+  // always "out" since the boss never personally clocks in themselves.
+  const clocked = state.role === "boss"
+    ? state.driverClockStatus?.status === "in"
+    : state.clock.status === "in";
   document.getElementById("clockStatusNum").textContent = clocked ? "🟢" : "⚪";
 }
 
@@ -2850,7 +2884,10 @@ function doClockIn(){
   state.clock = {status:"in", since: Date.now(), lastSummary:null};
   save();
   const fbRef = dispatchRef();
-  if(fbRef) fbRef.child("clockEvent").set({ type:"in", ts: Date.now() });
+  if(fbRef){
+    fbRef.child("clockEvent").set({ type:"in", ts: Date.now() });
+    fbRef.child("clockStatus").set({ status:"in", since: state.clock.since });
+  }
   if(state.notify.clock && state.bossWa){
     const msg = state.lang==='ko'?'🟢 출근했습니다':state.lang==='id'?'🟢 Absen masuk':'🟢 Clocked in';
     openWhatsApp(waLink(state.bossWa, msg));
@@ -2868,7 +2905,10 @@ function doClockOut(){
   state.shifts.push({ id: uid("shift"), clockInTs: start, clockOutTs: Date.now(), totalMs, regularMs, overtimeMs });
   save();
   const fbRef = dispatchRef();
-  if(fbRef) fbRef.child("clockEvent").set({ type:"out", ts: Date.now(), totalMs });
+  if(fbRef){
+    fbRef.child("clockEvent").set({ type:"out", ts: Date.now(), totalMs });
+    fbRef.child("clockStatus").set({ status:"out", since:null });
+  }
   if(state.notify.clock && state.bossWa){
     const msg = state.lang==='ko' ? `⚪ 퇴근했습니다 (근무 ${formatHMS(totalMs)})` :
       state.lang==='id' ? `⚪ Absen keluar (kerja ${formatHMS(totalMs)})` :
