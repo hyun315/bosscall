@@ -1068,10 +1068,10 @@ document.getElementById("searchPlaceBtn").addEventListener("click", ()=>{
 });
 
 document.getElementById("pickupMapBtn").addEventListener("click", ()=>{
-  openMapPickerSheet("pickup");
+  openMapPickerSheet("pickupInput", {storeCoords:true});
 });
 document.getElementById("destMapBtn").addEventListener("click", ()=>{
-  openMapPickerSheet("dest");
+  openMapPickerSheet("destInput");
 });
 
 /* ---------- Google Maps picker (drag pin + reverse geocode) ---------- */
@@ -1190,7 +1190,7 @@ function bindAutocomplete(inputId, onPick){
 document.getElementById("pickupInput").addEventListener("focus", ensureAutocomplete, {once:false});
 document.getElementById("destInput").addEventListener("focus", ensureAutocomplete, {once:false});
 
-async function openMapPickerSheet(targetField){
+async function openMapPickerSheet(fieldId, opts={}){
   if(!state.apiKey){
     openSheet(`
       <div class="sheet-title">${t("sheet_map_pick")}</div>
@@ -1219,11 +1219,11 @@ async function openMapPickerSheet(targetField){
       document.getElementById("mapPickerCanvas").textContent = "Failed to load map — check API key";
       return;
     }
-    initMapPicker(targetField);
+    initMapPicker(fieldId, opts);
   });
 }
 
-function initMapPicker(targetField){
+function initMapPicker(fieldId, opts={}){
   const canvas = document.getElementById("mapPickerCanvas");
   if(!canvas) return;
   canvas.textContent = "";
@@ -1290,9 +1290,10 @@ function initMapPicker(targetField){
   if(confirmBtn){
     confirmBtn.onclick = ()=>{
       const addr = document.getElementById("mapPickerAddress").textContent;
-      const field = document.getElementById(targetField==="dest" ? "destInput" : "pickupInput");
-      field.value = addr;
-      if(targetField==="pickup"){ lastCoords = currentLatLng; }
+      const field = document.getElementById(fieldId);
+      if(field) field.value = addr;
+      if(opts.storeCoords){ lastCoords = currentLatLng; }
+      if(opts.onConfirm) opts.onConfirm(addr, currentLatLng);
       save();
       closeSheet();
     };
@@ -1523,6 +1524,10 @@ function renderAdminAdList(){
         <div class="list-title">${escapeHtml(r.name)}</div>
         <div class="list-sub">${escapeHtml(r.addr)} · ★ ${r.rating}</div>
       </div>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <div class="slot-link-btn" data-adm-up="${i}" style="width:28px;height:24px;font-size:12px;${i===0?'opacity:0.3;':''}">▲</div>
+        <div class="slot-link-btn" data-adm-down="${i}" style="width:28px;height:24px;font-size:12px;${i===pool.length-1?'opacity:0.3;':''}">▼</div>
+      </div>
       <div class="slot-link-btn" data-adm-del="${i}" style="border-color:transparent;">✕</div>
     </div>
   `).join("") : `<div class="empty-state"><div class="empty-state-text">${t("empty_favorites")}</div></div>`;
@@ -1530,6 +1535,28 @@ function renderAdminAdList(){
     btn.addEventListener("click", (e)=>{
       e.stopPropagation();
       state.ads.splice(parseInt(btn.getAttribute("data-adm-del")), 1);
+      save();
+      renderAdminAdList();
+      renderAdList();
+    });
+  });
+  el.querySelectorAll("[data-adm-up]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const i = parseInt(btn.getAttribute("data-adm-up"));
+      if(i <= 0) return;
+      [state.ads[i-1], state.ads[i]] = [state.ads[i], state.ads[i-1]];
+      save();
+      renderAdminAdList();
+      renderAdList();
+    });
+  });
+  el.querySelectorAll("[data-adm-down]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const i = parseInt(btn.getAttribute("data-adm-down"));
+      if(i >= state.ads.length-1) return;
+      [state.ads[i+1], state.ads[i]] = [state.ads[i], state.ads[i+1]];
       save();
       renderAdminAdList();
       renderAdList();
@@ -1767,19 +1794,25 @@ function renderDailyHours(){
 /* ============================================================
    FAVORITES (add sheet — list rendering lives in renderCallFavorites)
 =============================================================== */
-document.getElementById("addFavoriteBtn").addEventListener("click", ()=>{
+function openFavoriteSheet(prefill={}){
   openSheet(`
     <div class="sheet-title">${t("sheet_add_favorite")}</div>
-    <div class="field"><label>${t("sheet_favorite_name")}</label><input type="text" id="favName"></div>
-    <div class="field"><label>${t("sheet_favorite_addr")}</label><input type="text" id="favAddr"></div>
+    <div class="field"><label>${t("sheet_favorite_name")}</label><input type="text" id="favName" value="${escapeHtml(prefill.name||"")}"></div>
+    <div class="field">
+      <label>${t("sheet_favorite_addr")}</label>
+      <input type="text" id="favAddr" value="${escapeHtml(prefill.addr||"")}">
+      <div class="field-actions" style="margin-top:6px;">
+        <div class="chip-btn" id="favMapPickBtn">🗺️ <span>${t("btn_map_pick")}</span></div>
+      </div>
+    </div>
     <button class="btn full primary" id="saveFavBtn">${t("sheet_save")}</button>
   `, ()=>{
-    document.getElementById("favName").focus();
+    const nameInput = document.getElementById("favName");
+    if(!prefill.name) nameInput.focus();
     if(state.apiKey){
       loadGoogleMaps().then(()=>{
         if(window.google && window.google.maps && window.google.maps.places){
           bindAutocomplete("favAddr", (place)=>{
-            const nameInput = document.getElementById("favName");
             if(!nameInput.value.trim() && place.name){
               nameInput.value = place.name;
             }
@@ -1787,6 +1820,13 @@ document.getElementById("addFavoriteBtn").addEventListener("click", ()=>{
         }
       }).catch(()=>{});
     }
+    document.getElementById("favMapPickBtn").addEventListener("click", ()=>{
+      openMapPickerSheet("favAddr", {
+        onConfirm: (addr)=>{
+          openFavoriteSheet({ name: nameInput.value.trim(), addr });
+        }
+      });
+    });
     document.getElementById("saveFavBtn").addEventListener("click", ()=>{
       const name = document.getElementById("favName").value.trim();
       const addr = document.getElementById("favAddr").value.trim();
@@ -1796,7 +1836,9 @@ document.getElementById("addFavoriteBtn").addEventListener("click", ()=>{
       toast(t("toast_saved"));
     });
   });
-});
+}
+
+document.getElementById("addFavoriteBtn").addEventListener("click", ()=>openFavoriteSheet());
 
 /* ============================================================
    STATS
