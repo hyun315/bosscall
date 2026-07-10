@@ -972,6 +972,33 @@ function setupFirebaseListeners(){
     updateCallStatusUi();
     renderTodayStats();
   });
+
+  ref.child("clockEvent").on("value", (snap)=>{
+    const data = snap.val();
+    if(state.role !== "boss" || !data) return;
+    const isNew = state.__lastClockEventTs !== data.ts;
+    state.__lastClockEventTs = data.ts;
+    if(isNew){
+      const title = data.type === "in"
+        ? (state.lang==='ko' ? "기사님이 출근했어요" : state.lang==='id' ? "Sopir absen masuk" : "Driver clocked in")
+        : (state.lang==='ko' ? "기사님이 퇴근했어요" : state.lang==='id' ? "Sopir absen keluar" : "Driver clocked out");
+      const body = data.type === "out" && data.totalMs
+        ? (state.lang==='ko' ? `근무 ${formatHMS(data.totalMs)}` : state.lang==='id' ? `Kerja ${formatHMS(data.totalMs)}` : `Worked ${formatHMS(data.totalMs)}`)
+        : "";
+      fireAlert(title, body, ()=>{
+        closeSheet();
+        document.querySelectorAll("#bossTabbar .tab-item").forEach(x=>x.classList.remove("active"));
+        const driversTab = document.querySelector('[data-tab="screen-drivers"]');
+        if(driversTab) driversTab.classList.add("active");
+        document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+        const driversScreen = document.getElementById("screen-drivers");
+        if(driversScreen) driversScreen.classList.add("active");
+        render();
+      });
+      renderTodayStats();
+      renderDailyHours();
+    }
+  });
 }
 
 function updateCallStatusUi(){
@@ -2790,11 +2817,13 @@ const REGULAR_SHIFT_MS = 8 * 3600 * 1000; // 8-hour regular shift threshold
 function doClockIn(){
   if(state.clock.status === "in"){ toast(t("already_clocked_in")); return; }
   state.clock = {status:"in", since: Date.now(), lastSummary:null};
+  save();
+  const fbRef = dispatchRef();
+  if(fbRef) fbRef.child("clockEvent").set({ type:"in", ts: Date.now() });
   if(state.notify.clock && state.bossWa){
     const msg = state.lang==='ko'?'🟢 출근했습니다':state.lang==='id'?'🟢 Absen masuk':'🟢 Clocked in';
     openWhatsApp(waLink(state.bossWa, msg));
   }
-  save();
   updateClockUi();
 }
 
@@ -2806,13 +2835,15 @@ function doClockOut(){
   const overtimeMs = Math.max(0, totalMs - REGULAR_SHIFT_MS);
   state.clock = {status:"out", since:null, lastSummary:{totalMs, regularMs, overtimeMs}};
   state.shifts.push({ id: uid("shift"), clockInTs: start, clockOutTs: Date.now(), totalMs, regularMs, overtimeMs });
+  save();
+  const fbRef = dispatchRef();
+  if(fbRef) fbRef.child("clockEvent").set({ type:"out", ts: Date.now(), totalMs });
   if(state.notify.clock && state.bossWa){
     const msg = state.lang==='ko' ? `⚪ 퇴근했습니다 (근무 ${formatHMS(totalMs)})` :
       state.lang==='id' ? `⚪ Absen keluar (kerja ${formatHMS(totalMs)})` :
       `⚪ Clocked out (worked ${formatHMS(totalMs)})`;
     openWhatsApp(waLink(state.bossWa, msg));
   }
-  save();
   updateClockUi();
 }
 
