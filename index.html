@@ -690,7 +690,7 @@ const I18N = {
   id:{
     onboard_title:"Selamat Datang", onboard_sub:"Menyiapkan tampilan sopir Anda...",
     lbl_dispatch:"Panggilan", lbl_pickup:"Jemput", lbl_destination:"Tujuan (opsional)",
-    ph_pickup:"Lokasi jemput", ph_destination:"Ke mana", btn_gps:"Lokasi saat ini",
+    ph_pickup:"Cari atau ketik alamat", ph_destination:"Cari atau ketik alamat", btn_gps:"Lokasi saat ini",
     btn_search_place:"Cari tempat", btn_dropped:"Set titik turun", btn_map_pick:"Pilih di peta",
     phrase_dropped_off:"Titik turun terakhir",
     sheet_map_pick:"Pilih lokasi di peta", map_drag_hint:"Geser pin atau ketuk peta untuk memindahkan",
@@ -744,7 +744,7 @@ const I18N = {
   ko:{
     onboard_title:"환영합니다", onboard_sub:"기사님 화면을 준비하고 있어요...",
     lbl_dispatch:"호출", lbl_pickup:"픽업 위치", lbl_destination:"목적지 (선택)",
-    ph_pickup:"픽업 위치 입력", ph_destination:"목적지 입력", btn_gps:"현위치",
+    ph_pickup:"주소 검색 또는 입력", ph_destination:"주소 검색 또는 입력", btn_gps:"현위치",
     btn_search_place:"장소 검색", btn_dropped:"내려준 곳", btn_map_pick:"지도에서 선택",
     phrase_dropped_off:"내려준 곳",
     sheet_map_pick:"지도에서 위치 선택", map_drag_hint:"핀을 드래그하거나 지도를 눌러 위치를 옮기세요",
@@ -798,7 +798,7 @@ const I18N = {
   en:{
     onboard_title:"Welcome", onboard_sub:"Setting up your driver view...",
     lbl_dispatch:"Dispatch", lbl_pickup:"Pickup", lbl_destination:"Destination (optional)",
-    ph_pickup:"Where to pick up", ph_destination:"Where to", btn_gps:"Current location",
+    ph_pickup:"Search or type an address", ph_destination:"Search or type an address", btn_gps:"Current location",
     btn_search_place:"Search place", btn_dropped:"Set drop-off", btn_map_pick:"Pick on map",
     phrase_dropped_off:"Where you dropped me off",
     sheet_map_pick:"Choose location on map", map_drag_hint:"Drag the pin or tap the map to move it",
@@ -1064,7 +1064,7 @@ document.getElementById("droppedBtn").addEventListener("click", ()=>{
 });
 
 document.getElementById("searchPlaceBtn").addEventListener("click", ()=>{
-  openPlaceSearchSheet("dest");
+  openPlaceSearchSheet("destInput");
 });
 
 document.getElementById("pickupMapBtn").addEventListener("click", ()=>{
@@ -1230,7 +1230,8 @@ function initMapPicker(fieldId, opts={}){
   canvas.style.display = "block";
 
   let center = { lat:-6.2088, lng:106.8456 }; // default Jakarta
-  if(lastCoords) center = lastCoords;
+  if(opts.initialCenter) center = opts.initialCenter;
+  else if(lastCoords) center = lastCoords;
 
   const finish = (map, marker) => {
     const setup = (c)=>{
@@ -1238,7 +1239,7 @@ function initMapPicker(fieldId, opts={}){
       marker.setPosition(c);
       updateAddressFromLatLng(c.lat, c.lng);
     };
-    if(!lastCoords && navigator.geolocation){
+    if(!opts.initialCenter && !lastCoords && navigator.geolocation){
       navigator.geolocation.getCurrentPosition(
         pos => setup({lat:pos.coords.latitude, lng:pos.coords.longitude}),
         () => updateAddressFromLatLng(center.lat, center.lng),
@@ -1300,7 +1301,7 @@ function initMapPicker(fieldId, opts={}){
   }
 }
 
-function openPlaceSearchSheet(targetField){
+function openPlaceSearchSheet(fieldId, opts={}){
   if(!state.apiKey){
     openSheet(`
       <div class="sheet-title">${t("sheet_search_place")}</div>
@@ -1322,12 +1323,12 @@ function openPlaceSearchSheet(targetField){
     let debounceTimer;
     input.addEventListener("input", ()=>{
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(()=>doPlaceSearch(input.value, targetField), 380);
+      debounceTimer = setTimeout(()=>doPlaceSearch(input.value, fieldId, opts), 380);
     });
   });
 }
 
-async function doPlaceSearch(query, targetField){
+async function doPlaceSearch(query, fieldId, opts={}){
   const resultsEl = document.getElementById("placeSearchResults");
   if(!resultsEl) return;
   if(!query || query.trim().length < 2){ resultsEl.innerHTML=""; return; }
@@ -1359,13 +1360,20 @@ async function doPlaceSearch(query, targetField){
     resultsEl.querySelectorAll(".search-result").forEach(el=>{
       el.addEventListener("click", ()=>{
         const p = data.places[parseInt(el.getAttribute("data-idx"))];
-        const label = (p.displayName?.text||"") + (p.formattedAddress ? (" — "+p.formattedAddress) : "");
-        document.getElementById(targetField==="dest" ? "destInput" : "pickupInput").value = label;
+        // Instead of filling the field directly, open the map centered on this
+        // result so the exact pin can be confirmed or fine-tuned — like Google Maps.
         if(p.location){
-          if(targetField==="dest"){ /* store for potential eta refinement */ }
+          openMapPickerSheet(fieldId, {
+            ...opts,
+            initialCenter: { lat: p.location.latitude, lng: p.location.longitude }
+          });
+        }else{
+          const label = (p.displayName?.text||"") + (p.formattedAddress ? (" — "+p.formattedAddress) : "");
+          const field = document.getElementById(fieldId);
+          if(field) field.value = label;
+          save();
+          closeSheet();
         }
-        save();
-        closeSheet();
       });
     });
   }catch(e){
@@ -1802,6 +1810,7 @@ function openFavoriteSheet(prefill={}){
       <label>${t("sheet_favorite_addr")}</label>
       <input type="text" id="favAddr" value="${escapeHtml(prefill.addr||"")}">
       <div class="field-actions" style="margin-top:6px;">
+        <div class="chip-btn" id="favSearchBtn">🔍 <span>${t("btn_search_place")}</span></div>
         <div class="chip-btn" id="favMapPickBtn">🗺️ <span>${t("btn_map_pick")}</span></div>
       </div>
     </div>
@@ -1820,6 +1829,13 @@ function openFavoriteSheet(prefill={}){
         }
       }).catch(()=>{});
     }
+    document.getElementById("favSearchBtn").addEventListener("click", ()=>{
+      openPlaceSearchSheet("favAddr", {
+        onConfirm: (addr)=>{
+          openFavoriteSheet({ name: nameInput.value.trim(), addr });
+        }
+      });
+    });
     document.getElementById("favMapPickBtn").addEventListener("click", ()=>{
       openMapPickerSheet("favAddr", {
         onConfirm: (addr)=>{
