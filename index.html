@@ -1073,7 +1073,7 @@ const I18N = {
     toast_ok_sent:"Konfirmasi terkirim ke Bos", empty_drivers:"Belum ada sopir. Tambahkan sopir pertama Anda.",
     empty_favorites:"Belum ada favorit tersimpan.", empty_rides:"Belum ada perjalanan hari ini.",
     empty_fuel:"Belum ada catatan bensin.", confirm_reset:"Hapus semua data aplikasi? Tindakan ini tidak bisa dibatalkan.",
-    confirm_delete_driver:"Hapus sopir ini?", sheet_add_driver:"Sopir baru", sheet_driver_name:"Nama sopir",
+    confirm_delete_driver:"Hapus sopir ini?", sheet_add_driver:"Sopir baru", sheet_edit_driver:"Edit sopir", sheet_driver_name:"Nama sopir",
     sheet_driver_wa:"Nomor WhatsApp", sheet_save:"Simpan", sheet_cancel:"Batal", sheet_confirm:"Konfirmasi", sheet_invite_link:"Tautan undangan",
     lbl_pair_code:"Kode pasangan", pair_code_hint:"Bos dan sopir harus punya kode yang sama agar panggilan tersambung.",
     boss_switch_pin_desc:"Masukkan PIN admin untuk beralih ke tampilan Bos.",
@@ -1139,7 +1139,7 @@ const I18N = {
     toast_ok_sent:"사장님께 확인 메시지를 보냈습니다", empty_drivers:"등록된 기사가 없습니다. 첫 기사를 추가해보세요.",
     empty_favorites:"저장된 즐겨찾기가 없습니다.", empty_rides:"오늘 운행 기록이 없습니다.",
     empty_fuel:"주유 기록이 없습니다.", confirm_reset:"모든 앱 데이터를 삭제할까요? 이 작업은 되돌릴 수 없습니다.",
-    confirm_delete_driver:"이 기사를 삭제할까요?", sheet_add_driver:"기사 추가", sheet_driver_name:"기사 이름",
+    confirm_delete_driver:"이 기사를 삭제할까요?", sheet_add_driver:"기사 추가", sheet_edit_driver:"기사 편집", sheet_driver_name:"기사 이름",
     sheet_driver_wa:"WhatsApp 번호", sheet_save:"저장", sheet_cancel:"취소", sheet_confirm:"확인", sheet_invite_link:"초대 링크",
     lbl_pair_code:"페어 코드", pair_code_hint:"사장과 기사가 같은 코드를 가지고 있어야 호출이 연결돼요.",
     boss_switch_pin_desc:"사장 화면으로 전환하려면 관리자 PIN을 입력하세요.",
@@ -1205,7 +1205,7 @@ const I18N = {
     toast_ok_sent:"Confirmation sent to Boss", empty_drivers:"No drivers yet. Add your first driver.",
     empty_favorites:"No favorites saved yet.", empty_rides:"No rides logged today.",
     empty_fuel:"No fuel entries yet.", confirm_reset:"Delete all app data? This cannot be undone.",
-    confirm_delete_driver:"Delete this driver?", sheet_add_driver:"New driver", sheet_driver_name:"Driver name",
+    confirm_delete_driver:"Delete this driver?", sheet_add_driver:"New driver", sheet_edit_driver:"Edit driver", sheet_driver_name:"Driver name",
     sheet_driver_wa:"WhatsApp number", sheet_save:"Save", sheet_cancel:"Cancel", sheet_confirm:"Confirm", sheet_invite_link:"Invite link",
     lbl_pair_code:"Pair code", pair_code_hint:"Boss and driver need the same code for calls to connect.",
     boss_switch_pin_desc:"Enter the admin PIN to switch to the Boss view.",
@@ -2367,11 +2367,13 @@ function renderDriverList(){
         <div class="driver-meta-sub">${escapeHtml(d.wa||"—")}</div>
       </div>
       <div class="slot-link-btn" data-invite="${d.id}">🔗</div>
+      <div class="slot-link-btn" data-driver-edit="${d.id}" style="border-color:transparent;">✏️</div>
+      <div class="slot-link-btn" data-driver-del="${d.id}" style="border-color:transparent;">✕</div>
     </div>
   `).join("");
   el.querySelectorAll("[data-driver]").forEach(slot=>{
     slot.addEventListener("click", (e)=>{
-      if(e.target.closest("[data-invite]")) return;
+      if(e.target.closest("[data-invite]") || e.target.closest("[data-driver-edit]") || e.target.closest("[data-driver-del]")) return;
       state.activeDriverId = slot.getAttribute("data-driver");
       save();
       renderDriverList();
@@ -2383,6 +2385,26 @@ function renderDriverList(){
       e.stopPropagation();
       const driver = state.drivers.find(d=>d.id===btn.getAttribute("data-invite"));
       openInviteSheet(driver);
+    });
+  });
+  el.querySelectorAll("[data-driver-edit]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const driver = state.drivers.find(d=>d.id===btn.getAttribute("data-driver-edit"));
+      if(driver) openDriverSheet(driver);
+    });
+  });
+  el.querySelectorAll("[data-driver-del]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      if(!confirm(t("confirm_delete_driver"))) return;
+      const id = btn.getAttribute("data-driver-del");
+      state.drivers = state.drivers.filter(d=>d.id!==id);
+      if(state.activeDriverId === id){
+        state.activeDriverId = state.drivers.length ? state.drivers[0].id : null;
+      }
+      save();
+      renderDriverList();
     });
   });
   updateActiveDriverTicket();
@@ -2425,28 +2447,51 @@ function updateActiveDriverTicket(){
   document.getElementById("activeDriverSub").textContent = driver ? (driver.wa || "—") : "—";
 }
 
-document.getElementById("addDriverBtn").addEventListener("click", ()=>{
+function openDriverSheet(driver){
+  const isEdit = !!driver;
   openSheet(`
-    <div class="sheet-title">${t("sheet_add_driver")}</div>
-    <div class="field"><label>${t("sheet_driver_name")}</label><input type="text" id="newDriverName"></div>
-    <div class="field"><label>${t("sheet_driver_wa")}</label><input type="tel" id="newDriverWa" placeholder="+62 8xx xxxx xxxx"></div>
+    <div class="sheet-title">${isEdit ? t("sheet_edit_driver") : t("sheet_add_driver")}</div>
+    <div class="field"><label>${t("sheet_driver_name")}</label><input type="text" id="newDriverName" value="${isEdit ? escapeHtml(driver.name) : ''}"></div>
+    <div class="field"><label>${t("sheet_driver_wa")}</label><input type="tel" id="newDriverWa" placeholder="+62 8xx xxxx xxxx" value="${isEdit ? escapeHtml(driver.wa||'') : ''}"></div>
     <button class="btn full primary" id="saveDriverBtn">${t("sheet_save")}</button>
+    ${isEdit ? `<button class="btn full danger-ghost" id="deleteDriverBtn" style="margin-top:8px;">${t("btn_delete")}</button>` : ""}
   `, ()=>{
-    document.getElementById("newDriverName").focus();
+    const nameInput = document.getElementById("newDriverName");
+    if(!isEdit) nameInput.focus();
     document.getElementById("saveDriverBtn").addEventListener("click", ()=>{
-      const name = document.getElementById("newDriverName").value.trim();
+      const name = nameInput.value.trim();
       const wa = document.getElementById("newDriverWa").value.trim();
       if(!name) return;
-      const d = { id: uid("drv"), name, wa };
-      state.drivers.push(d);
-      if(!state.activeDriverId) state.activeDriverId = d.id;
+      if(isEdit){
+        driver.name = name;
+        driver.wa = wa;
+      }else{
+        const d = { id: uid("drv"), name, wa };
+        state.drivers.push(d);
+        if(!state.activeDriverId) state.activeDriverId = d.id;
+      }
       save();
       closeSheet();
       renderDriverList();
       toast(t("toast_saved"));
     });
+    if(isEdit){
+      document.getElementById("deleteDriverBtn").addEventListener("click", ()=>{
+        if(!confirm(t("confirm_delete_driver"))) return;
+        state.drivers = state.drivers.filter(d=>d.id!==driver.id);
+        if(state.activeDriverId === driver.id){
+          state.activeDriverId = state.drivers.length ? state.drivers[0].id : null;
+        }
+        save();
+        closeSheet();
+        renderDriverList();
+        toast(t("toast_deleted"));
+      });
+    }
   });
-});
+}
+
+document.getElementById("addDriverBtn").addEventListener("click", ()=>openDriverSheet(null));
 
 function localDateKey(ts){
   const d = new Date(ts);
