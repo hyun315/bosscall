@@ -1297,6 +1297,7 @@ document.getElementById("driverSettingsBtn").addEventListener("click", ()=>{
       <div class="list-sub" style="margin-top:6px;">${t("pair_code_hint")}</div>
     </div>
     <button class="btn full primary" id="driverSwitchBossBtn">${t("btn_switch_boss")}</button>
+    <button class="btn full danger-ghost" id="driverResetBtn" style="margin-top:10px;">🗑 <span data-i18n="btn_reset">Reset all data</span></button>
   `, ()=>{
     const input = document.getElementById("driverBossWaInput");
     input.value = state.bossWa || "";
@@ -1309,6 +1310,15 @@ document.getElementById("driverSettingsBtn").addEventListener("click", ()=>{
       save();
     });
 
+    document.getElementById("driverResetBtn").addEventListener("click", ()=>{
+      if(confirm(t("confirm_reset"))){
+        localStorage.removeItem(DB_KEY);
+        state = loadState();
+        closeSheet();
+        render();
+      }
+    });
+
     document.getElementById("driverSwitchBossBtn").addEventListener("click", async ()=>{
       const bp = bossPinRef();
       let sharedPin = null;
@@ -1319,6 +1329,13 @@ document.getElementById("driverSettingsBtn").addEventListener("click", ()=>{
         }catch(e){}
       }
       if(!sharedPin){
+        // No password set yet anywhere — nothing to protect against, so let
+        // the switch through directly (this is what unblocks first-time setup).
+        state.role = "boss";
+        save();
+        closeSheet();
+        render();
+        syncDispatchNow();
         toast(t("boss_pin_not_set"));
         return;
       }
