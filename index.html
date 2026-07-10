@@ -488,9 +488,8 @@ button{font-family:inherit;}
     </div>
     <div class="topbar-actions">
       <div class="lang-pill" id="langBtn">EN</div>
-      <div class="icon-btn" id="adminModeBtn" style="display:none;">🔒</div>
       <div class="icon-btn" id="driverSettingsBtn" style="display:none;">⚙️</div>
-      <div class="icon-btn" id="darkToggleBtn">◐</div>
+      <div class="icon-btn" id="adminModeBtn" style="display:none;">🔑</div>
     </div>
   </div>
 
@@ -558,10 +557,7 @@ button{font-family:inherit;}
     <div id="callFavoritesList" class="card"></div>
     <button class="btn full" id="addFavoriteBtn" style="margin-top:6px;">＋ <span data-i18n="btn_add_favorite">Add favorite</span></button>
 
-    <div class="row" style="margin:22px 2px 10px;">
-      <div class="section-label" data-i18n="lbl_ad" style="margin:0;flex:1;">Sponsored</div>
-      <div class="link" id="editAdsBtn" style="font-size:12.5px;cursor:pointer;display:none;" data-i18n="btn_edit_ads">Edit</div>
-    </div>
+    <div class="section-label" data-i18n="lbl_ad">Sponsored</div>
     <div id="adList" class="card"></div>
   </div>
 
@@ -636,15 +632,8 @@ button{font-family:inherit;}
       <button class="btn full ghost" id="testWaBtn" style="margin-top:12px;">✉️ <span data-i18n="btn_test_wa">Send test message</span></button>
     </div>
 
-    <div class="section-label" data-i18n="lbl_api">Google Maps API key</div>
     <div class="card">
-      <div class="field" style="margin-bottom:8px;"><input type="text" id="apiKeyInput" placeholder="AIza..."></div>
-      <div class="list-sub" data-i18n="api_hint">Used for place search and maps. Stored only on this device.</div>
-    </div>
-
-    <div class="section-label" data-i18n="lbl_admin_pin">Admin PIN</div>
-    <div class="card">
-      <div class="field"><input type="password" id="adminPinInput2" inputmode="numeric" placeholder="••••"></div>
+      <div class="list-sub" data-i18n="admin_settings_moved">Google Maps API key and Admin PIN moved to the 🔑 Admin screen (top right).</div>
     </div>
 
     <div class="section-label" data-i18n="lbl_role_switch">Mode</div>
@@ -720,6 +709,8 @@ const I18N = {
     admin_pin_wrong:"PIN salah", admin_pin_not_set:"Belum ada PIN diatur — atur di Lainnya untuk keamanan.",
     admin_mode_on:"Mode admin aktif", admin_mode_off:"Mode admin nonaktif",
     sheet_edit_ads:"Kelola sponsor", sheet_ad_name:"Nama tempat", sheet_ad_addr:"Alamat", sheet_ad_rating:"Rating",
+    admin_settings_moved:"Kunci API Google Maps dan PIN Admin dipindah ke layar 🔑 Admin (kanan atas).",
+    sheet_admin_title:"Layar Admin", lbl_admin_ads:"Kelola sponsor",
     btn_add_ad:"Tambah sponsor", lbl_admin_pin:"PIN admin (lindungi edit sponsor)",
     lbl_payroll:"Pengaturan gaji", lbl_base_pay:"Gaji pokok", lbl_overtime:"Lembur", lbl_meal:"Uang makan",
     lbl_vehicle:"Tunjangan kendaraan", lbl_bonus:"Bonus", lbl_insurance:"Asuransi", lbl_preview_total:"Perkiraan total",
@@ -769,6 +760,8 @@ const I18N = {
     admin_pin_wrong:"PIN이 올바르지 않아요", admin_pin_not_set:"설정된 PIN이 없어요 — 더보기에서 보안을 위해 설정해두세요.",
     admin_mode_on:"관리자 모드 켜짐", admin_mode_off:"관리자 모드 꺼짐",
     sheet_edit_ads:"광고 관리", sheet_ad_name:"장소 이름", sheet_ad_addr:"주소", sheet_ad_rating:"평점",
+    admin_settings_moved:"Google Maps API 키와 관리자 PIN은 우측 상단 🔑 관리자 화면으로 옮겨졌어요.",
+    sheet_admin_title:"관리자 화면", lbl_admin_ads:"광고 관리",
     btn_add_ad:"광고 추가", lbl_admin_pin:"관리자 PIN (광고 편집 보호)",
     lbl_payroll:"급여 설정", lbl_base_pay:"기본급", lbl_overtime:"시간외수당", lbl_meal:"식대",
     lbl_vehicle:"차량유지비", lbl_bonus:"상여금", lbl_insurance:"보험", lbl_preview_total:"예상 총액",
@@ -818,6 +811,8 @@ const I18N = {
     admin_pin_wrong:"Incorrect PIN", admin_pin_not_set:"No PIN set yet — set one in More for security.",
     admin_mode_on:"Admin mode on", admin_mode_off:"Admin mode off",
     sheet_edit_ads:"Manage sponsored", sheet_ad_name:"Place name", sheet_ad_addr:"Address", sheet_ad_rating:"Rating",
+    admin_settings_moved:"Google Maps API key and Admin PIN moved to the 🔑 Admin screen (top right).",
+    sheet_admin_title:"Admin screen", lbl_admin_ads:"Manage sponsored",
     btn_add_ad:"Add sponsored listing", lbl_admin_pin:"Admin PIN (protects ad editing)",
     lbl_payroll:"Payroll settings", lbl_base_pay:"Base pay", lbl_overtime:"Overtime rate", lbl_meal:"Meal allowance",
     lbl_vehicle:"Vehicle allowance", lbl_bonus:"Bonus", lbl_insurance:"Insurance", lbl_preview_total:"Estimated total",
@@ -1008,10 +1003,6 @@ document.getElementById("langBtn").addEventListener("click", ()=>{
   state.lang = order[(idx+1) % order.length];
   save();
   render();
-});
-
-document.getElementById("darkToggleBtn").addEventListener("click", ()=>{
-  toast(state.lang==="ko" ? "다크 모드는 항상 켜져 있어요" : state.lang==="id" ? "Mode gelap selalu aktif" : "Dark mode is always on");
 });
 
 document.getElementById("driverSettingsBtn").addEventListener("click", ()=>{
@@ -1424,64 +1415,37 @@ function renderAdList(){
   });
 }
 
-document.getElementById("editAdsBtn").addEventListener("click", ()=>{
-  openAdManageSheet();
-});
-
-/* ---------- Admin mode (separate from regular boss settings) ---------- */
-let adminModeActive = false;
-
-function updateAdminModeUi(){
-  const btn = document.getElementById("adminModeBtn");
-  const editBtn = document.getElementById("editAdsBtn");
-  if(btn){
-    btn.textContent = adminModeActive ? "🔓" : "🔒";
-    btn.style.color = adminModeActive ? "var(--signal)" : "var(--text-muted)";
-  }
-  if(editBtn){
-    editBtn.style.display = adminModeActive ? "block" : "none";
-  }
-  const roleLabel = document.getElementById("roleLabel");
-  if(roleLabel && state.role === "boss"){
-    roleLabel.textContent = adminModeActive ? "BOSS MODE · ADMIN" : "BOSS MODE";
-  }
-}
-
+/* ---------- Admin screen: API key, PIN, and ad management in one place ---------- */
 document.getElementById("adminModeBtn").addEventListener("click", ()=>{
-  if(adminModeActive){
-    adminModeActive = false;
-    updateAdminModeUi();
-    toast(t("admin_mode_off"));
-    return;
-  }
-  if(!state.adminPin){
-    toast(t("admin_pin_not_set"));
-    return;
-  }
-  openSheet(`
-    <div class="sheet-title">${t("sheet_admin_pin")}</div>
-    <div class="list-sub" style="margin-bottom:14px;">${t("admin_pin_desc")}</div>
-    <div class="field"><input type="password" id="adminPinInput" inputmode="numeric" placeholder="••••"></div>
-    <button class="btn full primary" id="adminPinConfirmBtn" style="margin-top:6px;">${t("sheet_confirm")}</button>
-  `, ()=>{
-    const input = document.getElementById("adminPinInput");
-    input.focus();
-    document.getElementById("adminPinConfirmBtn").addEventListener("click", ()=>{
-      if(input.value === state.adminPin){
-        adminModeActive = true;
-        updateAdminModeUi();
-        closeSheet();
-        toast(t("admin_mode_on"));
-      }else{
-        toast(t("admin_pin_wrong"));
-      }
+  if(state.adminPin){
+    openSheet(`
+      <div class="sheet-title">${t("sheet_admin_pin")}</div>
+      <div class="list-sub" style="margin-bottom:14px;">${t("admin_pin_desc")}</div>
+      <div class="field"><input type="password" id="adminPinCheckInput" inputmode="numeric" placeholder="••••"></div>
+      <button class="btn full primary" id="adminPinConfirmBtn" style="margin-top:6px;">${t("sheet_confirm")}</button>
+    `, ()=>{
+      const input = document.getElementById("adminPinCheckInput");
+      input.focus();
+      document.getElementById("adminPinConfirmBtn").addEventListener("click", ()=>{
+        if(input.value === state.adminPin){
+          closeSheet();
+          setTimeout(openAdminSheet, 220);
+        }else{
+          toast(t("admin_pin_wrong"));
+        }
+      });
     });
-  });
+  }else{
+    toast(t("admin_pin_not_set"));
+    openAdminSheet();
+  }
 });
 
-function openAdManageSheet(){
+function renderAdminAdList(){
+  const el = document.getElementById("adminAdList");
+  if(!el) return;
   const pool = adPool();
-  const listHtml = pool.length ? pool.map((r,i)=>`
+  el.innerHTML = pool.length ? pool.map((r,i)=>`
     <div class="list-item" data-adm="${i}">
       <div class="list-icon" style="background:#FCE8E6;">🍽️</div>
       <div class="list-body">
@@ -1491,15 +1455,49 @@ function openAdManageSheet(){
       <div class="slot-link-btn" data-adm-del="${i}" style="border-color:transparent;">✕</div>
     </div>
   `).join("") : `<div class="empty-state"><div class="empty-state-text">${t("empty_favorites")}</div></div>`;
+  el.querySelectorAll("[data-adm-del]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      state.ads.splice(parseInt(btn.getAttribute("data-adm-del")), 1);
+      save();
+      renderAdminAdList();
+      renderAdList();
+    });
+  });
+}
 
+function openAdminSheet(){
   openSheet(`
-    <div class="sheet-title">${t("sheet_edit_ads")}</div>
-    <div id="adManageList">${listHtml}</div>
+    <div class="sheet-title">${t("sheet_admin_title")}</div>
+
+    <div class="section-label" data-i18n="lbl_api" style="margin-top:0;">Google Maps API key</div>
+    <div class="card">
+      <div class="field" style="margin-bottom:8px;"><input type="text" id="adminApiKeyInput" placeholder="AIza..."></div>
+      <div class="list-sub">${t("api_hint")}</div>
+    </div>
+
+    <div class="section-label">${t("lbl_admin_pin")}</div>
+    <div class="card">
+      <div class="field"><input type="password" id="adminPinFieldInput" inputmode="numeric" placeholder="••••"></div>
+    </div>
+
+    <div class="section-label">${t("lbl_admin_ads")}</div>
+    <div id="adminAdList" class="card"></div>
     <div class="field" style="margin-top:14px;"><label>${t("sheet_ad_name")}</label><input type="text" id="newAdName"></div>
     <div class="field"><label>${t("sheet_ad_addr")}</label><input type="text" id="newAdAddr"></div>
     <div class="field"><label>${t("sheet_ad_rating")}</label><input type="number" step="0.1" min="0" max="5" id="newAdRating" placeholder="4.8"></div>
     <button class="btn full primary" id="saveAdBtn">${t("btn_add_ad")}</button>
   `, ()=>{
+    const apiKeyField = document.getElementById("adminApiKeyInput");
+    apiKeyField.value = state.apiKey || "";
+    apiKeyField.addEventListener("input", ()=>{ state.apiKey = apiKeyField.value.trim(); save(); });
+
+    const pinField = document.getElementById("adminPinFieldInput");
+    pinField.value = state.adminPin || "";
+    pinField.addEventListener("input", ()=>{ state.adminPin = pinField.value.trim(); save(); });
+
+    renderAdminAdList();
+
     if(state.apiKey){
       loadGoogleMaps().then(()=>{
         if(window.google && window.google.maps && window.google.maps.places){
@@ -1510,26 +1508,18 @@ function openAdManageSheet(){
         }
       }).catch(()=>{});
     }
-    document.querySelectorAll("[data-adm-del]").forEach(btn=>{
-      btn.addEventListener("click", (e)=>{
-        e.stopPropagation();
-        if(!state.ads.length) state.ads = [...AD_RESTAURANTS];
-        state.ads.splice(parseInt(btn.getAttribute("data-adm-del")), 1);
-        save();
-        closeSheet();
-        renderAdList();
-        openAdManageSheet();
-      });
-    });
     document.getElementById("saveAdBtn").addEventListener("click", ()=>{
       const name = document.getElementById("newAdName").value.trim();
       const addr = document.getElementById("newAdAddr").value.trim();
       const rating = parseFloat(document.getElementById("newAdRating").value) || 4.5;
       if(!name || !addr) return;
-      if(!state.ads.length) state.ads = [...AD_RESTAURANTS];
+      adPool(); // ensure state.ads is seeded
       state.ads.push({name, addr, rating});
       save();
-      closeSheet();
+      document.getElementById("newAdName").value = "";
+      document.getElementById("newAdAddr").value = "";
+      document.getElementById("newAdRating").value = "";
+      renderAdminAdList();
       renderAdList();
       toast(t("toast_saved"));
     });
@@ -1864,12 +1854,6 @@ document.getElementById("addFuelBtn").addEventListener("click", ()=>{
 document.getElementById("bossWaInput").addEventListener("input", (e)=>{
   state.bossWa = e.target.value; save();
 });
-document.getElementById("apiKeyInput").addEventListener("input", (e)=>{
-  state.apiKey = e.target.value.trim(); save();
-});
-document.getElementById("adminPinInput2").addEventListener("input", (e)=>{
-  state.adminPin = e.target.value.trim(); save();
-});
 document.querySelectorAll("[data-notify]").forEach(tg=>{
   tg.addEventListener("click", ()=>{
     const key = tg.getAttribute("data-notify");
@@ -2088,7 +2072,6 @@ function render(){
   document.getElementById("bossTabbar").style.display = state.role === "boss" ? "flex" : "none";
   document.getElementById("driverSettingsBtn").style.display = state.role === "driver" ? "flex" : "none";
   document.getElementById("adminModeBtn").style.display = state.role === "boss" ? "flex" : "none";
-  updateAdminModeUi();
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
 
   if(state.role === "boss"){
@@ -2102,8 +2085,6 @@ function render(){
     bindPayrollInputs();
     renderFuel();
     document.getElementById("bossWaInput").value = state.bossWa || "";
-    document.getElementById("apiKeyInput").value = state.apiKey || "";
-    document.getElementById("adminPinInput2").value = state.adminPin || "";
     document.querySelectorAll("[data-notify]").forEach(tg=>{
       tg.classList.toggle("on", !!state.notify[tg.getAttribute("data-notify")]);
     });
