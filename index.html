@@ -852,9 +852,18 @@ function syncDispatchNow(){
   });
 }
 
+let activeDispatchRef = null;
 function setupFirebaseListeners(){
+  // Re-subscribing (e.g. after the pair code changes) must first detach the
+  // old listeners, otherwise they stay bound to the stale pairId forever
+  // and calls/responses silently stop arriving.
+  if(activeDispatchRef){
+    activeDispatchRef.child("pendingCall").off();
+    activeDispatchRef.child("response").off();
+  }
   const ref = dispatchRef();
   if(!ref) return;
+  activeDispatchRef = ref;
 
   ref.child("pendingCall").on("value", (snap)=>{
     const data = snap.val();
@@ -1322,6 +1331,7 @@ document.getElementById("driverSettingsBtn").addEventListener("click", ()=>{
     pairInput.addEventListener("input", ()=>{
       state.pairId = pairInput.value.trim().toUpperCase();
       save();
+      setupFirebaseListeners();
     });
 
     document.getElementById("driverResetBtn").addEventListener("click", ()=>{
@@ -1330,6 +1340,7 @@ document.getElementById("driverSettingsBtn").addEventListener("click", ()=>{
         state = loadState();
         closeSheet();
         render();
+        setupFirebaseListeners();
       }
     });
 
@@ -2551,6 +2562,7 @@ document.getElementById("resetDataBtn").addEventListener("click", ()=>{
     localStorage.removeItem(DB_KEY);
     state = loadState();
     render();
+    setupFirebaseListeners();
   }
 });
 
