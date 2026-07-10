@@ -46,10 +46,6 @@ module.exports = async (req, res) => {
       notification: { title, body: body || "" },
       webpush: {
         fcmOptions: { link: url || "/" },
-        notification: {
-          icon: "https://bosscall-ten.vercel.app/icon.png",
-          badge: "https://bosscall-ten.vercel.app/icon.png",
-        },
       },
     });
 
