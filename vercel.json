@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "firebase-messaging-sw.js", "use": "@vercel/static" },
+    { "src": "api/send-push.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/api/send-push", "dest": "/api/send-push.js" },
+    { "src": "/firebase-messaging-sw.js", "dest": "/firebase-messaging-sw.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
