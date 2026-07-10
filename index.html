@@ -641,6 +641,12 @@ button{font-family:inherit;}
       <button class="btn full ghost" id="testAlertBtn">🔊 <span data-i18n="btn_test_alert">Test alert</span></button>
     </div>
 
+    <div class="section-label" data-i18n="lbl_boss_pin">Boss switch password</div>
+    <div class="card">
+      <div class="field"><input type="password" id="bossPinInput" placeholder="••••••"></div>
+      <div class="list-sub" data-i18n="boss_pin_hint">A driver must enter this to switch from driver view back to boss view. Set it here — it syncs to the paired driver automatically.</div>
+    </div>
+
     <div class="section-label" data-i18n="lbl_role_switch">Mode</div>
     <div class="card">
       <div class="row">
@@ -746,15 +752,24 @@ function dispatchRef(){
   return db.ref("dispatch/" + pairId);
 }
 
-/* The admin PIN is set on the boss's own device, but must also be checkable
-   from the driver's separate device (different localStorage entirely) when
-   they try to switch to the boss view. Mirror it into Firebase, scoped by
-   the same pairId used for call/response sync, so both devices agree. */
-function pinRef(){
+/* The boss's own switch-back password ("사장 전환 암호"), set by each boss in
+   their own Settings screen. It must also be checkable from the driver's
+   separate device (different localStorage entirely) when they try to
+   switch to the boss view, so mirror it into Firebase, scoped by the same
+   pairId used for call/response sync — this is completely separate from
+   the developer-only admin password below. */
+function bossPinRef(){
   const db = initFirebase();
   if(!db) return null;
-  return db.ref("dispatch/" + ensurePairId() + "/pin");
+  return db.ref("dispatch/" + ensurePairId() + "/bossPin");
 }
+
+/* Admin screen password — gates the developer-only 🔑 screen (API key,
+   ad/banner management). This is NOT the boss's password and is never
+   shown or settable anywhere in the UI; only someone with access to this
+   source code (i.e. the developer) knows it. Change it here directly if
+   you want a different value. */
+const ADMIN_DEV_PASSWORD = "BOSSCALL-DEV-2026";
 
 async function requestNotifyPermission(){
   if(!("Notification" in window)) return false;
@@ -925,6 +940,8 @@ const I18N = {
     lbl_fuel:"Catatan bensin", lbl_fuel_month:"Bulan ini", btn_add_fuel:"Tambah catatan bensin",
     lbl_whatsapp:"WhatsApp", lbl_boss_wa:"Nomor WA Bos", notify_call:"Notifikasi saat panggilan",
     lbl_app_alerts:"Alarm aplikasi", app_alerts_desc:"Dapatkan suara, getaran, dan notifikasi begitu ada panggilan atau respons — bahkan di dua HP berbeda.",
+    lbl_boss_pin:"Kata sandi beralih ke Bos", boss_pin_hint:"Sopir harus memasukkan ini untuk beralih dari tampilan sopir ke tampilan Bos. Atur di sini — otomatis tersinkron ke sopir yang berpasangan.",
+    boss_pin_not_set:"Bos belum mengatur kata sandi beralih.",
     btn_enable_alerts:"Aktifkan alarm", btn_test_alert:"Tes alarm", alerts_enabled:"Alarm aktif", alerts_denied:"Izin notifikasi ditolak — aktifkan di pengaturan browser",
     notify_accept:"Notifikasi saat diterima", notify_clock:"Notifikasi absen masuk/keluar", notify_fuel:"Notifikasi catatan bensin",
     btn_test_wa:"Kirim pesan tes", lbl_api:"Kunci API Google Maps", api_hint:"Digunakan untuk pencarian tempat dan peta. Hanya disimpan di perangkat ini.",
@@ -987,6 +1004,8 @@ const I18N = {
     lbl_fuel:"주유 기록", lbl_fuel_month:"이번 달", btn_add_fuel:"주유 기록 추가",
     lbl_whatsapp:"WhatsApp", lbl_boss_wa:"사장 WA 번호", notify_call:"호출 시 알림",
     lbl_app_alerts:"앱 알림", app_alerts_desc:"호출이나 응답이 오는 즉시 소리, 진동, 알림으로 바로 알려드려요 — 서로 다른 두 폰 사이에서도 작동합니다.",
+    lbl_boss_pin:"사장 전환 암호", boss_pin_hint:"기사가 기사 화면에서 사장 화면으로 넘어갈 때 이 암호를 입력해야 해요. 여기서 설정하면 짝지어진 기사에게 자동으로 동기화됩니다.",
+    boss_pin_not_set:"사장님이 아직 전환 암호를 설정하지 않았어요.",
     btn_enable_alerts:"알림 켜기", btn_test_alert:"테스트 알람", alerts_enabled:"알림이 켜졌어요", alerts_denied:"알림 권한이 거부됐어요 — 브라우저 설정에서 허용해주세요",
     notify_accept:"수락 시 알림", notify_clock:"출퇴근 시 알림", notify_fuel:"주유 기록 시 알림",
     btn_test_wa:"테스트 메시지 발송", lbl_api:"Google Maps API 키", api_hint:"장소 검색 및 지도 표시에 사용됩니다. 이 기기에만 저장됩니다.",
@@ -1049,6 +1068,8 @@ const I18N = {
     lbl_fuel:"Fuel log", lbl_fuel_month:"This month", btn_add_fuel:"Add fuel entry",
     lbl_whatsapp:"WhatsApp", lbl_boss_wa:"Boss WhatsApp number", notify_call:"Notify on call",
     lbl_app_alerts:"App alerts", app_alerts_desc:"Get a sound, vibration, and notification the instant a call or response arrives — even across two different phones.",
+    lbl_boss_pin:"Boss switch password", boss_pin_hint:"A driver must enter this to switch from driver view back to boss view. Set it here — it syncs to the paired driver automatically.",
+    boss_pin_not_set:"Boss hasn't set a switch password yet.",
     btn_enable_alerts:"Enable alerts", btn_test_alert:"Test alert", alerts_enabled:"Alerts enabled", alerts_denied:"Notification permission denied — enable it in browser settings",
     notify_accept:"Notify on accept", notify_clock:"Notify on clock in/out", notify_fuel:"Notify on fuel entry",
     btn_test_wa:"Send test message", lbl_api:"Google Maps API key", api_hint:"Used for place search and maps. Stored only on this device.",
@@ -1097,7 +1118,7 @@ function loadState(){
     activeDriverId:null,
     favorites:[],
     ads:[], // boss-editable sponsored listings; falls back to AD_RESTAURANTS pool when empty
-    adminPin:"",
+    bossPin:"", // boss-set password required for driver→boss switch (synced via Firebase)
     shifts:[], // {id,clockInTs,clockOutTs,totalMs,regularMs,overtimeMs} completed work shifts
     driverEnRoute:null, // {pickup,dest,ts} set when driver's Firebase response arrives on boss's device
     pairId:"", // shared code that scopes this boss<->driver pair's Firebase data (prevents cross-tenant mixing)
@@ -1289,22 +1310,22 @@ document.getElementById("driverSettingsBtn").addEventListener("click", ()=>{
     });
 
     document.getElementById("driverSwitchBossBtn").addEventListener("click", async ()=>{
-      const pr = pinRef();
+      const bp = bossPinRef();
       let sharedPin = null;
-      if(pr){
+      if(bp){
         try{
-          const snap = await pr.once("value");
+          const snap = await bp.once("value");
           sharedPin = snap.val();
         }catch(e){}
       }
       if(!sharedPin){
-        toast(t("admin_pin_not_set"));
+        toast(t("boss_pin_not_set"));
         return;
       }
       openSheet(`
-        <div class="sheet-title">${t("sheet_admin_pin")}</div>
+        <div class="sheet-title">${t("lbl_boss_pin")}</div>
         <div class="list-sub" style="margin-bottom:14px;">${t("boss_switch_pin_desc")}</div>
-        <div class="field"><input type="password" id="bossSwitchPinInput" inputmode="numeric" placeholder="••••"></div>
+        <div class="field"><input type="password" id="bossSwitchPinInput" placeholder="••••••"></div>
         <button class="btn full primary" id="bossSwitchPinConfirmBtn" style="margin-top:6px;">${t("sheet_confirm")}</button>
       `, ()=>{
         const pinField = document.getElementById("bossSwitchPinInput");
@@ -1819,30 +1840,25 @@ function renderAdList(){
   });
 }
 
-/* ---------- Admin screen: API key, PIN, and ad management in one place ---------- */
+/* ---------- Admin screen: API key and ad management (developer-only) ---------- */
 document.getElementById("adminModeBtn").addEventListener("click", ()=>{
-  if(state.adminPin){
-    openSheet(`
-      <div class="sheet-title">${t("sheet_admin_pin")}</div>
-      <div class="list-sub" style="margin-bottom:14px;">${t("admin_pin_desc")}</div>
-      <div class="field"><input type="password" id="adminPinCheckInput" inputmode="numeric" placeholder="••••"></div>
-      <button class="btn full primary" id="adminPinConfirmBtn" style="margin-top:6px;">${t("sheet_confirm")}</button>
-    `, ()=>{
-      const input = document.getElementById("adminPinCheckInput");
-      input.focus();
-      document.getElementById("adminPinConfirmBtn").addEventListener("click", ()=>{
-        if(input.value === state.adminPin){
-          closeSheet();
-          setTimeout(openAdminSheet, 220);
-        }else{
-          toast(t("admin_pin_wrong"));
-        }
-      });
+  openSheet(`
+    <div class="sheet-title">${t("sheet_admin_pin")}</div>
+    <div class="list-sub" style="margin-bottom:14px;">${t("admin_pin_desc")}</div>
+    <div class="field"><input type="password" id="adminPinCheckInput" placeholder="••••••••"></div>
+    <button class="btn full primary" id="adminPinConfirmBtn" style="margin-top:6px;">${t("sheet_confirm")}</button>
+  `, ()=>{
+    const input = document.getElementById("adminPinCheckInput");
+    input.focus();
+    document.getElementById("adminPinConfirmBtn").addEventListener("click", ()=>{
+      if(input.value === ADMIN_DEV_PASSWORD){
+        closeSheet();
+        setTimeout(openAdminSheet, 220);
+      }else{
+        toast(t("admin_pin_wrong"));
+      }
     });
-  }else{
-    toast(t("admin_pin_not_set"));
-    openAdminSheet();
-  }
+  });
 });
 
 function renderAdminAdList(){
@@ -1914,11 +1930,6 @@ function openAdminSheet(){
       <div class="list-sub">${t("api_hint")}</div>
     </div>
 
-    <div class="section-label">${t("lbl_admin_pin")}</div>
-    <div class="card">
-      <div class="field"><input type="password" id="adminPinFieldInput" inputmode="numeric" placeholder="••••"></div>
-    </div>
-
     <div class="section-label">${t("lbl_admin_ads")}</div>
     <div id="adminAdList" class="card"></div>
     <div id="adFormTitle" class="list-sub" style="margin:14px 0 4px;font-weight:600;">${t("btn_add_ad")}</div>
@@ -1940,15 +1951,6 @@ function openAdminSheet(){
     const apiKeyField = document.getElementById("adminApiKeyInput");
     apiKeyField.value = state.apiKey || "";
     apiKeyField.addEventListener("input", ()=>{ state.apiKey = apiKeyField.value.trim(); save(); });
-
-    const pinField = document.getElementById("adminPinFieldInput");
-    pinField.value = state.adminPin || "";
-    pinField.addEventListener("input", ()=>{
-      state.adminPin = pinField.value.trim();
-      save();
-      const pr = pinRef();
-      if(pr) pr.set(state.adminPin);
-    });
 
     renderAdminAdList();
 
@@ -2497,6 +2499,13 @@ document.getElementById("testAlertBtn").addEventListener("click", ()=>{
   fireAlert("BossCall", state.lang==='ko' ? "테스트 알람입니다" : state.lang==='id' ? "Ini alarm uji coba" : "This is a test alert");
 });
 
+document.getElementById("bossPinInput").addEventListener("input", (e)=>{
+  state.bossPin = e.target.value.trim();
+  save();
+  const bp = bossPinRef();
+  if(bp) bp.set(state.bossPin);
+});
+
 document.getElementById("switchModeBtn").addEventListener("click", ()=>{
   state.role = state.role === "boss" ? "driver" : "boss";
   save();
@@ -2727,6 +2736,7 @@ function render(){
     renderFuel();
     updateCallStatusUi();
     document.getElementById("bossWaInput").value = state.bossWa || "";
+    document.getElementById("bossPinInput").value = state.bossPin || "";
     document.querySelectorAll("[data-notify]").forEach(tg=>{
       tg.classList.toggle("on", !!state.notify[tg.getAttribute("data-notify")]);
     });
