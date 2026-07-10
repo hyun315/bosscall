@@ -822,9 +822,11 @@ function tokenRef(){
    pushes. */
 async function setupPushNotifications(){
   const granted = await requestNotifyPermission();
-  if(!granted) return false;
+  if(!granted){ toast("❌ 알림 권한 거부됨"); return false; }
+  toast("✅ 권한 허용됨, 서비스워커 등록 중...");
   const reg = await registerServiceWorker();
-  if(!reg) return false;
+  if(!reg){ toast("❌ 서비스워커 등록 실패 (firebase-messaging-sw.js 확인)"); return false; }
+  toast("✅ 서비스워커 등록됨, 토큰 발급 중...");
   try{
     initFirebase();
     if(!fcmMessaging) fcmMessaging = firebase.messaging();
@@ -834,10 +836,14 @@ async function setupPushNotifications(){
       save();
       const ref = tokenRef();
       if(ref) ref.set(token);
+      toast("✅ FCM 토큰 발급 및 저장 완료!");
       return true;
+    }else{
+      toast("❌ 토큰이 비어있음 (VAPID 키 확인 필요)");
     }
   }catch(e){
     console.error("FCM token failed", e);
+    toast("❌ 토큰 발급 실패: " + (e && e.message ? e.message : e));
   }
   return false;
 }
@@ -853,14 +859,22 @@ async function sendPushToOther(targetRole, title, body, url){
     if(!db) return;
     const snap = await db.ref("dispatch/" + ensurePairId() + "/tokens/" + targetRole).once("value");
     const token = snap.val();
-    if(!token) return;
-    await fetch("/api/send-push", {
+    if(!token){ toast("⚠️ 상대방(" + targetRole + ") 푸시 토큰이 없어요 — 그쪽도 알림 켜기 필요"); return; }
+    const res = await fetch("/api/send-push", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, title, body, url: url || "/" })
     });
+    if(res.ok){
+      toast("✅ 푸시 발송 성공");
+    }else{
+      const errText = await res.text();
+      toast("❌ 푸시 발송 실패 (" + res.status + "): " + errText.slice(0,120));
+      console.error("send-push response", res.status, errText);
+    }
   }catch(e){
     console.error("sendPushToOther failed", e);
+    toast("❌ 푸시 발송 중 오류: " + (e && e.message ? e.message : e));
   }
 }
 
@@ -1507,6 +1521,14 @@ document.getElementById("langBtn").addEventListener("click", ()=>{
 document.getElementById("driverSettingsBtn").addEventListener("click", ()=>{
   openSheet(`
     <div class="sheet-title">${t("driver_settings_title")}</div>
+
+    <div class="section-label" style="margin-top:0;">${t("lbl_app_alerts")}</div>
+    <div class="card">
+      <div class="list-sub" style="margin-bottom:12px;">${t("app_alerts_desc")}</div>
+      <button class="btn full primary" id="driverEnableNotifyBtn" style="margin-bottom:8px;">🔔 <span>${t("btn_enable_alerts")}</span></button>
+      <button class="btn full ghost" id="driverTestAlertBtn">🔊 <span>${t("btn_test_alert")}</span></button>
+    </div>
+
     <div class="field"><label>${t("lbl_boss_wa")}</label><input type="tel" id="driverBossWaInput" placeholder="+62 8xx xxxx xxxx"></div>
     <div class="field">
       <label>${t("lbl_pair_code")}</label>
@@ -1516,6 +1538,21 @@ document.getElementById("driverSettingsBtn").addEventListener("click", ()=>{
     <button class="btn full primary" id="driverSwitchBossBtn">${t("btn_switch_boss")}</button>
     <button class="btn full danger-ghost" id="driverResetBtn" style="margin-top:10px;">🗑 <span data-i18n="btn_reset">Reset all data</span></button>
   `, ()=>{
+    document.getElementById("driverEnableNotifyBtn").addEventListener("click", async ()=>{
+      if(!isStandaloneApp()){
+        toast(t("need_homescreen_install"));
+      }
+      const pushReady = await setupPushNotifications();
+      toast(pushReady ? t("alerts_enabled") : t("alerts_denied"));
+      if(pushReady){
+        playAlertSound();
+        fireAlert("BossCall", t("alerts_enabled"));
+      }
+    });
+    document.getElementById("driverTestAlertBtn").addEventListener("click", ()=>{
+      fireAlert("BossCall", state.lang==='ko' ? "테스트 알람입니다" : state.lang==='id' ? "Ini alarm uji coba" : "This is a test alert");
+    });
+
     const input = document.getElementById("driverBossWaInput");
     input.value = state.bossWa || "";
     input.addEventListener("input", ()=>{ state.bossWa = input.value; save(); });
