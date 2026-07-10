@@ -735,6 +735,7 @@ const I18N = {
     lbl_active_trip:"Perjalanan aktif", btn_end_trip:"Selesaikan perjalanan", toast_trip_ended:"Perjalanan selesai",
     lbl_current_time:"Waktu sekarang", lbl_total_worked:"Total jam kerja", lbl_regular_hours:"Reguler", lbl_overtime_hours:"Lembur",
     sheet_send_invite:"Kirim via WhatsApp", sheet_copy_link:"Salin tautan", sheet_add_favorite:"Favorit baru",
+    sheet_edit_favorite:"Edit favorit", btn_delete:"Hapus",
     sheet_favorite_name:"Nama tempat", sheet_favorite_addr:"Alamat", sheet_add_fuel:"Catatan bensin",
     fuel_liters:"Liter", fuel_cost:"Biaya", sheet_search_place:"Cari tempat",
     search_placeholder:"Ketik nama tempat...", need_api_key:"Masukkan kunci API Google Maps di Lainnya untuk mengaktifkan pencarian.",
@@ -789,6 +790,7 @@ const I18N = {
     lbl_active_trip:"진행중 운행", btn_end_trip:"운행 종료", toast_trip_ended:"운행이 종료되었습니다",
     lbl_current_time:"현재 시각", lbl_total_worked:"총 근무시간", lbl_regular_hours:"정규", lbl_overtime_hours:"초과근무",
     sheet_send_invite:"WhatsApp으로 보내기", sheet_copy_link:"링크 복사", sheet_add_favorite:"즐겨찾기 추가",
+    sheet_edit_favorite:"즐겨찾기 편집", btn_delete:"삭제",
     sheet_favorite_name:"장소 이름", sheet_favorite_addr:"주소", sheet_add_fuel:"주유 기록 추가",
     fuel_liters:"주유량(L)", fuel_cost:"비용", sheet_search_place:"장소 검색",
     search_placeholder:"장소 이름을 입력하세요...", need_api_key:"장소 검색을 사용하려면 [더보기]에서 Google Maps API 키를 입력하세요.",
@@ -843,6 +845,7 @@ const I18N = {
     lbl_active_trip:"Active trip", btn_end_trip:"End trip", toast_trip_ended:"Trip ended",
     lbl_current_time:"Current time", lbl_total_worked:"Total worked", lbl_regular_hours:"Regular", lbl_overtime_hours:"Overtime",
     sheet_send_invite:"Send via WhatsApp", sheet_copy_link:"Copy link", sheet_add_favorite:"New favorite",
+    sheet_edit_favorite:"Edit favorite", btn_delete:"Delete",
     sheet_favorite_name:"Place name", sheet_favorite_addr:"Address", sheet_add_fuel:"Add fuel entry",
     fuel_liters:"Liters", fuel_cost:"Cost", sheet_search_place:"Search place",
     search_placeholder:"Type a place name...", need_api_key:"Enter a Google Maps API key in More to enable search.",
@@ -1645,15 +1648,23 @@ function renderCallFavorites(){
         <div class="list-title">${escapeHtml(f.name)}</div>
         <div class="list-sub">${escapeHtml(f.addr||'')}</div>
       </div>
+      <div class="slot-link-btn" data-fav-edit="${f.id}" style="border-color:transparent;">✏️</div>
       <div class="slot-link-btn" data-fav-del="${f.id}" style="border-color:transparent;">✕</div>
     </div>
   `).join("");
   el.querySelectorAll("[data-fav-quick]").forEach(item=>{
     item.addEventListener("click", (e)=>{
-      if(e.target.closest("[data-fav-del]")) return;
+      if(e.target.closest("[data-fav-del]") || e.target.closest("[data-fav-edit]")) return;
       const fav = state.favorites.find(f=>f.id===item.getAttribute("data-fav-quick"));
       document.getElementById("destInput").value = fav.addr || fav.name;
       toast(t("toast_dest_set"));
+    });
+  });
+  el.querySelectorAll("[data-fav-edit]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const fav = state.favorites.find(f=>f.id===btn.getAttribute("data-fav-edit"));
+      if(fav) openFavoriteSheet({ id: fav.id, name: fav.name, addr: fav.addr });
     });
   });
   el.querySelectorAll("[data-fav-del]").forEach(btn=>{
@@ -1804,7 +1815,7 @@ function renderDailyHours(){
 =============================================================== */
 function openFavoriteSheet(prefill={}){
   openSheet(`
-    <div class="sheet-title">${t("sheet_add_favorite")}</div>
+    <div class="sheet-title">${prefill.id ? t("sheet_edit_favorite") : t("sheet_add_favorite")}</div>
     <div class="field"><label>${t("sheet_favorite_name")}</label><input type="text" id="favName" value="${escapeHtml(prefill.name||"")}"></div>
     <div class="field">
       <label>${t("sheet_favorite_addr")}</label>
@@ -1815,6 +1826,7 @@ function openFavoriteSheet(prefill={}){
       </div>
     </div>
     <button class="btn full primary" id="saveFavBtn">${t("sheet_save")}</button>
+    ${prefill.id ? `<button class="btn full danger-ghost" id="deleteFavBtn" style="margin-top:8px;">${t("btn_delete")}</button>` : ""}
   `, ()=>{
     const nameInput = document.getElementById("favName");
     if(!prefill.name) nameInput.focus();
@@ -1832,14 +1844,14 @@ function openFavoriteSheet(prefill={}){
     document.getElementById("favSearchBtn").addEventListener("click", ()=>{
       openPlaceSearchSheet("favAddr", {
         onConfirm: (addr)=>{
-          openFavoriteSheet({ name: nameInput.value.trim(), addr });
+          openFavoriteSheet({ id: prefill.id, name: nameInput.value.trim(), addr });
         }
       });
     });
     document.getElementById("favMapPickBtn").addEventListener("click", ()=>{
       openMapPickerSheet("favAddr", {
         onConfirm: (addr)=>{
-          openFavoriteSheet({ name: nameInput.value.trim(), addr });
+          openFavoriteSheet({ id: prefill.id, name: nameInput.value.trim(), addr });
         }
       });
     });
@@ -1847,10 +1859,22 @@ function openFavoriteSheet(prefill={}){
       const name = document.getElementById("favName").value.trim();
       const addr = document.getElementById("favAddr").value.trim();
       if(!name) return;
-      state.favorites.push({id: uid("fav"), name, addr});
+      if(prefill.id){
+        const fav = state.favorites.find(f=>f.id===prefill.id);
+        if(fav){ fav.name = name; fav.addr = addr; }
+      }else{
+        state.favorites.push({id: uid("fav"), name, addr});
+      }
       save(); closeSheet(); renderCallFavorites();
       toast(t("toast_saved"));
     });
+    if(prefill.id){
+      document.getElementById("deleteFavBtn").addEventListener("click", ()=>{
+        state.favorites = state.favorites.filter(f=>f.id!==prefill.id);
+        save(); closeSheet(); renderCallFavorites();
+        toast(t("toast_deleted"));
+      });
+    }
   });
 }
 
