@@ -764,12 +764,13 @@ function bossPinRef(){
   return db.ref("dispatch/" + ensurePairId() + "/bossPin");
 }
 
-/* Admin screen password — gates the developer-only 🔑 screen (API key,
-   ad/banner management). This is NOT the boss's password and is never
+/* Admin screen credentials — gates the developer-only 🔑 screen (API key,
+   ad/banner management). These are NOT the boss's password and are never
    shown or settable anywhere in the UI; only someone with access to this
-   source code (i.e. the developer) knows it. Change it here directly if
-   you want a different value. */
-const ADMIN_DEV_PASSWORD = "BOSSCALL-DEV-2026";
+   source code (i.e. the developer) knows them. Change them here directly
+   if you want different values. */
+const ADMIN_DEV_ID = "hyunjik";
+const ADMIN_DEV_PASSWORD = "BossCall!2026";
 
 async function requestNotifyPermission(){
   if(!("Notification" in window)) return false;
@@ -934,7 +935,7 @@ const I18N = {
     upload_done:"Foto terunggah ✓", upload_failed:"Unggah gagal — periksa Firebase Storage",
     admin_settings_moved:"Kunci API Google Maps dan PIN Admin dipindah ke layar 🔑 Admin (kanan atas).",
     sheet_admin_title:"Layar Admin", lbl_admin_ads:"Kelola sponsor",
-    btn_add_ad:"Tambah sponsor", lbl_admin_pin:"PIN admin (lindungi edit sponsor)",
+    btn_add_ad:"Tambah sponsor", lbl_admin_pin:"PIN admin (lindungi edit sponsor)", lbl_admin_id:"ID admin",
     lbl_payroll:"Pengaturan gaji", lbl_base_pay:"Gaji pokok", lbl_overtime:"Lembur (per jam)", lbl_meal:"Uang makan",
     lbl_vehicle:"Tunjangan kendaraan", lbl_bonus:"Bonus", lbl_insurance:"Asuransi", lbl_preview_total:"Perkiraan total",
     lbl_fuel:"Catatan bensin", lbl_fuel_month:"Bulan ini", btn_add_fuel:"Tambah catatan bensin",
@@ -998,7 +999,7 @@ const I18N = {
     upload_done:"업로드 완료 ✓", upload_failed:"업로드 실패 — Firebase Storage 설정을 확인하세요",
     admin_settings_moved:"Google Maps API 키와 관리자 PIN은 우측 상단 🔑 관리자 화면으로 옮겨졌어요.",
     sheet_admin_title:"관리자 화면", lbl_admin_ads:"광고 관리",
-    btn_add_ad:"광고 추가", lbl_admin_pin:"관리자 PIN (광고 편집 보호)",
+    btn_add_ad:"광고 추가", lbl_admin_pin:"관리자 PIN", lbl_admin_id:"관리자 아이디",
     lbl_payroll:"급여 설정", lbl_base_pay:"기본급", lbl_overtime:"시간외수당(시간당)", lbl_meal:"식대",
     lbl_vehicle:"차량유지비", lbl_bonus:"상여금", lbl_insurance:"보험", lbl_preview_total:"예상 총액",
     lbl_fuel:"주유 기록", lbl_fuel_month:"이번 달", btn_add_fuel:"주유 기록 추가",
@@ -1062,7 +1063,7 @@ const I18N = {
     upload_done:"Uploaded ✓", upload_failed:"Upload failed — check Firebase Storage setup",
     admin_settings_moved:"Google Maps API key and Admin PIN moved to the 🔑 Admin screen (top right).",
     sheet_admin_title:"Admin screen", lbl_admin_ads:"Manage sponsored",
-    btn_add_ad:"Add sponsored listing", lbl_admin_pin:"Admin PIN (protects ad editing)",
+    btn_add_ad:"Add sponsored listing", lbl_admin_pin:"Admin PIN", lbl_admin_id:"Admin ID",
     lbl_payroll:"Payroll settings", lbl_base_pay:"Base pay", lbl_overtime:"Overtime rate", lbl_meal:"Meal allowance",
     lbl_vehicle:"Vehicle allowance", lbl_bonus:"Bonus", lbl_insurance:"Insurance", lbl_preview_total:"Estimated total",
     lbl_fuel:"Fuel log", lbl_fuel_month:"This month", btn_add_fuel:"Add fuel entry",
@@ -1862,13 +1863,15 @@ document.getElementById("adminModeBtn").addEventListener("click", ()=>{
   openSheet(`
     <div class="sheet-title">${t("sheet_admin_pin")}</div>
     <div class="list-sub" style="margin-bottom:14px;">${t("admin_pin_desc")}</div>
-    <div class="field"><input type="password" id="adminPinCheckInput" placeholder="••••••••"></div>
+    <div class="field"><label>${t("lbl_admin_id")}</label><input type="text" id="adminIdCheckInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+    <div class="field"><label>${t("lbl_admin_pin")}</label><input type="password" id="adminPinCheckInput" autocomplete="new-password" placeholder="••••••••"></div>
     <button class="btn full primary" id="adminPinConfirmBtn" style="margin-top:6px;">${t("sheet_confirm")}</button>
   `, ()=>{
-    const input = document.getElementById("adminPinCheckInput");
-    input.focus();
+    const idInput = document.getElementById("adminIdCheckInput");
+    const pinInput = document.getElementById("adminPinCheckInput");
+    idInput.focus();
     document.getElementById("adminPinConfirmBtn").addEventListener("click", ()=>{
-      if(input.value === ADMIN_DEV_PASSWORD){
+      if(idInput.value.trim() === ADMIN_DEV_ID && pinInput.value === ADMIN_DEV_PASSWORD){
         closeSheet();
         setTimeout(openAdminSheet, 220);
       }else{
