@@ -968,6 +968,14 @@ function syncDispatchNow(){
       renderTodayStats();
     }
   });
+  ref.child("shifts").once("value").then(snap=>{
+    if(state.role === "boss"){
+      const val = snap.val();
+      state.driverShifts = val ? Object.values(val) : [];
+      save();
+      renderDailyHours();
+    }
+  });
 }
 
 /* Runs once at load, independent of pairId — every device (boss, driver,
@@ -1007,6 +1015,7 @@ function setupFirebaseListeners(){
     activeDispatchRef.child("response").off();
     activeDispatchRef.child("clockEvent").off();
     activeDispatchRef.child("clockStatus").off();
+    activeDispatchRef.child("shifts").off();
   }
   const ref = dispatchRef();
   if(!ref) return;
@@ -1096,6 +1105,14 @@ function setupFirebaseListeners(){
     state.driverClockStatus = data || {status:"out", since:null};
     save();
     renderTodayStats();
+  });
+
+  ref.child("shifts").on("value", (snap)=>{
+    if(state.role !== "boss") return;
+    const val = snap.val();
+    state.driverShifts = val ? Object.values(val) : [];
+    save();
+    renderDailyHours();
   });
 }
 
@@ -1333,6 +1350,7 @@ function loadState(){
     shifts:[], // {id,clockInTs,clockOutTs,totalMs,regularMs,overtimeMs} completed work shifts
     driverEnRoute:null, // {pickup,dest,ts} set when driver's Firebase response arrives on boss's device
     driverClockStatus:null, // {status,since} the driver's actual clock state, synced via Firebase
+    driverShifts:[], // completed shifts, synced from the driver's device via Firebase
     fcmToken:"", // this device's push token, once notifications are enabled
     pairId:"", // shared code that scopes this boss<->driver pair's Firebase data (prevents cross-tenant mixing)
     __lastResponseTs:null,
@@ -2629,7 +2647,8 @@ function renderTodayStats(){
 function renderDailyHours(){
   const el = document.getElementById("dailyHoursList");
   if(!el) return;
-  const shifts = [...state.shifts].sort((a,b)=>b.clockOutTs-a.clockOutTs).slice(0,20);
+  const source = state.role === "boss" ? state.driverShifts : state.shifts;
+  const shifts = [...source].sort((a,b)=>b.clockOutTs-a.clockOutTs).slice(0,20);
   if(!shifts.length){
     el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🕘</div><div class="empty-state-text">${t("empty_shifts")}</div></div>`;
     return;
@@ -3077,7 +3096,12 @@ function formatHMS(ms){
 
 const REGULAR_SHIFT_MS = 8 * 3600 * 1000; // 8-hour regular shift threshold
 
+let lastClockActionTs = 0;
+
 function doClockIn(){
+  const nowGuard = Date.now();
+  if(nowGuard - lastClockActionTs < 3000) return; // ignore rapid duplicate taps/listener fires
+  lastClockActionTs = nowGuard;
   if(state.clock.status === "in"){ toast(t("already_clocked_in")); return; }
   state.clock = {status:"in", since: Date.now(), lastSummary:null};
   save();
@@ -3098,18 +3122,23 @@ function doClockIn(){
 }
 
 function doClockOut(){
+  const nowGuard = Date.now();
+  if(nowGuard - lastClockActionTs < 3000) return; // ignore rapid duplicate taps/listener fires
+  lastClockActionTs = nowGuard;
   if(state.clock.status === "out"){ toast(t("already_clocked_out")); return; }
   const start = state.clock.since;
   const totalMs = start ? (Date.now() - start) : 0;
   const regularMs = Math.min(totalMs, REGULAR_SHIFT_MS);
   const overtimeMs = Math.max(0, totalMs - REGULAR_SHIFT_MS);
   state.clock = {status:"out", since:null, lastSummary:{totalMs, regularMs, overtimeMs}};
-  state.shifts.push({ id: uid("shift"), clockInTs: start, clockOutTs: Date.now(), totalMs, regularMs, overtimeMs });
+  const shiftRecord = { id: uid("shift"), clockInTs: start, clockOutTs: Date.now(), totalMs, regularMs, overtimeMs };
+  state.shifts.push(shiftRecord);
   save();
   const fbRef = dispatchRef();
   if(fbRef){
     fbRef.child("clockEvent").set({ type:"out", ts: Date.now(), totalMs });
     fbRef.child("clockStatus").set({ status:"out", since:null });
+    fbRef.child("shifts").child(shiftRecord.id).set(shiftRecord);
   }
   sendPushToOther("boss",
     state.lang==='ko' ? "기사님이 퇴근했어요" : state.lang==='id' ? "Sopir absen keluar" : "Driver clocked out",
