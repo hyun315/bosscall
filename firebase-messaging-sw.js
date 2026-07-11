@@ -19,13 +19,14 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const title = (payload.notification && payload.notification.title) || "BossCall";
-  const body = (payload.notification && payload.notification.body) || "";
+  const title = (payload.data && payload.data.title) || "BossCall";
+  const body = (payload.data && payload.data.body) || "";
+  const url = (payload.data && payload.data.url) || "/";
   self.registration.showNotification(title, {
     body,
     tag: "bosscall-alert",
     renotify: true,
-    data: { url: (payload.fcmOptions && payload.fcmOptions.link) || "/" }
+    data: { url }
   });
 });
 

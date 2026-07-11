@@ -810,6 +810,23 @@ async function registerServiceWorker(){
   }
 }
 
+/* This is the ONLY place that reacts to an incoming FCM message while the
+   app is open/focused. Registered exactly once (guarded by a flag) so it
+   can never double-fire. Combined with data-only push payloads (so the
+   browser itself never auto-displays anything) and the service worker
+   being the ONLY handler for background messages, there is now exactly
+   one alert-producing path per push — no more duplicates. */
+let foregroundHandlerRegistered = false;
+function registerForegroundPushHandler(){
+  if(foregroundHandlerRegistered || !fcmMessaging) return;
+  foregroundHandlerRegistered = true;
+  fcmMessaging.onMessage((payload)=>{
+    const title = (payload.data && payload.data.title) || "BossCall";
+    const body = (payload.data && payload.data.body) || "";
+    fireAlert(title, body);
+  });
+}
+
 function tokenRef(){
   const db = initFirebase();
   if(!db) return null;
@@ -836,6 +853,7 @@ async function setupPushNotifications(){
       save();
       const ref = tokenRef();
       if(ref) ref.set(token);
+      registerForegroundPushHandler();
       toast("✅ FCM 토큰 발급 및 저장 완료!");
       return true;
     }else{
@@ -1025,15 +1043,8 @@ function setupFirebaseListeners(){
     const data = snap.val();
     if(state.role !== "driver") return;
     if(data){
-      const isNew = !state.pendingCall || state.pendingCall.ts !== data.ts;
       state.pendingCall = { pickup: data.pickup, dest: data.dest, ts: data.ts };
       save();
-      if(isNew){
-        fireAlert(t("driver_calling_title"), data.pickup + (data.dest ? (" → " + data.dest) : ""), ()=>{
-          closeSheet();
-          render();
-        });
-      }
       if(document.getElementById("driverHeroWrap")) renderDriverHome();
     }else if(state.pendingCall){
       state.pendingCall = null;
@@ -1046,28 +1057,10 @@ function setupFirebaseListeners(){
     const data = snap.val();
     if(state.role !== "boss") return;
     if(!data) return;
-    const isNew = state.__lastResponseTs !== data.ts;
-    state.__lastResponseTs = data.ts;
     const ride = state.rides.find(r=>r.ts===data.ts);
     if(ride){ ride.status = "accepted"; }
     state.driverEnRoute = { pickup: data.pickup, dest: data.dest, ts: data.ts };
     save();
-    if(isNew){
-      fireAlert(
-        state.lang==='ko' ? "기사님이 응답했어요" : state.lang==='id' ? "Sopir merespons" : "Driver responded",
-        t("status_driver_coming"),
-        ()=>{
-          closeSheet();
-          document.querySelectorAll("#bossTabbar .tab-item").forEach(x=>x.classList.remove("active"));
-          const callTab = document.querySelector('[data-tab="screen-call"]');
-          if(callTab) callTab.classList.add("active");
-          document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-          const callScreen = document.getElementById("screen-call");
-          if(callScreen) callScreen.classList.add("active");
-          render();
-        }
-      );
-    }
     updateCallStatusUi();
     renderTodayStats();
   });
@@ -1078,22 +1071,6 @@ function setupFirebaseListeners(){
     const isNew = state.__lastClockEventTs !== data.ts;
     state.__lastClockEventTs = data.ts;
     if(isNew){
-      const title = data.type === "in"
-        ? (state.lang==='ko' ? "기사님이 출근했어요" : state.lang==='id' ? "Sopir absen masuk" : "Driver clocked in")
-        : (state.lang==='ko' ? "기사님이 퇴근했어요" : state.lang==='id' ? "Sopir absen keluar" : "Driver clocked out");
-      const body = data.type === "out" && data.totalMs
-        ? (state.lang==='ko' ? `근무 ${formatHMS(data.totalMs)}` : state.lang==='id' ? `Kerja ${formatHMS(data.totalMs)}` : `Worked ${formatHMS(data.totalMs)}`)
-        : "";
-      fireAlert(title, body, ()=>{
-        closeSheet();
-        document.querySelectorAll("#bossTabbar .tab-item").forEach(x=>x.classList.remove("active"));
-        const driversTab = document.querySelector('[data-tab="screen-drivers"]');
-        if(driversTab) driversTab.classList.add("active");
-        document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-        const driversScreen = document.getElementById("screen-drivers");
-        if(driversScreen) driversScreen.classList.add("active");
-        render();
-      });
       renderTodayStats();
       renderDailyHours();
     }
