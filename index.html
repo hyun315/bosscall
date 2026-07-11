@@ -625,6 +625,16 @@ button{font-family:inherit;}
     <div id="fuelList"></div>
     <button class="btn full" id="addFuelBtn" style="margin-top:6px;">⛽ <span data-i18n="btn_add_fuel">Add fuel entry</span></button>
 
+    <div class="section-label" data-i18n="lbl_family_share">Family sharing</div>
+    <div class="card">
+      <div class="field"><label data-i18n="lbl_boss_name">My name (shown to the driver)</label><input type="text" id="bossNameInput" placeholder="아버지 / 어머니 / ..."></div>
+      <div class="field">
+        <label data-i18n="lbl_family_group_code">Group code</label>
+        <input type="text" id="bossGroupCodeInput" placeholder="ABC123" style="text-transform:uppercase;letter-spacing:2px;">
+        <div class="list-sub" style="margin-top:6px;" data-i18n="family_group_hint">Family members sharing the same driver should all enter the same code here — combined hours, separate call routing.</div>
+      </div>
+    </div>
+
     <div class="section-label" data-i18n="lbl_whatsapp">WhatsApp</div>
     <div class="card">
       <div class="field"><label data-i18n="lbl_boss_wa">Boss WhatsApp number</label><input type="tel" id="bossWaInput" placeholder="+62 8xx xxxx xxxx"></div>
@@ -738,6 +748,19 @@ function ensurePairId(){
   return state.pairId;
 }
 
+/* Each BOSS device gets its own stable identity — this is what lets several
+   family members share one driver: every call carries "who called", and
+   the driver's response routes back to that specific person instead of a
+   single fixed "the boss" slot. The driver device doesn't need one (there's
+   only ever one driver in a group). */
+function ensureBossId(){
+  if(!state.bossId){
+    state.bossId = "b" + Math.random().toString(36).slice(2,8);
+    save();
+  }
+  return state.bossId;
+}
+
 function dispatchRef(){
   const db = initFirebase();
   if(!db) return null;
@@ -830,7 +853,8 @@ function registerForegroundPushHandler(){
 function tokenRef(){
   const db = initFirebase();
   if(!db) return null;
-  return db.ref("dispatch/" + ensurePairId() + "/tokens/" + state.role);
+  const key = state.role === "boss" ? ("boss_" + ensureBossId()) : "driver";
+  return db.ref("dispatch/" + ensurePairId() + "/tokens/" + key);
 }
 
 /* Called from the "🔔 알림 켜기" button — sets up everything needed for
@@ -871,13 +895,13 @@ async function setupPushNotifications(){
    push arrive even when the recipient's phone is locked. Fails silently
    (the in-app Notification()/sound alert still covers the "app is open"
    case regardless). */
-async function sendPushToOther(targetRole, title, body, url){
+async function sendPushToOther(targetKey, title, body, url){
   try{
     const db = initFirebase();
     if(!db) return;
-    const snap = await db.ref("dispatch/" + ensurePairId() + "/tokens/" + targetRole).once("value");
+    const snap = await db.ref("dispatch/" + ensurePairId() + "/tokens/" + targetKey).once("value");
     const token = snap.val();
-    if(!token){ toast("⚠️ 상대방(" + targetRole + ") 푸시 토큰이 없어요 — 그쪽도 알림 켜기 필요"); return; }
+    if(!token){ toast("⚠️ 상대방 푸시 토큰이 없어요 — 그쪽도 알림 켜기 필요"); return; }
     const res = await fetch("/api/send-push", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -893,6 +917,28 @@ async function sendPushToOther(targetRole, title, body, url){
   }catch(e){
     console.error("sendPushToOther failed", e);
     toast("❌ 푸시 발송 중 오류: " + (e && e.message ? e.message : e));
+  }
+}
+
+/* Clock in/out matters to EVERY family member sharing this driver, not
+   just whoever happened to make the last call — so this fans out to every
+   registered "boss_*" token under the group, instead of a single target. */
+async function sendPushToAllBosses(title, body, url){
+  try{
+    const db = initFirebase();
+    if(!db) return;
+    const snap = await db.ref("dispatch/" + ensurePairId() + "/tokens").once("value");
+    const tokens = snap.val() || {};
+    const bossTokens = Object.keys(tokens).filter(k=>k.startsWith("boss_")).map(k=>tokens[k]);
+    await Promise.all(bossTokens.map(token=>
+      fetch("/api/send-push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, title, body, url: url || "/" })
+      }).catch(e=>console.error("push to boss failed", e))
+    ));
+  }catch(e){
+    console.error("sendPushToAllBosses failed", e);
   }
 }
 
@@ -962,9 +1008,9 @@ function syncDispatchNow(){
   ref.child("pendingCall").once("value").then(snap=>{
     const data = snap.val();
     if(state.role === "driver" && data){
-      state.pendingCall = { pickup: data.pickup, dest: data.dest, ts: data.ts };
+      state.pendingCall = { pickup: data.pickup, dest: data.dest, ts: data.ts, callerBossId: data.callerBossId, callerName: data.callerName, callerWa: data.callerWa };
       save();
-      fireAlert(t("driver_calling_title"), data.pickup + (data.dest ? (" → " + data.dest) : ""), ()=>{
+      fireAlert(t("driver_calling_title"), (data.callerName ? data.callerName + " · " : "") + data.pickup + (data.dest ? (" → " + data.dest) : ""), ()=>{
         closeSheet();
         render();
       });
@@ -973,7 +1019,7 @@ function syncDispatchNow(){
   });
   ref.child("response").once("value").then(snap=>{
     const data = snap.val();
-    if(state.role === "boss" && data){
+    if(state.role === "boss" && data && (!data.callerBossId || data.callerBossId === state.bossId)){
       state.driverEnRoute = { pickup: data.pickup, dest: data.dest, ts: data.ts };
       save();
       updateCallStatusUi();
@@ -1043,7 +1089,7 @@ function setupFirebaseListeners(){
     const data = snap.val();
     if(state.role !== "driver") return;
     if(data){
-      state.pendingCall = { pickup: data.pickup, dest: data.dest, ts: data.ts };
+      state.pendingCall = { pickup: data.pickup, dest: data.dest, ts: data.ts, callerBossId: data.callerBossId, callerName: data.callerName, callerWa: data.callerWa };
       save();
       if(document.getElementById("driverHeroWrap")) renderDriverHome();
     }else if(state.pendingCall){
@@ -1057,6 +1103,10 @@ function setupFirebaseListeners(){
     const data = snap.val();
     if(state.role !== "boss") return;
     if(!data) return;
+    // A response is only ever relevant to the specific boss who made that
+    // call — with several family members sharing one driver, everyone
+    // else listening on this same shared node must ignore it.
+    if(data.callerBossId && data.callerBossId !== state.bossId) return;
     const ride = state.rides.find(r=>r.ts===data.ts);
     if(ride){ ride.status = "accepted"; }
     state.driverEnRoute = { pickup: data.pickup, dest: data.dest, ts: data.ts };
@@ -1138,6 +1188,9 @@ const I18N = {
     lbl_payroll:"Pengaturan gaji", lbl_base_pay:"Gaji pokok", lbl_overtime:"Lembur (per jam)", lbl_meal:"Uang makan",
     lbl_vehicle:"Tunjangan kendaraan", lbl_bonus:"Bonus", lbl_insurance:"Asuransi", lbl_preview_total:"Perkiraan total",
     lbl_fuel:"Catatan bensin", lbl_fuel_month:"Bulan ini", btn_add_fuel:"Tambah catatan bensin",
+    lbl_family_share:"Berbagi keluarga", lbl_boss_name:"Nama saya (terlihat oleh sopir)",
+    lbl_family_group_code:"Kode grup",
+    family_group_hint:"Anggota keluarga yang berbagi sopir yang sama harus memasukkan kode yang sama di sini — jam kerja gabungan, panggilan tetap terpisah per orang.",
     lbl_whatsapp:"WhatsApp", lbl_boss_wa:"Nomor WA Bos", notify_call:"Notifikasi saat panggilan",
     lbl_app_alerts:"Alarm aplikasi", app_alerts_desc:"Dapatkan suara, getaran, dan notifikasi begitu ada panggilan atau respons — bahkan di dua HP berbeda.",
     lbl_boss_pin:"Kata sandi beralih ke Bos", boss_pin_hint:"Sopir harus memasukkan ini untuk beralih dari tampilan sopir ke tampilan Bos. Atur di sini — otomatis tersinkron ke sopir yang berpasangan.",
@@ -1204,6 +1257,9 @@ const I18N = {
     lbl_payroll:"급여 설정", lbl_base_pay:"기본급", lbl_overtime:"시간외수당(시간당)", lbl_meal:"식대",
     lbl_vehicle:"차량유지비", lbl_bonus:"상여금", lbl_insurance:"보험", lbl_preview_total:"예상 총액",
     lbl_fuel:"주유 기록", lbl_fuel_month:"이번 달", btn_add_fuel:"주유 기록 추가",
+    lbl_family_share:"가족 공유", lbl_boss_name:"내 이름 (기사에게 표시됨)",
+    lbl_family_group_code:"그룹 코드",
+    family_group_hint:"같은 기사를 함께 쓰는 가족들은 여기에 똑같은 코드를 입력하세요 — 근무시간은 합쳐서 보이고, 호출은 각자 따로 응답받습니다.",
     lbl_whatsapp:"WhatsApp", lbl_boss_wa:"사장 WA 번호", notify_call:"호출 시 알림",
     lbl_app_alerts:"앱 알림", app_alerts_desc:"호출이나 응답이 오는 즉시 소리, 진동, 알림으로 바로 알려드려요 — 서로 다른 두 폰 사이에서도 작동합니다.",
     lbl_boss_pin:"사장 전환 암호", boss_pin_hint:"기사가 기사 화면에서 사장 화면으로 넘어갈 때 이 암호를 입력해야 해요. 여기서 설정하면 짝지어진 기사에게 자동으로 동기화됩니다.",
@@ -1270,6 +1326,9 @@ const I18N = {
     lbl_payroll:"Payroll settings", lbl_base_pay:"Base pay", lbl_overtime:"Overtime rate", lbl_meal:"Meal allowance",
     lbl_vehicle:"Vehicle allowance", lbl_bonus:"Bonus", lbl_insurance:"Insurance", lbl_preview_total:"Estimated total",
     lbl_fuel:"Fuel log", lbl_fuel_month:"This month", btn_add_fuel:"Add fuel entry",
+    lbl_family_share:"Family sharing", lbl_boss_name:"My name (shown to the driver)",
+    lbl_family_group_code:"Group code",
+    family_group_hint:"Family members sharing the same driver should all enter the same code here — combined hours, separate call routing.",
     lbl_whatsapp:"WhatsApp", lbl_boss_wa:"Boss WhatsApp number", notify_call:"Notify on call",
     lbl_app_alerts:"App alerts", app_alerts_desc:"Get a sound, vibration, and notification the instant a call or response arrives — even across two different phones.",
     lbl_boss_pin:"Boss switch password", boss_pin_hint:"A driver must enter this to switch from driver view back to boss view. Set it here — it syncs to the paired driver automatically.",
@@ -1329,6 +1388,8 @@ function loadState(){
     driverClockStatus:null, // {status,since} the driver's actual clock state, synced via Firebase
     driverShifts:[], // completed shifts, synced from the driver's device via Firebase
     fcmToken:"", // this device's push token, once notifications are enabled
+    bossId:"", // this boss device's own identity — lets several family members share one driver
+    bossName:"", // display name shown to the driver when this boss calls
     pairId:"", // shared code that scopes this boss<->driver pair's Firebase data (prevents cross-tenant mixing)
     __lastResponseTs:null,
     rides:[], // {id,driverId,pickup,dest,ts,status,eta,dropoffTs}
@@ -2025,14 +2086,19 @@ document.getElementById("callDriverBtn").addEventListener("click", async ()=>{
   state.driverEnRoute = null;
   save();
 
+  const callerBossId = ensureBossId();
+  const callerName = state.bossName || (state.lang==='ko' ? "사장님" : state.lang==='id' ? "Bos" : "Boss");
   const fbRef = dispatchRef();
   if(fbRef){
     try{
-      await fbRef.child("pendingCall").set({ pickup, dest, ts: ride.ts, driverName: driver.name });
+      await fbRef.child("pendingCall").set({
+        pickup, dest, ts: ride.ts, driverName: driver.name,
+        callerBossId, callerName, callerWa: state.bossWa || ""
+      });
       await fbRef.child("response").remove();
     }catch(e){ console.error("Firebase write failed", e); }
   }
-  sendPushToOther("driver", t("driver_calling_title"), pickup + (dest ? (" → " + dest) : ""));
+  sendPushToOther("driver", t("driver_calling_title"), callerName + " · " + pickup + (dest ? (" → " + dest) : ""));
 
   const destLine = dest
     ? (state.lang==="ko" ? `목적지: ${dest}\n` : state.lang==="id" ? `Tujuan: ${dest}\n` : `Destination: ${dest}\n`)
@@ -2930,6 +2996,18 @@ document.getElementById("bossPinInput").addEventListener("input", (e)=>{
   if(bp) bp.set(state.bossPin);
 });
 
+document.getElementById("bossNameInput").addEventListener("input", (e)=>{
+  state.bossName = e.target.value.trim();
+  save();
+});
+
+document.getElementById("bossGroupCodeInput").addEventListener("input", (e)=>{
+  state.pairId = e.target.value.trim().toUpperCase();
+  save();
+  setupFirebaseListeners();
+  syncDispatchNow();
+});
+
 document.getElementById("switchModeBtn").addEventListener("click", ()=>{
   state.role = state.role === "boss" ? "driver" : "boss";
   save();
@@ -2969,7 +3047,7 @@ function renderDriverHome(){
     wrap.innerHTML = `
       <div class="driver-hero calling">
         <div class="driver-hero-icon">📲</div>
-        <div class="driver-hero-title">${t("driver_calling_title")}</div>
+        <div class="driver-hero-title">${pending.callerName ? escapeHtml(pending.callerName) + " " : ""}${t("driver_calling_title")}</div>
         <div class="driver-hero-sub">${routeLabel(pending.pickup, pending.dest)}</div>
         <button class="ok-boss-btn" id="okBossBtn">${t("ok_boss")}</button>
       </div>
@@ -3027,17 +3105,22 @@ async function handleOkBoss(){
   const fbRef = dispatchRef();
   if(fbRef){
     try{
-      await fbRef.child("response").set({ pickup: pending.pickup, dest: pending.dest, ts: pending.ts, respondedAt: Date.now() });
+      await fbRef.child("response").set({
+        pickup: pending.pickup, dest: pending.dest, ts: pending.ts, respondedAt: Date.now(),
+        callerBossId: pending.callerBossId || null
+      });
       await fbRef.child("pendingCall").remove();
     }catch(e){ console.error("Firebase write failed", e); }
   }
-  sendPushToOther("boss",
+  sendPushToOther(
+    pending.callerBossId ? ("boss_" + pending.callerBossId) : "boss",
     state.lang==='ko' ? "기사님이 응답했어요" : state.lang==='id' ? "Sopir merespons" : "Driver responded",
     t("status_driver_coming")
   );
 
-  if(state.bossWa){
-    openWhatsApp(waLink(state.bossWa, msg));
+  const replyWa = pending.callerWa || state.bossWa;
+  if(replyWa){
+    openWhatsApp(waLink(replyWa, msg));
   }else{
     toast(state.lang==='ko' ? "사장 WA 번호가 설정되지 않았어요 (⚙️ 설정)" : state.lang==='id' ? "Nomor WA Bos belum diatur (⚙️ Pengaturan)" : "Boss WhatsApp number not set (⚙️ Settings)");
   }
@@ -3087,7 +3170,7 @@ function doClockIn(){
     fbRef.child("clockEvent").set({ type:"in", ts: Date.now() });
     fbRef.child("clockStatus").set({ status:"in", since: state.clock.since });
   }
-  sendPushToOther("boss",
+  sendPushToAllBosses(
     state.lang==='ko' ? "기사님이 출근했어요" : state.lang==='id' ? "Sopir absen masuk" : "Driver clocked in",
     ""
   );
@@ -3117,7 +3200,7 @@ function doClockOut(){
     fbRef.child("clockStatus").set({ status:"out", since:null });
     fbRef.child("shifts").child(shiftRecord.id).set(shiftRecord);
   }
-  sendPushToOther("boss",
+  sendPushToAllBosses(
     state.lang==='ko' ? "기사님이 퇴근했어요" : state.lang==='id' ? "Sopir absen keluar" : "Driver clocked out",
     state.lang==='ko' ? `근무 ${formatHMS(totalMs)}` : state.lang==='id' ? `Kerja ${formatHMS(totalMs)}` : `Worked ${formatHMS(totalMs)}`
   );
@@ -3206,6 +3289,8 @@ function render(){
     updateCallStatusUi();
     document.getElementById("bossWaInput").value = state.bossWa || "";
     document.getElementById("bossPinInput").value = state.bossPin || "";
+    document.getElementById("bossNameInput").value = state.bossName || "";
+    document.getElementById("bossGroupCodeInput").value = state.pairId || "";
     document.querySelectorAll("[data-notify]").forEach(tg=>{
       tg.classList.toggle("on", !!state.notify[tg.getAttribute("data-notify")]);
     });
