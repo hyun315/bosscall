@@ -43,9 +43,18 @@ module.exports = async (req, res) => {
 
     await admin.messaging().send({
       token,
-      notification: { title, body: body || "" },
+      // Data-only (no top-level "notification" field). This is deliberate:
+      // if we include "notification", the browser auto-displays it AND our
+      // own service worker also displays it, producing duplicate alerts.
+      // Data-only means our service worker is the single, exclusive place
+      // that ever calls showNotification().
+      data: {
+        title: String(title),
+        body: String(body || ""),
+        url: String(url || "/"),
+      },
       webpush: {
-        fcmOptions: { link: url || "/" },
+        headers: { Urgency: "high" },
       },
     });
 
