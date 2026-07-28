@@ -496,9 +496,11 @@ button{font-family:inherit;}
       <div class="icon-btn" id="adminModeBtn" style="display:none;">🔑</div>
     </div>
   </div>
+  <div id="statusStrip" style="display:flex; gap:14px; align-items:center; padding:8px 16px; background:var(--surface); border-bottom:1px solid #EEF0F2; font-size:11.5px; color:var(--text-muted); cursor:pointer;"></div>
 
   <!-- ===== CALL / DISPATCH SCREEN (boss) ===== -->
   <div class="screen active" id="screen-call">
+    <div id="onboardChecklist" style="display:none;"></div>
     <div class="section-label" data-i18n="lbl_dispatch">Dispatch</div>
 
     <div class="ticket">
@@ -673,6 +675,7 @@ button{font-family:inherit;}
 
   <!-- ===== DRIVER VIEW ===== -->
   <div class="screen" id="screen-driver-home">
+    <div id="onboardChecklistDriver" style="display:none;"></div>
     <div id="driverHeroWrap"></div>
 
     <div class="section-label" data-i18n="lbl_navigate">Navigate</div>
@@ -863,11 +866,9 @@ function tokenRef(){
    pushes. */
 async function setupPushNotifications(){
   const granted = await requestNotifyPermission();
-  if(!granted){ toast("❌ 알림 권한 거부됨"); return false; }
-  toast("✅ 권한 허용됨, 서비스워커 등록 중...");
+  if(!granted){ console.warn("Notification permission denied"); return false; }
   const reg = await registerServiceWorker();
-  if(!reg){ toast("❌ 서비스워커 등록 실패 (firebase-messaging-sw.js 확인)"); return false; }
-  toast("✅ 서비스워커 등록됨, 토큰 발급 중...");
+  if(!reg){ console.error("Service worker registration failed"); return false; }
   try{
     initFirebase();
     if(!fcmMessaging) fcmMessaging = firebase.messaging();
@@ -878,14 +879,12 @@ async function setupPushNotifications(){
       const ref = tokenRef();
       if(ref) ref.set(token);
       registerForegroundPushHandler();
-      toast("✅ FCM 토큰 발급 및 저장 완료!");
       return true;
     }else{
-      toast("❌ 토큰이 비어있음 (VAPID 키 확인 필요)");
+      console.error("FCM getToken returned empty");
     }
   }catch(e){
     console.error("FCM token failed", e);
-    toast("❌ 토큰 발급 실패: " + (e && e.message ? e.message : e));
   }
   return false;
 }
@@ -901,22 +900,18 @@ async function sendPushToOther(targetKey, title, body, url){
     if(!db) return;
     const snap = await db.ref("dispatch/" + ensurePairId() + "/tokens/" + targetKey).once("value");
     const token = snap.val();
-    if(!token){ toast("⚠️ 상대방 푸시 토큰이 없어요 — 그쪽도 알림 켜기 필요"); return; }
+    if(!token){ console.warn("No push token registered for", targetKey); return; }
     const res = await fetch("/api/send-push", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, title, body, url: url || "/" })
     });
-    if(res.ok){
-      toast("✅ 푸시 발송 성공");
-    }else{
+    if(!res.ok){
       const errText = await res.text();
-      toast("❌ 푸시 발송 실패 (" + res.status + "): " + errText.slice(0,120));
       console.error("send-push response", res.status, errText);
     }
   }catch(e){
     console.error("sendPushToOther failed", e);
-    toast("❌ 푸시 발송 중 오류: " + (e && e.message ? e.message : e));
   }
 }
 
@@ -1388,6 +1383,7 @@ function loadState(){
     driverClockStatus:null, // {status,since} the driver's actual clock state, synced via Firebase
     driverShifts:[], // completed shifts, synced from the driver's device via Firebase
     fcmToken:"", // this device's push token, once notifications are enabled
+    onboardingDismissed:false, // manually dismissed the first-run checklist
     bossId:"", // this boss device's own identity — lets several family members share one driver
     bossName:"", // display name shown to the driver when this boss calls
     pairId:"", // shared code that scopes this boss<->driver pair's Firebase data (prevents cross-tenant mixing)
@@ -2649,6 +2645,8 @@ function openDriverSheet(driver){
       save();
       closeSheet();
       renderDriverList();
+      renderStatusStrip();
+      renderOnboardChecklist();
       toast(t("toast_saved"));
     });
     if(isEdit){
@@ -2661,6 +2659,8 @@ function openDriverSheet(driver){
         save();
         closeSheet();
         renderDriverList();
+        renderStatusStrip();
+        renderOnboardChecklist();
         toast(t("toast_deleted"));
       });
     }
@@ -2982,6 +2982,8 @@ document.getElementById("enableNotifyBtn").addEventListener("click", async ()=>{
   if(pushReady){
     playAlertSound();
     fireAlert("BossCall", t("alerts_enabled"));
+    renderStatusStrip();
+    renderOnboardChecklist();
   }
 });
 
@@ -2994,6 +2996,7 @@ document.getElementById("bossPinInput").addEventListener("input", (e)=>{
   save();
   const bp = bossPinRef();
   if(bp) bp.set(state.bossPin);
+  renderOnboardChecklist();
 });
 
 document.getElementById("bossNameInput").addEventListener("input", (e)=>{
@@ -3264,11 +3267,131 @@ function updateClockUi(){
 /* ============================================================
    MASTER RENDER
 =============================================================== */
+/* One-line status summary always visible under the topbar — notification
+   state and pairing/roster state used to be buried inside Settings, which
+   made it hard to tell at a glance whether the app was actually ready to
+   receive calls. Tapping it jumps straight to the relevant setup screen. */
+function renderStatusStrip(){
+  const el = document.getElementById("statusStrip");
+  if(!el) return;
+  const notifOn = ("Notification" in window) && Notification.permission === "granted" && !!state.fcmToken;
+  const notifText = notifOn
+    ? (state.lang==='ko' ? "🔔 알림 켜짐" : state.lang==='id' ? "🔔 Notifikasi aktif" : "🔔 Notifications on")
+    : (state.lang==='ko' ? "🔕 알림 꺼짐 — 탭해서 켜기" : state.lang==='id' ? "🔕 Notifikasi mati — ketuk" : "🔕 Notifications off — tap to enable");
+  const notifColor = notifOn ? "var(--ok)" : "var(--alert)";
+
+  let secondText = "";
+  if(state.role === "boss"){
+    const n = state.drivers.length;
+    secondText = n>0
+      ? (state.lang==='ko' ? `🚗 기사 ${n}명 연결됨` : state.lang==='id' ? `🚗 ${n} sopir terhubung` : `🚗 ${n} driver connected`)
+      : (state.lang==='ko' ? "🚗 등록된 기사 없음 — 탭해서 추가" : state.lang==='id' ? "🚗 Belum ada sopir — ketuk" : "🚗 No drivers yet — tap to add");
+  }else{
+    secondText = state.bossWa
+      ? (state.lang==='ko' ? "👤 사장님과 연결됨" : state.lang==='id' ? "👤 Terhubung dengan Bos" : "👤 Connected to boss")
+      : (state.lang==='ko' ? "👤 연결 정보 없음" : state.lang==='id' ? "👤 Belum terhubung" : "👤 Not connected yet");
+  }
+
+  el.innerHTML = `
+    <span style="color:${notifColor};font-weight:600;">${notifText}</span>
+    <span style="color:#DADCE0;">·</span>
+    <span>${secondText}</span>
+  `;
+  el.onclick = ()=>{
+    if(state.role === "boss"){
+      document.querySelectorAll("#bossTabbar .tab-item").forEach(x=>x.classList.remove("active"));
+      const tab = document.querySelector(notifOn && state.drivers.length ? '[data-tab="screen-more"]' : '[data-tab="screen-drivers"]');
+      if(tab) tab.click();
+    }else{
+      document.getElementById("driverSettingsBtn").click();
+    }
+  };
+}
+
+/* First-run checklist. Boss sees three steps (add a driver, enable
+   notifications, set a switch-back password); driver sees a single
+   "enable notifications" prompt since the rest is handled by the invite
+   link. Auto-hides once everything's done, and can be dismissed early. */
+function renderOnboardChecklist(){
+  const notifOn = ("Notification" in window) && Notification.permission === "granted" && !!state.fcmToken;
+
+  if(state.role === "boss"){
+    const el = document.getElementById("onboardChecklist");
+    if(!el) return;
+    const steps = [
+      { done: state.drivers.length>0, label: state.lang==='ko'?"기사 추가하기":state.lang==='id'?"Tambah sopir":"Add a driver", tab:"screen-drivers" },
+      { done: notifOn, label: state.lang==='ko'?"알림 켜기":state.lang==='id'?"Aktifkan notifikasi":"Enable notifications", tab:"screen-more" },
+      { done: !!state.bossPin, label: state.lang==='ko'?"사장 전환 암호 설정":state.lang==='id'?"Atur kata sandi beralih":"Set switch-back password", tab:"screen-more" },
+    ];
+    const allDone = steps.every(s=>s.done);
+    if(allDone || state.onboardingDismissed){ el.style.display = "none"; return; }
+    el.style.display = "block";
+    el.innerHTML = `
+      <div class="card" style="margin-bottom:14px;position:relative;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-weight:600;font-size:14px;">${state.lang==='ko'?"시작하기":state.lang==='id'?"Mulai":"Get started"}</div>
+          <div id="onboardDismissBtn" style="font-size:13px;color:var(--text-muted);padding:4px 6px;cursor:pointer;">✕</div>
+        </div>
+        ${steps.map((s,i)=>`
+          <div class="onboard-step" data-step="${i}" style="display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer;${i<steps.length-1?'border-bottom:1px solid #F1F3F4;':''}">
+            <div style="width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;
+              background:${s.done?'var(--ok-dim)':'#F1F3F4'};color:${s.done?'var(--ok)':'var(--text-muted)'};">${s.done?'✓':(i+1)}</div>
+            <div style="font-size:13px;${s.done?'color:var(--text-muted);text-decoration:line-through;':'color:var(--text);'}">${s.label}</div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+    el.querySelectorAll(".onboard-step").forEach((row, i)=>{
+      row.addEventListener("click", ()=>{
+        document.querySelectorAll("#bossTabbar .tab-item").forEach(x=>x.classList.remove("active"));
+        const tab = document.querySelector(`[data-tab="${steps[i].tab}"]`);
+        if(tab) tab.click();
+      });
+    });
+    document.getElementById("onboardDismissBtn").addEventListener("click", (e)=>{
+      e.stopPropagation();
+      state.onboardingDismissed = true;
+      save();
+      renderOnboardChecklist();
+    });
+  }else{
+    const el = document.getElementById("onboardChecklistDriver");
+    if(!el) return;
+    if(notifOn || state.onboardingDismissed){ el.style.display = "none"; return; }
+    el.style.display = "block";
+    el.innerHTML = `
+      <div class="card" style="margin-bottom:14px;background:var(--ok-dim);">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:20px;">🔔</div>
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:13.5px;">${state.lang==='ko'?"알림을 켜야 잠금화면에서도 호출을 받아요":state.lang==='id'?"Aktifkan notifikasi agar tetap menerima panggilan":"Enable notifications to receive calls when locked"}</div>
+          </div>
+          <div id="onboardDismissBtnDriver" style="font-size:13px;color:var(--text-muted);padding:4px 6px;cursor:pointer;">✕</div>
+        </div>
+        <button class="btn full primary" id="onboardEnableNotifyBtn" style="margin-top:10px;">${state.lang==='ko'?"지금 켜기":state.lang==='id'?"Aktifkan sekarang":"Enable now"}</button>
+      </div>
+    `;
+    document.getElementById("onboardEnableNotifyBtn").addEventListener("click", async ()=>{
+      if(!isStandaloneApp()) toast(t("need_homescreen_install"));
+      const ok = await setupPushNotifications();
+      toast(ok ? t("alerts_enabled") : t("alerts_denied"));
+      if(ok) renderOnboardChecklist();
+    });
+    document.getElementById("onboardDismissBtnDriver").addEventListener("click", ()=>{
+      state.onboardingDismissed = true;
+      save();
+      renderOnboardChecklist();
+    });
+  }
+}
+
 function render(){
   applyI18nStatic();
 
   const badge = document.getElementById("pairCodeBadge");
   if(badge) badge.textContent = "PAIR: " + ensurePairId();
+  renderStatusStrip();
+  renderOnboardChecklist();
 
   document.getElementById("bossTabbar").style.display = state.role === "boss" ? "flex" : "none";
   document.getElementById("driverSettingsBtn").style.display = state.role === "driver" ? "flex" : "none";
