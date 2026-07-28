@@ -172,6 +172,20 @@ button{font-family:inherit;}
 }
 .chip-btn:active{background:var(--surface-hi);}
 
+.fav-chip-row{
+  display:flex; gap:8px; overflow-x:auto; padding:2px 2px 8px;
+  -webkit-overflow-scrolling:touch; scrollbar-width:none;
+}
+.fav-chip-row::-webkit-scrollbar{display:none;}
+.fav-chip{
+  flex:0 0 auto; display:inline-flex; align-items:center; gap:6px;
+  background:var(--surface); border:1px solid var(--line-soft); border-radius:20px;
+  padding:9px 12px; font-size:12.5px; color:var(--text); white-space:nowrap; cursor:pointer;
+}
+.fav-chip:active{background:var(--surface-hi);}
+.fav-chip-edit{ font-size:11px; opacity:0.55; margin-left:2px; }
+.fav-chip-add{ color:var(--signal); border-color:var(--signal); border-style:dashed; font-weight:500; }
+
 .ticket-perf{
   height:1px;background:var(--line-soft);margin:0;
 }
@@ -554,16 +568,17 @@ button{font-family:inherit;}
       📲 <span data-i18n="btn_call_driver">Call driver</span>
     </button>
 
-    <div class="section-label" data-i18n="lbl_navigate">Navigate</div>
-    <div class="nav-grid">
-      <div class="nav-app" data-nav="google"><div class="nav-app-icon">🗺️</div><div class="nav-app-label">Google</div></div>
+    <div id="navigateSection" style="display:none;">
+      <div class="section-label" data-i18n="lbl_navigate">Navigate</div>
+      <div class="nav-grid">
+        <div class="nav-app" data-nav="google"><div class="nav-app-icon">🗺️</div><div class="nav-app-label">Google</div></div>
+      </div>
     </div>
 
     <div class="section-label" data-i18n="lbl_favorites">Favorites</div>
-    <div id="callFavoritesList" class="card"></div>
-    <button class="btn full" id="addFavoriteBtn" style="margin-top:6px;">＋ <span data-i18n="btn_add_favorite">Add favorite</span></button>
+    <div id="callFavoritesList" class="fav-chip-row"></div>
 
-    <div class="section-label" data-i18n="lbl_ad">Sponsored</div>
+    <div class="section-label" data-i18n="lbl_ad" style="opacity:0.55;font-size:10.5px;margin-top:18px;">Sponsored</div>
     <div id="adList"></div>
   </div>
 
@@ -1828,8 +1843,15 @@ function bindAutocomplete(inputId, onPick){
   });
 }
 
+function updateNavigateSectionVisibility(){
+  const sec = document.getElementById("navigateSection");
+  if(!sec) return;
+  const dest = document.getElementById("destInput")?.value.trim();
+  sec.style.display = dest ? "block" : "none";
+}
 document.getElementById("pickupInput").addEventListener("focus", ensureAutocomplete, {once:false});
 document.getElementById("destInput").addEventListener("focus", ensureAutocomplete, {once:false});
+document.getElementById("destInput").addEventListener("input", updateNavigateSectionVisibility);
 
 async function openMapPickerSheet(fieldId, opts={}){
   if(!state.apiKey){
@@ -2482,25 +2504,19 @@ function openAdminSheet(){
 
 function renderCallFavorites(){
   const el = document.getElementById("callFavoritesList");
-  if(!state.favorites.length){
-    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⭐</div><div class="empty-state-text">${t("empty_favorites")}</div></div>`;
-    return;
-  }
-  el.innerHTML = state.favorites.map(f=>`
-    <div class="list-item" data-fav-quick="${f.id}">
-      <div class="list-icon">⭐</div>
-      <div class="list-body">
-        <div class="list-title">${escapeHtml(f.name)}</div>
-      </div>
-      <div class="slot-link-btn" data-fav-edit="${f.id}" style="border-color:transparent;">✏️</div>
-      <div class="slot-link-btn" data-fav-del="${f.id}" style="border-color:transparent;">✕</div>
+  const chips = state.favorites.map(f=>`
+    <div class="fav-chip" data-fav-quick="${f.id}">
+      <span>⭐ ${escapeHtml(f.name)}</span>
+      <span class="fav-chip-edit" data-fav-edit="${f.id}">✏️</span>
     </div>
   `).join("");
+  el.innerHTML = chips + `<div class="fav-chip fav-chip-add" id="addFavoriteBtn">＋ <span data-i18n="btn_add_favorite">${t("btn_add_favorite")}</span></div>`;
   el.querySelectorAll("[data-fav-quick]").forEach(item=>{
     item.addEventListener("click", (e)=>{
-      if(e.target.closest("[data-fav-del]") || e.target.closest("[data-fav-edit]")) return;
+      if(e.target.closest("[data-fav-edit]")) return;
       const fav = state.favorites.find(f=>f.id===item.getAttribute("data-fav-quick"));
       document.getElementById("destInput").value = fav.addr || fav.name;
+      document.getElementById("destInput").dispatchEvent(new Event("input"));
       toast(t("toast_dest_set"));
     });
   });
@@ -2511,14 +2527,7 @@ function renderCallFavorites(){
       if(fav) openFavoriteSheet({ id: fav.id, name: fav.name, addr: fav.addr });
     });
   });
-  el.querySelectorAll("[data-fav-del]").forEach(btn=>{
-    btn.addEventListener("click", (e)=>{
-      e.stopPropagation();
-      state.favorites = state.favorites.filter(f=>f.id!==btn.getAttribute("data-fav-del"));
-      save(); renderCallFavorites();
-      toast(t("toast_deleted"));
-    });
-  });
+  document.getElementById("addFavoriteBtn").addEventListener("click", ()=>openFavoriteSheet());
 }
 
 /* ============================================================
@@ -2784,7 +2793,6 @@ function openFavoriteSheet(prefill={}){
   });
 }
 
-document.getElementById("addFavoriteBtn").addEventListener("click", ()=>openFavoriteSheet());
 
 /* ============================================================
    STATS
@@ -3392,6 +3400,7 @@ function render(){
   if(badge) badge.textContent = "PAIR: " + ensurePairId();
   renderStatusStrip();
   renderOnboardChecklist();
+  updateNavigateSectionVisibility();
 
   document.getElementById("bossTabbar").style.display = state.role === "boss" ? "flex" : "none";
   document.getElementById("driverSettingsBtn").style.display = state.role === "driver" ? "flex" : "none";
