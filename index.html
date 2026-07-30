@@ -617,9 +617,16 @@ button{font-family:inherit;}
   <div class="screen" id="screen-more">
     <div class="section-label" data-i18n="lbl_payroll">Payroll settings</div>
     <div class="card" id="payrollCard">
-      <div class="field"><label data-i18n="lbl_base_pay">Base pay</label><input type="number" id="payBase" placeholder="0"></div>
+      <div class="field">
+        <label data-i18n="lbl_pay_period">Pay period</label>
+        <select id="payPeriod">
+          <option value="monthly" data-i18n="opt_monthly">Monthly</option>
+          <option value="weekly" data-i18n="opt_weekly">Weekly</option>
+        </select>
+      </div>
+      <div class="field"><label id="payBaseLabel" data-i18n="lbl_base_pay">Base pay</label><input type="number" id="payBase" placeholder="0"></div>
       <div class="field-row">
-        <div class="field"><label data-i18n="lbl_overtime">Overtime rate</label><input type="number" id="payOT" placeholder="0"></div>
+        <div class="field"><label data-i18n="lbl_overtime">Overtime rate (per hour)</label><input type="number" id="payOT" placeholder="0"></div>
         <div class="field"><label data-i18n="lbl_meal">Meal allowance</label><input type="number" id="payMeal" placeholder="0"></div>
       </div>
       <div class="field-row">
@@ -627,6 +634,11 @@ button{font-family:inherit;}
         <div class="field"><label data-i18n="lbl_bonus">Bonus</label><input type="number" id="payBonus" placeholder="0"></div>
       </div>
       <div class="field"><label data-i18n="lbl_insurance">Insurance</label><input type="number" id="payInsurance" placeholder="0"></div>
+      <div class="field">
+        <label data-i18n="lbl_ot_threshold">Overtime kicks in after (hours/day)</label>
+        <input type="number" id="payOtThreshold" placeholder="8" step="0.5" min="1" max="16">
+        <div class="list-sub" style="margin-top:6px;" data-i18n="ot_threshold_hint">Hours worked beyond this in a single shift count as overtime.</div>
+      </div>
     </div>
 
     <div class="section-label" data-i18n="lbl_estimated_pay">Estimated pay</div>
@@ -1050,6 +1062,12 @@ function syncDispatchNow(){
       renderDailyHours();
     }
   });
+  ref.child("otThresholdHours").once("value").then(snap=>{
+    if(state.role === "driver"){
+      const v = snap.val();
+      if(v){ state.payroll.otThresholdHours = v; save(); }
+    }
+  });
 }
 
 /* Runs once at load, independent of pairId — every device (boss, driver,
@@ -1090,6 +1108,7 @@ function setupFirebaseListeners(){
     activeDispatchRef.child("clockEvent").off();
     activeDispatchRef.child("clockStatus").off();
     activeDispatchRef.child("shifts").off();
+    activeDispatchRef.child("otThresholdHours").off();
   }
   const ref = dispatchRef();
   if(!ref) return;
@@ -1151,6 +1170,12 @@ function setupFirebaseListeners(){
     save();
     renderDailyHours();
   });
+
+  ref.child("otThresholdHours").on("value", (snap)=>{
+    if(state.role !== "driver") return;
+    const v = snap.val();
+    if(v){ state.payroll.otThresholdHours = v; save(); }
+  });
 }
 
 function updateCallStatusUi(){
@@ -1181,7 +1206,10 @@ const I18N = {
     btn_add_driver:"Tambah sopir", lbl_today_activity:"Aktivitas hari ini", lbl_rides_today:"Perjalanan hari ini",
     lbl_clock_status:"Status absen", lbl_ride_log:"Riwayat perjalanan", lbl_favorites:"Tempat favorit",
     lbl_daily_hours:"Jam kerja harian", lbl_estimated_pay:"Perkiraan gaji", lbl_as_of:"Per tanggal",
-    lbl_ot_hours_month:"Lembur bulan ini", lbl_fixed_allowance:"Tunjangan tetap", lbl_est_total:"Perkiraan total",
+    lbl_ot_hours_month:"Lembur bulan ini", lbl_ot_hours_week:"Lembur minggu ini", lbl_fixed_allowance:"Tunjangan tetap", lbl_est_total:"Perkiraan total",
+    lbl_pay_period:"Periode gaji", opt_monthly:"Bulanan", opt_weekly:"Mingguan",
+    lbl_ot_threshold:"Lembur berlaku setelah (jam/hari)",
+    ot_threshold_hint:"Jam kerja melebihi ini dalam satu shift dihitung sebagai lembur.",
     empty_shifts:"Belum ada riwayat jam kerja.",
     btn_add_favorite:"Tambah favorit", lbl_monthly:"Ringkasan bulanan", lbl_month_detail:"Pilih bulan untuk detail harian",
     btn_edit_ads:"Edit", sheet_admin_pin:"PIN Admin", admin_pin_desc:"Masukkan PIN admin untuk mengedit sponsor.",
@@ -1250,7 +1278,10 @@ const I18N = {
     btn_add_driver:"기사 추가", lbl_today_activity:"오늘 현황", lbl_rides_today:"오늘 운행",
     lbl_clock_status:"출퇴근 상태", lbl_ride_log:"운행 기록", lbl_favorites:"즐겨찾기",
     lbl_daily_hours:"일별 근무시간", lbl_estimated_pay:"예상급여", lbl_as_of:"조회기준일",
-    lbl_ot_hours_month:"이번 달 초과근무", lbl_fixed_allowance:"고정 수당", lbl_est_total:"예상 총액",
+    lbl_ot_hours_month:"이번 달 초과근무", lbl_ot_hours_week:"이번 주 초과근무", lbl_fixed_allowance:"고정 수당", lbl_est_total:"예상 총액",
+    lbl_pay_period:"지급 단위", opt_monthly:"월급", opt_weekly:"주급",
+    lbl_ot_threshold:"초과근무 인정 기준 (하루 몇 시간 초과 시)",
+    ot_threshold_hint:"하루 근무시간 중 이 시간을 넘는 만큼이 초과근무로 계산됩니다.",
     empty_shifts:"근무 기록이 없습니다.",
     btn_add_favorite:"즐겨찾기 추가", lbl_monthly:"월별 현황", lbl_month_detail:"일별 상세를 보려면 월을 선택하세요",
     btn_edit_ads:"편집", sheet_admin_pin:"관리자 PIN", admin_pin_desc:"광고를 편집하려면 관리자 PIN을 입력하세요.",
@@ -1319,7 +1350,10 @@ const I18N = {
     btn_add_driver:"Add driver", lbl_today_activity:"Today's activity", lbl_rides_today:"Rides today",
     lbl_clock_status:"Clock status", lbl_ride_log:"Ride log", lbl_favorites:"Favorite places",
     lbl_daily_hours:"Daily work hours", lbl_estimated_pay:"Estimated pay", lbl_as_of:"As of",
-    lbl_ot_hours_month:"Overtime this month", lbl_fixed_allowance:"Fixed allowances", lbl_est_total:"Estimated total",
+    lbl_ot_hours_month:"Overtime this month", lbl_ot_hours_week:"Overtime this week", lbl_fixed_allowance:"Fixed allowances", lbl_est_total:"Estimated total",
+    lbl_pay_period:"Pay period", opt_monthly:"Monthly", opt_weekly:"Weekly",
+    lbl_ot_threshold:"Overtime kicks in after (hours/day)",
+    ot_threshold_hint:"Hours worked beyond this in a single shift count as overtime.",
     empty_shifts:"No shift history yet.",
     btn_add_favorite:"Add favorite", lbl_monthly:"Monthly overview", lbl_month_detail:"Select a month for daily detail",
     btn_edit_ads:"Edit", sheet_admin_pin:"Admin PIN", admin_pin_desc:"Enter the admin PIN to edit sponsored listings.",
@@ -1405,7 +1439,7 @@ function loadState(){
     __lastResponseTs:null,
     rides:[], // {id,driverId,pickup,dest,ts,status,eta,dropoffTs}
     fuel:[], // {id,liters,cost,ts}
-    payroll:{base:0,ot:0,meal:0,vehicle:0,bonus:0,insurance:0},
+    payroll:{base:0,ot:0,meal:0,vehicle:0,bonus:0,insurance:0,period:"monthly",otThresholdHours:8},
     notify:{call:true,accept:true,clock:true,fuel:false},
     clock:{status:"out", since:null, lastSummary:null}, // driver clock state
     pendingCall:null, // {pickup,dest,ts} for driver view
@@ -2871,13 +2905,62 @@ function bindPayrollInputs(){
       renderEstimatedPay();
     });
   });
+
+  const periodSel = document.getElementById("payPeriod");
+  periodSel.value = state.payroll.period || "monthly";
+  updatePayBaseLabel();
+  periodSel.addEventListener("change", ()=>{
+    state.payroll.period = periodSel.value;
+    save();
+    updatePayBaseLabel();
+    renderEstimatedPay();
+  });
+
+  const otThresholdEl = document.getElementById("payOtThreshold");
+  otThresholdEl.value = state.payroll.otThresholdHours || 8;
+  otThresholdEl.addEventListener("input", ()=>{
+    const v = parseFloat(otThresholdEl.value);
+    state.payroll.otThresholdHours = (v>0 && v<=16) ? v : 8;
+    save();
+    const ref = otThresholdRef();
+    if(ref) ref.set(state.payroll.otThresholdHours);
+    renderEstimatedPay();
+  });
+
   renderEstimatedPay();
 }
 
-function monthlyOvertimeMs(){
+function updatePayBaseLabel(){
+  const lbl = document.getElementById("payBaseLabel");
+  if(!lbl) return;
+  const period = state.payroll.period || "monthly";
+  const suffix = period === "weekly"
+    ? (state.lang==='ko'?" (주급)":state.lang==='id'?" (mingguan)":" (weekly)")
+    : (state.lang==='ko'?" (월급)":state.lang==='id'?" (bulanan)":" (monthly)");
+  lbl.textContent = t("lbl_base_pay") + suffix;
+}
+
+function overtimeThresholdMs(){
+  return (state.payroll.otThresholdHours || 8) * 3600 * 1000;
+}
+function otThresholdRef(){
+  const db = initFirebase();
+  return db ? db.ref("dispatch/" + ensurePairId() + "/otThresholdHours") : null;
+}
+
+function periodOvertimeMs(){
   const now = new Date();
+  const period = state.payroll.period || "monthly";
+  const source = state.role === "boss" ? state.driverShifts : state.shifts;
+  if(period === "weekly"){
+    const day = now.getDay(); // 0=Sun
+    const weekStart = new Date(now); weekStart.setHours(0,0,0,0); weekStart.setDate(now.getDate()-day);
+    return source
+      .filter(s=>new Date(s.clockOutTs) >= weekStart)
+      .reduce((sum,s)=> sum + (s.overtimeMs||0), 0);
+  }
   const y = now.getFullYear(), m = now.getMonth();
-  return state.shifts
+  return source
     .filter(s=>{ const d = new Date(s.clockOutTs); return d.getFullYear()===y && d.getMonth()===m; })
     .reduce((sum,s)=> sum + (s.overtimeMs||0), 0);
 }
@@ -2886,7 +2969,7 @@ function renderEstimatedPay(){
   const el = document.getElementById("estimatedPayCard");
   if(!el) return;
   const p = state.payroll;
-  const otMs = monthlyOvertimeMs();
+  const otMs = periodOvertimeMs();
   const otHours = otMs / 3600000;
   const otPay = otHours * (p.ot||0);
   const fixed = (p.base||0) + (p.meal||0) + (p.vehicle||0) + (p.bonus||0) + (p.insurance||0);
@@ -2902,7 +2985,7 @@ function renderEstimatedPay(){
       <span class="list-value">${fmtNum(fixed)}</span>
     </div>
     <div class="row">
-      <span style="font-size:13.5px;">${t("lbl_ot_hours_month")}</span>
+      <span style="font-size:13.5px;">${(p.period==='weekly') ? t("lbl_ot_hours_week") : t("lbl_ot_hours_month")}</span>
       <span class="list-value">${otHours.toFixed(1)}h · ${fmtNum(Math.round(otPay))}</span>
     </div>
     <div class="row" style="margin-top:4px;">
@@ -3165,7 +3248,8 @@ function formatHMS(ms){
   return `${h}:${m}:${s}`;
 }
 
-const REGULAR_SHIFT_MS = 8 * 3600 * 1000; // 8-hour regular shift threshold
+// Overtime threshold is configurable per boss (state.payroll.otThresholdHours,
+// default 8h) via overtimeThresholdMs() — no longer a fixed constant.
 
 let lastClockActionTs = 0;
 
@@ -3199,8 +3283,9 @@ function doClockOut(){
   if(state.clock.status === "out"){ toast(t("already_clocked_out")); return; }
   const start = state.clock.since;
   const totalMs = start ? (Date.now() - start) : 0;
-  const regularMs = Math.min(totalMs, REGULAR_SHIFT_MS);
-  const overtimeMs = Math.max(0, totalMs - REGULAR_SHIFT_MS);
+  const threshold = overtimeThresholdMs();
+  const regularMs = Math.min(totalMs, threshold);
+  const overtimeMs = Math.max(0, totalMs - threshold);
   state.clock = {status:"out", since:null, lastSummary:{totalMs, regularMs, overtimeMs}};
   const shiftRecord = { id: uid("shift"), clockInTs: start, clockOutTs: Date.now(), totalMs, regularMs, overtimeMs };
   state.shifts.push(shiftRecord);
