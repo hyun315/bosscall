@@ -44,7 +44,9 @@ Next.js 15 (App Router) · TypeScript strict · Tailwind CSS · Firebase (Auth �
 3. Authentication › 설정 › **승인된 도메인**에 Vercel 도메인 추가 (예: `bosscall.vercel.app`)
 4. **Firestore Database** › 데이터베이스 만들기 › 위치 **asia-southeast2 (Jakarta)** 권장 › 프로덕션 모드
 5. Firestore › **규칙** 탭에 이 저장소의 `firestore.rules` 내용을 그대로 붙여넣고 게시
-   (별도 색인 배포는 필요 없습니다. 콘솔에 색인 생성 링크가 뜨면 눌러 주세요.)
+   (복합 색인은 필요 없습니다. 단, 구글 좌표 30일 정리용 **단일 필드 예외 2개**는 꼭 추가하세요:
+   Firestore › 색인 › 단일 필드 › 예외 추가 → 컬렉션 ID `calls`, 필드 `geoExpiresAt`, **컬렉션 그룹** 범위 `오름차순` 체크 → 저장.
+   `favorites` 도 똑같이 한 번 더. Firebase CLI가 있으면 `firebase deploy --only firestore:indexes` 로 한 번에 됩니다.)
 6. (선택) Firestore › **TTL** › 컬렉션 그룹 `rateLimits`, 필드 `expireAt` 추가 — 레이트리밋 카운터 자동 삭제
 7. 프로젝트 설정 › 일반 › 내 앱 › **웹 앱 추가** → 표시되는 설정값을 `NEXT_PUBLIC_FIREBASE_*` 에 사용
 8. 프로젝트 설정 › **클라우드 메시징** › 웹 푸시 인증서 › **키 쌍 생성** → `NEXT_PUBLIC_FIREBASE_VAPID_KEY`
