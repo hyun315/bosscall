@@ -130,7 +130,16 @@ export function LocationPicker({
 
   return (
     <div className="space-y-5">
-      {kind === "destination" && <PlaceSearch groupId={groupId} onSelect={onPicked} />}
+      {kind === "destination" && (
+        <section>
+          {/* 픽업 카드 아래에서 "이제 목적지를 고를 차례"임을 분명히 보여준다 */}
+          <h3 className="mb-2 flex items-center gap-2 text-lg font-bold text-ink">
+            <span aria-hidden>🎯</span>
+            {t("loc.chooseDestinationTitle")}
+          </h3>
+          <PlaceSearch groupId={groupId} onSelect={onPicked} placeholder={t("loc.destinationSearchPlaceholder")} />
+        </section>
+      )}
 
       {kind === "pickup" && (
         <div className="grid gap-3">

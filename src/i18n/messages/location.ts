@@ -13,6 +13,12 @@ export const locationMsgs = {
   "loc.search": { ko: "장소 검색", id: "Cari tempat", en: "Search places" },
   "loc.pickPickup": { ko: "픽업 위치 선택", id: "Pilih titik jemput", en: "Choose pickup" },
   "loc.pickDestination": { ko: "목적지 선택", id: "Pilih tujuan", en: "Choose destination" },
+  "loc.chooseDestinationTitle": { ko: "목적지를 골라주세요", id: "Pilih tujuan Anda", en: "Choose your destination" },
+  "loc.destinationSearchPlaceholder": {
+    ko: "목적지 검색 (예: Grand Indonesia)",
+    id: "Cari tujuan (contoh: Grand Indonesia)",
+    en: "Search destination (e.g. Grand Indonesia)",
+  },
   "loc.deniedTitle": { ko: "현재 위치를 사용할 수 없습니다.", id: "Lokasi saat ini tidak tersedia.", en: "Current location is unavailable." },
   "loc.deniedBody": {
     ko: "설정에서 위치 권한을 허용하거나 지도에서 직접 위치를 선택해주세요.",
