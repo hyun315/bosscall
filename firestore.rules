@@ -1,0 +1,97 @@
+rules_version = '2';
+
+// BossCall 2.0 — Firestore 보안 규칙 (명세 §16 Multi-tenant Data Security)
+//
+// 원칙
+//  1) 클라이언트는 "읽기"만 한다. 모든 쓰기는 서버 API(Admin SDK)가 검증 후 수행한다.
+//     → call.status 는 서버만 바꿀 수 있다 (Source of Truth).
+//  2) 읽기는 current_user → group_members → authorized group → group-scoped record 경로로만 허용.
+//  3) 감사 로그는 Owner만 읽는다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function memberDoc(gid) {
+      return /databases/$(database)/documents/groups/$(gid)/members/$(request.auth.uid);
+    }
+    function isMember(gid) {
+      return signedIn() && exists(memberDoc(gid));
+    }
+    function isOwner(gid) {
+      return isMember(gid) && get(memberDoc(gid)).data.role == 'OWNER';
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+
+      match /notifications/{id} {
+        allow read: if signedIn() && request.auth.uid == uid;
+        allow write: if false;
+      }
+      match /deviceTokens/{id} {
+        allow read, write: if false;
+      }
+    }
+
+    match /groups/{gid} {
+      allow read: if isMember(gid);
+      allow write: if false;
+
+      match /members/{uid} {
+        allow read: if isMember(gid);
+        allow write: if false;
+      }
+      match /drivers/{driverId} {
+        allow read: if isMember(gid);
+        allow write: if false;
+      }
+      match /calls/{callId} {
+        allow read: if isMember(gid);
+        allow write: if false;
+
+        match /events/{eventId} {
+          allow read: if isMember(gid);
+          allow write: if false;
+        }
+      }
+      match /workSessions/{id} {
+        allow read: if isMember(gid);
+        allow write: if false;
+      }
+      match /favorites/{id} {
+        allow read: if isMember(gid);
+        allow write: if false;
+      }
+      match /auditLogs/{id} {
+        allow read: if isOwner(gid);
+        allow write: if false;
+      }
+      // 급여 조건: 관리자 + (공개 설정 시) 해당 기사 본인. 가족은 불가. 쓰기는 서버만.
+      match /payrollSettings/{driverId} {
+        allow read: if isOwner(gid) || (
+          isMember(gid) &&
+          get(memberDoc(gid)).data.driverId == driverId &&
+          resource.data.shareWithDriver == true
+        );
+        allow write: if false;
+      }
+      // 기사 최신 위치: 관리자·가족 + 기사 본인만 (다른 기사는 불가). 쓰기는 서버만.
+      match /driverLocations/{driverId} {
+        allow read: if isMember(gid) && (
+          get(memberDoc(gid)).data.role in ['OWNER', 'MEMBER'] ||
+          get(memberDoc(gid)).data.driverId == driverId
+        );
+        allow write: if false;
+      }
+    }
+
+    // invites, analyticsEvents, usageDaily, rateLimits,
+    // tripStats(익명 통계)·adProfiles(맞춤 혜택)·pois(자체 장소)·users/{uid}/consentLog 등 그 외 모든 경로: 서버 전용
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

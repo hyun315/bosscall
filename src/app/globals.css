@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+html,
+body {
+  background: #f7f8fa;
+  color: #111827;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  font-feature-settings: "tnum" 1;
+}
+
+body {
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+}
+
+@layer components {
+  .card {
+    @apply rounded-card border border-line bg-surface shadow-card;
+  }
+  .field {
+    @apply w-full rounded-btn border border-line bg-surface px-4 py-3 text-base text-ink outline-none transition placeholder:text-ink-faint focus:border-action focus:ring-2 focus:ring-action/20;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-ink-sub;
+  }
+  .section-title {
+    @apply mb-2 px-1 text-sm font-semibold text-ink-sub;
+  }
+}
+
+/* 호출 중 점 애니메이션 (C04) */
+@keyframes bc-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.bc-dot {
+  animation: bc-dot 1.2s infinite ease-in-out;
+}
+.bc-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.bc-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes bc-pulse-ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+.bc-pulse-ring {
+  animation: bc-pulse-ring 1.6s infinite cubic-bezier(0.2, 0.6, 0.4, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bc-dot,
+  .bc-pulse-ring {
+    animation: none;
+  }
+}
