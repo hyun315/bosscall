@@ -35,21 +35,31 @@ function describe(e: unknown): string {
  * path 가 null 이면 구독하지 않는다.
  */
 export function useLiveDoc<T>(path: string | null): LiveState<T | null> {
-  const [state, setState] = useState<LiveState<T | null>>({ data: null, loading: path !== null, error: null });
+  const [state, setState] = useState<LiveState<T | null> & { of: string | null }>({
+    data: null,
+    loading: path !== null,
+    error: null,
+    of: path,
+  });
   useEffect(() => {
     if (!path) {
-      setState({ data: null, loading: false, error: null });
+      setState({ data: null, loading: false, error: null, of: null });
       return;
     }
-    setState((s) => ({ ...s, loading: true, error: null }));
+    setState((s) => ({ ...s, loading: true, error: null, of: path }));
     const unsub = onSnapshot(
       doc(clientDb(), path),
-      (snap) => setState({ data: snap.exists() ? (snap.data() as T) : null, loading: false, error: null }),
-      (e) => setState({ data: null, loading: false, error: describe(e) }),
+      (snap) => setState({ data: snap.exists() ? (snap.data() as T) : null, loading: false, error: null, of: path }),
+      (e) => setState({ data: null, loading: false, error: describe(e), of: path }),
     );
     return unsub;
   }, [path]);
-  return state;
+  // path 가 바뀐 직후 한 렌더 동안은 state 가 이전 대상의 것이다 (effect 는 렌더 뒤에 돈다).
+  // 그 사이를 loading 으로 보지 않으면 "다 불러왔는데 비어 있음"으로 오인된다 — 딥링크가 홈으로 튕기던 원인.
+  const stale = state.of !== path;
+  return stale
+    ? { data: null, loading: true, error: null }
+    : { data: state.data, loading: state.loading, error: state.error };
 }
 
 export type Filter =
@@ -80,25 +90,34 @@ function build(path: string, filters: Filter[]): Query {
  */
 export function useLiveQuery<T>(path: string | null, filters: Filter[] = []): LiveState<T[]> {
   const key = path ? `${path}|${JSON.stringify(filters)}` : null;
-  const [state, setState] = useState<LiveState<T[]>>({ data: [], loading: key !== null, error: null });
+  const [state, setState] = useState<LiveState<T[]> & { of: string | null }>({
+    data: [],
+    loading: key !== null,
+    error: null,
+    of: key,
+  });
   useEffect(() => {
     if (!key || !path) {
-      setState({ data: [], loading: false, error: null });
+      setState({ data: [], loading: false, error: null, of: null });
       return;
     }
-    setState((s) => ({ ...s, loading: true, error: null }));
+    setState((s) => ({ ...s, loading: true, error: null, of: key }));
     const parsed = JSON.parse(key.slice(path.length + 1)) as Filter[];
     const unsub = onSnapshot(
       build(path, parsed),
-      (snap) => setState({ data: snap.docs.map((d) => d.data() as T), loading: false, error: null }),
+      (snap) => setState({ data: snap.docs.map((d) => d.data() as T), loading: false, error: null, of: key }),
       (e) => {
         console.error("[firestore]", path, e);
-        setState({ data: [], loading: false, error: describe(e) });
+        setState({ data: [], loading: false, error: describe(e), of: key });
       },
     );
     return unsub;
     // key 가 path+filters 를 모두 담고 있다
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
-  return state;
+  // useLiveDoc 과 같은 이유로, 구독 대상이 바뀐 직후 한 렌더는 loading 으로 본다
+  const stale = state.of !== key;
+  return stale
+    ? { data: [], loading: true, error: null }
+    : { data: state.data, loading: state.loading, error: state.error };
 }
