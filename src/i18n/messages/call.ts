@@ -17,6 +17,16 @@ export const callMsgs = {
     en: "The driver isn't on duty. You can call once they clock in.",
   },
   "newCall.noDriverOnDuty": { ko: "근무 중인 기사 없음", id: "Tidak ada sopir yang bertugas", en: "No driver on duty" },
+  "newCall.destPreset": {
+    ko: "목적지: {name} — 만날 곳만 고르시면 됩니다.",
+    id: "Tujuan: {name} — tinggal pilih titik jemput.",
+    en: "Destination: {name} — just pick where to meet.",
+  },
+  "newCall.destPresetFailed": {
+    ko: "링크로 받은 목적지를 불러오지 못했습니다. 직접 골라 주세요.",
+    id: "Tujuan dari tautan gagal dimuat. Silakan pilih sendiri.",
+    en: "Couldn't load the destination from the link. Please pick it yourself.",
+  },
 
   // ── 호출 화면 공통
   "call.titleCall": { ko: "호출", id: "Panggilan", en: "Call" },

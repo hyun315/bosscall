@@ -27,6 +27,12 @@ export default function NewCallPage() {
   const router = useRouter();
   const toast = useToast();
   const fromCallId = useSearchParam("from");
+  // 업소록 등 외부 앱에서 목적지를 들고 들어오는 경우 (§ 외부 연동)
+  const destName = useSearchParam("dest");
+  const destAddr = useSearchParam("destAddr");
+  const destPlaceId = useSearchParam("destPlaceId");
+  const destLat = useSearchParam("destLat");
+  const destLng = useSearchParam("destLng");
 
   const drivers = useDrivers(groupId);
   const favorites = useFavorites(groupId);
@@ -39,6 +45,7 @@ export default function NewCallPage() {
   const [driverId, setDriverId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [presetFailed, setPresetFailed] = useState(false);
 
   const eligible = useMemo(
     () => drivers.data.filter((d) => d.userId && (d.status === "ON_DUTY" || d.status === "BUSY")),
@@ -70,6 +77,37 @@ export default function NewCallPage() {
       cancelled = true;
     };
   }, [source.data, pickup]);
+
+  // 링크로 받은 목적지 (업소록의 "기사" 단추 등). 좌표가 없으면 Place ID로 받아온다.
+  useEffect(() => {
+    if (fromCallId || destination) return;
+    if (destPlaceId === undefined || destLat === undefined || destLng === undefined) return; // 아직 못 읽음
+    const lat = Number(destLat);
+    const lng = Number(destLng);
+    const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0);
+    if (!destPlaceId && !hasCoords) return;
+    let cancelled = false;
+    void resolvePlace({
+      lat: hasCoords ? lat : 0,
+      lng: hasCoords ? lng : 0,
+      address: destAddr ?? "",
+      name: destName ?? null,
+      placeId: destPlaceId ?? null,
+      source: "google",
+      category: null,
+      fetchedAt: hasCoords ? Date.now() : null,
+      needsRefresh: !hasCoords,
+    })
+      .then((p) => {
+        if (!cancelled) setDestination(p);
+      })
+      .catch(() => {
+        if (!cancelled) setPresetFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [fromCallId, destination, destName, destAddr, destPlaceId, destLat, destLng]);
 
   const pickupRecents = useMemo(() => recentPlaces(recentCalls.data, "both"), [recentCalls.data]);
   const destRecents = useMemo(() => recentPlaces(recentCalls.data, "destination"), [recentCalls.data]);
@@ -124,16 +162,30 @@ export default function NewCallPage() {
         )}
 
         {step === "pickup" && (
-          <LocationPicker
-            kind="pickup"
-            groupId={groupId}
-            favorites={favorites.data}
-            recents={pickupRecents}
-            onPicked={(p) => {
-              setPickup(p);
-              setStep("destination");
-            }}
-          />
+          <>
+            {destination && (
+              <div className="mb-4">
+                <NotificationBanner tone="info">
+                  {t("newCall.destPreset", { name: destination.name ?? destination.address })}
+                </NotificationBanner>
+              </div>
+            )}
+            {presetFailed && (
+              <div className="mb-4">
+                <NotificationBanner tone="warning">{t("newCall.destPresetFailed")}</NotificationBanner>
+              </div>
+            )}
+            <LocationPicker
+              kind="pickup"
+              groupId={groupId}
+              favorites={favorites.data}
+              recents={pickupRecents}
+              onPicked={(p) => {
+                setPickup(p);
+                setStep(destination ? "confirm" : "destination");
+              }}
+            />
+          </>
         )}
 
         {step === "destination" && (
