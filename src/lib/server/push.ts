@@ -22,6 +22,8 @@ export interface PushRequest {
   path: string;
   /** 기사 호출처럼 사용자가 직접 닫을 때까지 알림을 유지할지 */
   urgent?: boolean;
+  /** false 면 알림함에 기록하지 않고 푸시만 보낸다 (응답 재촉 알림) */
+  inbox?: boolean;
 }
 
 const CALL_UPDATE_TYPES: readonly NotificationType[] = [
@@ -68,7 +70,7 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
     });
 
     const batch = db.batch();
-    for (const u of recipients) {
+    for (const u of req.inbox === false ? [] : recipients) {
       const ref = db.collection(`users/${u.id}/notifications`).doc();
       const text = textFor(userLocale(u));
       batch.set(ref, {

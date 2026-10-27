@@ -5,6 +5,7 @@ import { BottomNavigation } from "@/components/common/BottomNavigation";
 import { LoadingState } from "@/components/common/States";
 import { ConsentSheet } from "@/components/privacy/ConsentSheet";
 import { useDriverLocationSharing } from "@/hooks/useDriverLocationSharing";
+import { useIncomingCallAlarm } from "@/hooks/useCallAlarm";
 import { useActiveCalls } from "@/hooks/useGroupData";
 import { useSession } from "@/hooks/useSession";
 import { refreshPushTokenSilently } from "@/services/client/push";
@@ -36,15 +37,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   // 근무 중 위치 공유 (기사 본인이 켠 경우에만)
   useDriverLocationSharing(isDriver ? session.groupId : null, isDriver ? driverId : null);
   const incomingId = active.data.find((c) => c.driverId === driverId && c.status === "CALLING")?.id ?? null;
+  // 응답할 때까지 호출 알람 반복 (앱이 화면에 열려 있는 동안)
+  useIncomingCallAlarm(active.data, driverId, isDriver);
 
   useEffect(() => {
     if (!incomingId) return;
     if (pathname === `/calls/${incomingId}`) return;
-    try {
-      navigator.vibrate?.([300, 150, 300, 150, 600]);
-    } catch {
-      /* 미지원 */
-    }
     router.push(`/calls/${incomingId}`);
   }, [incomingId, pathname, router]);
 

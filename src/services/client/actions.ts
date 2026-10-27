@@ -106,3 +106,7 @@ export const getTripReport = (dims: string[], from: string, to: string) =>
 export const getPois = () => api<{ pois: PoiDoc[] }>("/api/operator/pois");
 export const uploadPois = (csv: string, replace: boolean) =>
   api<{ saved: number; errors: { line: number; reason: string }[] }>("/api/operator/pois", { body: { csv, replace } });
+
+/** 응답 대기 중 기사에게 알림 다시 보내기 (호출자 화면에서 자동) */
+export const nudgeDriver = (groupId: string, callId: string) =>
+  api<{ sent: boolean }>(`/api/calls/${callId}/nudge`, { body: { groupId } });

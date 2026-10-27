@@ -4,6 +4,12 @@ import type { Tri } from "@/i18n/core";
 export const pushMsgs = {
   "push.callCreated.title": { ko: "🔔 새로운 호출", id: "🔔 Panggilan baru", en: "🔔 New call" },
   "push.callCreated.body": { ko: "{caller}님이 호출했습니다.", id: "{caller} memanggil Anda.", en: "{caller} is calling you." },
+  "push.callReminder.title": { ko: "🔔 호출 응답을 기다리고 있어요", id: "🔔 Panggilan menunggu jawaban", en: "🔔 A call is waiting for you" },
+  "push.callReminder.body": {
+    ko: "{caller}님이 기다리고 있습니다. 앱을 열어 응답해주세요.",
+    id: "{caller} sedang menunggu. Buka aplikasi untuk menjawab.",
+    en: "{caller} is waiting. Open the app to respond.",
+  },
   "push.accepted.title": { ko: "✓ 호출 수락", id: "✓ Panggilan diterima", en: "✓ Call accepted" },
   "push.accepted.body": {
     ko: "{driver} 기사님이 {caller}님의 호출을 수락했습니다.",

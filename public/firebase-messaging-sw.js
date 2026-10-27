@@ -32,7 +32,8 @@ self.addEventListener("push", (event) => {
     tag: p.callId ? "call-" + p.callId : p.type || "bosscall",
     renotify: true,
     requireInteraction: p.urgent,
-    vibrate: p.urgent ? [300, 150, 300, 150, 600] : [200],
+    vibrate: p.urgent ? [500, 200, 500, 200, 500, 200, 800] : [200],
+    silent: false,
     data: { url: p.url },
   };
   event.waitUntil(self.registration.showNotification(p.title, options));

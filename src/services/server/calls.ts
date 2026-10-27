@@ -342,6 +342,50 @@ async function groupOwnerIds(groupId: string): Promise<string[]> {
   return snap.docs.map((d) => (d.data() as MemberDoc).userId);
 }
 
+/** 응답 재촉 알림: 최소 간격·최대 횟수 (호출 대기 90초 동안 최대 3번) */
+export const NUDGE_MIN_INTERVAL_MS = 20_000;
+export const NUDGE_MAX = 3;
+
+/**
+ * 기사가 아직 응답하지 않은 호출에 푸시 알림을 다시 보낸다.
+ * 앱이 닫혀 있는 기사 휴대폰은 웹앱이 소리를 계속 낼 수 없으므로, 호출자 화면이 열려 있는 동안
+ * 일정 간격으로 알림을 다시 울리게 한다. 간격·횟수는 서버가 강제한다.
+ */
+export async function nudgeDriver(groupId: string, callId: string, actor: MemberDoc): Promise<{ sent: boolean }> {
+  const db = adminDb();
+  const callRef = db.doc(`groups/${groupId}/calls/${callId}`);
+  const result = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(callRef);
+    if (!snap.exists) throw notFound("err.callNotFound");
+    const call = snap.data() as CallDoc;
+    if (actor.role === "DRIVER") throw forbidden();
+    const now = Date.now();
+    const waiting = (call.status === "CALLING" || call.status === "RECEIVED") && call.expiresAt > now;
+    const count = call.nudgeCount ?? 0;
+    const recent = call.lastNudgeAt != null && now - call.lastNudgeAt < NUDGE_MIN_INTERVAL_MS;
+    if (!waiting || recent || count >= NUDGE_MAX) return null;
+    tx.update(callRef, { lastNudgeAt: now, nudgeCount: count + 1 });
+    return call;
+  });
+  if (!result) return { sent: false };
+
+  const dSnap = await db.doc(`groups/${groupId}/drivers/${result.driverId}`).get();
+  const driverUserId = (dSnap.data() as DriverDoc | undefined)?.userId;
+  if (!driverUserId) return { sent: false };
+  await notifyUsers([driverUserId], {
+    type: "CALL_CREATED",
+    groupId,
+    callId,
+    titleKey: "push.callReminder.title",
+    bodyKey: "push.callReminder.body",
+    params: { caller: result.callerName },
+    path: `/calls/${callId}?g=${groupId}`,
+    urgent: true,
+    inbox: false,
+  });
+  return { sent: true };
+}
+
 /** 기사 연결 여부 등을 확인할 때 쓰는 헬퍼 */
 export async function requireCallInGroup(groupId: string, callId: string): Promise<CallDoc> {
   const snap = await adminDb().doc(`groups/${groupId}/calls/${callId}`).get();

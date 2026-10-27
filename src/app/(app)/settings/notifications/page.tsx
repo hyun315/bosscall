@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { AppHeader } from "@/components/common/AppHeader";
 import { PushPrompt } from "@/components/common/PushPrompt";
+import { AlarmSoundPicker } from "@/components/driver/AlarmSoundPicker";
 import { useToast } from "@/components/common/Toast";
 import { useReadySession } from "@/hooks/useSession";
 import { updateMe } from "@/services/client/actions";
@@ -45,6 +46,7 @@ export default function NotificationSettingsPage() {
         {role === "DRIVER" && (
           <p className="px-1 text-sm leading-relaxed text-ink-sub">{t("notifSet.driverNote")}</p>
         )}
+        {role === "DRIVER" && <AlarmSoundPicker />}
         <div className="card divide-y divide-line">
           {rows.map((r) => (
             <label key={r.key} className="flex min-h-[64px] cursor-pointer items-center gap-3 px-4 py-3">

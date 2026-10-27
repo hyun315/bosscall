@@ -258,6 +258,9 @@ export interface CallDoc {
   actualPickup?: ActualFix | null;
   actualDropoff?: ActualFix | null;
   tripStartedAt?: number | null;
+  /** 응답 대기 중 기사에게 다시 보낸 알림 (호출자 화면이 열려 있는 동안 서버가 간격 제한) */
+  lastNudgeAt?: number | null;
+  nudgeCount?: number;
   status: CallStatus;
   createdAt: number;
   expiresAt: number;

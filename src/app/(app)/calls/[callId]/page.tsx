@@ -10,13 +10,14 @@ import { StatusBadge } from "@/components/common/StatusBadge";
 import { useToast } from "@/components/common/Toast";
 import { DriverLocationMap } from "@/components/driver/DriverLocationMap";
 import { LocationCard } from "@/components/location/LocationCard";
+import { useAlarmState } from "@/hooks/useCallAlarm";
 import { lim, ob, useLiveDoc, useLiveQuery } from "@/hooks/useLive";
 import { useSearchParam } from "@/hooks/useSearchParam";
 import { useReadySession } from "@/hooks/useSession";
 import { isPending, isTerminal, type CallAction } from "@/lib/callStateMachine";
 import { CALL_STATUS_LABEL, googleMapsDirectionsUrl, shortPlace, toWhatsAppNumber } from "@/lib/format";
 import { formatTime } from "@/lib/time";
-import { transitionCall, updateMe } from "@/services/client/actions";
+import { nudgeDriver, transitionCall, updateMe } from "@/services/client/actions";
 import { quickFix } from "@/services/client/places";
 import { coordsGone } from "@/lib/tripData";
 import { ClientApiError, errorMessage } from "@/services/client/api";
@@ -113,6 +114,18 @@ function CallView({ callId }: { callId: string }) {
     void run("TIMEOUT", { silent: true }).catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [call?.status, remainingMs <= 0, Math.floor(remainingMs / 4000)]);
+
+  // 기사가 아직 응답하지 않으면 20초마다 알림을 다시 울린다 (앱이 닫힌 기사 폰 대비, 서버가 최대 3번으로 제한)
+  const nudgeBucket = useRef(0);
+  const sinceCreated = call ? now - call.createdAt : 0;
+  const bucket = Math.floor(sinceCreated / 20_000);
+  useEffect(() => {
+    if (!call || role === "DRIVER" || !isPending(call.status) || remainingMs <= 0) return;
+    if (bucket < 1 || bucket <= nudgeBucket.current) return;
+    nudgeBucket.current = bucket;
+    void nudgeDriver(groupId, callId).catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bucket, call?.status]);
 
   if (callState.loading) return <LoadingState full />;
   if (callState.error || !call) {
@@ -453,6 +466,7 @@ function DriverPanel({
 }) {
   const router = useRouter();
   const { t } = useI18n();
+  const alarm = useAlarmState();
   const navTarget =
     call.status === "TRIP_STARTED"
       ? googleMapsDirectionsUrl(call.destinationLat, call.destinationLng, call.destinationPlaceId)
@@ -467,6 +481,15 @@ function DriverPanel({
         <p className="mt-2 text-lg font-semibold text-ink">📍 {shortPlace(call.pickupName, call.pickupAddress)}</p>
         <p className="text-lg font-semibold text-ink">🎯 {shortPlace(call.destinationName, call.destinationAddress)}</p>
         <p className="mt-2 text-sm tabular-nums text-ink-sub">{t("call.respondWithin", { s: seconds })}</p>
+        {alarm.blocked && (
+          // 브라우저가 소리를 막은 상태 — 이 버튼을 누르는 동작으로 알람이 켜진다 (전역 터치 감지)
+          <button
+            type="button"
+            className="mt-4 w-full rounded-btn border-2 border-dashed border-action bg-surface px-4 py-3 text-base font-bold text-action"
+          >
+            {t("alarm.tapToSound")}
+          </button>
+        )}
         <div className="mt-6 flex flex-col gap-5">
           <Button
             variant="success"
