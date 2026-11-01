@@ -192,9 +192,9 @@ export const commonMsgs = {
   "ad.label": { ko: "광고", id: "Iklan", en: "Ad" },
   "ad.inquiryTitle": { ko: "이 자리에 우리 가게를 알리세요", id: "Promosikan usaha Anda di sini", en: "Advertise your business here" },
   "ad.inquiryShort": {
-    ko: "한인 가정이 매일 보는 화면에 광고하세요",
-    id: "Pasang iklan di layar yang dilihat keluarga Korea setiap hari",
-    en: "Reach Korean families on a screen they see every day",
+    ko: "🎉 신규 출시 기념 · 2027년 3월 31일까지 광고 무료",
+    id: "🎉 Promo peluncuran · iklan gratis s.d. 31 Maret 2027",
+    en: "🎉 Launch offer · free ads until March 31, 2027",
   },
   "ad.inquiryMore": { ko: "광고 안내", id: "Info iklan", en: "Learn more" },
 } satisfies Record<string, Tri>;

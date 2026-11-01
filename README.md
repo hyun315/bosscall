@@ -226,7 +226,8 @@ npm run typecheck
 - 지금은 **모든 칸에 한인업소록 배너 + 광고 안내 카드**를 함께 보여줍니다 (`SLOT_ADS` 에서 칸별로 바꿀 수 있음).
 - 원칙: 사장님·가족 화면에만, 화면 아래쪽 한 곳에만, 항상 "광고" 표시. 기사 화면·호출 버튼 주변·호출 확인 화면·푸시 알림에는 넣지 않습니다.
 - 광고 링크에는 `utm_source=bosscall&utm_campaign=<칸 이름>` 이 붙어 광고주 쪽에서 BossCall 유입을 알 수 있습니다.
-- 노출·클릭은 `analyticsEvents` 에 `ad_impression` / `ad_click` (칸·광고 id) 으로 쌓입니다.
+- 노출·클릭은 내부 참고용으로 `analyticsEvents` 에 `ad_impression` / `ad_click` 이 쌓입니다 (광고주에게 제공하지 않음).
+- 신규 출시 기념: **2027년 3월 31일까지 광고 무료** — 광고 안내 페이지 상단·진행 순서·문의 영역, 앱 안 빈 광고 칸 문구에 표시.
 - 전체 끄기: Vercel 환경변수 `NEXT_PUBLIC_ADS_ENABLED=false`
 
 ## 15. 홈 화면에 추가 안내

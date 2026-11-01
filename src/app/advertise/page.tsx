@@ -14,7 +14,7 @@ const SAMPLE = HOUSE_AD_SAMPLE;
 const STEPS = [
   { title: "메일로 문의", desc: "업소 이름, 원하는 광고 자리, 게재 기간을 알려주세요." },
   { title: "광고 내용 전달", desc: "제목 한 줄, 짧은 설명, 연결할 링크(홈페이지·인스타그램·WhatsApp·업소록 페이지)만 있으면 됩니다." },
-  { title: "게재 시작", desc: "확인 후 앱에 바로 올라갑니다. 노출 수와 클릭 수를 알려 드립니다." },
+  { title: "게재 시작", desc: "확인 후 앱에 바로 올라갑니다." },
 ];
 
 const RULES = [
@@ -47,7 +47,12 @@ export default function AdvertisePage() {
           <Link href="/" className="text-sm font-semibold text-white/70">
             ← BossCall
           </Link>
-          <p className="mt-6 text-[13px] font-semibold tracking-wide text-[#F2C230]">BossCall 광고 안내</p>
+          <p className="mt-6 flex flex-wrap items-center gap-2 text-[13px] font-semibold tracking-wide text-[#F2C230]">
+            BossCall 광고 안내
+            <span className="rounded-full bg-[#F2C230] px-2.5 py-0.5 text-[12px] font-bold text-navy">
+              🎉 신규 출시 기념 · 2027년 3월 31일까지 무료
+            </span>
+          </p>
           <h1 className="mt-2 text-[28px] font-extrabold leading-tight [text-wrap:balance]">
             자카르타 한인 가정이
             <br />
@@ -114,9 +119,10 @@ export default function AdvertisePage() {
               </li>
             ))}
           </ol>
-          <p className="mt-4 rounded-btn bg-surface px-4 py-3 text-sm text-ink-sub ring-1 ring-line">
-            광고비는 자리와 기간에 따라 안내해 드립니다.
-          </p>
+          <div className="mt-4 rounded-card bg-[#F2C230]/15 px-4 py-3 ring-1 ring-[#F2C230]/50">
+            <p className="text-[15px] font-bold text-ink">🎉 신규 출시 기념 · 2027년 3월 31일까지 무료</p>
+            <p className="mt-0.5 text-sm text-ink-sub">이 기간에 문의하시면 게재 비용을 받지 않습니다.</p>
+          </div>
         </section>
 
         {/* 약속 */}
@@ -137,7 +143,7 @@ export default function AdvertisePage() {
         {/* 문의 */}
         <section className="rounded-card bg-navy p-5 text-white">
           <h2 className="text-lg font-bold">광고 문의</h2>
-          <p className="mt-1 text-sm text-white/70">메일 주시면 자리와 일정, 비용을 안내해 드립니다.</p>
+          <p className="mt-1 text-sm text-white/70">메일 주시면 자리와 일정을 안내해 드립니다. 2027년 3월 31일까지는 무료입니다.</p>
           <a
             href={inquiryMailto(from)}
             className="mt-4 flex min-h-[52px] items-center justify-center gap-2 rounded-btn bg-white text-[15px] font-bold text-navy"
