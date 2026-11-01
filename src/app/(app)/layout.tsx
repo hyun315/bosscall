@@ -36,7 +36,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const active = useActiveCalls(isDriver ? session.groupId : null);
   // 근무 중 위치 공유 (기사 본인이 켠 경우에만)
   useDriverLocationSharing(isDriver ? session.groupId : null, isDriver ? driverId : null);
-  const incomingId = active.data.find((c) => c.driverId === driverId && c.status === "CALLING")?.id ?? null;
+  // 휴대폰에 저장된 지난 화면에서 이미 끝난 호출로 이동하지 않도록 응답 시간이 남은 호출만
+  const incomingId =
+    active.data.find((c) => c.driverId === driverId && c.status === "CALLING" && c.expiresAt > Date.now())?.id ?? null;
   // 응답할 때까지 호출 알람 반복 (앱이 화면에 열려 있는 동안)
   // 호출 소리를 끈 기사는 앱 안 알람도 울리지 않는다 (설정하지 않았으면 켜짐)
   useIncomingCallAlarm(active.data, driverId, isDriver && session.me?.callAlarmSound !== false);

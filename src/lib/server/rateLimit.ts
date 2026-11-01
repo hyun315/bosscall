@@ -11,16 +11,12 @@ export async function rateLimit(uid: string, key: string, limit: number, windowS
   const now = Date.now();
   const windowId = Math.floor(now / (windowSec * 1000));
   const ref = adminDb().doc(`rateLimits/${uid}_${key}_${windowId}`);
-  const count = await adminDb().runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const current = (snap.exists ? (snap.data()?.count as number) : 0) + 1;
-    tx.set(
-      ref,
-      { count: current, expireAt: new Date((windowId + 2) * windowSec * 1000) },
-      { merge: true },
-    );
-    return current;
-  });
+  // 트랜잭션(왕복 3번) 대신 읽기·증가를 동시에 1번 왕복으로. 동시 요청 몇 건의 오차는 남용 방지에 문제없다.
+  const [snap] = await Promise.all([
+    ref.get(),
+    ref.set({ count: FieldValue.increment(1), expireAt: new Date((windowId + 2) * windowSec * 1000) }, { merge: true }),
+  ]);
+  const count = (snap.exists ? Number(snap.data()?.count ?? 0) : 0) + 1;
   if (count > limit) throw tooMany();
 }
 

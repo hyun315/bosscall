@@ -49,6 +49,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setAuthUser(u);
       setAuthReady(true);
       if (u) {
+        // 서버 프로필 갱신은 기다리지 않는다 — 내 정보는 바로 구독해 화면을 띄우고,
+        // 처음 가입한 사람(문서가 아직 없음)만 갱신이 끝날 때까지 기다린다.
         setProfileReady(false);
         try {
           await api("/api/me", { method: "POST", body: {} });
@@ -63,7 +65,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const meState = useLiveDoc<UserDoc>(authUser && profileReady ? `users/${authUser.uid}` : null);
+  const meState = useLiveDoc<UserDoc>(authUser ? `users/${authUser.uid}` : null);
   const me = meState.data;
   const groupId = me?.activeGroupId ?? null;
   const groupState = useLiveDoc<GroupDoc>(groupId ? `groups/${groupId}` : null);
@@ -72,8 +74,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const status: SessionStatus = useMemo(() => {
     if (!authReady) return "loading";
     if (!authUser) return "signed-out";
-    if (!profileReady || meState.loading) return "loading";
-    if (!me || !groupId) return "no-group";
+    if (meState.loading) return "loading";
+    if (!me) return profileReady ? "no-group" : "loading";
+    if (!groupId) return "no-group";
     if (groupState.loading || memberState.loading) return "loading";
     if (!groupState.data || !memberState.data) return "no-group";
     return "ready";

@@ -5,6 +5,7 @@ import { track } from "@/lib/server/analytics";
 import { writeAudit } from "@/lib/server/audit";
 import { badRequest, conflict, notFound } from "@/lib/server/http";
 import { notifyUsers } from "@/lib/server/push";
+import { runAfterResponse } from "@/lib/server/defer";
 import { formatTime } from "@/lib/time";
 import { expireStaleCalls } from "@/services/server/calls";
 import type { CallDoc, DriverDoc, GroupDoc, MemberDoc, WorkSessionDoc } from "@/types/domain";
@@ -32,8 +33,6 @@ export async function clock(
   const groupId = group.id;
   const driverRef = db.doc(`groups/${groupId}/drivers/${driverId}`);
   const locationRef = db.doc(`groups/${groupId}/driverLocations/${driverId}`);
-
-  if (action === "CLOCK_OUT") await expireStaleCalls(groupId, driverId);
 
   const now = Date.now();
   let driverSnapshot: DriverDoc | null = null;
@@ -83,7 +82,10 @@ export async function clock(
     const activeSnap = await tx.get(
       db.collection(`groups/${groupId}/calls`).where("status", "in", [...PENDING_STATUSES, ...IN_PROGRESS_STATUSES]),
     );
-    const active = activeSnap.docs.map((d) => d.data() as CallDoc).filter((c) => c.driverId === driver.id);
+    // 응답 시간이 지난 대기 호출은 막지 않는다 (응답 뒤 TIMEOUT 처리)
+    const active = activeSnap.docs
+      .map((d) => d.data() as CallDoc)
+      .filter((c) => c.driverId === driver.id && !(PENDING_STATUSES.includes(c.status) && c.expiresAt <= now));
     if (active.length > 0) {
       const c = active[0];
       throw conflict(
@@ -115,6 +117,24 @@ export async function clock(
 
   const driverDoc = driverSnapshot as DriverDoc | null;
   const driverName = driverDoc?.displayName ?? member.displayName;
+  // 알림·기록은 응답을 돌려준 뒤 처리 — 버튼 반응이 빨라지도록
+  await runAfterResponse(() => notifyClock(group, member, action, now, driverName, driverDoc, byOwner, driverId));
+  return { sessionId };
+}
+
+async function notifyClock(
+  group: GroupDoc,
+  member: MemberDoc,
+  action: "CLOCK_IN" | "CLOCK_OUT",
+  now: number,
+  driverName: string,
+  driverDoc: DriverDoc | null,
+  byOwner: boolean,
+  driverId: string,
+): Promise<void> {
+  const db = adminDb();
+  const groupId = group.id;
+  if (action === "CLOCK_OUT") await expireStaleCalls(groupId, driverId);
   const owners = await db.collection(`groups/${groupId}/members`).where("role", "in", ["OWNER", "MEMBER"]).get();
   // 누른 사람 본인에게는 알리지 않는다
   const recipients = owners.docs.map((d) => (d.data() as MemberDoc).userId).filter((id) => id !== member.userId);
@@ -146,7 +166,6 @@ export async function clock(
     );
   }
   await Promise.all(tasks);
-  return { sessionId };
 }
 
 /** 근무기록 수정 — Owner 전용, 감사 로그 필수 (명세 §29 "기록 수정 권한 통제") */

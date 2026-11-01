@@ -18,7 +18,7 @@ import { useReadySession } from "@/hooks/useSession";
 import { isPending, isTerminal, type CallAction } from "@/lib/callStateMachine";
 import { CALL_STATUS_LABEL, googleMapsDirectionsUrl, shortPlace, toWhatsAppNumber } from "@/lib/format";
 import { formatTime } from "@/lib/time";
-import { nudgeDriver, transitionCall, updateMe } from "@/services/client/actions";
+import { transitionCall, updateMe } from "@/services/client/actions";
 import { quickFix } from "@/services/client/places";
 import { coordsGone } from "@/lib/tripData";
 import { ClientApiError, errorMessage } from "@/services/client/api";
@@ -115,18 +115,6 @@ function CallView({ callId }: { callId: string }) {
     void run("TIMEOUT", { silent: true }).catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [call?.status, remainingMs <= 0, Math.floor(remainingMs / 4000)]);
-
-  // 기사가 아직 응답하지 않으면 20초마다 알림을 다시 울린다 (앱이 닫힌 기사 폰 대비, 서버가 최대 3번으로 제한)
-  const nudgeBucket = useRef(0);
-  const sinceCreated = call ? now - call.createdAt : 0;
-  const bucket = Math.floor(sinceCreated / 20_000);
-  useEffect(() => {
-    if (!call || role === "DRIVER" || !isPending(call.status) || remainingMs <= 0) return;
-    if (bucket < 1 || bucket <= nudgeBucket.current) return;
-    nudgeBucket.current = bucket;
-    void nudgeDriver(groupId, callId).catch(() => undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bucket, call?.status]);
 
   if (callState.loading) return <LoadingState full />;
   if (callState.error || !call) {

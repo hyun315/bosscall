@@ -12,6 +12,7 @@ import {
 import { track, type AnalyticsEvent } from "@/lib/server/analytics";
 import { badRequest, conflict, forbidden, notFound, ApiError } from "@/lib/server/http";
 import { notifyUsers } from "@/lib/server/push";
+import { runAfterResponse } from "@/lib/server/defer";
 import { acceptableFix, geoExpiryFor } from "@/lib/tripData";
 import { recordCompletedTrip } from "@/services/server/tripData";
 import type {
@@ -83,8 +84,7 @@ export async function createCall(
   input: CreateCallInput,
 ): Promise<{ callId: string }> {
   const db = adminDb();
-  await expireStaleCalls(groupId, input.driverId);
-
+  // 만료된 대기 호출은 아래 트랜잭션에서 '진행 중'으로 보지 않고, 응답 뒤에 TIMEOUT 처리한다 (호출이 빨라지도록)
   const callRef = db.collection(`groups/${groupId}/calls`).doc();
   const driverRef = db.doc(`groups/${groupId}/drivers/${input.driverId}`);
   const now = Date.now();
@@ -100,7 +100,9 @@ export async function createCall(
     const activeSnap = await tx.get(
       db.collection(`groups/${groupId}/calls`).where("status", "in", [...ACTIVE_STATUSES]),
     );
-    const active = activeSnap.docs.map((d) => d.data() as CallDoc).filter((c) => c.driverId === input.driverId);
+    const active = activeSnap.docs
+      .map((d) => d.data() as CallDoc)
+      .filter((c) => c.driverId === input.driverId && !(PENDING_STATUSES.includes(c.status) && c.expiresAt <= now));
     if (active.length > 0) {
       const existing = active[0];
       throw existing
@@ -165,9 +167,9 @@ export async function createCall(
     return { driver };
   });
 
-  await Promise.all([
-    track("call_created", caller.userId, groupId, { callId: callRef.id }),
-    notifyUsers([driver.userId as string], {
+  // 응답을 먼저 돌려주고 기사 알림·기록·만료 정리는 바로 이어서 처리
+  await runAfterResponse(async () => {
+    await notifyUsers([driver.userId as string], {
       type: "CALL_CREATED",
       groupId,
       callId: callRef.id,
@@ -176,8 +178,12 @@ export async function createCall(
       params: { caller: caller.displayName },
       path: `/calls/${callRef.id}?g=${groupId}`,
       urgent: true,
-    }),
-  ]);
+    });
+    await Promise.all([
+      track("call_created", caller.userId, groupId, { callId: callRef.id }),
+      expireStaleCalls(groupId, input.driverId),
+    ]);
+  });
   return { callId: callRef.id };
 }
 
@@ -259,81 +265,84 @@ export async function transitionCall(
   });
 
   const { call, to, driverUserId } = outcome;
-  const analyticsEvent = ANALYTICS_FOR[to];
-  const tasks: Promise<unknown>[] = [];
-  if (analyticsEvent) {
-    const props: Record<string, number | string> = { callId };
-    if (to === "ACCEPTED") props.responseMs = Date.now() - call.createdAt;
-    tasks.push(track(analyticsEvent, actor.userId === "system" ? null : actor.userId, groupId, props));
-  }
-
-  const path = `/calls/${callId}?g=${groupId}`;
-  const driverName = call.driverName;
-  // 호출자(와 관리자)에게 결과 알림
-  const ownerIds = await groupOwnerIds(groupId);
-  const toCaller = [call.callerId, ...ownerIds].filter((id) => id !== actor.userId);
-  switch (to) {
-    case "ACCEPTED":
-      tasks.push(
-        notifyUsers(toCaller, {
-          type: "CALL_ACCEPTED",
-          groupId,
-          callId,
-          titleKey: "push.accepted.title",
-          bodyKey: "push.accepted.body",
-          params: { driver: driverName, caller: call.callerName },
-          path,
-        }),
-      );
-      break;
-    case "DECLINED":
-      tasks.push(
-        notifyUsers(toCaller, {
-          type: "CALL_DECLINED",
-          groupId,
-          callId,
-          titleKey: "push.declined.title",
-          bodyKey: "push.declined.body",
-          params: { driver: driverName },
-          path,
-        }),
-      );
-      break;
-    case "CANCELLED": {
-      const targets = [...toCaller];
-      if (driverUserId && driverUserId !== actor.userId) targets.push(driverUserId);
-      tasks.push(
-        notifyUsers(targets, {
-          type: "CALL_CANCELLED",
-          groupId,
-          callId,
-          titleKey: "push.cancelled.title",
-          bodyKey: "push.cancelled.body",
-          params: { caller: call.callerName },
-          path,
-        }),
-      );
-      break;
+  // 알림·통계는 응답을 돌려준 뒤 처리 — 버튼을 누른 사람은 바로 다음 화면으로
+  await runAfterResponse(async () => {
+    const analyticsEvent = ANALYTICS_FOR[to];
+    const tasks: Promise<unknown>[] = [];
+    if (analyticsEvent) {
+      const props: Record<string, number | string> = { callId };
+      if (to === "ACCEPTED") props.responseMs = Date.now() - call.createdAt;
+      tasks.push(track(analyticsEvent, actor.userId === "system" ? null : actor.userId, groupId, props));
     }
-    case "COMPLETED":
-      // 익명 통계·관심 분류 — 동의한 호출자만. 실패해도 운행 완료에는 영향 없음
-      tasks.push(recordCompletedTrip(call).catch((e) => console.error("tripData", e)));
-      tasks.push(
-        notifyUsers(toCaller, {
-          type: "CALL_COMPLETED",
-          groupId,
-          callId,
-          titleKey: "push.completed.title",
-          bodyKey: "push.completed.body",
-          params: { caller: call.callerName },
-          path,
-        }),
-      );
-      break;
-    default:
-      break;
-  }
-  await Promise.all(tasks);
+
+    const path = `/calls/${callId}?g=${groupId}`;
+    const driverName = call.driverName;
+    // 호출자(와 관리자)에게 결과 알림
+    const ownerIds = await groupOwnerIds(groupId);
+    const toCaller = [call.callerId, ...ownerIds].filter((id) => id !== actor.userId);
+    switch (to) {
+      case "ACCEPTED":
+        tasks.push(
+          notifyUsers(toCaller, {
+            type: "CALL_ACCEPTED",
+            groupId,
+            callId,
+            titleKey: "push.accepted.title",
+            bodyKey: "push.accepted.body",
+            params: { driver: driverName, caller: call.callerName },
+            path,
+          }),
+        );
+        break;
+      case "DECLINED":
+        tasks.push(
+          notifyUsers(toCaller, {
+            type: "CALL_DECLINED",
+            groupId,
+            callId,
+            titleKey: "push.declined.title",
+            bodyKey: "push.declined.body",
+            params: { driver: driverName },
+            path,
+          }),
+        );
+        break;
+      case "CANCELLED": {
+        const targets = [...toCaller];
+        if (driverUserId && driverUserId !== actor.userId) targets.push(driverUserId);
+        tasks.push(
+          notifyUsers(targets, {
+            type: "CALL_CANCELLED",
+            groupId,
+            callId,
+            titleKey: "push.cancelled.title",
+            bodyKey: "push.cancelled.body",
+            params: { caller: call.callerName },
+            path,
+          }),
+        );
+        break;
+      }
+      case "COMPLETED":
+        // 익명 통계·관심 분류 — 동의한 호출자만. 실패해도 운행 완료에는 영향 없음
+        tasks.push(recordCompletedTrip(call).catch((e) => console.error("tripData", e)));
+        tasks.push(
+          notifyUsers(toCaller, {
+            type: "CALL_COMPLETED",
+            groupId,
+            callId,
+            titleKey: "push.completed.title",
+            bodyKey: "push.completed.body",
+            params: { caller: call.callerName },
+            path,
+          }),
+        );
+        break;
+      default:
+        break;
+    }
+    await Promise.all(tasks);
+  });
   return { status: to };
 }
 

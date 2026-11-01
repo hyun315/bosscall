@@ -2,6 +2,7 @@
 import { translate } from "@/i18n/index";
 import { getLocale } from "@/i18n/runtime";
 import { placesLibrary } from "@/lib/location/googleMaps";
+import { getLastFix } from "@/services/client/locationSharing";
 import { coordsGone, fetchedAtFromExpiry, sourceOf } from "@/lib/tripData";
 import type { CallDoc, FavoriteLocationDoc, PlaceInput } from "@/types/domain";
 
@@ -81,6 +82,9 @@ export async function resolvePlace(p: StoredPlace): Promise<PlaceInput> {
  * 못 받으면 null (운행 처리는 그대로 진행).
  */
 export async function quickFix(): Promise<{ lat: number; lng: number; accuracy: number; at: number } | null> {
+  // 위치 공유 중이면 방금 받은 위치를 그대로 — 버튼이 GPS를 기다리지 않게
+  const recent = getLastFix(60_000);
+  if (recent) return recent;
   if (typeof navigator === "undefined" || !navigator.geolocation) return null;
   try {
     const perm = await navigator.permissions?.query({ name: "geolocation" as PermissionName });
@@ -98,7 +102,8 @@ export async function quickFix(): Promise<{ lat: number; lng: number; accuracy: 
           at: pos.timestamp || Date.now(),
         }),
       () => resolve(null),
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 },
+      // 오래 기다리지 않는다 (최근 1분 안의 위치면 바로, 아니면 최대 2초)
+      { enableHighAccuracy: true, timeout: 2000, maximumAge: 60000 },
     );
   });
 }

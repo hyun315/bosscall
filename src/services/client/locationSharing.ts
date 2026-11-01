@@ -28,6 +28,12 @@ export function subscribeShareState(l: (s: State) => void): () => void {
   return () => listeners.delete(l);
 }
 
+/** 마지막으로 받은 GPS (운행 시작·완료 지점을 기다림 없이 쓰기 위해) */
+let lastFix: { lat: number; lng: number; accuracy: number; at: number } | null = null;
+export function getLastFix(maxAgeMs: number): { lat: number; lng: number; accuracy: number; at: number } | null {
+  return lastFix && Date.now() - lastFix.at <= maxAgeMs ? lastFix : null;
+}
+
 let watchId: number | null = null;
 let activeGroup: string | null = null;
 let last: SentState | null = null;
@@ -47,6 +53,7 @@ export function startLocationSharing(groupId: string): void {
     (pos) => {
       const next = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
       const now = Date.now();
+      lastFix = { ...next, at: pos.timestamp || now };
       if (state.status !== "active") set({ status: "active" });
       if (inFlight || !shouldSendLocation(last, next, now)) return;
       inFlight = true;

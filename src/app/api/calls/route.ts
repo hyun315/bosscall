@@ -10,11 +10,14 @@ export const maxDuration = 60;
 
 /** 호출 생성 — OWNER/MEMBER. 기사는 호출할 수 없다. */
 export const POST = route(async (req) => {
-  const user = await requireUser(req);
-  await rateLimit(user.uid, "call_create", 6, 60);
-  const body = requireRecord(await readJson(req));
+  const [user, raw] = await Promise.all([requireUser(req), readJson(req)]);
+  const body = requireRecord(raw);
   const groupId = requireId(body.groupId, "field.group");
-  const { member } = await requireMember(groupId, user.uid, ["OWNER", "MEMBER"]);
+  // 사용량 제한·권한 확인을 동시에 (데이터베이스 왕복을 줄인다)
+  const [, { member }] = await Promise.all([
+    rateLimit(user.uid, "call_create", 6, 60),
+    requireMember(groupId, user.uid, ["OWNER", "MEMBER"]),
+  ]);
   const result = await createCall(groupId, member, {
     driverId: requireId(body.driverId, "field.driver"),
     pickup: requirePlace(body.pickup, "field.pickup"),
