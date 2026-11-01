@@ -342,23 +342,29 @@ async function groupOwnerIds(groupId: string): Promise<string[]> {
   return snap.docs.map((d) => (d.data() as MemberDoc).userId);
 }
 
-/** 응답 재촉 알림: 최소 간격·최대 횟수 (호출 대기 90초 동안 최대 3번) */
-export const NUDGE_MIN_INTERVAL_MS = 20_000;
-export const NUDGE_MAX = 3;
+/** 응답 재촉 알림: 최소 간격·최대 횟수 (호출 대기 90초 동안 최대 4번) */
+export const NUDGE_MIN_INTERVAL_MS = 14_000;
+export const NUDGE_MAX = 4;
+/** 서버가 스스로 다시 보내는 간격 — 호출 생성 요청이 끝난 뒤 백그라운드에서 */
+export const SERVER_NUDGE_DELAYS_MS = [15_000, 30_000, 45_000] as const;
 
 /**
  * 기사가 아직 응답하지 않은 호출에 푸시 알림을 다시 보낸다.
  * 앱이 닫혀 있는 기사 휴대폰은 웹앱이 소리를 계속 낼 수 없으므로, 호출자 화면이 열려 있는 동안
  * 일정 간격으로 알림을 다시 울리게 한다. 간격·횟수는 서버가 강제한다.
  */
-export async function nudgeDriver(groupId: string, callId: string, actor: MemberDoc): Promise<{ sent: boolean }> {
+export async function nudgeDriver(
+  groupId: string,
+  callId: string,
+  actor: MemberDoc | "SYSTEM",
+): Promise<{ sent: boolean }> {
   const db = adminDb();
   const callRef = db.doc(`groups/${groupId}/calls/${callId}`);
   const result = await db.runTransaction(async (tx) => {
     const snap = await tx.get(callRef);
     if (!snap.exists) throw notFound("err.callNotFound");
     const call = snap.data() as CallDoc;
-    if (actor.role === "DRIVER") throw forbidden();
+    if (actor !== "SYSTEM" && actor.role === "DRIVER") throw forbidden();
     const now = Date.now();
     const waiting = (call.status === "CALLING" || call.status === "RECEIVED") && call.expiresAt > now;
     const count = call.nudgeCount ?? 0;
@@ -384,6 +390,28 @@ export async function nudgeDriver(groupId: string, callId: string, actor: Member
     inbox: false,
   });
   return { sent: true };
+}
+
+/**
+ * 기사 앱이 뒤에 있거나 닫혀 있으면 웹앱은 소리를 직접 반복할 수 없다.
+ * 그래서 호출을 만든 뒤 서버가 15·30·45초에 아직 응답이 없으면 알림을 다시 보낸다
+ * (호출자 화면이 닫혀 있어도). 응답·취소·시간 초과가 되면 nudgeDriver 가 아무것도 보내지 않는다.
+ */
+export async function repeatNudges(groupId: string, callId: string): Promise<void> {
+  const start = Date.now();
+  for (const at of SERVER_NUDGE_DELAYS_MS) {
+    const wait = start + at - Date.now();
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    try {
+      const snap = await adminDb().doc(`groups/${groupId}/calls/${callId}`).get();
+      const status = (snap.data() as CallDoc | undefined)?.status;
+      if (status !== "CALLING" && status !== "RECEIVED") return; // 응답했거나 끝남 → 중단
+      await nudgeDriver(groupId, callId, "SYSTEM");
+    } catch (e) {
+      console.error("[nudge] repeat failed", e);
+      return;
+    }
+  }
 }
 
 /** 기사 연결 여부 등을 확인할 때 쓰는 헬퍼 */

@@ -38,9 +38,9 @@ export const driverMsgs = {
   "alarm.preview": { ko: "듣기", id: "Dengar", en: "Play" },
   "alarm.previewAria": { ko: "{name} 미리 듣기", id: "Dengarkan {name}", en: "Preview {name}" },
   "alarm.note": {
-    ko: "새 호출이 오면 수락하거나 거절할 때까지 계속 울립니다. 앱을 화면에 켜 둔 동안 이 소리가 나고, 앱이 닫혀 있으면 휴대폰 알림이 20초 간격으로 최대 3번 더 울립니다. 휴대폰 소리 크기를 키워 두세요.",
-    id: "Saat ada panggilan baru, alarm terus berbunyi sampai Anda menerima atau menolak. Suara ini berbunyi selama aplikasi terbuka di layar; jika aplikasi tertutup, notifikasi HP berbunyi lagi tiap 20 detik, paling banyak 3 kali. Besarkan volume HP Anda.",
-    en: "A new call keeps ringing until you accept or decline. This sound plays while the app is open on screen; if the app is closed, the phone notification rings again every 20 seconds, up to 3 times. Keep your volume up.",
+    ko: "새 호출이 오면 수락하거나 거절할 때까지 계속 울립니다. 앱을 화면에 켜 둔 동안 이 소리가 나고, 앱이 뒤에 있거나 닫혀 있으면 휴대폰 알림이 15초 간격으로 3번 더 울립니다. 휴대폰 소리 크기를 키워 두세요.",
+    id: "Saat ada panggilan baru, alarm terus berbunyi sampai Anda menerima atau menolak. Suara ini berbunyi selama aplikasi terbuka di layar; jika aplikasi di latar belakang atau tertutup, notifikasi HP berbunyi lagi 3 kali tiap 15 detik. Besarkan volume HP Anda.",
+    en: "A new call keeps ringing until you accept or decline. This sound plays while the app is open on screen; if the app is in the background or closed, the phone notification rings 3 more times, every 15 seconds. Keep your volume up.",
   },
   "alarm.tapToSound": {
     ko: "🔊 여기를 누르면 알람 소리가 납니다",
