@@ -28,6 +28,22 @@ export const driverMsgs = {
     id: "Mulai kerja untuk menerima panggilan",
     en: "Clock in to start receiving calls",
   },
+  // ── 관리자가 기사 대신 출근/퇴근
+  "ownerClock.inButton": { ko: "기사님 대신 출근 처리", id: "Catat masuk kerja untuk sopir", en: "Clock in for the driver" },
+  "ownerClock.outButton": { ko: "기사님 대신 퇴근 처리", id: "Catat pulang kerja untuk sopir", en: "Clock out for the driver" },
+  "ownerClock.inTitle": { ko: "{name} 기사님을 지금 출근 처리할까요?", id: "Catat {name} masuk kerja sekarang?", en: "Clock {name} in now?" },
+  "ownerClock.outTitle": { ko: "{name} 기사님을 지금 퇴근 처리할까요?", id: "Catat {name} pulang kerja sekarang?", en: "Clock {name} out now?" },
+  "ownerClock.body": {
+    ko: "기사님이 버튼을 깜빡했을 때 쓰세요. 근무기록에 '관리자 처리'로 남고 기사님께 알림이 갑니다. 시간이 다르면 근무기록에서 고칠 수 있습니다.",
+    id: "Gunakan jika sopir lupa menekan tombol. Tercatat sebagai 'oleh admin' dan sopir akan diberi tahu. Jam bisa diubah di catatan kerja.",
+    en: "Use this if the driver forgot. It's logged as 'by admin' and the driver is notified. You can fix the time in work records.",
+  },
+  "ownerClock.inConfirm": { ko: "출근 처리", id: "Catat masuk", en: "Clock in" },
+  "ownerClock.outConfirm": { ko: "퇴근 처리", id: "Catat pulang", en: "Clock out" },
+  "ownerClock.inDone": { ko: "{name} 기사님을 출근 처리했습니다.", id: "{name} dicatat masuk kerja.", en: "{name} is clocked in." },
+  "ownerClock.outDone": { ko: "{name} 기사님을 퇴근 처리했습니다.", id: "{name} dicatat pulang kerja.", en: "{name} is clocked out." },
+  "work.byOwner": { ko: "관리자 처리", id: "oleh admin", en: "by admin" },
+
   // ── 호출 알람 소리
   "alarm.title": { ko: "호출 알람 소리", id: "Suara alarm panggilan", en: "Call alarm sound" },
   "alarm.sound.alarm": { ko: "경고음", id: "Sirene", en: "Alert" },

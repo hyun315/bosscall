@@ -10,6 +10,18 @@ export const pushMsgs = {
     id: "Jika suara ini terdengar, panggilan tetap diterima walau layar mati.",
     en: "If you hear this, you'll get calls even with the screen off.",
   },
+  "push.clockInByOwner.title": { ko: "🟢 출근 처리됨", id: "🟢 Masuk kerja dicatat", en: "🟢 Clocked in for you" },
+  "push.clockInByOwner.body": {
+    ko: "{owner}님이 {time}에 출근 처리했습니다.",
+    id: "{owner} mencatat Anda masuk kerja pukul {time}.",
+    en: "{owner} clocked you in at {time}.",
+  },
+  "push.clockOutByOwner.title": { ko: "⚪ 퇴근 처리됨", id: "⚪ Pulang kerja dicatat", en: "⚪ Clocked out for you" },
+  "push.clockOutByOwner.body": {
+    ko: "{owner}님이 {time}에 퇴근 처리했습니다.",
+    id: "{owner} mencatat Anda pulang kerja pukul {time}.",
+    en: "{owner} clocked you out at {time}.",
+  },
   "push.callReminder.title": { ko: "🔔 호출 응답을 기다리고 있어요", id: "🔔 Panggilan menunggu jawaban", en: "🔔 A call is waiting for you" },
   "push.callReminder.body": {
     ko: "{caller}님이 기다리고 있습니다. 앱을 열어 응답해주세요.",

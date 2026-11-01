@@ -36,6 +36,7 @@ export function WorkSessionRow({
         </p>
         <p className="mt-0.5 text-sm tabular-nums text-ink-sub">
           {formatTime(session.clockInAt, tz)} ~ {session.clockOutAt ? formatTime(session.clockOutAt, tz) : t("common.inProgress")}
+          {session.clockInBy || session.clockOutBy ? ` · ${t("work.byOwner")}` : ""}
           {session.editedAt ? ` · ${t("work.edited")}` : ""}
         </p>
       </div>

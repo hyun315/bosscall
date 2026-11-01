@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { OwnerClockButton } from "@/components/driver/OwnerClockButton";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/common/AppHeader";
@@ -108,6 +109,8 @@ export function OwnerHome() {
         ) : (
           <div className="space-y-2">
             <DriverCard driver={driver} tz={tz} size="lg" href={`/drivers/${driver.id}`} />
+            {/* 관리자: 기사가 출근을 깜빡했을 때 대신 처리 (퇴근은 기사 상세 화면에서) */}
+            {!driver.currentSessionId && <OwnerClockButton driver={driver} compact />}
             {driver.currentSessionId && (
               <Link
                 href={`/drivers/${driver.id}`}

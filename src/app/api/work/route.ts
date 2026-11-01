@@ -4,13 +4,14 @@ import { rateLimit } from "@/lib/server/rateLimit";
 import { requireId, requireOneOf, requireRecord } from "@/lib/validation";
 import { clock } from "@/services/server/work";
 
-/** 출근/퇴근 — 연결된 기사 본인만 */
+/** 출근/퇴근 — 기사 본인, 또는 관리자(OWNER)가 기사 대신 (body.driverId) */
 export const POST = route(async (req) => {
   const user = await requireUser(req);
   await rateLimit(user.uid, "clock", 10, 60);
   const body = requireRecord(await readJson(req));
   const groupId = requireId(body.groupId, "field.group");
-  const { group, member } = await requireMember(groupId, user.uid, ["DRIVER"]);
+  const { group, member } = await requireMember(groupId, user.uid, ["DRIVER", "OWNER"]);
   const action = requireOneOf(body.action, ["CLOCK_IN", "CLOCK_OUT"] as const, "field.action");
-  return clock(group, member, action, body.shareLocation === true);
+  const driverId = member.role === "OWNER" ? requireId(body.driverId, "field.driver") : undefined;
+  return clock(group, member, action, body.shareLocation === true, driverId);
 });

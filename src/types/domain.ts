@@ -296,6 +296,9 @@ export interface WorkSessionDoc {
   createdAt: number;
   editedBy: string | null;
   editedAt: number | null;
+  /** 관리자가 기사 대신 출근/퇴근을 누른 경우 그 사람 uid */
+  clockInBy?: string | null;
+  clockOutBy?: string | null;
 }
 
 export interface FavoriteLocationDoc {

@@ -9,28 +9,40 @@ import { formatTime } from "@/lib/time";
 import { expireStaleCalls } from "@/services/server/calls";
 import type { CallDoc, DriverDoc, GroupDoc, MemberDoc, WorkSessionDoc } from "@/types/domain";
 
-/** 명세 §10 — 출근/퇴근은 서버 timestamp 로 기록 */
+/**
+ * 명세 §10 — 출근/퇴근은 서버 timestamp 로 기록.
+ * 기사 본인, 또는 관리자(OWNER)가 기사 대신 누를 수 있다 (기사가 깜빡한 경우 대비).
+ * 관리자가 누르면 근무기록에 누가 눌렀는지 남기고(감사 로그 포함) 기사에게 알림을 보낸다.
+ */
 export async function clock(
   group: GroupDoc,
   member: MemberDoc,
   action: "CLOCK_IN" | "CLOCK_OUT",
-  /** 출근 시 위치 공유 여부 (기사가 안내를 보고 선택) */
+  /** 출근 시 위치 공유 여부 (기사가 안내를 보고 선택 — 관리자가 대신 누르면 항상 꺼짐) */
   shareLocation = false,
+  /** 관리자가 대신 누를 때 대상 기사 */
+  targetDriverId?: string,
 ): Promise<{ sessionId: string }> {
-  if (!member.driverId) throw badRequest("err.driverOnlyClock");
+  const byOwner = member.role !== "DRIVER";
+  const driverId = byOwner ? targetDriverId : member.driverId;
+  if (!driverId) throw badRequest(byOwner ? "err.driverNotFound" : "err.driverOnlyClock");
+  if (byOwner && member.role !== "OWNER") throw badRequest("err.driverOnlyClock");
+  const share = byOwner ? false : shareLocation;
   const db = adminDb();
   const groupId = group.id;
-  const driverRef = db.doc(`groups/${groupId}/drivers/${member.driverId}`);
-  const locationRef = db.doc(`groups/${groupId}/driverLocations/${member.driverId}`);
+  const driverRef = db.doc(`groups/${groupId}/drivers/${driverId}`);
+  const locationRef = db.doc(`groups/${groupId}/driverLocations/${driverId}`);
 
-  if (action === "CLOCK_OUT") await expireStaleCalls(groupId, member.driverId);
+  if (action === "CLOCK_OUT") await expireStaleCalls(groupId, driverId);
 
   const now = Date.now();
+  let driverSnapshot: DriverDoc | null = null;
   const sessionId = await db.runTransaction(async (tx) => {
     const dSnap = await tx.get(driverRef);
     if (!dSnap.exists) throw notFound("err.driverNotFound");
     const driver = dSnap.data() as DriverDoc;
-    if (driver.userId !== member.userId) throw badRequest("err.notLinkedDriver");
+    driverSnapshot = driver;
+    if (!byOwner && driver.userId !== member.userId) throw badRequest("err.notLinkedDriver");
 
     if (action === "CLOCK_IN") {
       if (driver.currentSessionId) throw conflict("err.alreadyClockedIn", "ALREADY_CLOCKED_IN");
@@ -45,16 +57,24 @@ export async function clock(
         createdAt: now,
         editedBy: null,
         editedAt: null,
+        clockInBy: byOwner ? member.userId : null,
       };
       tx.create(ref, session);
       tx.update(driverRef, {
         status: "ON_DUTY",
         currentSessionId: ref.id,
         lastClockInAt: now,
-        locationSharing: shareLocation,
-        ...(shareLocation && !driver.locationConsentAt ? { locationConsentAt: now } : {}),
+        locationSharing: share,
+        ...(share && !driver.locationConsentAt ? { locationConsentAt: now } : {}),
         updatedAt: now,
       });
+      if (byOwner) {
+        writeAudit(
+          groupId,
+          { action: "DRIVER_CLOCK_IN_BY_OWNER", actorId: member.userId, targetType: "workSession", targetId: ref.id, after: { clockInAt: now } },
+          tx,
+        );
+      }
       tx.delete(locationRef); // 이전 근무의 잔여 위치 제거
       return ref.id;
     }
@@ -74,27 +94,58 @@ export async function clock(
       );
     }
     const sRef = db.doc(`groups/${groupId}/workSessions/${driver.currentSessionId}`);
-    tx.update(sRef, { clockOutAt: now });
+    tx.update(sRef, { clockOutAt: now, ...(byOwner ? { clockOutBy: member.userId } : {}) });
+    if (byOwner) {
+      writeAudit(
+        groupId,
+        {
+          action: "DRIVER_CLOCK_OUT_BY_OWNER",
+          actorId: member.userId,
+          targetType: "workSession",
+          targetId: driver.currentSessionId,
+          after: { clockOutAt: now },
+        },
+        tx,
+      );
+    }
     tx.update(driverRef, { status: "OFF_DUTY", currentSessionId: null, locationSharing: false, updatedAt: now });
     tx.delete(locationRef); // 퇴근 즉시 위치 삭제 (명세 §24)
     return driver.currentSessionId;
   });
 
+  const driverDoc = driverSnapshot as DriverDoc | null;
+  const driverName = driverDoc?.displayName ?? member.displayName;
   const owners = await db.collection(`groups/${groupId}/members`).where("role", "in", ["OWNER", "MEMBER"]).get();
-  const recipients = owners.docs.map((d) => (d.data() as MemberDoc).userId);
+  // 누른 사람 본인에게는 알리지 않는다
+  const recipients = owners.docs.map((d) => (d.data() as MemberDoc).userId).filter((id) => id !== member.userId);
   const t = formatTime(now, group.timezone);
-  await Promise.all([
-    track(action === "CLOCK_IN" ? "clock_in" : "clock_out", member.userId, groupId),
+  const tasks: Promise<unknown>[] = [
+    track(action === "CLOCK_IN" ? "clock_in" : "clock_out", member.userId, groupId, { byOwner }),
     notifyUsers(recipients, {
       type: action === "CLOCK_IN" ? "DRIVER_CLOCK_IN" : "DRIVER_CLOCK_OUT",
       groupId,
       callId: null,
       titleKey: action === "CLOCK_IN" ? "push.clockIn.title" : "push.clockOut.title",
       bodyKey: action === "CLOCK_IN" ? "push.clockIn.body" : "push.clockOut.body",
-      params: { driver: member.displayName, time: t },
+      params: { driver: driverName, time: t },
       path: "/home",
     }),
-  ]);
+  ];
+  // 관리자가 대신 눌렀으면 기사에게 알린다 (기사 언어로)
+  if (byOwner && driverDoc?.userId) {
+    tasks.push(
+      notifyUsers([driverDoc.userId], {
+        type: action === "CLOCK_IN" ? "DRIVER_CLOCK_IN" : "DRIVER_CLOCK_OUT",
+        groupId,
+        callId: null,
+        titleKey: action === "CLOCK_IN" ? "push.clockInByOwner.title" : "push.clockOutByOwner.title",
+        bodyKey: action === "CLOCK_IN" ? "push.clockInByOwner.body" : "push.clockOutByOwner.body",
+        params: { owner: member.displayName, time: t },
+        path: "/home",
+      }),
+    );
+  }
+  await Promise.all(tasks);
   return { sessionId };
 }
 

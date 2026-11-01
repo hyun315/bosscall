@@ -16,6 +16,7 @@ import { useCallsBetween, useWorkSessionsBetween } from "@/hooks/useGroupData";
 import { useLiveDoc } from "@/hooks/useLive";
 import { useReadySession } from "@/hooks/useSession";
 import { DriverLocationMap } from "@/components/driver/DriverLocationMap";
+import { OwnerClockButton } from "@/components/driver/OwnerClockButton";
 import { DRIVER_STATUS_LABEL, toWhatsAppNumber } from "@/lib/format";
 import { isOwner } from "@/lib/permissions";
 import { formatTime, startOfDay, startOfMonth } from "@/lib/time";
@@ -83,6 +84,9 @@ export default function DriverDetailPage() {
           <Row label={t("home.todayCalls")} value={String(todayCount)} />
           <Row label={t("drivers.monthCalls")} value={String(mine.length)} />
         </div>
+
+        {/* 관리자: 기사가 깜빡했을 때 대신 출근/퇴근 */}
+        <OwnerClockButton driver={driver} />
 
         {driver.currentSessionId && <DriverLocationMap groupId={groupId} driver={driver} />}
 

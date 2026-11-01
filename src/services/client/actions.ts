@@ -57,6 +57,10 @@ export const transitionCall = (groupId: string, callId: string, action: CallActi
 export const clock = (groupId: string, action: "CLOCK_IN" | "CLOCK_OUT", shareLocation = false) =>
   api<{ sessionId: string }>("/api/work", { body: { groupId, action, shareLocation } });
 
+/** 관리자가 기사 대신 출근/퇴근 처리 */
+export const clockForDriver = (groupId: string, driverId: string, action: "CLOCK_IN" | "CLOCK_OUT") =>
+  api<{ sessionId: string }>("/api/work", { body: { groupId, action, driverId } });
+
 export const sendDriverLocation = (
   groupId: string,
   p: { lat: number; lng: number; accuracy: number; capturedAt: number },
