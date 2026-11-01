@@ -11,7 +11,8 @@
 import type { Tri } from "@/i18n/core";
 
 export const AD_SLOTS = [
-  "destinationSearch", // 목적지 검색 아래 — 관심도 가장 높음
+  "pickup", // 호출 › 픽업 위치 고르는 화면 맨 아래
+  "destinationSearch", // 목적지 고르는 화면 맨 아래 — 관심도 가장 높음
   "waiting", // 기사 호출 직후, 기사님 응답 기다리는 화면 (맨 아래)
   "tripCompleted", // 운행 완료 화면
   "onTheWay", // 기사님 오는 중 화면 (상태 카드 아래)
@@ -76,6 +77,7 @@ const INQUIRY: InquirySlot = { kind: "inquiry" };
 
 /** 칸별 광고 — 지금은 한인업소록 + 나머지는 광고 문의 안내 */
 export const SLOT_ADS: Readonly<Record<AdSlotId, SlotContent>> = {
+  pickup: INQUIRY,
   destinationSearch: HANIN_DIRECTORY,
   waiting: INQUIRY,
   tripCompleted: HANIN_DIRECTORY,
@@ -103,6 +105,7 @@ export function advertisePath(slot?: AdSlotId): string {
 
 /** 광고 안내 페이지에서 보여줄 칸 설명 */
 export const SLOT_INFO: ReadonlyArray<{ slot: AdSlotId; icon: string; title: string; when: string }> = [
+  { slot: "pickup", icon: "📍", title: "픽업 위치 고르는 화면", when: "기사님을 부르려고 앱을 열면 가장 먼저 보는 화면입니다." },
   { slot: "destinationSearch", icon: "🎯", title: "목적지 고르는 화면", when: "\"어디 가지?\" 고민하는 순간. 식당·골프장·병원 광고에 가장 잘 맞습니다." },
   { slot: "waiting", icon: "⏳", title: "기사님 응답 기다리는 화면", when: "기사 호출을 누른 직후, 응답을 기다리며 화면을 보는 순간입니다." },
   { slot: "tripCompleted", icon: "🏁", title: "운행 완료 화면", when: "목적지에 막 도착한 순간. 근처 가게·서비스를 알리기 좋습니다." },

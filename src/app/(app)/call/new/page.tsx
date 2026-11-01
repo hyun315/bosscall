@@ -180,6 +180,7 @@ export default function NewCallPage() {
               groupId={groupId}
               favorites={favorites.data}
               recents={pickupRecents}
+              adSlot="pickup"
               onPicked={(p) => {
                 setPickup(p);
                 setStep(destination ? "confirm" : "destination");
@@ -200,6 +201,7 @@ export default function NewCallPage() {
               groupId={groupId}
               favorites={favorites.data}
               recents={destRecents}
+              adSlot="destinationSearch"
               onPicked={(p) => {
                 setDestination(p);
                 setStep("confirm");

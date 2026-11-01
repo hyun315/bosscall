@@ -3,7 +3,7 @@ import type { Tri } from "@/i18n/core";
 /** 호출 만들기·호출 화면·진행 기록 */
 export const callMsgs = {
   // ── 새 호출 (C01~C03)
-  "newCall.whereMeet": { ko: "어디에서 만날까요?", id: "Dijemput di mana?", en: "Where should we meet?" },
+  "newCall.whereMeet": { ko: "픽업 위치", id: "Lokasi jemput", en: "Pickup location" },
   "newCall.whereGo": { ko: "어디로 갈까요?", id: "Mau ke mana?", en: "Where to?" },
   "newCall.confirm": { ko: "호출 내용을 확인하세요", id: "Periksa detail panggilan", en: "Review your call" },
   "newCall.driverCannotCall": {

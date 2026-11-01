@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { AdSlot } from "@/components/ads/AdSlot";
+import type { AdSlotId } from "@/lib/ads";
 import { Button } from "@/components/common/Button";
 import { ConfirmModal } from "@/components/common/ConfirmModal";
 import { NotificationBanner } from "@/components/common/States";
@@ -48,12 +49,15 @@ export function LocationPicker({
   favorites,
   recents,
   onPicked,
+  adSlot,
 }: {
   kind: "pickup" | "destination";
   groupId: string;
   favorites: FavoriteLocationDoc[];
   recents: StoredPlace[];
   onPicked: (p: PlaceInput) => void;
+  /** 이 화면 맨 아래 광고 칸 (호출 화면에서만) */
+  adSlot?: AdSlotId;
 }) {
   const { t } = useI18n();
   const [locating, setLocating] = useState(false);
@@ -162,23 +166,25 @@ export function LocationPicker({
         </div>
       )}
 
-      {favoritesList}
-      {recentsList}
-      {error && <p className="text-sm text-danger">{error}</p>}
-
-      {/* 광고: 목적지 고르는 화면 — 즐겨찾기·최근 장소 아래 (사장님·가족만, 기사 계정엔 그리지 않음) */}
-      {kind === "destination" && <AdSlot slot="destinationSearch" />}
-
-      <Button variant="secondary" block onClick={() => setMapOpen(null)} icon={<span aria-hidden>🗺</span>}>
-        {t("loc.chooseOnMap")}
-      </Button>
-
+      {/* 픽업: 장소 검색 (목적지는 위 제목 아래 검색칸) */}
       {kind === "pickup" && (
         <section>
           <h3 className="section-title">{t("loc.search")}</h3>
           <PlaceSearch groupId={groupId} onSelect={onPicked} />
         </section>
       )}
+
+      <Button variant="secondary" block onClick={() => setMapOpen(null)} icon={<span aria-hidden>🗺</span>}>
+        {t("loc.chooseOnMap")}
+      </Button>
+
+      {favoritesList}
+      {recentsList}
+      {error && <p className="text-sm text-danger">{error}</p>}
+
+      {/* 광고: 맨 아래 (호출 화면에서만 넘겨받음 — 사장님·가족만, 기사 계정엔 그리지 않음) */}
+      {adSlot && <AdSlot slot={adSlot} />}
+
 
       {mapOpen !== false && (
         <MapPicker
