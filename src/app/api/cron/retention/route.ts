@@ -17,3 +17,5 @@ export async function GET(req: Request): Promise<Response> {
     return NextResponse.json({ error: { code: "INTERNAL" } }, { status: 500 });
   }
 }
+
+export const maxDuration = 60;

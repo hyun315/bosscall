@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/server/auth";
 import { ApiError, readJson, route } from "@/lib/server/http";
 import { incrementUsage, rateLimit } from "@/lib/server/rateLimit";
+import { runAfterResponse } from "@/lib/server/defer";
 import { requireLat, requireLng, requireRecord } from "@/lib/validation";
 
 interface GeocodeResult {
@@ -15,9 +16,9 @@ interface GeocodeResult {
  * 사용자별 레이트 리밋과 사용량 집계(§34.5)를 한곳에서 처리하기 위함.
  */
 export const POST = route(async (req) => {
-  const user = await requireUser(req);
+  const [user, raw] = await Promise.all([requireUser(req), readJson(req)]);
+  const body = requireRecord(raw);
   await rateLimit(user.uid, "geocode", 30, 60);
-  const body = requireRecord(await readJson(req));
   const lat = requireLat(body.lat);
   const lng = requireLng(body.lng);
 
@@ -37,7 +38,7 @@ export const POST = route(async (req) => {
   } catch {
     throw new ApiError(502, "MAPS_NETWORK", "err.maps.network");
   }
-  await incrementUsage("geocode_reverse");
+  await runAfterResponse(() => incrementUsage("geocode_reverse"));
 
   switch (data.status) {
     case "OK": {

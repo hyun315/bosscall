@@ -4,6 +4,7 @@ import { translate } from "@/i18n/index";
 import { getLocale } from "@/i18n/runtime";
 import { JAKARTA_CENTER, placesLibrary, type PlacePrediction } from "@/lib/location/googleMaps";
 import type { PlaceInput } from "@/types/domain";
+import { getLastFix } from "@/services/client/locationSharing";
 
 export type GeoErrorCode = "DENIED" | "UNAVAILABLE" | "TIMEOUT" | "UNSUPPORTED";
 
@@ -17,7 +18,17 @@ export interface GeoFix {
 /** 이 값보다 오차가 크면 지도에서 수정하도록 안내 (명세 §34.6 "GPS 오차가 큰 경우 지도에서 수정") */
 export const POOR_ACCURACY_M = 100;
 
+let grantedTracked = false;
+
+/**
+ * 현재 위치. 지도에서 핀을 다시 확인하므로 아주 정밀할 필요는 없다 —
+ * 근무 중 위치 공유로 받아 둔 최근 값(30초 이내·오차 100m 이하)이 있으면 바로 쓴다.
+ */
 export function getCurrentPosition(groupId: string | null): Promise<GeoFix> {
+  const recent = getLastFix(30_000);
+  if (recent && recent.accuracy <= POOR_ACCURACY_M) {
+    return Promise.resolve({ lat: recent.lat, lng: recent.lng, accuracy: recent.accuracy });
+  }
   return new Promise((resolve, reject) => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       reject(Object.assign(new Error(translate(getLocale(), "loc.unsupported")), { code: "UNSUPPORTED" as GeoErrorCode }));
@@ -25,7 +36,10 @@ export function getCurrentPosition(groupId: string | null): Promise<GeoFix> {
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        trackClient("location_permission_granted", groupId);
+        if (!grantedTracked) {
+          grantedTracked = true;
+          trackClient("location_permission_granted", groupId);
+        }
         resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy });
       },
       (err) => {
@@ -33,7 +47,7 @@ export function getCurrentPosition(groupId: string | null): Promise<GeoFix> {
         if (code === "DENIED") trackClient("location_permission_denied", groupId);
         reject(Object.assign(new Error(err.message), { code }));
       },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
     );
   });
 }

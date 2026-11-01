@@ -211,14 +211,6 @@ export interface TripStatDoc {
   createdAt: number;
 }
 
-/** adProfiles/{uid} — 맞춤 혜택 동의자만. 동의 철회 시 삭제 */
-export interface AdProfileDoc {
-  uid: string;
-  /** 목적지 분류별 운행 횟수 */
-  categoryCounts: Partial<Record<PlaceCategory, number>>;
-  updatedAt: number;
-}
-
 /** pois/{id} — 운영자가 등록한 자체 장소 (구글 데이터가 아님) */
 export interface PoiDoc {
   id: string;

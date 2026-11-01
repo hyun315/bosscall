@@ -118,6 +118,8 @@ export function useLiveQuery<T>(path: string | null, filters: Filter[] = []): Li
   // useLiveDoc 과 같은 이유로, 구독 대상이 바뀐 직후 한 렌더는 loading 으로 본다
   const stale = state.of !== key;
   return stale
-    ? { data: [], loading: true, error: null }
+    ? { data: EMPTY as T[], loading: true, error: null }
     : { data: state.data, loading: state.loading, error: state.error };
 }
+
+const EMPTY: never[] = [];

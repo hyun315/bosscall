@@ -17,3 +17,5 @@ export const POST = route(async (req) => {
   const driverId = member.role === "OWNER" ? requireId(body.driverId, "field.driver") : undefined;
   return clock(group, member, action, body.shareLocation === true, driverId);
 });
+
+export const maxDuration = 30;

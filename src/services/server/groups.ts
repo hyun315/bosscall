@@ -1,4 +1,5 @@
 import "server-only";
+import { runAfterResponse } from "@/lib/server/defer";
 import { randomBytes } from "node:crypto";
 import { FieldValue, type DocumentReference } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
@@ -73,7 +74,7 @@ export async function createGroup(uid: string, input: CreateGroupInput): Promise
     });
   });
 
-  await track("group_created", uid, groupRef.id);
+  await runAfterResponse(() => track("group_created", uid, groupRef.id));
   return { groupId: groupRef.id, driverId: driverRef.id };
 }
 
@@ -218,7 +219,7 @@ export async function createInvite(
     targetId: invite.code,
     after: { role: invite.role, driverId: invite.driverId },
   });
-  await track(input.role === "DRIVER" ? "driver_invited" : "member_invited", actorId, groupId);
+  await runAfterResponse(() => track(input.role === "DRIVER" ? "driver_invited" : "member_invited", actorId, groupId));
   return invite;
 }
 
@@ -319,7 +320,7 @@ export async function acceptInvite(code: string, uid: string): Promise<{ groupId
     return { groupId: inv.groupId, role: inv.role };
   });
 
-  await track(result.role === "DRIVER" ? "driver_connected" : "member_joined", uid, result.groupId);
+  await runAfterResponse(() => track(result.role === "DRIVER" ? "driver_connected" : "member_joined", uid, result.groupId));
   return result;
 }
 

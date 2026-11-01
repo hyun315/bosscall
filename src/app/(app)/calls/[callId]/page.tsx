@@ -69,7 +69,8 @@ function CallView({ callId }: { callId: string }) {
   const events = useLiveQuery<CallEventDoc>(`groups/${groupId}/calls/${callId}/events`, [ob("createdAt", "asc"), lim(30)]);
   const driverDoc = useLiveDoc<DriverDoc>(call ? `groups/${groupId}/drivers/${call.driverId}` : null);
   const callerDoc = useLiveDoc<MemberDoc>(call ? `groups/${groupId}/members/${call.callerId}` : null);
-  const now = useNow(1000);
+  // 초 단위 카운트다운은 응답 대기 중에만 — 그 외에는 화면을 매초 다시 그리지 않는다
+  const now = useNow(call && isPending(call.status) ? 1000 : 30000);
 
   const [busyAction, setBusyAction] = useState<CallAction | null>(null);
   const [confirm, setConfirm] = useState<CallAction | null>(null);
@@ -79,7 +80,8 @@ function CallView({ callId }: { callId: string }) {
   const isAssignedDriver = role === "DRIVER" && call?.driverId === member.driverId;
 
   const run = async (action: CallAction, opts: { silent?: boolean } = {}) => {
-    setBusyAction(action);
+    // 자동 처리(전달됨·시간 초과)는 버튼을 잠그지 않는다 — 기사가 곧바로 수락할 수 있게
+    if (!opts.silent) setBusyAction(action);
     try {
       // 탑승 시작·운행 완료: 실제 출발·도착 지점 (위치 권한이 이미 있을 때만)
       const fix = isAssignedDriver && (action === "START_TRIP" || action === "COMPLETE") ? await quickFix() : null;
@@ -92,7 +94,7 @@ function CallView({ callId }: { callId: string }) {
       setConfirm(null);
       throw e;
     } finally {
-      setBusyAction(null);
+      if (!opts.silent) setBusyAction(null);
     }
   };
 
@@ -155,13 +157,8 @@ function CallView({ callId }: { callId: string }) {
             busyAction={busyAction}
             onAction={(a) => {
               if (a === "DECLINE" || a === "COMPLETE") setConfirm(a);
-              else if (a === "ACCEPT" && call.status === "CALLING") {
-                // 자동 RECEIVE 가 실패했더라도 상태머신 순서(CALLING→RECEIVED→ACCEPTED)를 지킨다
-                void run("RECEIVE", { silent: true })
-                  .catch(() => undefined)
-                  .then(() => run("ACCEPT"))
-                  .catch(() => undefined);
-              } else void run(a).catch(() => undefined);
+              // 전달됨 전에 수락해도 서버가 전달됨 → 수락 순서를 한 번에 기록한다
+              else void run(a).catch(() => undefined);
             }}
           />
         ) : (
@@ -437,7 +434,7 @@ function ProgressSteps({ status }: { status: CallDoc["status"] }) {
       {steps.map((s, i) => (
         <li key={s.key} className="flex flex-1 flex-col items-center gap-1">
           <span className={`h-1.5 w-full rounded-full ${i <= idx ? "bg-success" : "bg-line"}`} />
-          <span className={`text-[11px] font-semibold ${i <= idx ? "text-success" : "text-ink-faint"}`}>{s.label}</span>
+          <span className={`text-[11px] font-semibold ${i <= idx ? "text-success" : "text-ink-faint"}`}>{t(s.label)}</span>
         </li>
       ))}
     </ol>

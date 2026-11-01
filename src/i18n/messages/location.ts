@@ -30,13 +30,7 @@ export const locationMsgs = {
     id: "Lokasi tidak ditemukan. Pilih langsung di peta.",
     en: "Couldn't find your location. Please pick it on the map.",
   },
-  "loc.poorTitle": { ko: "위치가 정확하지 않을 수 있어요", id: "Lokasi mungkin kurang akurat", en: "Your location may be inaccurate" },
   "loc.poorAccuracy": { ko: "GPS 오차가 약 {m}m 입니다.", id: "Akurasi GPS sekitar {m} m.", en: "GPS accuracy is about {m} m." },
-  "loc.poorQuestion": {
-    ko: "지도에서 정확한 위치로 수정하시겠어요?",
-    id: "Perbaiki ke lokasi yang tepat di peta?",
-    en: "Adjust to the exact spot on the map?",
-  },
   "loc.confirmHereTitle": { ko: "이 위치가 맞습니까?", id: "Apakah lokasi ini sudah benar?", en: "Is this the right spot?" },
   "loc.confirmHereHint": {
     ko: "다르면 지도를 움직여 핀을 정확한 곳에 맞춰주세요.",
@@ -44,8 +38,6 @@ export const locationMsgs = {
     en: "If not, move the map to put the pin on the exact spot.",
   },
   "loc.confirmHereYes": { ko: "네, 여기서 픽업", id: "Ya, jemput di sini", en: "Yes, pick me up here" },
-  "loc.fixOnMap": { ko: "지도에서 수정", id: "Perbaiki di peta", en: "Adjust on map" },
-  "loc.useAsIs": { ko: "이대로 사용", id: "Pakai apa adanya", en: "Use as is" },
   "loc.unsupported": {
     ko: "이 기기에서는 위치를 사용할 수 없습니다.",
     id: "Lokasi tidak tersedia di perangkat ini.",

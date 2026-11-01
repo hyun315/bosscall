@@ -37,7 +37,13 @@ export async function clock(
   const now = Date.now();
   let driverSnapshot: DriverDoc | null = null;
   const sessionId = await db.runTransaction(async (tx) => {
-    const dSnap = await tx.get(driverRef);
+    // 퇴근이면 기사 문서와 진행 중 호출을 한 번에 읽는다
+    const [dSnap, activeSnap] = await Promise.all([
+      tx.get(driverRef),
+      action === "CLOCK_OUT"
+        ? tx.get(db.collection(`groups/${groupId}/calls`).where("status", "in", [...PENDING_STATUSES, ...IN_PROGRESS_STATUSES]))
+        : Promise.resolve(null),
+    ]);
     if (!dSnap.exists) throw notFound("err.driverNotFound");
     const driver = dSnap.data() as DriverDoc;
     driverSnapshot = driver;
@@ -79,9 +85,7 @@ export async function clock(
     }
 
     if (!driver.currentSessionId) throw conflict("err.notClockedIn", "NOT_CLOCKED_IN");
-    const activeSnap = await tx.get(
-      db.collection(`groups/${groupId}/calls`).where("status", "in", [...PENDING_STATUSES, ...IN_PROGRESS_STATUSES]),
-    );
+    if (!activeSnap) throw new Error("unreachable");
     // 응답 시간이 지난 대기 호출은 막지 않는다 (응답 뒤 TIMEOUT 처리)
     const active = activeSnap.docs
       .map((d) => d.data() as CallDoc)

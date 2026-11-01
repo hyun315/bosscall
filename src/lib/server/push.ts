@@ -53,7 +53,12 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
   const now = Date.now();
 
   try {
-    const userSnaps = await db.getAll(...unique.map((id) => db.doc(`users/${id}`)));
+    // 사용자 문서와 기기 토큰을 동시에 읽는다 (알림이 기사 폰에 닿는 시간 단축)
+    const [userSnaps, tokenSnaps] = await Promise.all([
+      db.getAll(...unique.map((id) => db.doc(`users/${id}`))),
+      Promise.all(unique.map((id) => db.collection(`users/${id}/deviceTokens`).get())),
+    ]);
+    const tokensByUser = new Map(unique.map((id, i) => [id, tokenSnaps[i]]));
     const recipients = userSnaps
       .filter((s) => s.exists)
       .map((s) => s.data() as UserDoc)
@@ -69,45 +74,47 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
       body: translate(l, req.bodyKey, req.params),
     });
 
-    const batch = db.batch();
-    for (const u of req.inbox === false ? [] : recipients) {
-      const ref = db.collection(`users/${u.id}/notifications`).doc();
-      const text = textFor(userLocale(u));
-      batch.set(ref, {
-        id: ref.id,
-        type: req.type,
-        groupId: req.groupId,
-        callId: req.callId,
-        title: text.title,
-        body: text.body,
-        url: req.path,
-        read: false,
-        createdAt: now,
-      });
+    // 알림함 기록은 푸시 발송과 동시에 (재촉·테스트 알림은 기록하지 않음)
+    let inboxWrite: Promise<unknown> = Promise.resolve();
+    if (req.inbox !== false && recipients.length > 0) {
+      const batch = db.batch();
+      for (const u of recipients) {
+        const ref = db.collection(`users/${u.id}/notifications`).doc();
+        const text = textFor(userLocale(u));
+        batch.set(ref, {
+          id: ref.id,
+          type: req.type,
+          groupId: req.groupId,
+          callId: req.callId,
+          title: text.title,
+          body: text.body,
+          url: req.path,
+          read: false,
+          createdAt: now,
+        });
+      }
+      inboxWrite = batch.commit();
     }
-    await batch.commit();
 
     // 호출 알림 소리: 기사가 설정에서 끈 경우에만 무음. 설정하지 않았으면 항상 소리
     const silentFor = (u: UserDoc) => req.type === "CALL_CREATED" && u.callAlarmSound === false;
     const tokenEntries: Array<{ uid: string; token: string; locale: Locale; silent: boolean }> = [];
-    await Promise.all(
-      recipients.map(async (u) => {
-        const snap = await db.collection(`users/${u.id}/deviceTokens`).get();
-        for (const d of snap.docs) {
-          const token = d.get("token");
-          if (typeof token === "string") tokenEntries.push({ uid: u.id, token, locale: userLocale(u), silent: silentFor(u) });
-        }
-      }),
-    );
+    for (const u of recipients) {
+      for (const d of tokensByUser.get(u.id)?.docs ?? []) {
+        const token = d.get("token");
+        if (typeof token === "string") tokenEntries.push({ uid: u.id, token, locale: userLocale(u), silent: silentFor(u) });
+      }
+    }
     if (tokenEntries.length === 0) {
-      await track("push_sent", null, req.groupId, { type: req.type, tokens: 0, success: 0 });
+      await Promise.all([inboxWrite, track("push_sent", null, req.groupId, { type: req.type, tokens: 0, success: 0 })]);
       return;
     }
 
     let success = 0;
     const cleanup: Promise<unknown>[] = [];
     const groups = [...new Set(tokenEntries.map((t) => `${t.locale}|${t.silent ? 1 : 0}`))];
-    for (const g of groups) {
+    // 언어·소리 묶음별 발송을 동시에
+    await Promise.all(groups.map(async (g) => {
       const [locale, silentFlag] = g.split("|") as [Locale, string];
       const entries = tokenEntries.filter((t) => t.locale === locale && (t.silent ? "1" : "0") === silentFlag);
       const text = textFor(locale);
@@ -142,8 +149,8 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
           cleanup.push(db.doc(`users/${entry.uid}/deviceTokens/${tokenDocId(entry.token)}`).delete());
         }
       });
-    }
-    await Promise.all(cleanup);
+    }));
+    await Promise.all([...cleanup, inboxWrite]);
     await track("push_sent", null, req.groupId, { type: req.type, tokens: tokenEntries.length, success });
   } catch (e) {
     console.error("[push] failed", req.type, e);

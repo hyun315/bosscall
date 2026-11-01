@@ -1,4 +1,5 @@
 import "server-only";
+import { runAfterResponse } from "@/lib/server/defer";
 import { adminDb } from "@/lib/firebase/admin";
 import type { AuthedUser } from "@/lib/server/auth";
 import { track } from "@/lib/server/analytics";
@@ -42,7 +43,7 @@ export async function upsertMe(user: AuthedUser, locale: Locale): Promise<UserDo
     tx.set(ref, doc);
     return { doc, created: true };
   });
-  if (result.created) await track("signup_completed", user.uid, null);
+  if (result.created) await runAfterResponse(() => track("signup_completed", user.uid, null));
   return result.doc;
 }
 

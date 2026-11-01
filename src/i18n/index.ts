@@ -47,10 +47,6 @@ export type MsgParams = Record<string, string | number>;
 
 const TABLE: Record<string, Tri> = MESSAGES;
 
-export function isMsgKey(k: unknown): k is MsgKey {
-  return typeof k === "string" && Object.prototype.hasOwnProperty.call(TABLE, k);
-}
-
 /**
  * 번역 — "{name}" 자리를 params 로 채운다.
  * params 값이 "@키" 형태면 그 키도 같은 언어로 번역해 넣는다 (예: 입력칸 이름).

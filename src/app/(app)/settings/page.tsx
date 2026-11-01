@@ -16,15 +16,35 @@ import { LOCALE_NAMES } from "@/i18n/core";
 
 /** §2.1 Settings — 가족 구성원 · 장소 관리 · 알림 설정 · 계정 */
 export default function SettingsPage() {
-  const { group, role, me, signOut } = useReadySession();
+  const { group, role, me, member, signOut } = useReadySession();
   const { t, locale } = useI18n();
   const [editGroup, setEditGroup] = useState(false);
-  const [operator, setOperator] = useState(false);
+  // 운영자 여부는 거의 바뀌지 않으므로 이 탭(세션) 동안 기억해 두고 다시 묻지 않는다
+  const opKey = `bosscall.operator.${member.userId}`;
+  const [operator, setOperator] = useState(() => {
+    try {
+      return sessionStorage.getItem(opKey) === "1";
+    } catch {
+      return false;
+    }
+  });
   useEffect(() => {
+    try {
+      if (sessionStorage.getItem(opKey) !== null) return;
+    } catch {
+      /* 저장소 불가 — 그냥 묻는다 */
+    }
     getOperatorStatus()
-      .then((r) => setOperator(r.operator))
+      .then((r) => {
+        setOperator(r.operator);
+        try {
+          sessionStorage.setItem(opKey, r.operator ? "1" : "0");
+        } catch {
+          /* 무시 */
+        }
+      })
       .catch(() => undefined);
-  }, []);
+  }, [opKey]);
 
   const items: Array<{ href: string; icon: string; label: MsgKey; value?: string }> = [
     { href: "/settings/family", icon: "👨‍👩‍👦", label: "settings.family" },

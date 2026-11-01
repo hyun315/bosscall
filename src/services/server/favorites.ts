@@ -1,4 +1,5 @@
 import "server-only";
+import { runAfterResponse } from "@/lib/server/defer";
 import { adminDb } from "@/lib/firebase/admin";
 import { canDeleteFavorite } from "@/lib/permissions";
 import { track } from "@/lib/server/analytics";
@@ -36,7 +37,7 @@ export async function createFavorite(
     createdAt: Date.now(),
   };
   await ref.create(doc);
-  await track("favorite_created", member.userId, groupId);
+  await runAfterResponse(() => track("favorite_created", member.userId, groupId));
   return ref.id;
 }
 

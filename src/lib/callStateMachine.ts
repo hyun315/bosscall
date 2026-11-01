@@ -59,9 +59,6 @@ export const ACTIVE_STATUSES: readonly CallStatus[] = [...PENDING_STATUSES, ...I
 export function isTerminal(status: CallStatus): boolean {
   return TERMINAL_STATUSES.includes(status);
 }
-export function isActive(status: CallStatus): boolean {
-  return ACTIVE_STATUSES.includes(status);
-}
 export function isPending(status: CallStatus): boolean {
   return PENDING_STATUSES.includes(status);
 }
@@ -89,10 +86,6 @@ export type TransitionErrorCode =
 export type TransitionResult =
   | { ok: true; to: CallStatus; from: CallStatus }
   | { ok: false; code: TransitionErrorCode; messageKey: MsgKey; params?: MsgParams };
-
-export function isCallAction(value: unknown): value is CallAction {
-  return typeof value === "string" && (CALL_ACTIONS as readonly string[]).includes(value);
-}
 
 /**
  * 상태 전이 가능 여부를 판단한다. 부작용 없음.

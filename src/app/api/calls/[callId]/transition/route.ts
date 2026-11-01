@@ -21,3 +21,5 @@ export const POST = routeWithParams<{ callId: string }>(async (req, params) => {
     driverId: member.driverId,
   }, optionalFix(body.fix));
 });
+
+export const maxDuration = 30;

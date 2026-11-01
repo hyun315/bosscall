@@ -102,12 +102,6 @@ export function formatDate(ms: number, timeZone: string, locale: Locale = "ko"):
   }).format(new Date(ms));
 }
 
-/** "2026-09-29" (timezone 기준) — date input 값 */
-export function toDateInputValue(ms: number, timeZone: string): string {
-  const p = partsInTz(ms, timeZone);
-  return `${p.year}-${p.month}-${p.day}`;
-}
-
 /** "2026-09-29T08:52" (timezone 기준) — datetime-local 값 */
 export function toDateTimeInputValue(ms: number, timeZone: string): string {
   const p = partsInTz(ms, timeZone);

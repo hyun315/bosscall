@@ -12,6 +12,7 @@ import {
 import { clientAuth } from "@/lib/firebase/client";
 import { useLiveDoc } from "@/hooks/useLive";
 import { api } from "@/services/client/api";
+import { isStandaloneApp } from "@/services/client/install";
 import { unregisterThisDevice } from "@/services/client/push";
 import type { GroupDoc, MemberDoc, UserDoc } from "@/types/domain";
 
@@ -29,12 +30,6 @@ interface SessionValue {
 }
 
 const SessionContext = createContext<SessionValue | null>(null);
-
-function isStandalone(): boolean {
-  if (typeof window === "undefined") return false;
-  const nav = window.navigator as Navigator & { standalone?: boolean };
-  return window.matchMedia("(display-mode: standalone)").matches || nav.standalone === true;
-}
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [authUser, setAuthUser] = useState<User | null>(null);
@@ -86,7 +81,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const auth = clientAuth();
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
-    if (isStandalone()) {
+    if (isStandaloneApp()) {
       await signInWithRedirect(auth, provider);
       return;
     }

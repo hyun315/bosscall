@@ -52,7 +52,8 @@ export default function HistoryPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [range, tz, startOfDay(now, tz)]);
 
-  const calls = useCallsBetween(groupId, from, to);
+  // 근무·급여 탭에서는 호출 목록을 구독하지 않는다
+  const calls = useCallsBetween(tab === "work" || tab === "pay" ? null : groupId, from, to);
   const sessions = useWorkSessionsBetween(!isDriver && tab === "work" ? groupId : null, from, to);
   const drivers = useDrivers(groupId);
   const members = useMembers(groupId);

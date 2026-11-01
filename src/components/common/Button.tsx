@@ -55,14 +55,6 @@ export function Button({
   );
 }
 
-export function PrimaryButton(props: Omit<Props, "variant">) {
-  return <Button {...props} variant="primary" />;
-}
-
-export function SecondaryButton(props: Omit<Props, "variant">) {
-  return <Button {...props} variant="secondary" />;
-}
-
 export function Spinner({ className = "h-5 w-5" }: { className?: string }) {
   return (
     <svg className={`animate-spin ${className}`} viewBox="0 0 24 24" fill="none" aria-hidden>

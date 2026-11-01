@@ -10,7 +10,7 @@ import {
   type CallAction,
 } from "@/lib/callStateMachine";
 import { track, type AnalyticsEvent } from "@/lib/server/analytics";
-import { badRequest, conflict, forbidden, notFound, ApiError } from "@/lib/server/http";
+import { conflict, forbidden, notFound, ApiError } from "@/lib/server/http";
 import { notifyUsers } from "@/lib/server/push";
 import { runAfterResponse } from "@/lib/server/defer";
 import { acceptableFix, geoExpiryFor } from "@/lib/tripData";
@@ -21,14 +21,13 @@ import type {
   CallEventDoc,
   CallStatus,
   DriverDoc,
-  GroupDoc,
   MemberDoc,
   MemberRole,
   PlaceInput,
 } from "@/types/domain";
 
 /** 명세 §5 C04: 기본 60~90초, 운영 데이터로 조정 → 환경변수 */
-export function callTimeoutMs(): number {
+function callTimeoutMs(): number {
   const sec = Number(process.env.CALL_TIMEOUT_SECONDS ?? "90");
   return (Number.isFinite(sec) && sec >= 30 && sec <= 600 ? sec : 90) * 1000;
 }
@@ -90,16 +89,17 @@ export async function createCall(
   const now = Date.now();
 
   const { driver } = await db.runTransaction(async (tx) => {
-    const dSnap = await tx.get(driverRef);
+    // 기사 문서와 진행 중 호출을 동시에 읽는다 (왕복 1번)
+    const [dSnap, activeSnap] = await Promise.all([
+      tx.get(driverRef),
+      tx.get(db.collection(`groups/${groupId}/calls`).where("status", "in", [...ACTIVE_STATUSES])),
+    ]);
     if (!dSnap.exists) throw notFound("err.driverNotFound");
     const driver = dSnap.data() as DriverDoc;
     if (!driver.userId) throw conflict("err.driverNotConnected", "DRIVER_NOT_CONNECTED");
     if (driver.status === "OFF_DUTY" || driver.status === "INACTIVE") {
       throw conflict("err.driverOffDuty", "DRIVER_OFF_DUTY");
     }
-    const activeSnap = await tx.get(
-      db.collection(`groups/${groupId}/calls`).where("status", "in", [...ACTIVE_STATUSES]),
-    );
     const active = activeSnap.docs
       .map((d) => d.data() as CallDoc)
       .filter((c) => c.driverId === input.driverId && !(PENDING_STATUSES.includes(c.status) && c.expiresAt <= now));
@@ -217,11 +217,14 @@ export async function transitionCall(
   const callRef = db.doc(`groups/${groupId}/calls/${callId}`);
 
   const outcome = await db.runTransaction(async (tx) => {
-    const cSnap = await tx.get(callRef);
+    // 기사가 누른 경우 기사 문서 경로를 이미 알므로 호출·기사를 한 번에 읽는다 (왕복 1번 절약)
+    const knownDriverRef = actor.driverId ? db.doc(`groups/${groupId}/drivers/${actor.driverId}`) : null;
+    const [cSnap, preDriverSnap] = await Promise.all([tx.get(callRef), knownDriverRef ? tx.get(knownDriverRef) : null]);
     if (!cSnap.exists) throw notFound("err.callNotFound");
-    const call = cSnap.data() as CallDoc;
-    const driverRef = db.doc(`groups/${groupId}/drivers/${call.driverId}`);
-    const dSnap = await tx.get(driverRef);
+    const original = cSnap.data() as CallDoc;
+    const driverRef = db.doc(`groups/${groupId}/drivers/${original.driverId}`);
+    const dSnap =
+      preDriverSnap && knownDriverRef && knownDriverRef.path === driverRef.path ? preDriverSnap : await tx.get(driverRef);
     const now = Date.now();
 
     // SYSTEM(만료 처리)은 역할 검사를 거치지 않지만 만료 시각 검사는 동일하게 거친다
@@ -231,13 +234,33 @@ export async function transitionCall(
         : { userId: actor.userId, role: actor.role, driverId: actor.driverId };
     if (actor.role === "SYSTEM" && action !== "TIMEOUT") throw forbidden();
 
+    // 기사 화면이 '전달됨'을 보내기 전에 바로 수락하면, 같은 트랜잭션에서 전달됨 → 수락 순서를 모두 기록한다
+    // (상태머신 순서 CALLING→RECEIVED→ACCEPTED 유지, 서버 왕복은 1번)
+    let call = original;
+    let receivedFields: Record<string, unknown> = {};
+    if (action === "ACCEPT" && original.status === "CALLING") {
+      const r0 = evaluateTransition(original, "RECEIVE", evalActor, now);
+      if (r0.ok) {
+        receivedFields = timestampFieldsFor(r0.to, now);
+        appendEvent(tx, original, {
+          eventType: r0.to,
+          fromStatus: r0.from,
+          actorId: actor.userId,
+          actorRole: actor.role,
+          createdAt: now - 1,
+          metadata: { action: "RECEIVE" },
+        });
+        call = { ...original, status: r0.to };
+      }
+    }
+
     const r = evaluateTransition(call, action, evalActor, now);
     if (!r.ok) {
       const status = r.code === "FORBIDDEN" ? 403 : 409;
       throw new ApiError(status, r.code, r.messageKey, r.params);
     }
 
-    const fields: Record<string, unknown> = { status: r.to, ...timestampFieldsFor(r.to, now) };
+    const fields: Record<string, unknown> = { status: r.to, ...receivedFields, ...timestampFieldsFor(r.to, now) };
     // 배정된 기사 본인이 보낸 품질 좋은 GPS만 실제 지점으로 인정
     const fixOk = fix !== null && actor.role === "DRIVER" && actor.driverId === call.driverId && acceptableFix(fix, now);
     if (fixOk && r.to === "TRIP_STARTED") fields.actualPickup = fix;
@@ -352,28 +375,23 @@ async function groupOwnerIds(groupId: string): Promise<string[]> {
 }
 
 /** 응답 재촉 알림: 최소 간격·최대 횟수 (호출 대기 90초 동안 최대 4번) */
-export const NUDGE_MIN_INTERVAL_MS = 14_000;
-export const NUDGE_MAX = 4;
+const NUDGE_MIN_INTERVAL_MS = 14_000;
+const NUDGE_MAX = 4;
 /** 서버가 스스로 다시 보내는 간격 — 호출 생성 요청이 끝난 뒤 백그라운드에서 */
-export const SERVER_NUDGE_DELAYS_MS = [15_000, 30_000, 45_000] as const;
+const SERVER_NUDGE_DELAYS_MS = [15_000, 30_000, 45_000] as const;
 
 /**
  * 기사가 아직 응답하지 않은 호출에 푸시 알림을 다시 보낸다.
  * 앱이 닫혀 있는 기사 휴대폰은 웹앱이 소리를 계속 낼 수 없으므로, 호출자 화면이 열려 있는 동안
  * 일정 간격으로 알림을 다시 울리게 한다. 간격·횟수는 서버가 강제한다.
  */
-export async function nudgeDriver(
-  groupId: string,
-  callId: string,
-  actor: MemberDoc | "SYSTEM",
-): Promise<{ sent: boolean }> {
+async function nudgeDriver(groupId: string, callId: string): Promise<{ sent: boolean }> {
   const db = adminDb();
   const callRef = db.doc(`groups/${groupId}/calls/${callId}`);
   const result = await db.runTransaction(async (tx) => {
     const snap = await tx.get(callRef);
     if (!snap.exists) throw notFound("err.callNotFound");
     const call = snap.data() as CallDoc;
-    if (actor !== "SYSTEM" && actor.role === "DRIVER") throw forbidden();
     const now = Date.now();
     const waiting = (call.status === "CALLING" || call.status === "RECEIVED") && call.expiresAt > now;
     const count = call.nudgeCount ?? 0;
@@ -415,7 +433,7 @@ export async function repeatNudges(groupId: string, callId: string): Promise<voi
       const snap = await adminDb().doc(`groups/${groupId}/calls/${callId}`).get();
       const status = (snap.data() as CallDoc | undefined)?.status;
       if (status !== "CALLING" && status !== "RECEIVED") return; // 응답했거나 끝남 → 중단
-      await nudgeDriver(groupId, callId, "SYSTEM");
+      await nudgeDriver(groupId, callId);
     } catch (e) {
       console.error("[nudge] repeat failed", e);
       return;
@@ -423,11 +441,5 @@ export async function repeatNudges(groupId: string, callId: string): Promise<voi
   }
 }
 
-/** 기사 연결 여부 등을 확인할 때 쓰는 헬퍼 */
-export async function requireCallInGroup(groupId: string, callId: string): Promise<CallDoc> {
-  const snap = await adminDb().doc(`groups/${groupId}/calls/${callId}`).get();
-  if (!snap.exists) throw notFound("err.callNotFound");
-  return snap.data() as CallDoc;
-}
 
 export { expireStaleCalls };

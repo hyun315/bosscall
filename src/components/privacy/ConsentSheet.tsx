@@ -11,7 +11,7 @@ import type { UserDoc } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
 
 /** 아직 묻지 않았거나 동의 문구가 바뀐 경우 */
-export function needsConsentPrompt(me: UserDoc): boolean {
+function needsConsentPrompt(me: UserDoc): boolean {
   const c = me.consents;
   return !c || c.analytics.version !== CONSENT_VERSION || c.marketing.version !== CONSENT_VERSION;
 }

@@ -1,4 +1,5 @@
 "use client";
+import { useMemo } from "react";
 import { ACTIVE_STATUSES } from "@/lib/callStateMachine";
 import { lim, ob, useLiveQuery, w } from "@/hooks/useLive";
 import type { CallDoc, DriverDoc, FavoriteLocationDoc, MemberDoc, WorkSessionDoc } from "@/types/domain";
@@ -16,7 +17,9 @@ export function useMembers(groupId: string | null) {
 /** 진행 중 호출 (status in ACTIVE) — 정렬은 클라이언트에서 */
 export function useActiveCalls(groupId: string | null) {
   const s = useLiveQuery<CallDoc>(groupId ? `groups/${groupId}/calls` : null, [w("status", "in", [...ACTIVE_STATUSES])]);
-  return { ...s, data: [...s.data].sort((a, b) => b.createdAt - a.createdAt) };
+  // 렌더마다 새 배열을 만들지 않도록 (구독 데이터가 바뀔 때만 정렬)
+  const data = useMemo(() => [...s.data].sort((a, b) => b.createdAt - a.createdAt), [s.data]);
+  return { ...s, data };
 }
 
 export function useRecentCalls(groupId: string | null, n = 30) {
