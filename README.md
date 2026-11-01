@@ -215,7 +215,7 @@ npm run typecheck
 | `waiting` | 기사 호출 직후, 기사님 응답 기다리는 화면 맨 아래 | 광고 문의 안내 |
 | `tripCompleted` | 운행 완료 화면 맨 아래 | 자카르타 한인업소록 |
 | `onTheWay` | 기사님 오는 중~운행 중 화면 맨 아래 | 광고 문의 안내 |
-| `homeBenefits` | 홈 맨 아래 | 광고 문의 안내 |
+| `homeBenefits` | 홈 · 오늘 요약 아래, 최근 호출 위 | 광고 문의 안내 |
 | `payroll` | 급여 화면 맨 아래 (관리자만) | 광고 문의 안내 |
 
 - 내용 바꾸기: `src/lib/ads.ts` 의 `SLOT_ADS` 한 곳만 고치면 됩니다. 광고 문의 메일은 `AD_CONTACT_EMAIL` (hanin.jakarta114@gmail.com).

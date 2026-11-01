@@ -16,7 +16,7 @@ export const AD_SLOTS = [
   "waiting", // 기사 호출 직후, 기사님 응답 기다리는 화면 (맨 아래)
   "tripCompleted", // 운행 완료 화면
   "onTheWay", // 기사님 오는 중 화면 (상태 카드 아래)
-  "homeBenefits", // 홈 맨 아래
+  "homeBenefits", // 홈 · 최근 호출 위
   "payroll", // 급여 화면 아래
 ] as const;
 export type AdSlotId = (typeof AD_SLOTS)[number];
@@ -110,7 +110,7 @@ export const SLOT_INFO: ReadonlyArray<{ slot: AdSlotId; icon: string; title: str
   { slot: "waiting", icon: "⏳", title: "기사님 응답 기다리는 화면", when: "기사 호출을 누른 직후, 응답을 기다리며 화면을 보는 순간입니다." },
   { slot: "tripCompleted", icon: "🏁", title: "운행 완료 화면", when: "목적지에 막 도착한 순간. 근처 가게·서비스를 알리기 좋습니다." },
   { slot: "onTheWay", icon: "🚗", title: "기사님 오는 중 화면", when: "기사님을 기다리며 5~15분 화면을 보는 시간입니다." },
-  { slot: "homeBenefits", icon: "🏠", title: "홈 화면 아래", when: "앱을 열 때마다 보는 화면입니다." },
+  { slot: "homeBenefits", icon: "🏠", title: "홈 화면", when: "앱을 열 때마다 보는 화면입니다." },
   { slot: "payroll", icon: "💼", title: "기사님 급여 화면", when: "기사님을 고용한 사장님이 매달 보는 화면. 송금·보험·차량 서비스에 맞습니다." },
 ];
 

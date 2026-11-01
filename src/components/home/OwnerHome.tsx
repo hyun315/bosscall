@@ -191,6 +191,11 @@ export function OwnerHome() {
           </div>
         )}
 
+        <PushPrompt groupId={groupId} />
+
+        {/* 광고: 오늘 요약 아래, 최근 호출 위 (호출 버튼보다 항상 아래) */}
+        <AdSlot slot="homeBenefits" />
+
         {/* 최근 호출 */}
         <section>
           <div className="mb-2 flex items-center justify-between px-1">
@@ -211,11 +216,6 @@ export function OwnerHome() {
             </div>
           )}
         </section>
-
-        <PushPrompt groupId={groupId} />
-
-        {/* 광고: 홈 맨 아래 — 호출 버튼·최근 호출보다 항상 아래 */}
-        <AdSlot slot="homeBenefits" />
       </main>
     </>
   );
