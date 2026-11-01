@@ -144,4 +144,15 @@ export const commonMsgs = {
     en: "Name (shown as caller/driver)",
   },
   "account.phoneLabel": { ko: "전화번호 (선택)", id: "Nomor telepon (opsional)", en: "Phone number (optional)" },
+
+  // ── 광고 칸
+  "ad.label": { ko: "광고", id: "Iklan", en: "Ad" },
+  "ad.inquiryTitle": { ko: "이 자리에 우리 가게를 알리세요", id: "Promosikan usaha Anda di sini", en: "Advertise your business here" },
+  "ad.inquiryBody": {
+    ko: "자카르타 한인 가정이 기사님을 부를 때마다 보는 화면입니다. 식당·병원·학원·골프·생활 서비스 광고를 받습니다.",
+    id: "Layar ini dilihat keluarga Korea di Jakarta setiap kali memanggil sopir. Kami menerima iklan restoran, klinik, kursus, golf, dan layanan sehari-hari.",
+    en: "Korean families in Jakarta see this screen every time they call their driver. We accept ads for restaurants, clinics, academies, golf and everyday services.",
+  },
+  "ad.inquiryMail": { ko: "광고 문의", id: "Tanya iklan", en: "Ad inquiry" },
+  "ad.copied": { ko: "주소를 복사했습니다", id: "Alamat disalin", en: "Address copied" },
 } satisfies Record<string, Tri>;

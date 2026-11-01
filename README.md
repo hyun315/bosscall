@@ -206,6 +206,22 @@ npm run typecheck
 - **앱이 닫혀 있거나 화면이 꺼져 있을 때**: 웹앱은 이때 소리를 직접 낼 수 없어 휴대폰 푸시 알림이 울립니다. 호출한 사람 화면이 열려 있는 동안 20초 간격으로 최대 3번 다시 알림을 보냅니다 (`/api/calls/[callId]/nudge`, 간격·횟수는 서버가 제한). 안드로이드는 알림이 응답 전까지 화면에 남습니다.
 - 소리는 음원 파일 없이 `src/lib/alarmSounds.ts` 에서 파형을 직접 만듭니다.
 
+## 14. 광고 칸
+
+| 칸 | 위치 | 지금 내용 |
+|---|---|---|
+| `destinationSearch` | 호출 › 목적지 고르기 화면, 즐겨찾기·최근 장소 아래 | 자카르타 한인업소록 |
+| `tripCompleted` | 운행 완료 화면 맨 아래 | 자카르타 한인업소록 |
+| `onTheWay` | 기사님 오는 중~운행 중 화면 맨 아래 | 광고 문의 안내 |
+| `homeBenefits` | 홈 맨 아래 | 광고 문의 안내 |
+| `payroll` | 급여 화면 맨 아래 (관리자만) | 광고 문의 안내 |
+
+- 내용 바꾸기: `src/lib/ads.ts` 의 `SLOT_ADS` 한 곳만 고치면 됩니다. 광고 문의 메일은 `AD_CONTACT_EMAIL` (hanin.jakarta114@gmail.com).
+- 원칙: 사장님·가족 화면에만, 화면당 1칸, 항상 "광고" 표시. 기사 화면·호출 버튼 주변·호출 확인 화면·푸시 알림에는 넣지 않습니다.
+- 광고 링크에는 `utm_source=bosscall&utm_campaign=<칸 이름>` 이 붙어 광고주 쪽에서 BossCall 유입을 알 수 있습니다.
+- 노출·클릭은 `analyticsEvents` 에 `ad_impression` / `ad_click` (칸·광고 id) 으로 쌓입니다.
+- 전체 끄기: Vercel 환경변수 `NEXT_PUBLIC_ADS_ENABLED=false`
+
 ### MVP 범위에서 제외 (명세 §1 "MVP 이후", §30)
 광고·관리자 대시보드·구독/결제·수당/공제 항목(식대·보너스 등)·급여 확정/지급 기록·이동 경로 기록·Native wrapper.
 데이터 구조(다중 기사, `plan`, `analyticsEvents`, `usageDaily`)는 이후 기능을 붙일 수 있게 준비되어 있습니다.

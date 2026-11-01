@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { Button } from "@/components/common/Button";
 import { ConfirmModal } from "@/components/common/ConfirmModal";
 import { NotificationBanner } from "@/components/common/States";
@@ -164,6 +165,9 @@ export function LocationPicker({
       {favoritesList}
       {recentsList}
       {error && <p className="text-sm text-danger">{error}</p>}
+
+      {/* 광고: 목적지 고르는 화면 — 즐겨찾기·최근 장소 아래 (사장님·가족만, 기사 계정엔 그리지 않음) */}
+      {kind === "destination" && <AdSlot slot="destinationSearch" />}
 
       <Button variant="secondary" block onClick={() => setMapOpen(null)} icon={<span aria-hidden>🗺</span>}>
         {t("loc.chooseOnMap")}

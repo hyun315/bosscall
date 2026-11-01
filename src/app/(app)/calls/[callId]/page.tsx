@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { AppHeader } from "@/components/common/AppHeader";
 import { Button } from "@/components/common/Button";
 import { ConfirmModal } from "@/components/common/ConfirmModal";
@@ -242,6 +243,12 @@ function CallView({ callId }: { callId: string }) {
               ))}
             </ol>
           </section>
+        )}
+
+        {/* 광고: 사장님·가족 화면 맨 아래 (버튼과 떨어진 곳). 오는 중 / 운행 완료일 때만 */}
+        {role !== "DRIVER" && call.status === "COMPLETED" && <AdSlot slot="tripCompleted" />}
+        {role !== "DRIVER" && ["ACCEPTED", "ON_THE_WAY", "ARRIVED", "TRIP_STARTED"].includes(call.status) && (
+          <AdSlot slot="onTheWay" />
         )}
       </main>
 

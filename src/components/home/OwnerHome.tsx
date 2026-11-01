@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/common/AppHeader";
 import { Button } from "@/components/common/Button";
@@ -212,6 +213,9 @@ export function OwnerHome() {
         </section>
 
         <PushPrompt groupId={groupId} />
+
+        {/* 광고: 홈 맨 아래 — 호출 버튼·최근 호출보다 항상 아래 */}
+        <AdSlot slot="homeBenefits" />
       </main>
     </>
   );
