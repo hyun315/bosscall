@@ -148,11 +148,10 @@ export const commonMsgs = {
   // ── 광고 칸
   "ad.label": { ko: "광고", id: "Iklan", en: "Ad" },
   "ad.inquiryTitle": { ko: "이 자리에 우리 가게를 알리세요", id: "Promosikan usaha Anda di sini", en: "Advertise your business here" },
-  "ad.inquiryBody": {
-    ko: "자카르타 한인 가정이 기사님을 부를 때마다 보는 화면입니다. 식당·병원·학원·골프·생활 서비스 광고를 받습니다.",
-    id: "Layar ini dilihat keluarga Korea di Jakarta setiap kali memanggil sopir. Kami menerima iklan restoran, klinik, kursus, golf, dan layanan sehari-hari.",
-    en: "Korean families in Jakarta see this screen every time they call their driver. We accept ads for restaurants, clinics, academies, golf and everyday services.",
+  "ad.inquiryShort": {
+    ko: "한인 가정이 매일 보는 화면에 광고하세요",
+    id: "Pasang iklan di layar yang dilihat keluarga Korea setiap hari",
+    en: "Reach Korean families on a screen they see every day",
   },
-  "ad.inquiryMail": { ko: "광고 문의", id: "Tanya iklan", en: "Ad inquiry" },
-  "ad.copied": { ko: "주소를 복사했습니다", id: "Alamat disalin", en: "Address copied" },
+  "ad.inquiryMore": { ko: "광고 안내", id: "Info iklan", en: "Learn more" },
 } satisfies Record<string, Tri>;

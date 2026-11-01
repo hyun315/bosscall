@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { useReadySession } from "@/hooks/useSession";
-import { AD_CONTACT_EMAIL, SLOT_ADS, adLink, adsEnabled, inquiryMailto, type AdSlotId } from "@/lib/ads";
+import { SLOT_ADS, adLink, adsEnabled, advertisePath, type AdSlotId, type HouseAd } from "@/lib/ads";
 import { trackClient } from "@/services/client/api";
 import { useI18n } from "@/i18n/client";
 
@@ -11,12 +12,11 @@ import { useI18n } from "@/i18n/client";
  */
 export function AdSlot({ slot, className = "" }: { slot: AdSlotId; className?: string }) {
   const { role, groupId } = useReadySession();
-  const { t, locale } = useI18n();
   const ref = useRef<HTMLElement | null>(null);
   const seen = useRef(false);
-  const [copied, setCopied] = useState(false);
   const content = SLOT_ADS[slot];
   const show = adsEnabled() && role !== "DRIVER";
+  const adId = content.kind === "ad" ? content.id : "inquiry";
 
   useEffect(() => {
     const el = ref.current;
@@ -25,7 +25,7 @@ export function AdSlot({ slot, className = "" }: { slot: AdSlotId; className?: s
       (entries) => {
         if (entries.some((e) => e.isIntersecting) && !seen.current) {
           seen.current = true;
-          trackClient("ad_impression", groupId, { slot, ad: content.kind === "ad" ? content.id : "inquiry" });
+          trackClient("ad_impression", groupId, { slot, ad: adId });
           io.disconnect();
         }
       },
@@ -33,77 +33,89 @@ export function AdSlot({ slot, className = "" }: { slot: AdSlotId; className?: s
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [show, groupId, slot, content]);
+  }, [show, groupId, slot, adId]);
 
   if (!show) return null;
-
-  if (content.kind === "inquiry") {
-    const copy = async () => {
-      try {
-        await navigator.clipboard.writeText(AD_CONTACT_EMAIL);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch {
-        /* 복사 불가 — 주소는 화면에 보이고 선택할 수 있다 */
-      }
-    };
-    return (
-      <aside
-        ref={ref}
-        aria-label={t("ad.inquiryTitle")}
-        className={`rounded-card border border-dashed border-line bg-surface px-4 py-4 ${className}`}
-      >
-        <div className="flex items-start gap-3">
-          <span className="mt-0.5 text-xl" aria-hidden>
-            📣
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-bold text-ink">{t("ad.inquiryTitle")}</p>
-            <p className="mt-1 text-sm leading-relaxed text-ink-sub">{t("ad.inquiryBody")}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <a
-                href={inquiryMailto(slot)}
-                onClick={() => trackClient("ad_click", groupId, { slot, ad: "inquiry" })}
-                className="inline-flex min-h-[40px] items-center rounded-btn bg-action-soft px-3 text-sm font-semibold text-action"
-              >
-                ✉️ {t("ad.inquiryMail")}
-              </a>
-              <button
-                type="button"
-                onClick={() => void copy()}
-                className="min-h-[40px] select-all rounded-btn px-2 text-sm text-ink-sub underline-offset-2 hover:underline"
-              >
-                {copied ? t("ad.copied") : AD_CONTACT_EMAIL}
-              </button>
-            </div>
-          </div>
-        </div>
-      </aside>
-    );
-  }
+  const onClick = () => trackClient("ad_click", groupId, { slot, ad: adId });
 
   return (
-    <aside ref={ref} aria-label={content.sponsor[locale]} className={`card overflow-hidden ${className}`}>
-      <a
-        href={adLink(content.url, slot)}
-        target="_blank"
-        rel="noopener sponsored"
-        onClick={() => trackClient("ad_click", groupId, { slot, ad: content.id })}
-        className="flex items-start gap-3 px-4 py-4 active:bg-bg"
-      >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-btn bg-action-soft text-2xl" aria-hidden>
-          {content.icon}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-2 text-xs text-ink-sub">
-            <span className="rounded border border-line px-1.5 py-px font-semibold">{t("ad.label")}</span>
-            {content.sponsor[locale]}
-          </span>
-          <span className="mt-1 block text-[15px] font-bold leading-snug text-ink">{content.title[locale]}</span>
-          <span className="mt-1 block text-sm leading-relaxed text-ink-sub">{content.body[locale]}</span>
-          <span className="mt-2 inline-block text-sm font-semibold text-action">{content.cta[locale]} ›</span>
-        </span>
-      </a>
+    <aside ref={ref} className={className}>
+      {content.kind === "inquiry" ? (
+        <InquiryCard slot={slot} onClick={onClick} />
+      ) : (
+        <BannerCard ad={content} slot={slot} onClick={onClick} />
+      )}
     </aside>
+  );
+}
+
+/** 광고주 배너 — 네이비 바탕, 큰 숫자, 카테고리 칩, 흰 버튼 */
+export function BannerCard({ ad, slot, onClick }: { ad: HouseAd; slot: AdSlotId; onClick: () => void }) {
+  const { t, locale } = useI18n();
+  return (
+    <a
+      href={adLink(ad.url, slot)}
+      target="_blank"
+      rel="noopener sponsored"
+      onClick={onClick}
+      className="group relative block overflow-hidden rounded-card bg-navy px-5 pb-5 pt-4 text-white shadow-modal active:scale-[0.99]"
+    >
+      {/* 배경 장식 */}
+      <span aria-hidden className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-action/40 blur-2xl" />
+      <span aria-hidden className="pointer-events-none absolute -bottom-16 -left-8 h-36 w-36 rounded-full bg-[#F2C230]/20 blur-2xl" />
+      <span aria-hidden className="pointer-events-none absolute right-4 top-10 select-none text-[64px] leading-none opacity-90 drop-shadow-lg">
+        {ad.icon}
+      </span>
+
+      <span className="relative flex items-center gap-2 text-xs text-white/70">
+        <span className="rounded-md bg-white/15 px-1.5 py-0.5 font-semibold text-white">{t("ad.label")}</span>
+        {ad.sponsor[locale]}
+      </span>
+
+      {ad.stat && (
+        <span className="relative mt-3 block text-[13px] font-semibold tracking-wide text-[#F2C230]">{ad.stat[locale]}</span>
+      )}
+      <span className="relative mt-1 block max-w-[78%] text-[19px] font-extrabold leading-snug [text-wrap:balance]">
+        {ad.title[locale]}
+      </span>
+
+      {ad.chips && ad.chips.length > 0 && (
+        <span className="relative mt-3 flex flex-wrap gap-1.5">
+          {ad.chips.map((c) => (
+            <span key={c.label.ko} className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-white/90 ring-1 ring-white/15">
+              {c.icon} {c.label[locale]}
+            </span>
+          ))}
+        </span>
+      )}
+
+      <span className="relative mt-4 flex items-center justify-between gap-3">
+        <span className="min-w-0 text-xs text-white/60">{ad.body[locale]}</span>
+        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white px-4 py-2 text-sm font-bold text-navy transition group-hover:translate-x-0.5">
+          {ad.cta[locale]} →
+        </span>
+      </span>
+    </a>
+  );
+}
+
+/** 빈 칸 — 광고 안내 페이지로 */
+function InquiryCard({ slot, onClick }: { slot: AdSlotId; onClick: () => void }) {
+  const { t } = useI18n();
+  return (
+    <Link
+      href={advertisePath(slot)}
+      onClick={onClick}
+      className="flex items-center gap-3 rounded-card border border-dashed border-action/40 bg-action-soft/60 px-4 py-4 active:bg-action-soft"
+    >
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-btn bg-surface text-2xl shadow-card" aria-hidden>
+        📣
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[15px] font-bold text-ink">{t("ad.inquiryTitle")}</span>
+        <span className="mt-0.5 block text-sm text-ink-sub">{t("ad.inquiryShort")}</span>
+      </span>
+      <span className="shrink-0 text-sm font-semibold text-action">{t("ad.inquiryMore")} ›</span>
+    </Link>
   );
 }
