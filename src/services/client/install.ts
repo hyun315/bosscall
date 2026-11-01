@@ -1,0 +1,98 @@
+"use client";
+/**
+ * 홈 화면에 추가(PWA 설치) 도우미.
+ * - 안드로이드 Chrome 등은 beforeinstallprompt 이벤트를 붙잡아 두었다가 [앱 설치] 버튼에서 띄운다.
+ * - 아이폰은 설치 창을 띄울 방법이 없어 Safari 공유 버튼 › 홈 화면에 추가 순서를 안내한다.
+ */
+
+export type InstallPlatform = "ios" | "android" | "desktop";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
+let deferred: BeforeInstallPromptEvent | null = null;
+let installedNow = false;
+let started = false;
+const listeners = new Set<() => void>();
+
+function emit(): void {
+  for (const l of listeners) l();
+}
+
+/** 앱 시작 시 한 번 — 설치 창 이벤트를 놓치지 않게 일찍 등록한다 */
+export function initInstallCapture(): void {
+  if (started || typeof window === "undefined") return;
+  started = true;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault(); // 브라우저 기본 배너 대신 우리 안내 카드에서 띄운다
+    deferred = e as BeforeInstallPromptEvent;
+    emit();
+  });
+  window.addEventListener("appinstalled", () => {
+    installedNow = true;
+    deferred = null;
+    emit();
+  });
+}
+
+export function subscribeInstall(l: () => void): () => void {
+  listeners.add(l);
+  return () => listeners.delete(l);
+}
+
+export function isStandaloneApp(): boolean {
+  if (typeof window === "undefined") return false;
+  const nav = window.navigator as Navigator & { standalone?: boolean };
+  return installedNow || window.matchMedia("(display-mode: standalone)").matches || nav.standalone === true;
+}
+
+export function installPlatform(): InstallPlatform {
+  if (typeof navigator === "undefined") return "desktop";
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) return "ios";
+  if (/Android/i.test(ua)) return "android";
+  return "desktop";
+}
+
+/** 아이폰에서 Safari가 아닌 브라우저(카카오톡 인앱, Chrome 등)로 열었는지 */
+export function isIosNonSafari(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /CriOS|FxiOS|EdgiOS|KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAgent);
+}
+
+export function canPromptInstall(): boolean {
+  return deferred !== null;
+}
+
+/** [앱 설치] — 브라우저 설치 창을 띄운다. 설치했으면 true */
+export async function promptInstall(): Promise<boolean> {
+  const e = deferred;
+  if (!e) return false;
+  deferred = null;
+  emit();
+  await e.prompt();
+  const choice = await e.userChoice.catch(() => ({ outcome: "dismissed" as const }));
+  return choice.outcome === "accepted";
+}
+
+const DISMISS_KEY = "bosscall.installDismissedAt";
+const DISMISS_DAYS = 3;
+
+export function installDismissedRecently(now = Date.now()): boolean {
+  try {
+    const v = Number(localStorage.getItem(DISMISS_KEY) ?? "0");
+    return Number.isFinite(v) && now - v < DISMISS_DAYS * 86400000;
+  } catch {
+    return false;
+  }
+}
+
+export function dismissInstall(): void {
+  try {
+    localStorage.setItem(DISMISS_KEY, String(Date.now()));
+  } catch {
+    /* 저장 불가 — 이번 화면에서만 숨김 */
+  }
+}

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { InstallPrompt } from "@/components/common/InstallPrompt";
 import { AppHeader } from "@/components/common/AppHeader";
 import { BottomSheet } from "@/components/common/BottomSheet";
 import { Button } from "@/components/common/Button";
@@ -64,6 +65,8 @@ export function DriverHome() {
     <>
       <AppHeader />
       <main className="mx-auto flex max-w-md flex-col gap-5 px-4 pb-6 pt-4">
+        {/* 기사: 홈 화면 앱이어야 화면이 꺼져도 호출 알림 — 맨 위에 강조 */}
+        <InstallPrompt emphasis groupId={groupId} />
         <PushPrompt groupId={groupId} />
         <WorkStatusCard driver={driver} tz={tz} />
         <DriverLocationShareCard driver={driver} groupId={groupId} />

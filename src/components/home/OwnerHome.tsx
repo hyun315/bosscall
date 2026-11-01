@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { InstallPrompt } from "@/components/common/InstallPrompt";
 import { OwnerClockButton } from "@/components/driver/OwnerClockButton";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { useEffect, useState } from "react";
@@ -194,6 +195,7 @@ export function OwnerHome() {
           </div>
         )}
 
+        <InstallPrompt groupId={groupId} />
         <PushPrompt groupId={groupId} />
 
         {/* 광고: 오늘 요약 아래, 최근 호출 위 (호출 버튼보다 항상 아래) */}

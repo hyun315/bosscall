@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { AppHeader } from "@/components/common/AppHeader";
+import { InstallPrompt } from "@/components/common/InstallPrompt";
 import { PushPrompt } from "@/components/common/PushPrompt";
 import { AlarmSoundPicker } from "@/components/driver/AlarmSoundPicker";
 import { useToast } from "@/components/common/Toast";
@@ -42,6 +43,7 @@ export default function NotificationSettingsPage() {
     <>
       <AppHeader title={t("settings.notifications")} back={role === "DRIVER" ? "/profile" : "/settings"} />
       <main className="mx-auto max-w-md space-y-4 px-4 pb-6 pt-3">
+        <InstallPrompt variant="panel" groupId={groupId} />
         <PushPrompt groupId={groupId} variant="panel" />
         {role === "DRIVER" && (
           <p className="px-1 text-sm leading-relaxed text-ink-sub">{t("notifSet.driverNote")}</p>

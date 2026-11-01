@@ -145,6 +145,49 @@ export const commonMsgs = {
   },
   "account.phoneLabel": { ko: "전화번호 (선택)", id: "Nomor telepon (opsional)", en: "Phone number (optional)" },
 
+  // ── 홈 화면에 추가 (PWA 설치)
+  "install.title": { ko: "홈 화면에 BossCall 추가하기", id: "Tambahkan BossCall ke layar utama", en: "Add BossCall to your home screen" },
+  "install.whyDriver": {
+    ko: "홈 화면 앱으로 써야 화면이 꺼져 있어도 호출 알림이 옵니다. 꼭 해주세요.",
+    id: "Pakai dari layar utama agar notifikasi panggilan tetap masuk walau layar mati. Wajib dilakukan.",
+    en: "Use it from the home screen so call alerts arrive even with the screen off. Please do this.",
+  },
+  "install.whyOwner": {
+    ko: "앱처럼 아이콘으로 바로 열고, 기사님 수락·도착 알림을 받을 수 있습니다.",
+    id: "Buka langsung dari ikon seperti aplikasi dan terima notifikasi sopir.",
+    en: "Open it from an icon like an app and get driver updates.",
+  },
+  "install.iosOpenSafari": {
+    ko: "지금 브라우저에서는 추가할 수 없을 수 있습니다. 주소를 복사해 Safari에서 열어주세요.",
+    id: "Browser ini mungkin tidak bisa menambahkan. Salin alamat dan buka di Safari.",
+    en: "This browser may not support it. Copy the address and open it in Safari.",
+  },
+  "install.iosStep1a": { ko: "Safari 아래쪽", id: "Di bawah Safari, ketuk", en: "In Safari, tap" },
+  "install.iosStep1b": { ko: "공유 버튼을 누릅니다", id: "tombol Bagikan", en: "the Share button" },
+  "install.iosStep2": {
+    ko: "목록을 내려 '홈 화면에 추가'를 누릅니다",
+    id: "Gulir ke bawah, ketuk 'Tambah ke Layar Utama'",
+    en: "Scroll down and tap 'Add to Home Screen'",
+  },
+  "install.iosStep3": {
+    ko: "홈 화면에 생긴 BossCall 아이콘으로 열고 알림을 켭니다",
+    id: "Buka BossCall dari ikon di layar utama, lalu nyalakan notifikasi",
+    en: "Open BossCall from the new home-screen icon and turn on notifications",
+  },
+  "install.androidButton": { ko: "📲 앱 설치", id: "📲 Pasang aplikasi", en: "📲 Install app" },
+  "install.androidManual": {
+    ko: "Chrome 오른쪽 위 ⋮ 메뉴 › '앱 설치' 또는 '홈 화면에 추가'를 누르세요.",
+    id: "Ketuk menu ⋮ di kanan atas Chrome › 'Instal aplikasi' atau 'Tambahkan ke Layar utama'.",
+    en: "Tap Chrome's ⋮ menu (top right) › 'Install app' or 'Add to Home screen'.",
+  },
+  "install.desktopManual": {
+    ko: "휴대폰에서 이 주소를 열면 홈 화면에 추가할 수 있습니다.",
+    id: "Buka alamat ini di HP untuk menambahkannya ke layar utama.",
+    en: "Open this address on your phone to add it to the home screen.",
+  },
+  "install.later": { ko: "나중에", id: "Nanti", en: "Later" },
+  "install.using": { ko: "홈 화면 앱으로 사용 중입니다", id: "Sedang dipakai sebagai aplikasi layar utama", en: "You're using the home-screen app" },
+
   // ── 광고 칸
   "ad.label": { ko: "광고", id: "Iklan", en: "Ad" },
   "ad.inquiryTitle": { ko: "이 자리에 우리 가게를 알리세요", id: "Promosikan usaha Anda di sini", en: "Advertise your business here" },

@@ -32,6 +32,7 @@ export const CLIENT_EVENTS = [
   "maps_error",
   "ad_impression",
   "ad_click",
+  "app_install_prompt",
 ] as const;
 
 export type AnalyticsEvent = (typeof SERVER_EVENTS)[number] | (typeof CLIENT_EVENTS)[number];
