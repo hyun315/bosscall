@@ -17,9 +17,10 @@ function readPayload(event) {
       type: data.type || "",
       callId: data.callId || "",
       urgent: data.urgent === "1",
+      silent: data.silent === "1",
     };
   } catch (e) {
-    return { title: "BossCall", body: "앱에서 확인해주세요.", url: "/home", type: "", callId: "", urgent: false };
+    return { title: "BossCall", body: "앱에서 확인해주세요.", url: "/home", type: "", callId: "", urgent: false, silent: false };
   }
 }
 
@@ -33,7 +34,8 @@ self.addEventListener("push", (event) => {
     renotify: true,
     requireInteraction: p.urgent,
     vibrate: p.urgent ? [500, 200, 500, 200, 500, 200, 800] : [200],
-    silent: false,
+    // 기사가 호출 소리를 끈 경우에만 무음. 기본은 항상 소리 (휴대폰 알림음)
+    silent: p.silent,
     data: { url: p.url },
   };
   event.waitUntil(self.registration.showNotification(p.title, options));

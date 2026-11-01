@@ -38,7 +38,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   useDriverLocationSharing(isDriver ? session.groupId : null, isDriver ? driverId : null);
   const incomingId = active.data.find((c) => c.driverId === driverId && c.status === "CALLING")?.id ?? null;
   // 응답할 때까지 호출 알람 반복 (앱이 화면에 열려 있는 동안)
-  useIncomingCallAlarm(active.data, driverId, isDriver);
+  // 호출 소리를 끈 기사는 앱 안 알람도 울리지 않는다 (설정하지 않았으면 켜짐)
+  useIncomingCallAlarm(active.data, driverId, isDriver && session.me?.callAlarmSound !== false);
 
   useEffect(() => {
     if (!incomingId) return;

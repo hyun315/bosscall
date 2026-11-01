@@ -54,6 +54,7 @@ export interface MePatch {
   locale?: Locale;
   /** 선택 동의 — 둘 다 보내야 한다 (처음 묻는 화면·설정 화면 모두 두 항목을 함께 저장) */
   consents?: { analytics: boolean; marketing: boolean };
+  callAlarmSound?: boolean;
 }
 
 export async function updateMe(uid: string, patch: MePatch): Promise<void> {
@@ -86,6 +87,7 @@ async function updateMeDoc(uid: string, patch: MePatch): Promise<void> {
     }
     if (patch.activeGroupId !== undefined) next.activeGroupId = patch.activeGroupId;
     if (patch.locale !== undefined) next.locale = patch.locale;
+    if (patch.callAlarmSound !== undefined) next.callAlarmSound = patch.callAlarmSound;
     if (patch.consents) {
       const now = Date.now();
       const consents: UserConsents = {

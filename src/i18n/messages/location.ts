@@ -37,6 +37,13 @@ export const locationMsgs = {
     id: "Perbaiki ke lokasi yang tepat di peta?",
     en: "Adjust to the exact spot on the map?",
   },
+  "loc.confirmHereTitle": { ko: "이 위치가 맞습니까?", id: "Apakah lokasi ini sudah benar?", en: "Is this the right spot?" },
+  "loc.confirmHereHint": {
+    ko: "다르면 지도를 움직여 핀을 정확한 곳에 맞춰주세요.",
+    id: "Jika belum, geser peta agar pin tepat di lokasi.",
+    en: "If not, move the map to put the pin on the exact spot.",
+  },
+  "loc.confirmHereYes": { ko: "네, 여기서 픽업", id: "Ya, jemput di sini", en: "Yes, pick me up here" },
   "loc.fixOnMap": { ko: "지도에서 수정", id: "Perbaiki di peta", en: "Adjust on map" },
   "loc.useAsIs": { ko: "이대로 사용", id: "Pakai apa adanya", en: "Use as is" },
   "loc.unsupported": {

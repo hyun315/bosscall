@@ -3,7 +3,6 @@ import { useState } from "react";
 import { AdSlot } from "@/components/ads/AdSlot";
 import type { AdSlotId } from "@/lib/ads";
 import { Button } from "@/components/common/Button";
-import { ConfirmModal } from "@/components/common/ConfirmModal";
 import { NotificationBanner } from "@/components/common/States";
 import { FavoriteLocationCard, RecentLocationCard } from "@/components/location/LocationCard";
 import { MapPicker } from "@/components/location/MapPicker";
@@ -14,7 +13,6 @@ import {
   POOR_ACCURACY_M,
   geoErrorCode,
   getCurrentPosition,
-  reverseGeocode,
   type GeoFix,
 } from "@/services/client/location";
 import { callSidePlace, favoritePlace, resolvePlace, usable, type StoredPlace } from "@/services/client/places";
@@ -62,7 +60,7 @@ export function LocationPicker({
   const { t } = useI18n();
   const [locating, setLocating] = useState(false);
   const [geoProblem, setGeoProblem] = useState<"DENIED" | "OTHER" | null>(null);
-  const [poorFix, setPoorFix] = useState<{ fix: GeoFix; place: PlaceInput } | null>(null);
+  const [currentFix, setCurrentFix] = useState<GeoFix | null>(null);
   const [mapOpen, setMapOpen] = useState<{ lat: number; lng: number } | null | false>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,29 +74,14 @@ export function LocationPicker({
     }
   };
 
+  /** 현재 위치 → 지도를 띄워 "이 위치가 맞습니까?" 확인 (핀을 옮겨 고칠 수 있음) */
   const pickCurrent = async () => {
     setLocating(true);
     setGeoProblem(null);
     setError(null);
     try {
       const fix = await getCurrentPosition(groupId);
-      let place: PlaceInput;
-      try {
-        const r = await reverseGeocode(fix.lat, fix.lng);
-        place = { lat: fix.lat, lng: fix.lng, address: r.address, name: t("loc.currentLocation"), placeId: null, source: "gps" };
-      } catch (e) {
-        setError(`${t("err.maps.failed")} ${errorMessage(e)}`);
-        place = {
-          lat: fix.lat,
-          lng: fix.lng,
-          address: `${t("loc.currentLocation")} (${fix.lat.toFixed(5)}, ${fix.lng.toFixed(5)})`,
-          name: t("loc.currentLocation"),
-          placeId: null,
-          source: "gps",
-        };
-      }
-      if (fix.accuracy > POOR_ACCURACY_M) setPoorFix({ fix, place });
-      else onPicked(place);
+      setCurrentFix(fix);
     } catch (e) {
       setGeoProblem(geoErrorCode(e) === "DENIED" ? "DENIED" : "OTHER");
     } finally {
@@ -186,6 +169,25 @@ export function LocationPicker({
       {adSlot && <AdSlot slot={adSlot} />}
 
 
+      {currentFix && (
+        <MapPicker
+          title={t("loc.pickupHere")}
+          initial={{ lat: currentFix.lat, lng: currentFix.lng }}
+          groupId={groupId}
+          question={t("loc.confirmHereTitle")}
+          confirmLabel={t("loc.confirmHereYes")}
+          note={
+            currentFix.accuracy > POOR_ACCURACY_M ? t("loc.poorAccuracy", { m: Math.round(currentFix.accuracy) }) : null
+          }
+          initialAsGps
+          onClose={() => setCurrentFix(null)}
+          onConfirm={(p) => {
+            setCurrentFix(null);
+            onPicked(p);
+          }}
+        />
+      )}
+
       {mapOpen !== false && (
         <MapPicker
           title={kind === "pickup" ? t("loc.pickPickup") : t("loc.pickDestination")}
@@ -199,31 +201,6 @@ export function LocationPicker({
         />
       )}
 
-      <ConfirmModal
-        open={poorFix !== null}
-        title={t("loc.poorTitle")}
-        message={
-          poorFix && (
-            <>
-              {t("loc.poorAccuracy", { m: Math.round(poorFix.fix.accuracy) })}
-              <br />
-              <span className="font-semibold text-ink">{poorFix.place.address}</span>
-              <br />
-              {t("loc.poorQuestion")}
-            </>
-          )
-        }
-        confirmLabel={t("loc.fixOnMap")}
-        cancelLabel={t("loc.useAsIs")}
-        onConfirm={() => {
-          if (poorFix) setMapOpen({ lat: poorFix.fix.lat, lng: poorFix.fix.lng });
-          setPoorFix(null);
-        }}
-        onCancel={() => {
-          if (poorFix) onPicked(poorFix.place);
-          setPoorFix(null);
-        }}
-      />
     </div>
   );
 }

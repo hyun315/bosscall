@@ -55,6 +55,8 @@ export interface UserDoc {
   notificationPrefs: NotificationPrefs;
   /** 화면·알림 언어 (ko | id | en). 없으면 기기 언어 */
   locale?: "ko" | "id" | "en";
+  /** 기사: 호출 알림 소리 (없으면 켜짐 — 설정하지 않았으면 무조건 소리) */
+  callAlarmSound?: boolean;
   /** 선택 동의 — 없으면 아직 묻지 않은 상태 */
   consents?: UserConsents;
   createdAt: number;
@@ -320,7 +322,8 @@ export type NotificationType =
   | "CALL_CANCELLED"
   | "CALL_COMPLETED"
   | "DRIVER_CLOCK_IN"
-  | "DRIVER_CLOCK_OUT";
+  | "DRIVER_CLOCK_OUT"
+  | "TEST_PUSH";
 
 export interface NotificationDoc {
   id: string;

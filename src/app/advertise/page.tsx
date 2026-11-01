@@ -7,9 +7,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { useSearchParam } from "@/hooks/useSearchParam";
 import { BannerCard } from "@/components/ads/AdSlot";
-import { AD_CONTACT_EMAIL, SLOT_ADS, SLOT_INFO, inquiryMailto, type HouseAd } from "@/lib/ads";
+import { AD_CONTACT_EMAIL, HOUSE_AD_SAMPLE, SLOT_INFO, inquiryMailto } from "@/lib/ads";
 
-const SAMPLE = SLOT_ADS.destinationSearch as HouseAd;
+const SAMPLE = HOUSE_AD_SAMPLE;
 
 const STEPS = [
   { title: "메일로 문의", desc: "업소 이름, 원하는 광고 자리, 게재 기간을 알려주세요." },
@@ -19,7 +19,7 @@ const STEPS = [
 
 const RULES = [
   "사장님·가족 화면에만 나옵니다. 운전 중인 기사님 화면에는 나오지 않습니다.",
-  "한 화면에 광고는 하나만, 항상 \"광고\" 표시를 붙입니다.",
+  "광고는 화면 아래쪽 한 곳에만 모아 두고, 항상 \"광고\" 표시를 붙입니다.",
   "호출 버튼을 가리거나 팝업으로 뜨지 않습니다.",
 ];
 

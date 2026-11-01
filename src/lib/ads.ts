@@ -4,7 +4,7 @@
  * 원칙 (사용자 안전·신뢰)
  *  - 사장님·가족 화면에만. 기사 화면에는 절대 넣지 않는다 (운전 중 안전).
  *  - 호출 버튼 주변·호출 확인 화면·푸시 알림에는 넣지 않는다.
- *  - 화면당 1칸, 항상 "광고" 표시.
+ *  - 화면 아래쪽 한 곳에만, 항상 "광고" 표시. (광고주 배너 + 광고 안내를 함께)
  *
  * 광고주가 늘면 SLOT_ADS 에서 칸마다 광고를 바꾸면 된다.
  */
@@ -75,15 +75,17 @@ const HANIN_DIRECTORY: HouseAd = {
 
 const INQUIRY: InquirySlot = { kind: "inquiry" };
 
-/** 칸별 광고 — 지금은 한인업소록 + 나머지는 광고 문의 안내 */
-export const SLOT_ADS: Readonly<Record<AdSlotId, SlotContent>> = {
-  pickup: INQUIRY,
-  destinationSearch: HANIN_DIRECTORY,
-  waiting: INQUIRY,
-  tripCompleted: HANIN_DIRECTORY,
-  onTheWay: INQUIRY,
-  homeBenefits: INQUIRY,
-  payroll: INQUIRY,
+/** 칸별 광고 — 위에서부터 차례로 보여준다. 지금은 모든 칸에 한인업소록 + 광고 안내 */
+export const HOUSE_AD_SAMPLE = HANIN_DIRECTORY;
+const DEFAULT_SLOT: readonly SlotContent[] = [HANIN_DIRECTORY, INQUIRY];
+export const SLOT_ADS: Readonly<Record<AdSlotId, readonly SlotContent[]>> = {
+  pickup: DEFAULT_SLOT,
+  destinationSearch: DEFAULT_SLOT,
+  waiting: DEFAULT_SLOT,
+  tripCompleted: DEFAULT_SLOT,
+  onTheWay: DEFAULT_SLOT,
+  homeBenefits: DEFAULT_SLOT,
+  payroll: DEFAULT_SLOT,
 };
 
 /** 광고 링크에 유입 경로 표시 (광고주가 BossCall에서 온 방문을 알 수 있게) */

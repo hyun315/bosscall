@@ -87,13 +87,15 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
     }
     await batch.commit();
 
-    const tokenEntries: Array<{ uid: string; token: string; locale: Locale }> = [];
+    // 호출 알림 소리: 기사가 설정에서 끈 경우에만 무음. 설정하지 않았으면 항상 소리
+    const silentFor = (u: UserDoc) => req.type === "CALL_CREATED" && u.callAlarmSound === false;
+    const tokenEntries: Array<{ uid: string; token: string; locale: Locale; silent: boolean }> = [];
     await Promise.all(
       recipients.map(async (u) => {
         const snap = await db.collection(`users/${u.id}/deviceTokens`).get();
         for (const d of snap.docs) {
           const token = d.get("token");
-          if (typeof token === "string") tokenEntries.push({ uid: u.id, token, locale: userLocale(u) });
+          if (typeof token === "string") tokenEntries.push({ uid: u.id, token, locale: userLocale(u), silent: silentFor(u) });
         }
       }),
     );
@@ -104,9 +106,10 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
 
     let success = 0;
     const cleanup: Promise<unknown>[] = [];
-    const locales = [...new Set(tokenEntries.map((t) => t.locale))];
-    for (const locale of locales) {
-      const entries = tokenEntries.filter((t) => t.locale === locale);
+    const groups = [...new Set(tokenEntries.map((t) => `${t.locale}|${t.silent ? 1 : 0}`))];
+    for (const g of groups) {
+      const [locale, silentFlag] = g.split("|") as [Locale, string];
+      const entries = tokenEntries.filter((t) => t.locale === locale && (t.silent ? "1" : "0") === silentFlag);
       const text = textFor(locale);
       const res = await adminMessaging().sendEachForMulticast({
         tokens: entries.map((t) => t.token),
@@ -119,6 +122,7 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
           body: text.body,
           url: req.path,
           urgent: req.urgent ? "1" : "0",
+          silent: silentFlag,
         },
         webpush: {
           headers: { Urgency: "high", TTL: req.urgent ? "120" : "3600" },

@@ -4,6 +4,12 @@ import type { Tri } from "@/i18n/core";
 export const pushMsgs = {
   "push.callCreated.title": { ko: "🔔 새로운 호출", id: "🔔 Panggilan baru", en: "🔔 New call" },
   "push.callCreated.body": { ko: "{caller}님이 호출했습니다.", id: "{caller} memanggil Anda.", en: "{caller} is calling you." },
+  "push.test.title": { ko: "🔔 알림 테스트", id: "🔔 Tes notifikasi", en: "🔔 Notification test" },
+  "push.test.body": {
+    ko: "이 소리가 들리면 화면이 꺼져 있어도 호출을 받을 수 있습니다.",
+    id: "Jika suara ini terdengar, panggilan tetap diterima walau layar mati.",
+    en: "If you hear this, you'll get calls even with the screen off.",
+  },
   "push.callReminder.title": { ko: "🔔 호출 응답을 기다리고 있어요", id: "🔔 Panggilan menunggu jawaban", en: "🔔 A call is waiting for you" },
   "push.callReminder.body": {
     ko: "{caller}님이 기다리고 있습니다. 앱을 열어 응답해주세요.",

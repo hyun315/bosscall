@@ -14,9 +14,9 @@ export function AdSlot({ slot, className = "" }: { slot: AdSlotId; className?: s
   const { role, groupId } = useReadySession();
   const ref = useRef<HTMLElement | null>(null);
   const seen = useRef(false);
-  const content = SLOT_ADS[slot];
-  const show = adsEnabled() && role !== "DRIVER";
-  const adId = content.kind === "ad" ? content.id : "inquiry";
+  const contents = SLOT_ADS[slot];
+  const show = adsEnabled() && role !== "DRIVER" && contents.length > 0;
+  const adIds = contents.map((c) => (c.kind === "ad" ? c.id : "inquiry")).join(",");
 
   useEffect(() => {
     const el = ref.current;
@@ -25,7 +25,7 @@ export function AdSlot({ slot, className = "" }: { slot: AdSlotId; className?: s
       (entries) => {
         if (entries.some((e) => e.isIntersecting) && !seen.current) {
           seen.current = true;
-          trackClient("ad_impression", groupId, { slot, ad: adId });
+          trackClient("ad_impression", groupId, { slot, ad: adIds });
           io.disconnect();
         }
       },
@@ -33,17 +33,19 @@ export function AdSlot({ slot, className = "" }: { slot: AdSlotId; className?: s
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [show, groupId, slot, adId]);
+  }, [show, groupId, slot, adIds]);
 
   if (!show) return null;
-  const onClick = () => trackClient("ad_click", groupId, { slot, ad: adId });
+  const clickOf = (ad: string) => () => trackClient("ad_click", groupId, { slot, ad });
 
   return (
-    <aside ref={ref} className={className}>
-      {content.kind === "inquiry" ? (
-        <InquiryCard slot={slot} onClick={onClick} />
-      ) : (
-        <BannerCard ad={content} slot={slot} onClick={onClick} />
+    <aside ref={ref} className={`space-y-3 ${className}`}>
+      {contents.map((c) =>
+        c.kind === "inquiry" ? (
+          <InquiryCard key="inquiry" slot={slot} onClick={clickOf("inquiry")} />
+        ) : (
+          <BannerCard key={c.id} ad={c} slot={slot} onClick={clickOf(c.id)} />
+        ),
       )}
     </aside>
   );

@@ -24,12 +24,23 @@ export function MapPicker({
   groupId,
   onConfirm,
   onClose,
+  question,
+  confirmLabel,
+  note,
+  initialAsGps,
 }: {
   title: string;
   initial?: LatLngLiteral | null;
   groupId: string | null;
   onConfirm: (place: PlaceInput) => void;
   onClose: () => void;
+  /** 아래 패널 제목으로 묻는 질문 (예: 이 위치가 맞습니까?) */
+  question?: string;
+  confirmLabel?: string;
+  /** 질문 아래 안내 한 줄 (예: GPS 오차) */
+  note?: string | null;
+  /** 시작 위치가 휴대폰 GPS — 핀을 옮기지 않고 확인하면 '현재 위치'로 저장 */
+  initialAsGps?: boolean;
 }) {
   const { t } = useI18n();
   const el = useRef<HTMLDivElement>(null);
@@ -43,6 +54,7 @@ export function MapPicker({
   const [mapError, setMapError] = useState<string | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
+  const moved = useRef(false);
 
   const resolve = useCallback((c: LatLngLiteral) => {
     if (debounce.current) clearTimeout(debounce.current);
@@ -85,7 +97,10 @@ export function MapPicker({
         });
         map.current = m;
         trackClient("map_loaded", groupId);
-        m.addListener("dragstart", () => setMoving(true));
+        m.addListener("dragstart", () => {
+          moved.current = true;
+          setMoving(true);
+        });
         m.addListener("idle", () => {
           setMoving(false);
           const c = m.getCenter();
@@ -95,7 +110,10 @@ export function MapPicker({
           resolve(next);
         });
         m.addListener("click", (e) => {
-          if (e?.latLng) m.panTo({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+          if (e?.latLng) {
+            moved.current = true;
+            m.panTo({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+          }
         });
       } catch (e) {
         if (!cancelled) {
@@ -127,14 +145,15 @@ export function MapPicker({
   };
 
   const confirm = () => {
+    const asGps = Boolean(initialAsGps) && !moved.current;
     onConfirm({
       lat: center.lat,
       lng: center.lng,
       address: address?.text ?? `${t("map.selected")} (${center.lat.toFixed(5)}, ${center.lng.toFixed(5)})`,
-      name: null,
+      name: asGps ? t("loc.currentLocation") : null,
       placeId: address?.placeId ?? null,
-      // 사용자가 지도 핀으로 직접 정한 좌표 (주소만 Geocoding)
-      source: "map",
+      // 휴대폰 GPS 그대로면 gps, 핀을 옮겼으면 사용자가 정한 좌표(map). 주소만 Geocoding
+      source: asGps ? "gps" : "map",
     });
   };
 
@@ -176,7 +195,15 @@ export function MapPicker({
       </div>
 
       <div className="border-t border-line bg-surface px-5 pb-[calc(16px+var(--safe-bottom))] pt-4">
-        <p className="text-xs font-semibold text-ink-sub">{t("map.selected")}</p>
+        {question ? (
+          <>
+            <p className="text-lg font-bold text-ink">{question}</p>
+            {note && <p className="mt-0.5 text-sm text-warning-text">{note}</p>}
+            <p className="mt-0.5 text-sm text-ink-sub">{t("loc.confirmHereHint")}</p>
+          </>
+        ) : (
+          <p className="text-xs font-semibold text-ink-sub">{t("map.selected")}</p>
+        )}
         <p className="mt-1 min-h-[48px] text-[15px] font-semibold text-ink">
           {moving
             ? t("map.moving")
@@ -186,7 +213,7 @@ export function MapPicker({
         </p>
         {geoError && <p className="mt-1 text-sm text-danger">{geoError}</p>}
         <Button block className="mt-3" disabled={Boolean(mapError) || moving || resolving} onClick={confirm}>
-          {t("map.choose")}
+          {confirmLabel ?? t("map.choose")}
         </Button>
       </div>
     </div>
