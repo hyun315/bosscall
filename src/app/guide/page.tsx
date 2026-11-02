@@ -168,6 +168,9 @@ export default function OwnerGuidePage() {
         >
           🖨 이 화면 인쇄하기
         </button>
+        <Link href="/manual" className="-mt-4 block text-center text-[15px] font-bold text-action print:hidden">
+          📖 자세한 사용 설명서 (이럴 땐 이렇게 · 문제 해결) ›
+        </Link>
         <a
           href="/guide/bosscall-guide-owner.pdf"
           download

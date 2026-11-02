@@ -56,8 +56,8 @@ export default function SettingsPage() {
     { href: "/settings/privacy", icon: "🔒", label: "settings.privacy" },
     { href: "/settings/account", icon: "🌐", label: "settings.language", value: LOCALE_NAMES[locale] },
     { href: "/settings/account", icon: "👤", label: "settings.account" },
-    // 사용 안내 — 기사는 인도네시아어 기사용, 그 외는 사장님용
-    { href: role === "DRIVER" ? "/guide/driver" : "/guide", icon: "📖", label: "settings.guide" },
+    // 사용 안내 — 기사는 인도네시아어 기사용, 그 외는 사용 설명서(차례·단추 모양·문제 해결)
+    { href: role === "DRIVER" ? "/guide/driver" : "/manual", icon: "📖", label: "settings.guide" },
   ];
 
   return (
