@@ -1,139 +1,72 @@
 "use client";
 /**
- * 사용 설명서 (사장님·가족용, 한국어) — 로그인 없이 열림. /manual
+ * 보스용 사용 설명서 (한국어) — 로그인 없이 열림. /manual  (?os=ios|android 로 기기 지정)
  * 원칙: 한 화면에 한 가지 일, 큰 글씨, 번호 순서, 실제 단추 모양을 그대로 그려서 "이걸 누르세요".
- * 자주 헷갈린 것(알림·카톡·삼성 경고·호출 단추 흐림 등)은 맨 아래 "문제가 생겼을 때"에 모았다.
+ * 설치·알림처럼 기기마다 다른 부분은 위의 "아이폰 / 안드로이드" 전환에 따라 바뀐다.
  */
 import Link from "next/link";
-import type { ReactNode } from "react";
-
-type Section = { id: string; icon: string; title: string; lead: string; steps: ReactNode[]; mock?: ReactNode; tip?: ReactNode };
+import {
+  AndroidInstallMock,
+  B,
+  IosAddToHomeMock,
+  ManualShell,
+  MockCard,
+  Phone,
+  PermissionMock,
+  SettingsMock,
+  useOs,
+  type ManualFaq,
+  type ManualSection,
+} from "@/components/manual/kit";
 
 export default function ManualPage() {
+  const [os, setOs] = useOs();
   return (
-    <main className="min-h-dvh bg-bg pb-[calc(48px+var(--safe-bottom))] print:bg-white print:pb-0">
-      <header className="bg-navy px-5 pb-7 pt-[calc(24px+var(--safe-top))] text-white print:px-8 print:pt-6">
-        <div className="mx-auto max-w-lg">
-          <Link href="/" className="text-sm font-semibold text-white/70 print:hidden">
-            ← BossCall
-          </Link>
-          <p className="mt-4 text-[13px] font-bold tracking-wide text-[#F2C230]">BossCall 사용 설명서</p>
-          <h1 className="mt-1 text-[28px] font-extrabold leading-tight">이럴 땐, 이렇게</h1>
-          <p className="mt-2 text-[16px] leading-relaxed text-white/80">하고 싶은 일을 고르세요. 단추 모양 그대로 따라 누르면 됩니다.</p>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-lg px-4 pt-5 print:max-w-none print:px-8">
-        {/* 차례 */}
-        <nav aria-label="차례" className="grid grid-cols-2 gap-2 print:hidden">
-          {[...SECTIONS, { id: "faq", icon: "🛟", title: "문제가 생겼을 때" }].map((s) => (
-            <a
-              key={s.id}
-              href={`#${s.id}`}
-              className="flex min-h-[56px] items-center gap-2 rounded-card border border-line bg-surface px-3 text-[15px] font-bold text-ink active:bg-bg"
+    <ManualShell
+      lang="ko"
+      os={os}
+      setOs={setOs}
+      sections={SECTIONS}
+      faq={FAQ}
+      text={{
+        kicker: "BossCall 사용 설명서 · 보스용",
+        title: "이럴 땐, 이렇게",
+        lead: "하고 싶은 일을 고르세요. 노란 테두리 단추를 그대로 따라 누르면 됩니다.",
+        osAsk: "내 휴대폰은?",
+        ios: "아이폰·아이패드",
+        android: "안드로이드",
+        faqTitle: "문제가 생겼을 때",
+        print: "이 화면 인쇄하기",
+      }}
+      bottom={
+        <section className="rounded-card bg-navy p-5 text-white print:hidden">
+          <p className="text-[17px] font-bold">기사님용 설명서는 따로 있어요</p>
+          <p className="mt-1 text-[15px] text-white/75">인도네시아어(한국어 전환 가능)로, 기사님이 할 일만 정리했습니다.</p>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <Link
+              href={`/manual/driver?os=${os}`}
+              className="flex min-h-[48px] items-center justify-center rounded-btn bg-white font-bold text-navy"
             >
-              <span className="text-xl" aria-hidden>
-                {s.icon}
-              </span>
-              {s.title}
+              기사용 보기
+            </Link>
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(
+                "Pak/Bu sopir, ini panduan BossCall. Tolong ikuti langkahnya:\nhttps://bosscall-ten.vercel.app/manual/driver",
+              )}`}
+              target="_blank"
+              rel="noopener"
+              className="flex min-h-[48px] items-center justify-center rounded-btn bg-[#25D366] font-bold text-white"
+            >
+              왓츠앱으로 보내기
             </a>
-          ))}
-        </nav>
-
-        <div className="mt-8 space-y-10">
-          {SECTIONS.map((s, i) => (
-            <section key={s.id} id={s.id} className="scroll-mt-4 break-inside-avoid">
-              <h2 className="flex items-center gap-2 text-[22px] font-extrabold text-ink">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-[15px] text-white">
-                  {i + 1}
-                </span>
-                {s.title}
-              </h2>
-              <p className="mt-2 text-[16px] leading-relaxed text-ink-sub">{s.lead}</p>
-              <div className={`mt-4 ${s.mock ? "grid gap-4 sm:grid-cols-[1fr_200px]" : ""}`}>
-                <ol className="space-y-3">
-                  {s.steps.map((step, k) => (
-                    <li key={k} className="flex gap-3 rounded-card bg-surface p-3.5 ring-1 ring-line">
-                      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-action text-sm font-bold text-white">
-                        {k + 1}
-                      </span>
-                      <span className="text-[17px] leading-relaxed text-ink">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-                {s.mock && <div className="mx-auto w-full max-w-[220px]">{s.mock}</div>}
-              </div>
-              {s.tip && (
-                <p className="mt-3 rounded-btn bg-warning-soft px-4 py-3 text-[15px] leading-relaxed text-warning-text">💡 {s.tip}</p>
-              )}
-            </section>
-          ))}
-
-          {/* 문제 해결 */}
-          <section id="faq" className="scroll-mt-4">
-            <h2 className="flex items-center gap-2 text-[22px] font-extrabold text-ink">🛟 문제가 생겼을 때</h2>
-            <div className="mt-4 space-y-3">
-              {FAQ.map((f) => (
-                <details key={f.q} className="group rounded-card bg-surface ring-1 ring-line open:ring-action">
-                  <summary className="flex min-h-[56px] cursor-pointer list-none items-center gap-3 px-4 text-[17px] font-bold text-ink">
-                    <span aria-hidden>{f.icon}</span>
-                    <span className="flex-1">{f.q}</span>
-                    <span className="text-ink-faint transition group-open:rotate-180" aria-hidden>
-                      ▾
-                    </span>
-                  </summary>
-                  <div className="space-y-2 px-4 pb-4 text-[16px] leading-relaxed text-ink">{f.a}</div>
-                </details>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-card bg-navy p-5 text-white print:hidden">
-            <p className="text-[17px] font-bold">기사님용 설명서는 따로 있어요</p>
-            <p className="mt-1 text-[15px] text-white/75">인도네시아어로, 기사님이 할 일만 정리했습니다.</p>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <Link href="/guide/driver" className="flex min-h-[48px] items-center justify-center rounded-btn bg-white font-bold text-navy">
-                기사용 보기
-              </Link>
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="flex min-h-[48px] items-center justify-center rounded-btn bg-white/10 font-semibold ring-1 ring-white/20"
-              >
-                🖨 인쇄
-              </button>
-            </div>
-          </section>
-        </div>
-      </div>
-    </main>
+          </div>
+        </section>
+      }
+    />
   );
 }
 
-/* ───────── 단추·화면 모양 ───────── */
-
-function B({ children, tone = "gray" }: { children: ReactNode; tone?: "gray" | "blue" | "green" | "dark" }) {
-  const cls = {
-    gray: "bg-surface text-ink ring-1 ring-line",
-    blue: "bg-action text-white",
-    green: "bg-success text-white",
-    dark: "bg-navy text-white",
-  }[tone];
-  return <span className={`mx-0.5 inline-block whitespace-nowrap rounded-lg px-2 py-0.5 text-[0.95em] font-bold ${cls}`}>{children}</span>;
-}
-
-function Phone({ children, title }: { children: ReactNode; title?: string }) {
-  return (
-    <div className="overflow-hidden rounded-[26px] border-[6px] border-navy bg-bg shadow-modal" aria-hidden>
-      <div className="flex h-8 items-center bg-surface px-3 text-[11px] font-extrabold text-brand">{title ?? "BossCall"}</div>
-      <div className="space-y-2 p-2.5 text-[11px]">{children}</div>
-    </div>
-  );
-}
-
-function MockCard({ children }: { children: ReactNode }) {
-  return <div className="rounded-xl bg-surface p-2.5 ring-1 ring-line">{children}</div>;
-}
+/* ───────── 화면 그림 ───────── */
 
 const HomeMock = (
   <Phone>
@@ -202,24 +135,90 @@ const DriverClockMock = (
 
 /* ───────── 내용 ───────── */
 
-const SECTIONS: Section[] = [
+const SECTIONS: ManualSection[] = [
   {
     id: "start",
     icon: "🚀",
     title: "처음 시작하기",
-    lead: "휴대폰 브라우저에서 바로 씁니다. 앱스토어에서 받을 필요가 없어요.",
-    steps: [
-      <>
-        <b>bosscall-ten.vercel.app</b> 을 열고 <B>Google로 계속</B>
-      </>,
-      <>우리 가족 이름, 기사님 이름·전화번호를 적고 <B tone="blue">시작하기</B></>,
-      <>
-        <b>홈 화면에 추가</b> — 아이폰: Safari 아래 <b>공유 버튼(□↑) → 홈 화면에 추가</b> / 안드로이드: <b>Chrome</b>{" "}
-        오른쪽 위 <b>⋮ → 앱 설치</b>
-      </>,
-      <>홈 화면에 생긴 BossCall 아이콘으로 열고, "알림 허용"을 눌러 주세요</>,
-    ],
-    tip: <>안드로이드는 꼭 Chrome으로 설치하세요. 삼성 인터넷으로 설치하면 &quot;안전하지 않은 앱&quot; 경고가 뜹니다.</>,
+    lead: "앱스토어에서 받지 않아요. 브라우저에서 열고 홈 화면에 붙여 놓으면 앱처럼 씁니다.",
+    steps: {
+      ios: [
+        <>
+          <b>Safari</b>로 <b>bosscall-ten.vercel.app</b> 열기 (카톡 안에서 열렸다면 Safari로 넘어갑니다)
+        </>,
+        <>
+          <B>Google로 계속</B> → 우리 가족 이름, 기사님 이름·전화번호 → <B tone="blue">시작하기</B>
+        </>,
+        <>
+          Safari 아래(아이패드는 위 오른쪽) <B>공유 ⬆︎</B> 단추 → 목록을 올려서 <B>홈 화면에 추가</B> → <B>추가</B>
+        </>,
+        <>
+          이제부터는 <b>홈 화면의 BossCall 아이콘</b>으로 여세요. Safari로 열면 알림이 오지 않습니다
+        </>,
+      ],
+      android: [
+        <>
+          <b>Chrome</b>으로 <b>bosscall-ten.vercel.app</b> 열기 (삼성 인터넷·카톡이 아니라 Chrome)
+        </>,
+        <>
+          <B>Google로 계속</B> → 우리 가족 이름, 기사님 이름·전화번호 → <B tone="blue">시작하기</B>
+        </>,
+        <>
+          Chrome 오른쪽 위 <B>⋮</B> → <B>앱 설치</B> (또는 <b>홈 화면에 추가</b>) → <B>설치</B>
+        </>,
+        <>
+          이제부터는 <b>홈 화면의 BossCall 아이콘</b>으로 여세요
+        </>,
+      ],
+    },
+    mock: {
+      ios: <IosAddToHomeMock share="공유" add="홈 화면에 추가" more="⬆︎ 공유 → 아래로 내려서 '홈 화면에 추가'" />,
+      android: <AndroidInstallMock install="앱 설치" home="홈 화면에 추가" />,
+    },
+    tip: {
+      ios: <>공유 단추(⬆︎)가 안 보이면 화면을 살짝 내리거나, 주소창 옆 <b>⋯</b> → <b>공유</b>를 누르세요. iOS 16.4 이상이어야 알림이 옵니다.</>,
+      android: <>삼성 인터넷으로 설치하면 &quot;안전하지 않은 앱 차단됨&quot; 경고가 뜹니다. 꼭 Chrome으로 설치하세요.</>,
+    },
+  },
+  {
+    id: "push",
+    icon: "🔔",
+    title: "알림 켜기",
+    lead: "기사님이 수락·도착하면 알림으로 알려 드려요. 처음 한 번만 하면 됩니다.",
+    steps: {
+      ios: [
+        <>홈 화면 아이콘으로 BossCall 열기</>,
+        <>
+          <B>설정</B> → <B>알림 설정</B> → <B tone="blue">알림 켜기</B>
+        </>,
+        <>
+          &quot;알림을 보내고자 합니다&quot; 창에서 <B>허용</B>
+        </>,
+        <>
+          <B>5초 뒤 테스트 알림 받기</B> → 화면을 끄고 소리가 나는지 확인
+        </>,
+      ],
+      android: [
+        <>홈 화면 아이콘으로 BossCall 열기</>,
+        <>
+          <B>설정</B> → <B>알림 설정</B> → <B tone="blue">알림 켜기</B>
+        </>,
+        <>
+          &quot;알림을 보내도록 허용할까요?&quot; 창에서 <B>허용</B>
+        </>,
+        <>
+          <B>5초 뒤 테스트 알림 받기</B> → 화면을 끄고 소리가 나는지 확인
+        </>,
+      ],
+    },
+    mock: {
+      ios: <PermissionMock os="ios" q={"\u201cBossCall\u201d에서 알림을 보내고자 합니다"} allow="허용" deny="허용 안 함" />,
+      android: <PermissionMock os="android" q="BossCall에서 알림을 보내도록 허용하시겠습니까?" allow="허용" deny="허용 안함" />,
+    },
+    tip: {
+      ios: <>테스트 뒤 결과 줄에 &quot;✓ 보냈습니다&quot;가 나왔는데 소리가 안 났다면, 아래 &quot;문제가 생겼을 때 › 알림 소리가 안 나요&quot;를 보세요.</>,
+      android: <>테스트 뒤 결과 줄에 &quot;✓ 보냈습니다&quot;가 나왔는데 소리가 안 났다면, 아래 &quot;문제가 생겼을 때 › 알림 소리가 안 나요&quot;를 보세요.</>,
+    },
   },
   {
     id: "connect",
@@ -374,25 +373,64 @@ const SECTIONS: Section[] = [
   },
 ];
 
-const FAQ: Array<{ icon: string; q: string; a: ReactNode }> = [
+const FAQ: ManualFaq[] = [
   {
     icon: "🔕",
-    q: "알림이 안 와요 / 소리가 안 나요",
-    a: (
-      <>
-        <p>
-          ① 휴대폰이 <b>무음·진동 모드</b>인지 보세요 (화면 맨 위에 🔇 표시).
-        </p>
-        <p>
-          ② BossCall <B>설정</B> → <B>알림 설정</B> → <B>5초 뒤 테스트 알림 받기</B>를 누르고 화면을 끄세요.
-        </p>
-        <p>
-          ③ 안 오면 휴대폰 <b>설정 › 애플리케이션 › BossCall(또는 Chrome) › 알림</b>에서 &quot;허용&quot;, &quot;소리&quot;, &quot;팝업으로
-          표시&quot;를 켜세요.
-        </p>
-        <p>④ 아이폰은 홈 화면 아이콘으로 열어야만 알림이 옵니다.</p>
-      </>
-    ),
+    q: "알림 소리가 안 나요",
+    a: {
+      ios: (
+        <>
+          <p>
+            ① 아이폰 옆 <b>무음 스위치</b>가 주황색이면 위로 올리세요. 화면 위에 🌙(집중 모드)가 있으면 끄세요.
+          </p>
+          <p>
+            ② 아이폰 <b>설정 › 알림 › BossCall</b> → <b>알림 허용</b>·<b>사운드</b>를 켜세요.
+          </p>
+          <SettingsMock
+            path="설정 › 알림 › BossCall"
+            rows={[
+              { label: "알림 허용", on: true, hl: true },
+              { label: "사운드", on: true, hl: true },
+              { label: "배지", on: true },
+            ]}
+          />
+          <p>
+            ③ <b>홈 화면 아이콘</b>으로 열어야 합니다. Safari 탭으로 열면 알림이 오지 않아요.
+          </p>
+          <p>
+            ④ BossCall <B>설정</B> → <B>알림 설정</B> → <B>5초 뒤 테스트 알림 받기</B>. 결과 줄이 ✗이면 <B>이 기기 다시 등록</B>.
+          </p>
+          <p className="text-ink-sub">
+            참고: 아이폰은 앱이 닫혀 있을 때 짧은 알림 소리 한 번만 납니다(애플 제한). 계속 울리는 알람은 BossCall이 화면에 열려 있을 때 납니다.
+          </p>
+        </>
+      ),
+      android: (
+        <>
+          <p>
+            ① 휴대폰이 <b>무음·진동</b>이거나 <b>방해 금지</b>면 끄세요 (화면을 위에서 내려서 확인).
+          </p>
+          <p>
+            ② 휴대폰 <b>설정 › 애플리케이션 › BossCall › 알림</b> → <b>알림 허용</b>, <b>소리</b>, <b>팝업으로 표시</b>를 켜세요. BossCall이 목록에
+            없으면 <b>Chrome</b>에서 찾으세요.
+          </p>
+          <SettingsMock
+            path="애플리케이션 › BossCall › 알림"
+            rows={[
+              { label: "알림 허용", on: true, hl: true },
+              { label: "소리", on: true, hl: true },
+              { label: "팝업으로 표시", on: true, hl: true },
+            ]}
+          />
+          <p>
+            ③ <b>설정 › 애플리케이션 › Chrome › 배터리</b> → <b>제한 없음</b> (알림이 늦게 오는 것을 막아요).
+          </p>
+          <p>
+            ④ BossCall <B>설정</B> → <B>알림 설정</B> → <B>5초 뒤 테스트 알림 받기</B>. 결과 줄이 ✗이면 <B>이 기기 다시 등록</B>.
+          </p>
+        </>
+      ),
+    },
   },
   {
     icon: "⚪",
@@ -414,14 +452,15 @@ const FAQ: Array<{ icon: string; q: string; a: ReactNode }> = [
     q: "카톡으로 받은 링크가 이상하게 열려요",
     a: (
       <p>
-        카톡 안의 브라우저에서는 Google 로그인이 막힙니다. 보통 Safari·Chrome으로 자동으로 넘어가고, 안 넘어가면 화면의 <B tone="blue">Safari로 열기</B>{" "}
-        / <B tone="blue">Chrome으로 열기</B>를 누르세요.
+        카톡 안의 브라우저에서는 Google 로그인이 막힙니다. 보통 자동으로 넘어가고, 안 넘어가면 화면의 <B tone="blue">Safari로 열기</B>{" "}
+        / <B tone="blue">Chrome으로 열기</B>를 누르세요. 카톡 오른쪽 아래 <b>⋯</b> → <b>다른 브라우저로 열기</b>도 됩니다.
       </p>
     ),
   },
   {
     icon: "⚠️",
-    q: "\"안전하지 않은 앱 차단됨\" 경고가 떠요 (안드로이드)",
+    q: "\"안전하지 않은 앱 차단됨\" 경고가 떠요",
+    only: "android",
     a: (
       <p>
         삼성 인터넷으로 설치해서 생기는 경고입니다. <b>확인</b>을 눌러 닫고, <b>Chrome</b>에서 BossCall을 열어 <b>⋮ → 앱 설치</b>로 다시 설치하세요.
@@ -440,7 +479,10 @@ const FAQ: Array<{ icon: string; q: string; a: ReactNode }> = [
   {
     icon: "🌙",
     q: "화면이 어두워요",
-    a: <p>휴대폰이 다크 모드면 BossCall도 어둡게 나옵니다. 밝게 보려면 휴대폰 설정에서 다크 모드를 끄세요.</p>,
+    a: {
+      ios: <p>휴대폰이 다크 모드면 BossCall도 어둡게 나옵니다. 밝게 보려면 아이폰 <b>설정 › 디스플레이 및 밝기 › 라이트</b>.</p>,
+      android: <p>휴대폰이 다크 모드면 BossCall도 어둡게 나옵니다. 밝게 보려면 <b>설정 › 디스플레이 › 라이트 모드</b>.</p>,
+    },
   },
   {
     icon: "🔤",

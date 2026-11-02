@@ -96,6 +96,12 @@ export default function DriverGuidePage() {
           </ul>
         </section>
 
+        <a
+          href="/manual/driver"
+          className="flex min-h-[52px] w-full items-center justify-center rounded-btn bg-action text-[15px] font-bold text-white print:hidden"
+        >
+          📖 Panduan lengkap (iPhone / Android) ›
+        </a>
         <button
           type="button"
           onClick={() => window.print()}

@@ -50,7 +50,7 @@ export function InviteShare({
         ...(role === "DRIVER" && locale !== "id" ? ["", translate("id", inviteKey, params)] : []),
         invite.url,
         // 기사님이 할 일(홈 화면 추가·알림·출근·호출 받기) 인도네시아어 안내
-        ...(role === "DRIVER" ? ["", `Panduan untuk sopir: ${window.location.origin}/guide/driver`] : []),
+        ...(role === "DRIVER" ? ["", `Panduan untuk sopir: ${window.location.origin}/manual/driver`] : []),
       ].join("\n")
     : "";
 

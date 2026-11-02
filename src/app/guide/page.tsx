@@ -64,7 +64,7 @@ const TIPS = [
 export default function OwnerGuidePage() {
   const [origin, setOrigin] = useState(`https://${APP_HOST}`);
   useEffect(() => setOrigin(window.location.origin), []);
-  const driverGuide = `${origin}/guide/driver`;
+  const driverGuide = `${origin}/manual/driver`;
   const waText = [
     "Pak/Bu sopir, mulai sekarang saya akan memanggil lewat aplikasi BossCall.",
     "Tolong baca panduan ini dan siapkan HP Anda:",
@@ -156,8 +156,8 @@ export default function OwnerGuidePage() {
           >
             WhatsApp으로 기사님께 보내기
           </a>
-          <Link href="/guide/driver" className="mt-2 block text-center text-sm font-semibold text-action">
-            기사용 안내 미리 보기 ›
+          <Link href="/manual/driver" className="mt-2 block text-center text-sm font-semibold text-action">
+            기사용 설명서 미리 보기 ›
           </Link>
         </section>
 
