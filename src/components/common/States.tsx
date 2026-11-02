@@ -80,7 +80,7 @@ export function NotificationBanner({
   action?: ReactNode;
 }) {
   const cls = {
-    info: "bg-action-soft text-navy border-action/20",
+    info: "bg-action-soft text-brand border-action/20",
     warning: "bg-warning-soft text-warning-text border-warning/30",
     danger: "bg-danger-soft text-danger border-danger/20",
     success: "bg-success-soft text-success border-success/20",

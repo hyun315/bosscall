@@ -326,9 +326,12 @@ npm run typecheck
 - **수정**: 기사 상세 화면 오른쪽 위 **✏️ 수정** (또는 "정보·수정" 탭) → 이름·전화번호 저장.
 - **삭제**: 같은 화면 아래 **기사 삭제**. `drivers/{id}.removedAt` 표시만 하고 지우지 않음 — 목록·호출·초대에서 빠지고, 연결된 기사 계정은 그룹에서 빠지며, 근무 중이면 퇴근 처리. 지난 호출·근무·급여 기록은 그대로 (기록 화면은 삭제한 기사 이름도 보여줌). 진행 중이거나 응답 대기 중인 호출이 있으면 막음. 감사 기록 `DRIVER_REMOVED`.
 
-## 21. 다크 모드 강제 변환 막기
+## 21. 다크 모드
 
-휴대폰이 다크 모드면 삼성 인터넷·Chrome 이 웹 화면을 강제로 어둡게 칠해 남색 단추가 배경에 묻히는 등 디자인이 깨집니다. `<meta name="color-scheme" content="only light">` + CSS `color-scheme: only light` 로 항상 밝은 화면을 유지합니다 (아이폰 Safari 는 원래 강제로 칠하지 않음).
+휴대폰 설정(밝은 화면 / 다크 모드)을 그대로 따릅니다. 브라우저가 멋대로 어둡게 칠하면(삼성 인터넷·Chrome 자동 어둡게) 남색 단추가 묻히는 등 디자인이 깨지므로, 앱이 두 모드의 색을 직접 정합니다.
+- 색은 `globals.css` 의 CSS 변수(`--c-bg`, `--c-surface`, `--c-ink` …), `tailwind.config.ts` 는 `rgb(var(--c-…) / <alpha-value>)` 로 참조 → `bg-action/35` 같은 투명도도 그대로.
+- `@media screen and (prefers-color-scheme: dark)` 에서만 다크 색 (인쇄는 항상 밝게). `<meta name="color-scheme" content="light dark">`.
+- `navy` 는 두 모드 같은 남색(헤더·배너 바탕, 흰 단추 위 글자). 로고·제목처럼 남색 글자였던 곳은 `brand`(다크 모드에선 밝은 색).
 
 ## 22. 메인 기사
 

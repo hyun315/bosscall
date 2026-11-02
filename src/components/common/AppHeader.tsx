@@ -44,7 +44,7 @@ export function AppHeader({
             ‹
           </button>
         ) : null}
-        <h1 className={`flex-1 truncate ${title ? "text-lg font-bold text-ink" : "text-xl font-extrabold tracking-tight text-navy"}`}>
+        <h1 className={`flex-1 truncate ${title ? "text-lg font-bold text-ink" : "text-xl font-extrabold tracking-tight text-brand"}`}>
           {title ?? "BossCall"}
         </h1>
         {right}

@@ -46,7 +46,7 @@ export default function LoginPage() {
         <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-[20px] bg-navy text-3xl" aria-hidden>
           🚗
         </div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-navy">BossCall</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight text-brand">BossCall</h1>
         <p className="mt-2 text-xl font-bold text-ink">{t("brand.tagline")}</p>
         <p className="mt-4 text-[15px] leading-relaxed text-ink-sub">
           {t("brand.desc1")}

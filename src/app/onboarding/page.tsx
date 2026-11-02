@@ -143,7 +143,7 @@ export default function OnboardingPage() {
           <Button type="submit" block loading={busy} disabled={!name.trim() || !driverName.trim()}>
             {t("onb.start")}
           </Button>
-          <div className="rounded-card bg-action-soft p-4 text-sm leading-relaxed text-navy">
+          <div className="rounded-card bg-action-soft p-4 text-sm leading-relaxed text-brand">
             <p className="font-semibold">{t("onb.gotInvite")}</p>
             <p className="mt-1 text-ink-sub">
               {t("onb.gotInviteDesc")}

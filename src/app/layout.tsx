@@ -20,15 +20,18 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#0B1736",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#0B1736" },
+    { media: "(prefers-color-scheme: dark)", color: "#0E1014" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko">
       <head>
-        {/* 휴대폰 다크 모드에서 브라우저(삼성 인터넷·Chrome)가 화면을 강제로 어둡게 칠하지 않도록 — 항상 밝은 화면 */}
-        <meta name="color-scheme" content="only light" />
+        {/* 휴대폰 다크 모드를 따른다 — 앱이 직접 다크 색을 정하므로 브라우저가 강제로 칠하지 않음 */}
+        <meta name="color-scheme" content="light dark" />
         {/* 카카오톡 등 인앱 브라우저 → 외부 브라우저 (앱 코드보다 먼저) */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="/open-external.js" />
