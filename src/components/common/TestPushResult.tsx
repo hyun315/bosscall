@@ -3,7 +3,7 @@
  * 알림 테스트 결과 — 서버가 실제로 보냈는지 / 애플·구글이 거절했는지 / 무음으로 보냈는지를 보여주고,
  * "보냈는데 소리가 안 났다"면 휴대폰 설정 점검 순서를 기기별로 안내한다.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/common/Button";
 import { useReadySession } from "@/hooks/useSession";
 import { installPlatform } from "@/services/client/install";
@@ -25,6 +25,12 @@ function ResultLine({ sentAt }: { sentAt: number }) {
   const { me, groupId } = useReadySession();
   const { t } = useI18n();
   const [fixing, setFixing] = useState(false);
+  const [late, setLate] = useState(false);
+  useEffect(() => {
+    setLate(false);
+    const id = setTimeout(() => setLate(true), 25_000);
+    return () => clearTimeout(id);
+  }, [sentAt]);
   const r = me.lastTestPush;
   const fresh = r && r.at >= sentAt;
   const apple = installPlatform() === "ios";
@@ -39,6 +45,7 @@ function ResultLine({ sentAt }: { sentAt: number }) {
   };
 
   if (!fresh) {
+    if (late) return <p className="rounded-btn bg-warning-soft px-3 py-2.5 text-sm text-warning-text">⚠️ {t("ptest.noResult")}</p>;
     return <p className="rounded-btn bg-bg px-3 py-2.5 text-sm text-ink-sub">⏳ {t("ptest.waiting")}</p>;
   }
   if (r.tokens === 0 || r.success === 0) {

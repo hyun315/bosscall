@@ -70,6 +70,7 @@ export function DriverSetupCard({ groupId }: { groupId: string }) {
       if (r.devices > 0) setTestSent(true);
       else toast(t("alarm.testNoDevice"), "error");
     } catch (e) {
+      setSentAt(null);
       toast(errorMessage(e), "error");
     } finally {
       setBusy(false);

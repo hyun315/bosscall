@@ -53,6 +53,7 @@ export function AlarmSoundPicker() {
       const r = await sendTestPush();
       toast(r.devices > 0 ? t("alarm.testSent") : t("alarm.testNoDevice"), r.devices > 0 ? "success" : "error");
     } catch (e) {
+      setSentAt(null); // 보내지 못했음 (너무 자주 누름 등) — "보내는 중"에 멈춰 있지 않게
       toast(errorMessage(e), "error");
     } finally {
       setTesting(false);

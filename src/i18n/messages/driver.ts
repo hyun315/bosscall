@@ -149,6 +149,11 @@ export const driverMsgs = {
     id: "HP ini normal. Jika tidak berbunyi, cek mode senyap, Fokus, dan Pengaturan › Notifikasi › BossCall › Suara.",
     en: "This phone looks fine. If it doesn't ring, check silent mode, Focus, and Settings › Notifications › BossCall › Sounds.",
   },
+  "ptest.noResult": {
+    ko: "서버에서 결과가 오지 않았습니다. 잠시 뒤 다시 눌러 보세요.",
+    id: "Hasil dari server belum datang. Coba tekan lagi sebentar lagi.",
+    en: "No result from the server. Try again in a moment.",
+  },
   "ptest.reRegister": { ko: "이 기기 다시 등록", id: "Daftarkan ulang perangkat ini", en: "Re-register this device" },
   "ptest.silent": {
     ko: "호출 소리가 꺼져 있어 소리 없이 보냈습니다. 위의 '호출 소리'를 켜 주세요.",
