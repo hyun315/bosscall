@@ -132,6 +132,23 @@ export const driverMsgs = {
     id: "Gagal mengirim karena alasan tidak diketahui. Coba daftarkan ulang.",
     en: "Couldn't send for an unknown reason. Try re-registering.",
   },
+  "pcheck.title": { ko: "이 휴대폰 점검", id: "Cek HP ini", en: "Phone check" },
+  "pcheck.standalone": { ko: "홈 화면 아이콘으로 열기", id: "Dibuka dari ikon layar utama", en: "Opened from home-screen icon" },
+  "pcheck.notStandalone": { ko: "아니요 (브라우저)", id: "Tidak (browser)", en: "No (browser)" },
+  "pcheck.ios": { ko: "iOS 버전 (16.4 이상)", id: "Versi iOS (16.4+)", en: "iOS version (16.4+)" },
+  "pcheck.permission": { ko: "알림 권한", id: "Izin notifikasi", en: "Notification permission" },
+  "pcheck.sw": { ko: "알림 받는 장치", id: "Penerima notifikasi", en: "Push receiver" },
+  "pcheck.sub": { ko: "알림 구독", id: "Langganan notifikasi", en: "Push subscription" },
+  "pcheck.bad": {
+    ko: "✗ 표시가 원인입니다. 홈 화면 아이콘으로 다시 열고, 알림 켜기 → 허용을 다시 해 주세요.",
+    id: "Tanda ✗ adalah penyebabnya. Buka lagi dari ikon layar utama, lalu nyalakan notifikasi → Izinkan.",
+    en: "The ✗ is the cause. Reopen from the home-screen icon, then turn on notifications → Allow.",
+  },
+  "pcheck.good": {
+    ko: "이 휴대폰 상태는 정상입니다. 소리가 안 나면 무음 모드·집중 모드·설정 › 알림 › BossCall › 사운드를 확인하세요.",
+    id: "HP ini normal. Jika tidak berbunyi, cek mode senyap, Fokus, dan Pengaturan › Notifikasi › BossCall › Suara.",
+    en: "This phone looks fine. If it doesn't ring, check silent mode, Focus, and Settings › Notifications › BossCall › Sounds.",
+  },
   "ptest.reRegister": { ko: "이 기기 다시 등록", id: "Daftarkan ulang perangkat ini", en: "Re-register this device" },
   "ptest.silent": {
     ko: "호출 소리가 꺼져 있어 소리 없이 보냈습니다. 위의 '호출 소리'를 켜 주세요.",

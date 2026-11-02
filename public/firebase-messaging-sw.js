@@ -30,7 +30,9 @@ self.addEventListener("push", (event) => {
     body: p.body,
     icon: "/icons/icon-192.png",
     badge: "/icons/badge-96.png",
-    tag: p.callId ? "call-" + p.callId : p.type || "bosscall",
+    // 아이폰(Safari)은 renotify 를 지원하지 않아, 같은 tag 알림은 소리·배너 없이 조용히 바뀐다.
+    // → 매번 다른 tag 를 써서 항상 울리게 한다. (호출 알림은 "call-<id>-" 로 시작 — 수락하면 한꺼번에 지움)
+    tag: (p.callId ? "call-" + p.callId : p.type || "bosscall") + "-" + Date.now(),
     renotify: true,
     requireInteraction: p.urgent,
     vibrate: p.urgent ? [500, 200, 500, 200, 500, 200, 800] : [200],

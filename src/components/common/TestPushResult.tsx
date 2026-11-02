@@ -9,12 +9,22 @@ import { useReadySession } from "@/hooks/useSession";
 import { installPlatform } from "@/services/client/install";
 import { enablePush } from "@/services/client/push";
 import { useI18n } from "@/i18n/client";
+import { PhoneCheck } from "@/components/common/PhoneCheck";
 
 export function TestPushResult({ sentAt }: { sentAt: number | null }) {
+  if (!sentAt) return null;
+  return (
+    <div className="space-y-2">
+      <ResultLine sentAt={sentAt} />
+      <PhoneCheck />
+    </div>
+  );
+}
+
+function ResultLine({ sentAt }: { sentAt: number }) {
   const { me, groupId } = useReadySession();
   const { t } = useI18n();
   const [fixing, setFixing] = useState(false);
-  if (!sentAt) return null;
   const r = me.lastTestPush;
   const fresh = r && r.at >= sentAt;
   const apple = installPlatform() === "ios";

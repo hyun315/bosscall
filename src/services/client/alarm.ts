@@ -269,8 +269,8 @@ export function isCallSilenced(callId: string): boolean {
 function closeCallNotifications(callId: string): void {
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
   void navigator.serviceWorker.ready
-    .then((reg) => reg.getNotifications({ tag: `call-${callId}` }))
-    .then((ns) => ns.forEach((n) => n.close()))
+    .then((reg) => reg.getNotifications())
+    .then((ns) => ns.filter((n) => n.tag === `call-${callId}` || n.tag.startsWith(`call-${callId}-`)).forEach((n) => n.close()))
     .catch(() => undefined);
 }
 
