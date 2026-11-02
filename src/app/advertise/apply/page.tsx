@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
 import { PaidBanner } from "@/components/ads/AdSlot";
 import { ImageCropper } from "@/components/ads/ImageCropper";
+import { AdPlaceField } from "@/components/ads/AdPlaceField";
 import { BANNER_SAFE, BannerSpecGuide } from "@/components/ads/BannerSpecGuide";
 import {
   AD_INDUSTRIES,
@@ -19,6 +20,7 @@ import {
   SLOT_INFO,
   campaignWindow,
   type AdMonths,
+  type AdPlace,
   type AdProduct,
 } from "@/lib/ads";
 import { useSearchParam } from "@/hooks/useSearchParam";
@@ -45,6 +47,7 @@ export default function AdApplyPage() {
   const [banner, setBanner] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | null>(null);
   const [linkUrl, setLinkUrl] = useState("");
+  const [place, setPlace] = useState<AdPlace | null>(null);
   const [agree, setAgree] = useState(false);
   const [website, setWebsite] = useState(""); // 숨은 칸 (자동 입력 프로그램 차단)
   const [busy, setBusy] = useState(false);
@@ -86,6 +89,7 @@ export default function AdApplyPage() {
           months,
           startDate,
           linkUrl: link ?? "",
+          place,
           bannerImage: banner,
           detailImage: detail,
           website,
@@ -278,6 +282,12 @@ export default function AdApplyPage() {
             />
             <p className="mt-1 text-xs text-ink-sub">넣으면 상세 이미지 아래에 [자세히 보기] 버튼이 생깁니다.</p>
           </Field>
+          <Field label="업소 위치 (선택)">
+            <AdPlaceField value={place} onChange={setPlace} />
+            <p className="mt-1 text-xs text-ink-sub">
+              넣으면 배너에 <b>🚗 여기로 가기</b> 단추가 생겨, 사장님이 누르면 바로 이곳을 목적지로 기사님을 부릅니다.
+            </p>
+          </Field>
         </Section>
 
         {/* 4. 미리보기 */}
@@ -293,7 +303,13 @@ export default function AdApplyPage() {
             </div>
             <div className="mt-3">
               {banner ? (
-                <PaidBanner company={company || "업체명"} bannerUrl={banner} detailUrl={detail} linkUrl={link} />
+                <PaidBanner
+                  company={company || "업체명"}
+                  bannerUrl={banner}
+                  detailUrl={detail}
+                  linkUrl={link}
+                  onGo={place ? () => window.alert(`앱에서는 "${place.name}"을(를) 목적지로 기사 호출 화면이 열립니다.`) : undefined}
+                />
               ) : (
                 <div className="flex aspect-[3/1] items-center justify-center rounded-card border-2 border-dashed border-line text-xs text-ink-faint">
                   배너를 올리면 여기에 보입니다

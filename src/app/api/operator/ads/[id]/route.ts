@@ -2,7 +2,7 @@ import { requireOperator } from "@/lib/server/auth";
 import { ApiError, readJson, routeWithParams } from "@/lib/server/http";
 import { requireId, requireRecord } from "@/lib/validation";
 import { AD_MONTHS } from "@/lib/ads";
-import { approveAdRequest, endCampaign, getAdRequestWithImages, rejectAdRequest } from "@/services/server/ads";
+import { approveAdRequest, endCampaign, getAdRequestWithImages, parseAdPlace, rejectAdRequest, setAdPlace } from "@/services/server/ads";
 
 /** 신청서 한 건 (이미지 포함) */
 export const GET = routeWithParams<{ id: string }>(async (req, params) => {
@@ -10,7 +10,7 @@ export const GET = routeWithParams<{ id: string }>(async (req, params) => {
   return getAdRequestWithImages(requireId(params.id, "field.request"));
 });
 
-/** 승인 / 반려 / 게재 중단 — id 는 신청 id (중단은 campaign id) */
+/** 승인 / 반려 / 위치 설정 / 게재 중단 — id 는 신청 id (위치·중단은 campaign id) */
 export const POST = routeWithParams<{ id: string }>(async (req, params) => {
   const [user, raw] = await Promise.all([requireOperator(req), readJson(req)]);
   const body = requireRecord(raw);
@@ -28,6 +28,9 @@ export const POST = routeWithParams<{ id: string }>(async (req, params) => {
       await rejectAdRequest(id, who, reason);
       return { ok: true };
     }
+    case "place":
+      await setAdPlace(id, parseAdPlace(body.place));
+      return { ok: true };
     case "end":
       await endCampaign(id);
       return { ok: true };

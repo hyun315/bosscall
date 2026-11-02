@@ -231,7 +231,7 @@ function CallView({ callId }: { callId: string }) {
         )}
 
         {/* 광고: 사장님·가족 화면 맨 아래 (버튼과 떨어진 곳). 기사님 응답 대기 중에만 */}
-        {role !== "DRIVER" && (call.status === "CALLING" || call.status === "RECEIVED") && <AdSlot slot="waiting" />}
+        {role !== "DRIVER" && (call.status === "CALLING" || call.status === "RECEIVED") && <AdSlot slot="waiting" noDestination />}
       </main>
 
       <ConfirmModal

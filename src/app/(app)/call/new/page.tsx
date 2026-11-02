@@ -16,6 +16,7 @@ import { createCall } from "@/services/client/actions";
 import { callSidePlace, resolvePlace } from "@/services/client/places";
 import { ClientApiError, errorMessage } from "@/services/client/api";
 import type { CallDoc, PlaceInput } from "@/types/domain";
+import type { AdPlace } from "@/lib/ads";
 import { useI18n } from "@/i18n/client";
 
 type Step = "pickup" | "destination" | "confirm";
@@ -109,6 +110,28 @@ export default function NewCallPage() {
     };
   }, [fromCallId, destination, destName, destAddr, destPlaceId, destLat, destLng]);
 
+  /** 광고의 [여기로 가기] — 좌표는 Place ID 로 새로 받는다. 목적지 단계면 바로 확인으로 */
+  const pickAdDestination = (pl: AdPlace) => {
+    setPresetFailed(false);
+    void resolvePlace({
+      lat: 0,
+      lng: 0,
+      address: pl.address,
+      name: pl.name,
+      placeId: pl.placeId,
+      source: "google",
+      category: null,
+      fetchedAt: null,
+      needsRefresh: true,
+    })
+      .then((p) => {
+        setDestination(p);
+        if (step === "destination") setStep("confirm");
+        else window.scrollTo({ top: 0, behavior: "smooth" });
+      })
+      .catch(() => setPresetFailed(true));
+  };
+
   const pickupRecents = useMemo(() => recentPlaces(recentCalls.data, "both"), [recentCalls.data]);
   const destRecents = useMemo(() => recentPlaces(recentCalls.data, "destination"), [recentCalls.data]);
 
@@ -181,6 +204,7 @@ export default function NewCallPage() {
               favorites={favorites.data}
               recents={pickupRecents}
               adSlot="pickup"
+              onAdDestination={pickAdDestination}
               onPicked={(p) => {
                 setPickup(p);
                 setStep(destination ? "confirm" : "destination");
@@ -202,6 +226,7 @@ export default function NewCallPage() {
               favorites={favorites.data}
               recents={destRecents}
               adSlot="destinationSearch"
+              onAdDestination={pickAdDestination}
               onPicked={(p) => {
                 setDestination(p);
                 setStep("confirm");

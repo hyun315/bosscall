@@ -2,7 +2,7 @@
 import { api } from "@/services/client/api";
 import type { CallAction } from "@/lib/callStateMachine";
 import type { ActualFix, NotificationPrefs, PlaceInput, PoiDoc } from "@/types/domain";
-import type { AdCampaignDoc, AdRequestDoc, AdSlotId } from "@/lib/ads";
+import type { AdCampaignDoc, AdPlace, AdRequestDoc, AdSlotId } from "@/lib/ads";
 
 /** 서버 API 호출 모음 — UI 컴포넌트는 이 함수들만 사용한다 (코딩규칙 3) */
 
@@ -126,4 +126,6 @@ export const approveAd = (id: string, startDate: string, months: number) =>
     body: { action: "approve", startDate, months },
   });
 export const rejectAd = (id: string, reason: string) => api(`/api/operator/ads/${id}`, { body: { action: "reject", reason } });
+export const setAdCampaignPlace = (campaignId: string, place: AdPlace | null) =>
+  api(`/api/operator/ads/${campaignId}`, { body: { action: "place", place } });
 export const endAdCampaign = (campaignId: string) => api(`/api/operator/ads/${campaignId}`, { body: { action: "end" } });

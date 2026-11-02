@@ -5,6 +5,7 @@ import {
   MAX_ADS_PER_SLOT,
   PRODUCT_INFO,
   campaignWindow,
+  destinationHref,
   fullSlots,
   jakartaDayStart,
   liveCampaigns,
@@ -64,4 +65,12 @@ test("jpegSize: SOF 에서 가로·세로", () => {
   const sof0 = [0xff, 0xc0, 0x00, 0x11, 0x08, 0x01, 0x90, 0x04, 0xb0, ...new Array(10).fill(0)];
   assert.deepEqual(jpegSize(Buffer.from([0xff, 0xd8, ...app0, ...sof0])), { w: 1200, h: 400 });
   assert.equal(jpegSize(Buffer.from([0x89, 0x50, 0x4e, 0x47])), null);
+});
+
+test("destinationHref: 업소록 연동과 같은 /call/new 주소", () => {
+  const href = destinationHref({ name: "서울 가든", address: "Jl. Senopati 1", placeId: "ChIJabc_123" });
+  const u = new URL(href, "https://x.test");
+  assert.equal(u.pathname, "/call/new");
+  assert.equal(u.searchParams.get("dest"), "서울 가든");
+  assert.equal(u.searchParams.get("destPlaceId"), "ChIJabc_123");
 });

@@ -13,6 +13,7 @@ import {
   type AdCampaignDoc,
   type AdIndustry,
   type AdMonths,
+  type AdPlace,
   type AdProduct,
   type AdRequestDoc,
   type AdSlotId,
@@ -36,6 +37,7 @@ export interface AdRequestInput {
   email: string;
   industry: AdIndustry;
   linkUrl: string | null;
+  place: AdPlace | null;
   product: AdProduct;
   startDate: string;
   months: AdMonths;
@@ -76,6 +78,7 @@ export async function createAdRequest(input: AdRequestInput): Promise<{ id: stri
     email: input.email,
     industry: input.industry,
     linkUrl: input.linkUrl,
+    place: input.place,
     product: input.product,
     startDate: input.startDate,
     months: input.months,
@@ -170,6 +173,7 @@ export async function approveAdRequest(
       bannerUrl: `/api/ad-image/${r.bannerImageId}`,
       detailUrl: `/api/ad-image/${r.detailImageId}`,
       linkUrl: r.linkUrl,
+      place: r.place ?? null,
       createdAt: now,
     };
     tx.create(campRef, campaign);
@@ -200,6 +204,28 @@ export async function rejectAdRequest(id: string, reviewer: string, reason: stri
     tx.delete(db.doc(`adImages/${r.bannerImageId}`));
     tx.delete(db.doc(`adImages/${r.detailImageId}`));
   });
+}
+
+/** 업소 위치(목적지 단추)를 넣거나 바꾼다 — 신청서와 게재 중 광고 둘 다 */
+export async function setAdPlace(campaignId: string, place: AdPlace | null): Promise<void> {
+  const db = adminDb();
+  const ref = db.doc(`adCampaigns/${campaignId}`);
+  const snap = await ref.get();
+  if (!snap.exists) throw notFound();
+  const c = snap.data() as AdCampaignDoc;
+  await Promise.all([ref.update({ place }), db.doc(`adRequests/${c.requestId}`).update({ place }).catch(() => undefined)]);
+}
+
+/** 요청 본문의 업소 위치 (없으면 null) */
+export function parseAdPlace(v: unknown): AdPlace | null {
+  if (v === null || v === undefined || v === "") return null;
+  if (typeof v !== "object") throw bad("업소 위치");
+  const o = v as Record<string, unknown>;
+  const name = typeof o.name === "string" ? o.name.trim().slice(0, 100) : "";
+  const address = typeof o.address === "string" ? o.address.trim().slice(0, 300) : "";
+  const placeId = typeof o.placeId === "string" ? o.placeId.trim() : "";
+  if (!name || !placeId || placeId.length > 300 || !/^[A-Za-z0-9_-]+$/.test(placeId)) throw bad("업소 위치");
+  return { name, address, placeId };
 }
 
 /** 게재 중인 광고를 지금 내린다 */

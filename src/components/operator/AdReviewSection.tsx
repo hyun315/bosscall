@@ -4,8 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/common/Button";
 import { useToast } from "@/components/common/Toast";
 import { PaidBanner } from "@/components/ads/AdSlot";
+import { AdPlaceField } from "@/components/ads/AdPlaceField";
 import { AD_MONTHS, PRODUCT_INFO, SLOT_INFO, type AdCampaignDoc, type AdRequestDoc } from "@/lib/ads";
-import { approveAd, endAdCampaign, getAdRequest, getAdRequests, rejectAd } from "@/services/client/actions";
+import { approveAd, endAdCampaign, getAdRequest, getAdRequests, rejectAd, setAdCampaignPlace } from "@/services/client/actions";
 import { errorMessage } from "@/services/client/api";
 
 type Tab = "pending" | "live" | "done";
@@ -90,7 +91,27 @@ export function AdReviewSection() {
               <p className="text-sm text-ink-sub">
                 {day(c.startAt)} ~ {day(c.endAt - 1)} · {c.slots.map(slotName).join(", ")}
               </p>
-              <PaidBanner company={c.company} bannerUrl={c.bannerUrl} detailUrl={c.detailUrl} linkUrl={c.linkUrl} />
+              <PaidBanner
+                company={c.company}
+                bannerUrl={c.bannerUrl}
+                detailUrl={c.detailUrl}
+                linkUrl={c.linkUrl}
+                onGo={c.place ? () => undefined : undefined}
+              />
+              <div>
+                <span className="label">업소 위치 ([여기로 가기] 단추)</span>
+                <AdPlaceField
+                  value={c.place ?? null}
+                  onChange={(p) => {
+                    setAdCampaignPlace(c.id, p)
+                      .then(() => {
+                        toast(p ? "위치를 넣었습니다. 몇 분 안에 앱에 반영됩니다." : "위치를 지웠습니다.");
+                        load();
+                      })
+                      .catch((e) => toast(errorMessage(e), "error"));
+                  }}
+                />
+              </div>
               <Button
                 variant="secondary"
                 size="sm"
@@ -218,6 +239,8 @@ function RequestCard({ r, open, onToggle, onDone }: { r: AdRequestDoc; open: boo
                 {r.email}
               </a>
             </dd>
+            <dt className="text-ink-sub">위치</dt>
+            <dd className="text-ink">{r.place ? `${r.place.name} · ${r.place.address}` : "없음 (승인 후 게재 중 탭에서 넣을 수 있음)"}</dd>
             <dt className="text-ink-sub">링크</dt>
             <dd className="break-all text-ink">
               {r.linkUrl ? (

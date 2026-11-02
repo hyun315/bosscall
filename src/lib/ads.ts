@@ -60,6 +60,22 @@ export const AD_INDUSTRIES = [
 ] as const;
 export type AdIndustry = (typeof AD_INDUSTRIES)[number];
 
+/**
+ * 광고주 업소 위치 — [여기로 가기] 단추용. 구글 좌표는 오래 보관하지 않도록 Place ID 만 두고,
+ * 목적지로 고를 때 Place ID 로 좌표를 새로 받는다.
+ */
+export interface AdPlace {
+  name: string;
+  address: string;
+  placeId: string;
+}
+
+/** /call/new 로 목적지를 들고 가는 주소 (업소록 연동과 같은 방식) */
+export function destinationHref(p: AdPlace): string {
+  const q = new URLSearchParams({ dest: p.name, destAddr: p.address, destPlaceId: p.placeId });
+  return `/call/new?${q.toString()}`;
+}
+
 /** adRequests/{id} — 광고 신청 (서버만 읽고 씀. 운영자는 API로 본다) */
 export type AdRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
 export interface AdRequestDoc {
@@ -72,6 +88,7 @@ export interface AdRequestDoc {
   email: string;
   industry: AdIndustry;
   linkUrl: string | null;
+  place: AdPlace | null;
   product: AdProduct;
   /** "YYYY-MM-DD" (자카르타 날짜) */
   startDate: string;
@@ -96,6 +113,7 @@ export interface AdCampaignDoc {
   bannerUrl: string;
   detailUrl: string;
   linkUrl: string | null;
+  place?: AdPlace | null;
   createdAt: number;
 }
 

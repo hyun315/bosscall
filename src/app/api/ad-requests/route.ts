@@ -3,7 +3,7 @@ import { ApiError, readJson, route } from "@/lib/server/http";
 import { rateLimit } from "@/lib/server/rateLimit";
 import { isRecord } from "@/lib/validation";
 import { AD_INDUSTRIES, AD_MONTHS, AD_PRODUCTS, type AdMonths } from "@/lib/ads";
-import { createAdRequest } from "@/services/server/ads";
+import { createAdRequest, parseAdPlace } from "@/services/server/ads";
 
 /**
  * 광고 신청 (로그인 없음 — 광고주가 링크로 들어와 작성).
@@ -59,6 +59,7 @@ export const POST = route(async (req) => {
     email,
     industry,
     linkUrl,
+    place: parseAdPlace(raw.place),
     product,
     startDate,
     months,
