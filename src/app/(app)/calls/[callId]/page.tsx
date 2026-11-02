@@ -11,7 +11,6 @@ import { StatusBadge } from "@/components/common/StatusBadge";
 import { useToast } from "@/components/common/Toast";
 import { DriverLocationMap } from "@/components/driver/DriverLocationMap";
 import { LocationCard } from "@/components/location/LocationCard";
-import { useAlarmState } from "@/hooks/useCallAlarm";
 import { lim, ob, useLiveDoc, useLiveQuery } from "@/hooks/useLive";
 import { useSearchParam } from "@/hooks/useSearchParam";
 import { useReadySession } from "@/hooks/useSession";
@@ -465,7 +464,6 @@ function DriverPanel({
 }) {
   const router = useRouter();
   const { t } = useI18n();
-  const alarm = useAlarmState();
   const navTarget =
     call.status === "TRIP_STARTED"
       ? googleMapsDirectionsUrl(call.destinationLat, call.destinationLng, call.destinationPlaceId)
@@ -480,15 +478,7 @@ function DriverPanel({
         <p className="mt-2 text-lg font-semibold text-ink">📍 {shortPlace(call.pickupName, call.pickupAddress)}</p>
         <p className="text-lg font-semibold text-ink">🎯 {shortPlace(call.destinationName, call.destinationAddress)}</p>
         <p className="mt-2 text-sm tabular-nums text-ink-sub">{t("call.respondWithin", { s: seconds })}</p>
-        {alarm.blocked && (
-          // 브라우저가 소리를 막은 상태 — 이 버튼을 누르는 동작으로 알람이 켜진다 (전역 터치 감지)
-          <button
-            type="button"
-            className="mt-4 w-full rounded-btn border-2 border-dashed border-action bg-surface px-4 py-3 text-base font-bold text-action"
-          >
-            {t("alarm.tapToSound")}
-          </button>
-        )}
+        {/* 아이폰은 앱을 새로 연 직후 한 번 터치해야 앱 소리가 난다 — 따로 묻지 않고, 화면 어디를 눌러도 (수락 단추 포함) 처리된다 */}
         <div className="mt-6 flex flex-col gap-5">
           <Button
             variant="success"
