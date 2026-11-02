@@ -143,14 +143,28 @@ export function InstallPrompt({
             {t("inapp.openChrome")}
           </Button>
         </div>
-      ) : canPrompt ? (
-        <Button block className="mt-3" loading={busy} onClick={() => void install()}>
-          {t("install.androidButton")}
-        </Button>
+      ) : platform === "android" ? (
+        <div className="mt-3 space-y-3">
+          {/* Chrome 이 설치 창을 허락하면 단추 한 번으로 끝 — 아래 단계는 그래도 안 될 때 */}
+          {canPrompt && (
+            <Button block loading={busy} onClick={() => void install()}>
+              {t("install.androidButton")}
+            </Button>
+          )}
+          {canPrompt && <p className="text-xs text-ink-sub">{t("install.androidOr")}</p>}
+          <ol className="space-y-2 text-[15px] text-ink">
+            {(["install.androidStep1", "install.androidStep2", "install.androidStep3"] as const).map((k, i) => (
+              <li key={k} className="flex gap-2">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">
+                  {i + 1}
+                </span>
+                <span>{t(k)}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
       ) : (
-        <p className="mt-3 text-[15px] leading-relaxed text-ink">
-          {platform === "android" ? t("install.androidManual") : t("install.desktopManual")}
-        </p>
+        <p className="mt-3 text-[15px] leading-relaxed text-ink">{t("install.desktopManual")}</p>
       )}
 
       {variant === "card" && (

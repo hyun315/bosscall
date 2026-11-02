@@ -201,10 +201,25 @@ export const commonMsgs = {
     en: "Open BossCall from the new home-screen icon and turn on notifications",
   },
   "install.androidButton": { ko: "📲 앱 설치", id: "📲 Pasang aplikasi", en: "📲 Install app" },
-  "install.androidManual": {
-    ko: "Chrome 오른쪽 위 ⋮ 메뉴 › '앱 설치' 또는 '홈 화면에 추가'를 누르세요.",
-    id: "Ketuk menu ⋮ di kanan atas Chrome › 'Instal aplikasi' atau 'Tambahkan ke Layar utama'.",
-    en: "Tap Chrome's ⋮ menu (top right) › 'Install app' or 'Add to Home screen'.",
+  "install.androidOr": {
+    ko: "단추가 안 되면 아래 순서대로 하세요.",
+    id: "Jika tombol tidak berfungsi, ikuti langkah di bawah.",
+    en: "If the button doesn't work, follow these steps.",
+  },
+  "install.androidStep1": {
+    ko: "Chrome 오른쪽 위 ⋮ (점 3개)를 누릅니다",
+    id: "Di Chrome, ketuk ⋮ (titik tiga) di kanan atas",
+    en: "In Chrome, tap ⋮ (three dots) at the top right",
+  },
+  "install.androidStep2": {
+    ko: "'앱 설치' 또는 '홈 화면에 추가'를 누르고, 한 번 더 '설치'를 누릅니다",
+    id: "Ketuk 'Instal aplikasi' atau 'Tambahkan ke Layar utama', lalu ketuk 'Instal'",
+    en: "Tap 'Install app' or 'Add to Home screen', then tap 'Install'",
+  },
+  "install.androidStep3": {
+    ko: "홈 화면에 생긴 BossCall 아이콘으로 열고 알림을 켭니다",
+    id: "Buka BossCall dari ikon di layar utama, lalu nyalakan notifikasi",
+    en: "Open BossCall from the new home-screen icon and turn on notifications",
   },
   "install.desktopManual": {
     ko: "휴대폰에서 이 주소를 열면 홈 화면에 추가할 수 있습니다.",
