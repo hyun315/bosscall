@@ -112,6 +112,26 @@ export const driverMsgs = {
     id: "Gagal mengirim (ditolak server notifikasi).",
     en: "Sending failed (rejected by the push service).",
   },
+  "ptest.errExpired": {
+    ko: "이 기기의 알림 등록이 만료되었습니다. 아래 단추로 다시 등록하세요.",
+    id: "Pendaftaran notifikasi perangkat ini kedaluwarsa. Daftarkan ulang dengan tombol di bawah.",
+    en: "This device's notification registration expired. Re-register below.",
+  },
+  "ptest.errAuth": {
+    ko: "애플·구글 알림 서버가 거절했습니다. 다시 등록해 보고, 계속되면 운영자에게 알려 주세요.",
+    id: "Ditolak server notifikasi Apple/Google. Coba daftarkan ulang; jika berlanjut, hubungi admin.",
+    en: "Rejected by the Apple/Google push service. Re-register; if it persists, tell the admin.",
+  },
+  "ptest.errServer": {
+    ko: "알림 서버가 잠시 응답하지 않습니다. 잠시 뒤 다시 테스트해 주세요.",
+    id: "Server notifikasi sedang sibuk. Coba tes lagi sebentar lagi.",
+    en: "The push service is busy. Try the test again shortly.",
+  },
+  "ptest.errOther": {
+    ko: "알 수 없는 이유로 보내지 못했습니다. 다시 등록해 보세요.",
+    id: "Gagal mengirim karena alasan tidak diketahui. Coba daftarkan ulang.",
+    en: "Couldn't send for an unknown reason. Try re-registering.",
+  },
   "ptest.reRegister": { ko: "이 기기 다시 등록", id: "Daftarkan ulang perangkat ini", en: "Re-register this device" },
   "ptest.silent": {
     ko: "호출 소리가 꺼져 있어 소리 없이 보냈습니다. 위의 '호출 소리'를 켜 주세요.",

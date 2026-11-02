@@ -35,7 +35,7 @@ export function TestPushResult({ sentAt }: { sentAt: number | null }) {
     return (
       <div className="space-y-2 rounded-btn bg-danger-soft px-3 py-3 text-sm leading-relaxed text-danger">
         <p className="font-bold">✗ {r.tokens === 0 ? t("ptest.noDevice") : t("ptest.failed")}</p>
-        {r.errors.length > 0 && <p className="break-all text-xs opacity-80">{r.errors.join(", ")}</p>}
+        {r.errors.length > 0 && <p className="text-xs opacity-80">{t(errorKey(r.errors[0] ?? ""))}</p>}
         <Button size="sm" loading={fixing} onClick={() => void reRegister()}>
           {t("ptest.reRegister")}
         </Button>
@@ -56,4 +56,11 @@ export function TestPushResult({ sentAt }: { sentAt: number | null }) {
       </ol>
     </div>
   );
+}
+
+function errorKey(code: string) {
+  if (code.includes("not-registered") || code.includes("invalid-registration")) return "ptest.errExpired" as const;
+  if (code.includes("third-party-auth") || code.includes("mismatched")) return "ptest.errAuth" as const;
+  if (code.includes("quota") || code.includes("unavailable") || code.includes("internal")) return "ptest.errServer" as const;
+  return "ptest.errOther" as const;
 }
