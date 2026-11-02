@@ -321,6 +321,7 @@ export type NotificationType =
   | "CALL_COMPLETED"
   | "DRIVER_CLOCK_IN"
   | "DRIVER_CLOCK_OUT"
+  | "AD_REQUEST"
   | "TEST_PUSH";
 
 export interface NotificationDoc {

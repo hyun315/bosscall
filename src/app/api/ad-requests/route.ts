@@ -4,6 +4,9 @@ import { rateLimit } from "@/lib/server/rateLimit";
 import { isRecord } from "@/lib/validation";
 import { parseAdRequestBody } from "@/lib/server/adRequestBody";
 import { createAdRequest } from "@/services/server/ads";
+import { operatorUids } from "@/lib/server/auth";
+import { runAfterResponse } from "@/lib/server/defer";
+import { notifyUsers } from "@/lib/server/push";
 
 /**
  * 광고 신청 (로그인 없음 — 광고주가 링크로 들어와 작성).
@@ -15,7 +18,23 @@ export const POST = route(async (req) => {
   const raw = await readJson(req);
   await Promise.all([rateLimit(ipKey, "ad_request", 5, 3600), rateLimit("global", "ad_request", 200, 86400)]);
   if (isRecord(raw) && typeof raw.website === "string" && raw.website) return { ok: true, id: null }; // 자동 입력 프로그램
-  return createAdRequest(parseAdRequestBody(raw, { operator: false }));
+  const input = parseAdRequestBody(raw, { operator: false });
+  const result = await createAdRequest(input);
+  // 운영자에게 알림 (휴대폰 푸시 + 알림함) — 응답 뒤에
+  await runAfterResponse(async () => {
+    const uids = await operatorUids();
+    if (uids.length === 0) return;
+    await notifyUsers(uids, {
+      type: "AD_REQUEST",
+      groupId: "",
+      callId: null,
+      titleKey: "push.adRequest.title",
+      bodyKey: "push.adRequest.body",
+      params: { company: input.company, industry: input.industry },
+      path: "/operator",
+    });
+  });
+  return result;
 });
 
 export const maxDuration = 30;

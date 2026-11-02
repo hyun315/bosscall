@@ -111,7 +111,7 @@ export interface TripReport {
   truncated: boolean;
   preview: Array<{ key: Record<string, string | undefined>; count: number; avgTripMinutes: number | null }>;
 }
-export const getOperatorStatus = () => api<{ operator: boolean }>("/api/operator");
+export const getOperatorStatus = () => api<{ operator: boolean; pendingAds: number }>("/api/operator");
 export const getTripReport = (dims: string[], from: string, to: string) =>
   api<TripReport>(
     `/api/operator/report?dims=${encodeURIComponent(dims.join(","))}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,

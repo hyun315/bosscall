@@ -28,15 +28,18 @@ export default function SettingsPage() {
       return false;
     }
   });
+  const [pendingAds, setPendingAds] = useState(0);
   useEffect(() => {
+    // 운영자가 아닌 것으로 기억된 계정은 다시 묻지 않는다. 운영자는 검토 대기 수를 보러 매번 묻는다
     try {
-      if (sessionStorage.getItem(opKey) !== null) return;
+      if (sessionStorage.getItem(opKey) === "0") return;
     } catch {
       /* 저장소 불가 — 그냥 묻는다 */
     }
     getOperatorStatus()
       .then((r) => {
         setOperator(r.operator);
+        setPendingAds(r.pendingAds);
         try {
           sessionStorage.setItem(opKey, r.operator ? "1" : "0");
         } catch {
@@ -97,6 +100,9 @@ export default function SettingsPage() {
             </span>
             {/* 운영자 전용 메뉴 — 한국어로만 표시 */}
             <span className="flex-1 text-[15px] font-semibold text-ink">운영자 도구</span>
+            {pendingAds > 0 && (
+              <span className="rounded-full bg-danger px-2 py-0.5 text-xs font-bold text-white">광고 신청 {pendingAds}</span>
+            )}
             <span className="text-ink-faint" aria-hidden>
               ›
             </span>

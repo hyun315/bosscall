@@ -66,6 +66,17 @@ export function isOperator(user: AuthedUser): boolean {
   return user.emailVerified && !!user.email && list.includes(user.email.toLowerCase());
 }
 
+/** 운영자(OPERATOR_EMAILS) 계정의 uid — 가입하지 않은 이메일은 건너뛴다 */
+export async function operatorUids(): Promise<string[]> {
+  const emails = (process.env.OPERATOR_EMAILS ?? "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  if (emails.length === 0) return [];
+  const r = await adminAuth().getUsers(emails.map((email) => ({ email })));
+  return r.users.filter((u) => u.emailVerified).map((u) => u.uid);
+}
+
 /** 운영자 전용 API — 익명 통계 리포트·자체 장소 목록 관리 */
 export async function requireOperator(req: Request): Promise<AuthedUser> {
   const user = await requireUser(req);
