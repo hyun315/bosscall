@@ -6,6 +6,7 @@ import type { Locale } from "@/i18n/core";
 import { I18nProvider } from "@/i18n/client";
 import { updateMe } from "@/services/client/actions";
 import { initInstallCapture } from "@/services/client/install";
+import { InAppBrowserNotice } from "@/components/common/InAppBrowserNotice";
 
 /** 로그인한 사용자의 저장된 언어를 반영하고, 바꾸면 계정에 저장 */
 function LocaleBridge({ children }: { children: ReactNode }) {
@@ -29,7 +30,10 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
       <LocaleBridge>
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          {children}
+          <InAppBrowserNotice />
+        </ToastProvider>
       </LocaleBridge>
     </SessionProvider>
   );

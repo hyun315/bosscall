@@ -302,3 +302,13 @@ npm run typecheck
 - 기사 초대 메시지에 기사용 안내 링크가 자동으로 붙고, 설정 › **사용 안내**에서 역할에 맞는 안내가 열립니다.
 - 인쇄: 각 페이지의 인쇄 단추(인쇄용 레이아웃 + QR), 또는 A4 한 장 PDF `public/guide/bosscall-guide-owner.pdf`, `bosscall-guide-driver-id.pdf`.
 - PDF 다시 만들기: `scripts/guide/` (owner.html·driver.html·base.css → `node render.js`, QR은 `python3 qr.py <작업폴더> public/guide` — 외부 라이브러리 없이 생성·검증). 앱 문구를 바꾸면 이 HTML도 같이 고치세요.
+
+## 18. 카카오톡 등 인앱 브라우저 → 외부 브라우저
+
+카카오톡·라인·인스타그램 등 앱 안의 브라우저에서는 구글 로그인이 막히고(disallowed_useragent) 알림·홈 화면 추가도 안 됩니다.
+- `public/open-external.js` (루트 layout `<head>` 에서 앱보다 먼저 실행):
+  - 카카오톡 → `kakaotalk://web/openExternal?url=…` (아이폰·안드로이드 모두 기본 브라우저로)
+  - 라인 → `?openExternalBrowser=1`
+  - 안드로이드의 그 밖의 인앱(인스타그램·페이스북·네이버 등) → Chrome intent
+  - 같은 탭에서 한 번만 시도 (실패 시 반복 방지)
+- 자동으로 못 빠져나가면(아이폰 인스타그램·페이스북 등) `InAppBrowserNotice`: "Safari로 열기 / Chrome으로 열기" 다시 시도, 링크 복사, 메뉴 위치 안내 (한·인니·영). "그냥 여기서 보기"로 닫을 수 있음.

@@ -96,3 +96,18 @@ export function dismissInstall(): void {
     /* 저장 불가 — 이번 화면에서만 숨김 */
   }
 }
+
+export type InAppBrowser = "kakao" | "line" | "instagram" | "facebook" | "naver" | "other";
+
+/** 메신저·SNS 안의 브라우저(인앱)인지 — 구글 로그인·알림·홈 화면 추가가 안 된다 */
+export function inAppBrowser(): InAppBrowser | null {
+  if (typeof navigator === "undefined") return null;
+  const ua = navigator.userAgent;
+  if (/KAKAOTALK/i.test(ua)) return "kakao";
+  if (/ Line\//i.test(ua)) return "line";
+  if (/Instagram/i.test(ua)) return "instagram";
+  if (/FBAN|FBAV|FB_IAB/i.test(ua)) return "facebook";
+  if (/NAVER\(inapp|DaumApps/i.test(ua)) return "naver";
+  if (/; wv\)/.test(ua) || /everytimeApp|Whale\/.*inapp/i.test(ua)) return "other";
+  return null;
+}

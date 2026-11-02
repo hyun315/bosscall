@@ -146,6 +146,27 @@ export const commonMsgs = {
   "account.phoneLabel": { ko: "전화번호 (선택)", id: "Nomor telepon (opsional)", en: "Phone number (optional)" },
 
   // ── 홈 화면에 추가 (PWA 설치)
+  "inapp.title": { ko: "외부 브라우저로 열어 주세요", id: "Buka di browser biasa", en: "Please open in your browser" },
+  "inapp.body": {
+    ko: "카카오톡 같은 앱 안의 브라우저에서는 구글 로그인과 알림이 되지 않습니다.",
+    id: "Di dalam aplikasi chat (KakaoTalk, dll.) login Google dan notifikasi tidak berfungsi.",
+    en: "Google sign-in and notifications don't work inside chat apps like KakaoTalk.",
+  },
+  "inapp.howIos": {
+    ko: "아이폰: 화면 아래(또는 위)의 ⋯ 또는 공유 버튼 → 'Safari로 열기'를 누르세요.",
+    id: "iPhone: ketuk ⋯ atau tombol Bagikan di bawah (atau atas) → 'Buka di Safari'.",
+    en: "iPhone: tap ⋯ or the Share button (bottom or top) → 'Open in Safari'.",
+  },
+  "inapp.howAndroid": {
+    ko: "안드로이드: 오른쪽 위 ⋮ → '다른 브라우저로 열기' 또는 'Chrome으로 열기'를 누르세요.",
+    id: "Android: ketuk ⋮ kanan atas → 'Buka di browser lain' atau 'Buka di Chrome'.",
+    en: "Android: tap ⋮ (top right) → 'Open in another browser' or 'Open in Chrome'.",
+  },
+  "inapp.openSafari": { ko: "Safari로 열기", id: "Buka di Safari", en: "Open in Safari" },
+  "inapp.openChrome": { ko: "Chrome으로 열기", id: "Buka di Chrome", en: "Open in Chrome" },
+  "inapp.copy": { ko: "링크 복사 (브라우저에 붙여넣기)", id: "Salin link (tempel di browser)", en: "Copy link (paste in your browser)" },
+  "inapp.copied": { ko: "복사했습니다 — 브라우저 주소창에 붙여넣으세요", id: "Tersalin — tempel di alamat browser", en: "Copied — paste it in your browser" },
+  "inapp.continue": { ko: "그냥 여기서 보기", id: "Tetap lihat di sini", en: "Stay here" },
   "install.title": { ko: "홈 화면에 BossCall 추가하기", id: "Tambahkan BossCall ke layar utama", en: "Add BossCall to your home screen" },
   "install.whyDriver": {
     ko: "홈 화면 앱으로 써야 화면이 꺼져 있어도 호출 알림이 옵니다. 꼭 해주세요.",
