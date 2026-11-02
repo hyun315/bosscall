@@ -27,6 +27,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko">
       <head>
+        {/* 휴대폰 다크 모드에서 브라우저(삼성 인터넷·Chrome)가 화면을 강제로 어둡게 칠하지 않도록 — 항상 밝은 화면 */}
+        <meta name="color-scheme" content="only light" />
         {/* 카카오톡 등 인앱 브라우저 → 외부 브라우저 (앱 코드보다 먼저) */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="/open-external.js" />

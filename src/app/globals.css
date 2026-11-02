@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  /* 다크 모드 강제 변환 막기 (삼성 인터넷·Chrome 자동 어둡게) — 항상 밝은 화면 */
+  color-scheme: only light;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
 }
