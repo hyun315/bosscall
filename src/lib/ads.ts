@@ -70,9 +70,14 @@ export interface AdPlace {
   placeId: string;
 }
 
-/** /call/new 로 목적지를 들고 가는 주소 (업소록 연동과 같은 방식) */
-export function destinationHref(p: AdPlace): string {
-  const q = new URLSearchParams({ dest: p.name, destAddr: p.address, destPlaceId: p.placeId });
+export type AdPlaceUse = "pickup" | "destination";
+
+/** /call/new 로 출발지(픽업) 또는 목적지를 들고 가는 주소 (목적지는 업소록 연동과 같은 방식) */
+export function placeHref(p: AdPlace, use: AdPlaceUse): string {
+  const q =
+    use === "destination"
+      ? new URLSearchParams({ dest: p.name, destAddr: p.address, destPlaceId: p.placeId })
+      : new URLSearchParams({ pick: p.name, pickAddr: p.address, pickPlaceId: p.placeId });
   return `/call/new?${q.toString()}`;
 }
 

@@ -5,7 +5,7 @@ import {
   MAX_ADS_PER_SLOT,
   PRODUCT_INFO,
   campaignWindow,
-  destinationHref,
+  placeHref,
   fullSlots,
   jakartaDayStart,
   liveCampaigns,
@@ -67,10 +67,13 @@ test("jpegSize: SOF 에서 가로·세로", () => {
   assert.equal(jpegSize(Buffer.from([0x89, 0x50, 0x4e, 0x47])), null);
 });
 
-test("destinationHref: 업소록 연동과 같은 /call/new 주소", () => {
-  const href = destinationHref({ name: "서울 가든", address: "Jl. Senopati 1", placeId: "ChIJabc_123" });
-  const u = new URL(href, "https://x.test");
-  assert.equal(u.pathname, "/call/new");
-  assert.equal(u.searchParams.get("dest"), "서울 가든");
-  assert.equal(u.searchParams.get("destPlaceId"), "ChIJabc_123");
+test("placeHref: 출발지·목적지 /call/new 주소", () => {
+  const p = { name: "서울 가든", address: "Jl. Senopati 1", placeId: "ChIJabc_123" };
+  const d = new URL(placeHref(p, "destination"), "https://x.test");
+  assert.equal(d.pathname, "/call/new");
+  assert.equal(d.searchParams.get("dest"), "서울 가든");
+  assert.equal(d.searchParams.get("destPlaceId"), "ChIJabc_123");
+  const k = new URL(placeHref(p, "pickup"), "https://x.test");
+  assert.equal(k.searchParams.get("pickPlaceId"), "ChIJabc_123");
+  assert.equal(k.searchParams.get("dest"), null);
 });

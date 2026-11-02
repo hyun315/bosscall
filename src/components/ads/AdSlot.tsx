@@ -10,9 +10,10 @@ import {
   adLink,
   adsEnabled,
   advertisePath,
-  destinationHref,
+  placeHref,
   liveCampaigns,
   type AdPlace,
+  type AdPlaceUse,
   type AdSlotId,
   type HouseAd,
 } from "@/lib/ads";
@@ -25,18 +26,18 @@ import { useI18n } from "@/i18n/client";
  * 노출은 칸이 화면에 처음 보였을 때 1번, 클릭은 누를 때마다 기록한다 (내부 참고용).
  *
  * 광고에 업소 위치가 있으면 [여기로 가기] 단추가 붙는다.
- *  - onDestination 을 주면 (목적지 고르는 화면) 바로 목적지로 고른다.
+ *  - [출발지로 설정]/[목적지로 설정]. onPlace 를 주면 (호출 화면) 그 자리에서 바로 채운다.
  *  - 없으면 기사 호출 화면으로 목적지를 들고 이동한다. 응답 대기 화면처럼 호출 중이면 noDestination.
  */
 export function AdSlot({
   slot,
   className = "",
-  onDestination,
+  onPlace,
   noDestination = false,
 }: {
   slot: AdSlotId;
   className?: string;
-  onDestination?: (p: AdPlace) => void;
+  onPlace?: (p: AdPlace, use: AdPlaceUse) => void;
   noDestination?: boolean;
 }) {
   const { role, groupId } = useReadySession();
@@ -87,11 +88,11 @@ export function AdSlot({
           onOpen={clickOf(paid.id)}
           onGo={
             paid.place && !noDestination
-              ? () => {
+              ? (use: AdPlaceUse) => {
                   const place = paid.place!;
-                  trackClient("ad_click", groupId, { slot, ad: paid.id, action: "destination" });
-                  if (onDestination) onDestination(place);
-                  else router.push(destinationHref(place));
+                  trackClient("ad_click", groupId, { slot, ad: paid.id, action: use });
+                  if (onPlace) onPlace(place, use);
+                  else router.push(placeHref(place, use));
                 }
               : undefined
           }
@@ -169,8 +170,8 @@ export function PaidBanner({
   detailUrl: string | null;
   linkUrl: string | null;
   onOpen?: () => void;
-  /** 있으면 [여기로 가기] 단추 */
-  onGo?: () => void;
+  /** 있으면 [여기로 가기] → 상세 화면에 [출발지로 설정]/[목적지로 설정] */
+  onGo?: (use: AdPlaceUse) => void;
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -196,7 +197,11 @@ export function PaidBanner({
       {onGo && (
         <button
           type="button"
-          onClick={onGo}
+          onClick={() => {
+            onOpen?.();
+            if (detailUrl) setOpen(true);
+            else onGo("destination");
+          }}
           className="absolute bottom-2 right-2 inline-flex min-h-[36px] items-center gap-1 rounded-full bg-white/95 px-3 text-[13px] font-bold text-navy shadow-card ring-1 ring-black/5 active:scale-95"
         >
           🚗 {t("ad.goHere")}
@@ -210,9 +215,9 @@ export function PaidBanner({
           linkUrl={linkUrl}
           onGo={
             onGo
-              ? () => {
+              ? (use: AdPlaceUse) => {
                   setOpen(false);
-                  onGo();
+                  onGo(use);
                 }
               : undefined
           }
@@ -233,7 +238,7 @@ function AdDetail({
   company: string;
   detailUrl: string;
   linkUrl: string | null;
-  onGo?: () => void;
+  onGo?: (use: AdPlaceUse) => void;
   onClose: () => void;
 }) {
   const { t } = useI18n();
@@ -263,13 +268,22 @@ function AdDetail({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={detailUrl} alt="" className="aspect-[4/5] max-h-[70dvh] w-full rounded-card bg-white/10 object-cover" />
         {onGo && (
-          <button
-            type="button"
-            onClick={onGo}
-            className="flex min-h-[52px] items-center justify-center gap-2 rounded-btn bg-action text-[15px] font-bold text-white"
-          >
-            🚗 {t("ad.callHere")}
-          </button>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => onGo("pickup")}
+              className="flex min-h-[52px] items-center justify-center gap-1.5 rounded-btn bg-white text-[15px] font-bold text-navy"
+            >
+              📍 {t("ad.setPickup")}
+            </button>
+            <button
+              type="button"
+              onClick={() => onGo("destination")}
+              className="flex min-h-[52px] items-center justify-center gap-1.5 rounded-btn bg-action text-[15px] font-bold text-white"
+            >
+              🎯 {t("ad.setDestination")}
+            </button>
+          </div>
         )}
         {linkUrl && (
           <a

@@ -340,7 +340,7 @@ function CampaignCard({ c, now, onChanged }: { c: AdCampaignDoc; now: number; on
             bannerUrl={c.bannerUrl}
             detailUrl={c.detailUrl}
             linkUrl={c.linkUrl}
-            onGo={c.place ? () => undefined : undefined}
+            onGo={c.place ? () => toast("앱에서는 이 위치가 출발지·목적지로 들어갑니다.") : undefined}
           />
           <div>
             <span className="label">업소 위치 ([여기로 가기] 단추)</span>

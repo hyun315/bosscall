@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { AdSlot } from "@/components/ads/AdSlot";
-import type { AdPlace, AdSlotId } from "@/lib/ads";
+import type { AdPlace, AdPlaceUse, AdSlotId } from "@/lib/ads";
 import { Button } from "@/components/common/Button";
 import { NotificationBanner } from "@/components/common/States";
 import { FavoriteLocationCard, RecentLocationCard } from "@/components/location/LocationCard";
@@ -48,7 +48,7 @@ export function LocationPicker({
   recents,
   onPicked,
   adSlot,
-  onAdDestination,
+  onAdPlace,
 }: {
   kind: "pickup" | "destination";
   groupId: string;
@@ -57,8 +57,8 @@ export function LocationPicker({
   onPicked: (p: PlaceInput) => void;
   /** 이 화면 맨 아래 광고 칸 (호출 화면에서만) */
   adSlot?: AdSlotId;
-  /** 광고의 [여기로 가기] — 호출 화면이 목적지로 받는다 */
-  onAdDestination?: (p: AdPlace) => void;
+  /** 광고의 [출발지로 설정]/[목적지로 설정] — 호출 화면이 받는다 */
+  onAdPlace?: (p: AdPlace, use: AdPlaceUse) => void;
 }) {
   const { t } = useI18n();
   const [locating, setLocating] = useState(false);
@@ -168,7 +168,7 @@ export function LocationPicker({
       {error && <p className="text-sm text-danger">{error}</p>}
 
       {/* 광고: 즐겨찾기 바로 아래, 최근 장소 위 (호출 화면에서만 넘겨받음 — 사장님·가족만, 기사 계정엔 그리지 않음) */}
-      {adSlot && <AdSlot slot={adSlot} onDestination={onAdDestination} />}
+      {adSlot && <AdSlot slot={adSlot} onPlace={onAdPlace} />}
 
       {recentsList}
 

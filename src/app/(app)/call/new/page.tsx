@@ -16,7 +16,23 @@ import { createCall } from "@/services/client/actions";
 import { callSidePlace, resolvePlace } from "@/services/client/places";
 import { ClientApiError, errorMessage } from "@/services/client/api";
 import type { CallDoc, PlaceInput } from "@/types/domain";
-import type { AdPlace } from "@/lib/ads";
+import type { AdPlace, AdPlaceUse } from "@/lib/ads";
+import type { StoredPlace } from "@/services/client/places";
+
+/** 광고 업소 위치 → 좌표는 Place ID 로 새로 받을 장소 */
+function adStoredPlace(pl: AdPlace): StoredPlace {
+  return {
+    lat: 0,
+    lng: 0,
+    address: pl.address,
+    name: pl.name || null,
+    placeId: pl.placeId,
+    source: "google",
+    category: null,
+    fetchedAt: null,
+    needsRefresh: true,
+  };
+}
 import { useI18n } from "@/i18n/client";
 
 type Step = "pickup" | "destination" | "confirm";
@@ -34,6 +50,9 @@ export default function NewCallPage() {
   const destPlaceId = useSearchParam("destPlaceId");
   const destLat = useSearchParam("destLat");
   const destLng = useSearchParam("destLng");
+  const pickName = useSearchParam("pick");
+  const pickAddr = useSearchParam("pickAddr");
+  const pickPlaceId = useSearchParam("pickPlaceId");
 
   const drivers = useDrivers(groupId);
   const favorites = useFavorites(groupId);
@@ -110,27 +129,45 @@ export default function NewCallPage() {
     };
   }, [fromCallId, destination, destName, destAddr, destPlaceId, destLat, destLng]);
 
-  /** 광고의 [여기로 가기] — 좌표는 Place ID 로 새로 받는다. 목적지 단계면 바로 확인으로 */
-  const pickAdDestination = (pl: AdPlace) => {
+  /**
+   * 광고의 [출발지로 설정]/[목적지로 설정] — 좌표는 Place ID 로 새로 받는다.
+   * 출발지면 다음 단계(목적지, 이미 있으면 확인)로, 목적지면 목적지 단계에선 확인으로.
+   */
+  const applyAdPlace = (pl: AdPlace, use: AdPlaceUse) => {
     setPresetFailed(false);
-    void resolvePlace({
-      lat: 0,
-      lng: 0,
-      address: pl.address,
-      name: pl.name,
-      placeId: pl.placeId,
-      source: "google",
-      category: null,
-      fetchedAt: null,
-      needsRefresh: true,
-    })
+    void resolvePlace(adStoredPlace(pl))
       .then((p) => {
-        setDestination(p);
-        if (step === "destination") setStep("confirm");
-        else window.scrollTo({ top: 0, behavior: "smooth" });
+        if (use === "pickup") {
+          setPickup(p);
+          setStep(destination ? "confirm" : "destination");
+        } else {
+          setDestination(p);
+          if (step === "destination" || (step === "pickup" && pickup)) setStep("confirm");
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
       })
       .catch(() => setPresetFailed(true));
   };
+
+  // 링크로 받은 출발지 (홈 화면 광고의 [출발지로 설정])
+  useEffect(() => {
+    if (fromCallId || pickup || !pickPlaceId) return;
+    let cancelled = false;
+    void resolvePlace(adStoredPlace({ name: pickName ?? "", address: pickAddr ?? "", placeId: pickPlaceId }))
+      .then((p) => {
+        if (cancelled) return;
+        setPickup(p);
+        setStep("destination");
+      })
+      .catch(() => {
+        if (!cancelled) setPresetFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // 처음 한 번만 (사용자가 출발지를 바꾼 뒤 덮어쓰지 않게)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromCallId, pickPlaceId]);
 
   const pickupRecents = useMemo(() => recentPlaces(recentCalls.data, "both"), [recentCalls.data]);
   const destRecents = useMemo(() => recentPlaces(recentCalls.data, "destination"), [recentCalls.data]);
@@ -204,7 +241,7 @@ export default function NewCallPage() {
               favorites={favorites.data}
               recents={pickupRecents}
               adSlot="pickup"
-              onAdDestination={pickAdDestination}
+              onAdPlace={applyAdPlace}
               onPicked={(p) => {
                 setPickup(p);
                 setStep(destination ? "confirm" : "destination");
@@ -226,7 +263,7 @@ export default function NewCallPage() {
               favorites={favorites.data}
               recents={destRecents}
               adSlot="destinationSearch"
-              onAdDestination={pickAdDestination}
+              onAdPlace={applyAdPlace}
               onPicked={(p) => {
                 setDestination(p);
                 setStep("confirm");

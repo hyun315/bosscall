@@ -308,7 +308,7 @@ export default function AdApplyPage() {
                   bannerUrl={banner}
                   detailUrl={detail}
                   linkUrl={link}
-                  onGo={place ? () => window.alert(`앱에서는 "${place.name}"을(를) 목적지로 기사 호출 화면이 열립니다.`) : undefined}
+                  onGo={place ? () => window.alert(`앱에서는 "${place.name}"이(가) 고른 대로 출발지 또는 목적지로 들어갑니다.`) : undefined}
                 />
               ) : (
                 <div className="flex aspect-[3/1] items-center justify-center rounded-card border-2 border-dashed border-line text-xs text-ink-faint">
