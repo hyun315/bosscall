@@ -191,7 +191,6 @@ export const commonMsgs = {
   // ── 광고 칸
   "ad.label": { ko: "광고", id: "Iklan", en: "Ad" },
   "ad.openLink": { ko: "자세히 보기", id: "Lihat selengkapnya", en: "Learn more" },
-  "ad.goHere": { ko: "여기로 가기", id: "Ke sini", en: "Go here" },
   "ad.setPickup": { ko: "출발지로 설정", id: "Jadikan penjemputan", en: "Set as pickup" },
   "ad.setDestination": { ko: "목적지로 설정", id: "Jadikan tujuan", en: "Set as destination" },
   "ad.emptyTitle": {

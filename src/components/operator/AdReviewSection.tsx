@@ -399,7 +399,7 @@ function CampaignCard({
             onGo={c.place ? () => toast("앱에서는 이 위치가 출발지·목적지로 들어갑니다.") : undefined}
           />
           <div>
-            <span className="label">업소 위치 ([여기로 가기] 단추)</span>
+            <span className="label">업소 위치 ([출발지로 설정·목적지로 설정] 단추)</span>
             <AdPlaceField
               value={c.place ?? null}
               onChange={(p) => {

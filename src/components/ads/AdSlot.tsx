@@ -26,7 +26,7 @@ import { useI18n } from "@/i18n/client";
  * 한 화면 AD_POSITIONS(5)칸: 1번 한인업소록 → 프리미엄 1~5 → 호출 묶음 1~5 → 남는 칸은 "빈 광고 자리" 안내.
  * 노출은 칸이 화면에 처음 보였을 때 1번, 클릭은 누를 때마다 기록한다 (내부 참고용).
  *
- * 광고에 업소 위치가 있으면 [여기로 가기] 단추가 붙는다.
+ * 광고에 업소 위치가 있으면 [출발지로 설정·목적지로 설정] 단추가 붙는다.
  *  - [출발지로 설정]/[목적지로 설정]. onPlace 를 주면 (호출 화면) 그 자리에서 바로 채운다.
  *  - 없으면 기사 호출 화면으로 목적지를 들고 이동한다. 응답 대기 화면처럼 호출 중이면 noDestination.
  */
@@ -174,7 +174,7 @@ export function PaidBanner({
   detailUrl: string | null;
   linkUrl: string | null;
   onOpen?: () => void;
-  /** 있으면 [여기로 가기] → 상세 화면에 [출발지로 설정]/[목적지로 설정] */
+  /** 있으면 배너 아래와 상세 화면에 [출발지로 설정]/[목적지로 설정] */
   onGo?: (use: AdPlaceUse) => void;
 }) {
   const { t } = useI18n();
@@ -198,20 +198,26 @@ export function PaidBanner({
           {t("ad.label")}
         </span>
       </button>
-      {onGo && (
-        <button
-          type="button"
-          onClick={() => {
-            onOpen?.();
-            if (detailUrl) setOpen(true);
-            else onGo("destination");
-          }}
-          className="absolute bottom-2 right-2 inline-flex min-h-[36px] items-center gap-1 rounded-full bg-white/95 px-3 text-[13px] font-bold text-navy shadow-card ring-1 ring-black/5 active:scale-95"
-        >
-          🚗 {t("ad.goHere")}
-        </button>
-      )}
       </div>
+      {/* 배너 바로 아래 — 이미지를 가리지 않게 단추 두 개를 따로 둔다 */}
+      {onGo && (
+        <div className="-mt-1.5 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => onGo("pickup")}
+            className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-btn border border-line bg-surface text-[14px] font-bold text-navy shadow-card active:scale-[0.98]"
+          >
+            📍 {t("ad.setPickup")}
+          </button>
+          <button
+            type="button"
+            onClick={() => onGo("destination")}
+            className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-btn bg-action text-[14px] font-bold text-white shadow-card active:scale-[0.98]"
+          >
+            🎯 {t("ad.setDestination")}
+          </button>
+        </div>
+      )}
       {open && detailUrl && (
         <AdDetail
           company={company}

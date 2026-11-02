@@ -285,7 +285,7 @@ export default function AdApplyPage() {
           <Field label="업소 위치 (선택)">
             <AdPlaceField value={place} onChange={setPlace} />
             <p className="mt-1 text-xs text-ink-sub">
-              넣으면 배너에 <b>🚗 여기로 가기</b> 단추가 생겨, 사장님이 누르면 바로 이곳을 목적지로 기사님을 부릅니다.
+              넣으면 배너 아래에 <b>📍 출발지로 설정 · 🎯 목적지로 설정</b> 단추가 생겨, 사장님이 누르면 바로 이곳을 출발지나 목적지로 기사님을 부릅니다.
             </p>
           </Field>
         </Section>

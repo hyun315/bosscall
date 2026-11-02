@@ -68,7 +68,7 @@ export const AD_INDUSTRIES = [
 export type AdIndustry = (typeof AD_INDUSTRIES)[number];
 
 /**
- * 광고주 업소 위치 — [여기로 가기] 단추용. 구글 좌표는 오래 보관하지 않도록 Place ID 만 두고,
+ * 광고주 업소 위치 — [출발지로 설정·목적지로 설정] 단추용. 구글 좌표는 오래 보관하지 않도록 Place ID 만 두고,
  * 목적지로 고를 때 Place ID 로 좌표를 새로 받는다.
  */
 export interface AdPlace {
