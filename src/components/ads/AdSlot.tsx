@@ -11,7 +11,7 @@ import {
   adsEnabled,
   advertisePath,
   placeHref,
-  slotLayout,
+  screenLayout,
   type AdPlace,
   type AdPlaceUse,
   type AdSlotId,
@@ -22,8 +22,8 @@ import { useI18n } from "@/i18n/client";
 
 /**
  * 광고 칸 — 사장님·가족 화면 전용. 기사 계정에는 아무것도 그리지 않는다.
- * 한 화면 1~5번 고정 자리 (slotLayout): 유료 광고는 자기 번호 자리에, 픽업·목적지 화면에선 같은 번호면 호출 묶음 우선,
- * 1번이 비면 한인업소록, 나머지 빈 자리는 "광고 자리 N" 안내. 끝난 광고 자리는 빈칸으로 남는다.
+ * 배치는 screenLayout — 지금(무료 기간)은 한인업소록 → 먼저 승인된 광고 순, 화면별 칸 수 제한, 넘치면 돌아가며,
+ * 자리가 남으면 "광고 자리" 안내 1칸. (등급제 AD_TIERS_ENABLED 를 켜면 1~5번 고정 자리)
  * 노출은 칸이 화면에 처음 보였을 때 1번, 클릭은 누를 때마다 기록한다 (내부 참고용).
  *
  * 광고에 업소 위치가 있으면 [출발지로 설정·목적지로 설정] 단추가 붙는다.
@@ -48,7 +48,9 @@ export function AdSlot({
   const show = adsEnabled() && role !== "DRIVER";
   const campaigns = useAdCampaigns(show);
   // 1~5번 고정 자리 — 끝난 광고 자리는 빈칸으로 남는다
-  const cells = slotLayout(campaigns, slot, Date.now());
+  // 광고가 칸보다 많으면 들어올 때마다 다른 광고부터 (선착순 순서는 유지)
+  const [seed] = useState(() => Math.floor(Math.random() * 1000));
+  const cells = screenLayout(campaigns, slot, Date.now(), seed);
   const house = SLOT_FALLBACK.find((c): c is HouseAd => c.kind === "ad");
   const adIds = cells
     .map((x) => (x.kind === "paid" ? x.c.id : x.kind === "house" ? house?.id : null))

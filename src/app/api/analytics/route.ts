@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/server/auth";
 import { readJson, route } from "@/lib/server/http";
 import { incrementUsage, rateLimit } from "@/lib/server/rateLimit";
 import { runAfterResponse } from "@/lib/server/defer";
+import { countAdEvent } from "@/services/server/ads";
 import { isRecord, requireOneOf, requireRecord } from "@/lib/validation";
 
 /** 클라이언트 이벤트 수집 (화이트리스트만) — 명세 §23, §34.5 */
@@ -26,6 +27,8 @@ export const POST = route(async (req) => {
   await runAfterResponse(() => {
     const jobs: Promise<unknown>[] = [track(event, user.uid, groupId, props)];
     if (event === "map_loaded") jobs.push(incrementUsage("maps_js_load"));
+    // 광고별 내부 집계 (광고주에게 제공하지 않음 — 유료 전환 때 가격 근거)
+    if (event === "ad_impression" || event === "ad_click") jobs.push(countAdEvent(event, props));
     if (event === "places_autocomplete_session") {
       const requests = typeof props.requests === "number" ? Math.min(props.requests, 100) : 1;
       jobs.push(incrementUsage("places_autocomplete_requests", requests), incrementUsage("places_details"));

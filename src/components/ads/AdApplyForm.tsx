@@ -29,6 +29,8 @@ import {
   SLOT_INFO,
   campaignWindow,
   nextFreeRank,
+  AD_TIERS_ENABLED,
+  MAX_LIVE_ADS,
   type AdCampaignDoc,
   type AdMonths,
   type AdPlace,
@@ -84,7 +86,12 @@ export function AdApplyForm({ mode }: { mode: "public" | "operator" }) {
     product: "premium",
     rank: win ? nextFreeRank(campaigns, "premium", win.startAt, win.endAt) : 1,
   };
-  const chosen: AdProduct | null = op ? opPick.product : (product ?? (AD_PRODUCTS.find((p) => p === initialProduct) ?? null));
+  // 단일 상품 운영(무료 기간): 상품 고르기 없이 모든 화면
+  const chosen: AdProduct | null = !AD_TIERS_ENABLED
+    ? "premium"
+    : op
+      ? opPick.product
+      : (product ?? (AD_PRODUCTS.find((p) => p === initialProduct) ?? null));
   const link = linkUrl.trim() ? (/^https?:\/\//.test(linkUrl.trim()) ? linkUrl.trim() : `https://${linkUrl.trim()}`) : null;
 
   const missing: string[] = [];
@@ -113,7 +120,7 @@ export function AdApplyForm({ mode }: { mode: "public" | "operator" }) {
           whatsapp,
           kakaoId,
           email,
-          product: opPick.product,
+          product: chosen!,
           rank: opPick.rank,
           months,
           startDate,
@@ -123,7 +130,7 @@ export function AdApplyForm({ mode }: { mode: "public" | "operator" }) {
           detailImage: detail!,
         });
         if (!r.ok) {
-          setTakenBy(r.takenBy);
+          setTakenBy(r.reason);
           return;
         }
         toast("광고를 올렸습니다. 몇 분 안에 앱에 반영됩니다.");
@@ -263,7 +270,19 @@ export function AdApplyForm({ mode }: { mode: "public" | "operator" }) {
 
         {/* 2. 상품 · 기간 */}
         <Section n={2} title="광고 위치와 기간">
-          {op ? (
+          {!AD_TIERS_ENABLED ? (
+            <div className="rounded-card border border-line bg-surface p-4">
+              <p className="text-[17px] font-extrabold text-ink">보스콜 광고</p>
+              <p className="mt-1 text-sm text-ink-sub">아래 4개 화면에 모두 나옵니다. 무료 기간에는 선착순으로 올라갑니다.</p>
+              <span className="mt-3 flex flex-wrap gap-1.5">
+                {SLOT_INFO.map((si) => (
+                  <span key={si.slot} className="rounded-full bg-action-soft px-2.5 py-1 text-xs font-semibold text-action">
+                    {si.icon} {si.title}
+                  </span>
+                ))}
+              </span>
+            </div>
+          ) : op ? (
             <ProductRankPicker
               value={opPick}
               onChange={(v) => {
@@ -340,7 +359,9 @@ export function AdApplyForm({ mode }: { mode: "public" | "operator" }) {
           )}
           {!op && (
             <p className="text-xs leading-relaxed text-ink-sub">
-              화면마다 1~5번 고정 자리가 있고, 자리 번호는 검토 후 정해 드립니다. 원하는 번호가 그 기간에 차 있으면 연락드립니다.
+              {AD_TIERS_ENABLED
+                ? "화면마다 1~5번 고정 자리가 있고, 자리 번호는 검토 후 정해 드립니다. 원하는 번호가 그 기간에 차 있으면 연락드립니다."
+                : `동시에 최대 ${MAX_LIVE_ADS}곳까지 올라가며, 화면 칸보다 많으면 돌아가며 노출됩니다. 무료 기간에 입점한 업체에는 유료 전환 때 창립 광고주 혜택을 드립니다.`}
             </p>
           )}
         </Section>
@@ -419,7 +440,7 @@ export function AdApplyForm({ mode }: { mode: "public" | "operator" }) {
           )}
           {takenBy && (
             <p className="rounded-btn bg-warning-soft px-4 py-3 text-sm text-warning-text">
-              {PRODUCT_INFO[opPick.product].name} {opPick.rank}번 자리는 그 기간에 「{takenBy}」 광고가 쓰고 있습니다. 다른 자리나 시작일을 고르세요.
+              {takenBy}
             </p>
           )}
           {error && <p className="rounded-btn bg-danger-soft px-4 py-3 text-sm text-danger">{error}</p>}
@@ -430,7 +451,7 @@ export function AdApplyForm({ mode }: { mode: "public" | "operator" }) {
             disabled={missing.length > 0 || busy}
             className="flex min-h-[56px] w-full items-center justify-center rounded-btn bg-action text-[16px] font-bold text-white disabled:bg-line disabled:text-ink-faint"
           >
-            {busy ? "보내는 중…" : op ? `${PRODUCT_INFO[opPick.product].name} ${opPick.rank}번 자리에 바로 올리기` : "무료로 광고 신청하기"}
+            {busy ? "보내는 중…" : op ? (AD_TIERS_ENABLED ? `${PRODUCT_INFO[opPick.product].name} ${opPick.rank}번 자리에 바로 올리기` : "바로 올리기") : "무료로 광고 신청하기"}
           </button>
         </section>
       </div>

@@ -122,11 +122,13 @@ export const uploadPois = (csv: string, replace: boolean) =>
 
 
 /* ───────── 광고 신청 검토 (운영자) ───────── */
-export const getAdRequests = () => api<{ requests: AdRequestDoc[]; campaigns: AdCampaignDoc[] }>("/api/operator/ads");
+export type AdStats = { impressions?: number; clicks?: number; pickup?: number; destination?: number };
+export const getAdRequests = () =>
+  api<{ requests: AdRequestDoc[]; campaigns: AdCampaignDoc[]; stats: Record<string, AdStats> }>("/api/operator/ads");
 export const getAdRequest = (id: string) =>
   api<{ request: AdRequestDoc; banner: string | null; detail: string | null }>(`/api/operator/ads/${id}`);
 export const approveAd = (id: string, startDate: string, months: number, rank: number, product: AdProduct) =>
-  api<{ ok: true; campaignId: string } | { ok: false; takenBy: string }>(`/api/operator/ads/${id}`, {
+  api<{ ok: true; campaignId: string } | { ok: false; reason: string }>(`/api/operator/ads/${id}`, {
     body: { action: "approve", startDate, months, rank, product },
   });
 export const rejectAd = (id: string, reason: string) => api(`/api/operator/ads/${id}`, { body: { action: "reject", reason } });
@@ -144,7 +146,7 @@ export const updateAdCampaign = (
     product?: AdProduct;
   },
 ) =>
-  api<{ ok: true; campaignId: string } | { ok: false; takenBy: string }>(`/api/operator/ads/${campaignId}`, {
+  api<{ ok: true; campaignId: string } | { ok: false; reason: string }>(`/api/operator/ads/${campaignId}`, {
     body: { action: "update", ...patch },
   });
 /** 운영자가 광고를 처음부터 직접 올림 (바로 승인) */
@@ -163,5 +165,5 @@ export const createAdDirect = (body: {
   place: AdPlace | null;
   bannerImage: string;
   detailImage: string;
-}) => api<{ ok: true; campaignId: string } | { ok: false; takenBy: string }>("/api/operator/ads", { body });
+}) => api<{ ok: true; campaignId: string } | { ok: false; reason: string }>("/api/operator/ads", { body });
 export const endAdCampaign = (campaignId: string) => api(`/api/operator/ads/${campaignId}`, { body: { action: "end" } });

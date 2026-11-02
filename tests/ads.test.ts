@@ -10,6 +10,9 @@ import {
   jakartaDayStart,
   rankTaken,
   slotLayout,
+  simpleLayout,
+  overlappingCount,
+  SCREEN_CAP,
   type AdCampaignDoc,
 } from "../src/lib/ads";
 import { jpegSize } from "../src/lib/jpeg";
@@ -77,7 +80,7 @@ test("slotLayout: 홈은 프리미엄 고정 자리, 픽업·목적지는 호출
     ["house", "e2", "b3", "e4", "e5"],
   );
   assert.equal(campaignLabel(all[1]!), "호출 묶음 2");
-  assert.equal(campaignLabel(all[4]!), "프리미엄 5");
+  assert.equal(campaignLabel(all[4]!), `${PRODUCT_INFO.premium.name} 5`);
 });
 
 test("rankTaken / nextFreeRank: 같은 상품·같은 번호·겹치는 기간만", () => {
@@ -111,4 +114,31 @@ test("placeHref: 출발지·목적지 /call/new 주소", () => {
   const k = new URL(placeHref(p, "pickup"), "https://x.test");
   assert.equal(k.searchParams.get("pickPlaceId"), "ChIJabc_123");
   assert.equal(k.searchParams.get("dest"), null);
+});
+
+test("simpleLayout: 한인업소록 → 선착순, 칸 수 제한, 넘치면 돌아가며, 남으면 안내 1칸", () => {
+  const mk = (id: string, createdAt: number, slots: AdCampaignDoc["slots"] = [...PRODUCT_INFO.premium.slots]) => ({
+    ...camp(id, slots, 0, 100),
+    createdAt,
+  });
+  const ids = (cells: ReturnType<typeof simpleLayout>) => cells.map((x) => (x.kind === "paid" ? x.c.id : x.kind));
+  assert.equal(SCREEN_CAP.homeBenefits, 3);
+  assert.equal(SCREEN_CAP.pickup, 2);
+  // 광고 없음
+  assert.deepEqual(ids(simpleLayout([], "homeBenefits", 10, 0)), ["house", "empty"]);
+  assert.deepEqual(ids(simpleLayout([], "pickup", 10, 0)), ["house", "empty"]);
+  // 1곳: 홈은 칸이 남아 안내, 픽업은 꽉 참. 호출 묶음으로 올렸던 광고도 홈에 나온다
+  const one = [mk("a", 1, [...PRODUCT_INFO.callBundle.slots])];
+  assert.deepEqual(ids(simpleLayout(one, "homeBenefits", 10, 0)), ["house", "a", "empty"]);
+  assert.deepEqual(ids(simpleLayout(one, "pickup", 10, 0)), ["house", "a"]);
+  // 3곳 (선착순 a, b, c): 홈 2칸, 픽업 1칸 — seed 로 시작점만 돈다
+  const three = [mk("c", 3), mk("a", 1), mk("b", 2)];
+  assert.deepEqual(ids(simpleLayout(three, "homeBenefits", 10, 0)), ["house", "a", "b"]);
+  assert.deepEqual(ids(simpleLayout(three, "homeBenefits", 10, 2)), ["house", "c", "a"]);
+  assert.deepEqual(ids(simpleLayout(three, "pickup", 10, 1)), ["house", "b"]);
+  // 끝난 광고는 빠진다
+  assert.deepEqual(ids(simpleLayout(three, "homeBenefits", 100, 0)), ["house", "empty"]);
+  assert.equal(overlappingCount(three, 50, 150), 3);
+  assert.equal(overlappingCount(three, 50, 150, "a"), 2);
+  assert.equal(overlappingCount(three, 100, 150), 0);
 });

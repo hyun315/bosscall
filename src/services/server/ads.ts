@@ -1,6 +1,6 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import type { DocumentSnapshot } from "firebase-admin/firestore";
+import { FieldValue, type DocumentSnapshot } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { ApiError, conflict, notFound } from "@/lib/server/http";
 import { jpegSize } from "@/lib/jpeg";
@@ -11,6 +11,9 @@ import {
   campaignProduct,
   campaignWindow,
   rankTaken,
+  overlappingCount,
+  AD_TIERS_ENABLED,
+  MAX_LIVE_ADS,
   jakartaDayStart,
   nextFreeRank,
   type AdCampaignDoc,
@@ -110,16 +113,23 @@ export async function readPublicImage(id: string): Promise<{ data: Buffer; conte
 
 /* ───────── 운영자 ───────── */
 
-export async function listAdRequests(): Promise<{ requests: AdRequestDoc[]; campaigns: AdCampaignDoc[] }> {
+export async function listAdRequests(): Promise<{
+  requests: AdRequestDoc[];
+  campaigns: AdCampaignDoc[];
+  stats: Record<string, AdStatsDoc>;
+}> {
   const db = adminDb();
   const [reqs, camps] = await Promise.all([
     db.collection("adRequests").orderBy("createdAt", "desc").limit(100).get(),
     db.collection("adCampaigns").where("endAt", ">", Date.now() - 90 * 86400_000).get(),
   ]);
-  return {
-    requests: reqs.docs.map((d) => d.data() as AdRequestDoc),
-    campaigns: camps.docs.map((d) => d.data() as AdCampaignDoc).sort((a, b) => a.startAt - b.startAt),
-  };
+  const campaigns = camps.docs.map((d) => d.data() as AdCampaignDoc).sort((a, b) => a.startAt - b.startAt);
+  const statSnaps = campaigns.length > 0 ? await db.getAll(...campaigns.map((c) => db.doc(`adStats/${c.id}`))) : [];
+  const stats: Record<string, AdStatsDoc> = {};
+  statSnaps.forEach((s, i) => {
+    if (s.exists) stats[campaigns[i]!.id] = s.data() as AdStatsDoc;
+  });
+  return { requests: reqs.docs.map((d) => d.data() as AdRequestDoc), campaigns, stats };
 }
 
 /** 검토 화면용 — 이미지를 data URL 로 함께 */
@@ -139,8 +149,26 @@ export async function getAdRequestWithImages(id: string): Promise<{ request: AdR
   return { request, banner: toUrl(b), detail: toUrl(d) };
 }
 
-/** 실패 시 그 번호 자리를 이미 쓰는 광고 업체명 */
-export type ApproveResult = { ok: true; campaignId: string } | { ok: false; takenBy: string };
+/** 실패 시 운영자에게 보여줄 이유 */
+export type ApproveResult = { ok: true; campaignId: string } | { ok: false; reason: string };
+
+/** 그 기간에 올릴 수 있는지 — 등급제면 같은 상품·번호, 아니면 동시 광고 수 상한 */
+function capacityProblem(
+  others: AdCampaignDoc[],
+  product: AdProduct,
+  rank: number,
+  startAt: number,
+  endAt: number,
+  exceptId?: string,
+): string | null {
+  if (AD_TIERS_ENABLED) {
+    const taken = rankTaken(others, product, rank, startAt, endAt, exceptId);
+    return taken ? `${PRODUCT_INFO[product].name} ${rank}번 자리는 그 기간에 「${taken.company}」 광고가 쓰고 있습니다.` : null;
+  }
+  return overlappingCount(others, startAt, endAt, exceptId) >= MAX_LIVE_ADS
+    ? `그 기간에는 이미 광고 ${MAX_LIVE_ADS}곳이 올라가 있습니다 (동시 최대 ${MAX_LIVE_ADS}곳). 시작일을 바꿔 주세요.`
+    : null;
+}
 
 export async function approveAdRequest(
   id: string,
@@ -158,15 +186,15 @@ export async function approveAdRequest(
     const months = override.months ?? r.months;
     const win = campaignWindow(startDate, months);
     if (!win) throw bad("시작일");
-    // 운영자가 상품을 바꿔 승인할 수 있다 (프리미엄 ↔ 호출 묶음)
-    const product = override.product ?? r.product;
+    // 운영자가 상품을 바꿔 승인할 수 있다 (프리미엄 ↔ 호출 묶음). 단일 상품 운영이면 모든 화면 상품
+    const product: AdProduct = AD_TIERS_ENABLED ? (override.product ?? r.product) : "premium";
     const slots = [...PRODUCT_INFO[product].slots];
 
     const existing = await tx.get(db.collection("adCampaigns").where("endAt", ">", win.startAt));
     const others = existing.docs.map((d) => d.data() as AdCampaignDoc);
     const rank = override.rank ?? nextFreeRank(others, product, win.startAt, win.endAt);
-    const taken = rankTaken(others, product, rank, win.startAt, win.endAt);
-    if (taken) return { ok: false, takenBy: taken.company };
+    const problem = capacityProblem(others, product, rank, win.startAt, win.endAt);
+    if (problem) return { ok: false, reason: problem };
 
     const campRef = db.collection("adCampaigns").doc();
     const now = Date.now();
@@ -285,7 +313,7 @@ export async function updateCampaign(campaignId: string, patch: CampaignPatch): 
     const now = Date.now();
     const update: Partial<AdCampaignDoc> = {};
 
-    const product = patch.product ?? campaignProduct(c);
+    const product = AD_TIERS_ENABLED ? (patch.product ?? campaignProduct(c)) : campaignProduct(c);
     if (patch.startDate !== undefined || patch.lastDate !== undefined || patch.rank !== undefined || patch.product !== undefined) {
       const startAt = patch.startDate !== undefined ? jakartaDayStart(patch.startDate) : c.startAt;
       const lastStart = patch.lastDate !== undefined ? jakartaDayStart(patch.lastDate) : c.endAt - 86400_000;
@@ -294,15 +322,8 @@ export async function updateCampaign(campaignId: string, patch: CampaignPatch): 
       const endAt = lastStart + 86400_000;
       const rank = patch.rank ?? c.rank ?? 5;
       const others = await tx.get(db.collection("adCampaigns").where("endAt", ">", startAt));
-      const taken = rankTaken(
-        others.docs.map((d) => d.data() as AdCampaignDoc),
-        product,
-        rank,
-        startAt,
-        endAt,
-        c.id,
-      );
-      if (taken) return { ok: false, takenBy: taken.company };
+      const problem = capacityProblem(others.docs.map((d) => d.data() as AdCampaignDoc), product, rank, startAt, endAt, c.id);
+      if (problem) return { ok: false, reason: problem };
       update.startAt = startAt;
       update.endAt = endAt;
     }
@@ -339,8 +360,37 @@ export async function createAdByOperator(input: AdRequestInput, rank: number, op
   const win = campaignWindow(input.startDate, input.months);
   if (!win) throw bad("시작일");
   const snap = await adminDb().collection("adCampaigns").where("endAt", ">", win.startAt).get();
-  const taken = rankTaken(snap.docs.map((d) => d.data() as AdCampaignDoc), input.product, rank, win.startAt, win.endAt);
-  if (taken) return { ok: false, takenBy: taken.company };
+  const product: AdProduct = AD_TIERS_ENABLED ? input.product : "premium";
+  const problem = capacityProblem(snap.docs.map((d) => d.data() as AdCampaignDoc), product, rank, win.startAt, win.endAt);
+  if (problem) return { ok: false, reason: problem };
   const { id } = await createAdRequest(input);
-  return approveAdRequest(id, operator, { rank, product: input.product });
+  return approveAdRequest(id, operator, { rank, product });
+}
+
+/** adStats/{campaignId} — 광고별 내부 집계 */
+export interface AdStatsDoc {
+  impressions?: number;
+  clicks?: number;
+  pickup?: number;
+  destination?: number;
+}
+
+const CAMPAIGN_ID = /^[A-Za-z0-9]{20}$/;
+
+/** 노출(광고 칸이 화면에 보임)·클릭·출발지/목적지 설정 수를 광고별로 센다 */
+export async function countAdEvent(
+  event: "ad_impression" | "ad_click",
+  props: Record<string, string | number | boolean | null>,
+): Promise<void> {
+  const ids = String(props.ad ?? "")
+    .split(",")
+    .filter((id) => CAMPAIGN_ID.test(id))
+    .slice(0, 10);
+  if (ids.length === 0) return;
+  const field =
+    event === "ad_impression" ? "impressions" : props.action === "pickup" ? "pickup" : props.action === "destination" ? "destination" : "clicks";
+  const db = adminDb();
+  const batch = db.batch();
+  for (const id of ids) batch.set(db.doc(`adStats/${id}`), { [field]: FieldValue.increment(1), updatedAt: Date.now() }, { merge: true });
+  await batch.commit();
 }

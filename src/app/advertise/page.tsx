@@ -8,7 +8,16 @@ import { useState } from "react";
 import { useSearchParam } from "@/hooks/useSearchParam";
 import { BannerCard } from "@/components/ads/AdSlot";
 import { BannerSpecGuide } from "@/components/ads/BannerSpecGuide";
-import { AD_CONTACT_EMAIL, AD_PRODUCTS, HOUSE_AD_SAMPLE, PRODUCT_INFO, SLOT_INFO, inquiryMailto } from "@/lib/ads";
+import {
+  AD_CONTACT_EMAIL,
+  AD_PRODUCTS,
+  AD_TIERS_ENABLED,
+  HOUSE_AD_SAMPLE,
+  MAX_LIVE_ADS,
+  PRODUCT_INFO,
+  SLOT_INFO,
+  inquiryMailto,
+} from "@/lib/ads";
 
 const SAMPLE = HOUSE_AD_SAMPLE;
 
@@ -86,7 +95,7 @@ export default function AdvertisePage() {
         <section>
           <h2 className="text-lg font-bold text-ink">광고 상품</h2>
           <div className="mt-4 space-y-3">
-            {AD_PRODUCTS.map((p) => (
+            {(AD_TIERS_ENABLED ? AD_PRODUCTS : (["premium"] as const)).map((p) => (
               <Link
                 key={p}
                 href={`/advertise/apply?product=${p}`}
@@ -96,11 +105,17 @@ export default function AdvertisePage() {
                   <span className="text-[17px] font-extrabold text-ink">{PRODUCT_INFO[p].name}</span>
                   <span className="text-sm font-semibold text-action">신청 ›</span>
                 </span>
-                <span className="mt-1 block text-sm text-ink-sub">{PRODUCT_INFO[p].desc}</span>
+                <span className="mt-1 block text-sm text-ink-sub">
+                  {AD_TIERS_ENABLED ? PRODUCT_INFO[p].desc : "홈 · 기사님 응답 대기 · 픽업 위치 · 목적지 — 4개 화면 모두"}
+                </span>
               </Link>
             ))}
           </div>
-          <p className="mt-2 text-xs text-ink-sub">기간 1·3·6개월 · 화면마다 1~5번 고정 자리 · 프리미엄은 픽업·목적지 화면에도 자동 노출 (호출 묶음 아래)</p>
+          <p className="mt-2 text-xs text-ink-sub">
+            {AD_TIERS_ENABLED
+              ? "기간 1·3·6개월 · 화면마다 1~5번 고정 자리 · 프리미엄은 픽업·목적지 화면에도 자동 노출 (호출 묶음 아래)"
+              : `기간 1·3·6개월 · 무료 기간 선착순 · 동시에 최대 ${MAX_LIVE_ADS}곳, 화면 칸보다 많으면 돌아가며 노출`}
+          </p>
         </section>
 
         {/* 광고 자리 */}
@@ -152,7 +167,10 @@ export default function AdvertisePage() {
           </ol>
           <div className="mt-4 rounded-card bg-[#F2C230]/15 px-4 py-3 ring-1 ring-[#F2C230]/50">
             <p className="text-[15px] font-bold text-ink">🎉 신규 출시 기념 · 2027년 3월 31일까지 무료</p>
-            <p className="mt-0.5 text-sm text-ink-sub">이 기간에는 게재 비용을 받지 않습니다.</p>
+            <p className="mt-0.5 text-sm text-ink-sub">
+              이 기간에는 게재 비용을 받지 않습니다. 선착순으로 올라가며, 무료 기간에 입점한 업체에는 유료 전환 때 <b>창립 광고주 혜택</b>을
+              드립니다.
+            </p>
           </div>
         </section>
 

@@ -20,12 +20,30 @@ export type AdSlotId = (typeof AD_SLOTS)[number];
 
 /* ───────── 광고 상품 (판매 단위) ───────── */
 
+/**
+ * 운영 방식 스위치.
+ *  - false (지금, 무료 기간): 상품 하나("보스콜 광고" = 4개 화면 전부), 선착순, 화면별 칸 수 제한 + 넘치면 돌아가며 노출.
+ *  - true: 프리미엄/호출 묶음 × 1~5번 고정 자리 (slotLayout). 가격이 정해지면 다시 켤 수 있게 남겨 둔다.
+ */
+export const AD_TIERS_ENABLED = false;
+
+/** 단일 상품 운영 시: 화면별 광고 칸 수 (한인업소록 포함) */
+export const SCREEN_CAP: Readonly<Record<AdSlotId, number>> = {
+  homeBenefits: 3,
+  waiting: 2,
+  pickup: 2,
+  destinationSearch: 2,
+};
+/** 단일 상품 운영 시: 같은 기간에 동시에 올릴 수 있는 광고 수 (넘치면 돌아가며 노출이 너무 묽어진다) */
+export const MAX_LIVE_ADS = 6;
+
 export const AD_PRODUCTS = ["premium", "callBundle"] as const;
 export type AdProduct = (typeof AD_PRODUCTS)[number];
 
 export const PRODUCT_INFO: Readonly<Record<AdProduct, { name: string; slots: readonly AdSlotId[]; desc: string }>> = {
   premium: {
-    name: "프리미엄",
+    // 단일 상품 운영 중에는 이 상품 하나만 쓴다 (모든 화면)
+    name: AD_TIERS_ENABLED ? "프리미엄" : "보스콜 광고",
     slots: ["homeBenefits", "waiting", "pickup", "destinationSearch"],
     desc: "홈 · 기사님 응답 대기 · 픽업 위치 · 목적지 — 광고 자리 4곳 모두",
   },
@@ -215,6 +233,37 @@ export function slotLayout(all: readonly AdCampaignDoc[], slot: AdSlotId, now: n
     tail.push({ kind: "empty", n });
   }
   return [...head, ...premium, ...tail];
+}
+
+/**
+ * 단일 상품 운영(선착순) — 1번 한인업소록, 그다음 먼저 승인된 광고부터.
+ * 화면 칸(SCREEN_CAP)보다 광고가 많으면 seed 로 시작점을 돌려 들어올 때마다 다른 광고가 나온다.
+ * 자리가 남으면 맨 아래 "광고 자리" 안내 1칸.
+ */
+export function simpleLayout(all: readonly AdCampaignDoc[], slot: AdSlotId, now: number, seed: number): AdCell[] {
+  // 단일 상품이므로 예전에 호출 묶음으로 올린 광고도 모든 화면에
+  const live = all
+    .filter((c) => c.startAt <= now && c.endAt > now)
+    .sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id));
+  const paidCap = Math.max(0, SCREEN_CAP[slot] - 1);
+  let shown = live;
+  if (live.length > paidCap) {
+    const start = ((seed % live.length) + live.length) % live.length;
+    shown = [...live.slice(start), ...live.slice(0, start)].slice(0, paidCap);
+  }
+  const cells: AdCell[] = [{ kind: "house", n: 1 }, ...shown.map((c, i): AdCell => ({ kind: "paid", n: i + 2, c }))];
+  if (live.length < paidCap) cells.push({ kind: "empty", n: cells.length + 1 });
+  return cells;
+}
+
+/** 지금 쓰는 배치 (스위치에 따라) */
+export function screenLayout(all: readonly AdCampaignDoc[], slot: AdSlotId, now: number, seed: number): AdCell[] {
+  return AD_TIERS_ENABLED ? slotLayout(all, slot, now) : simpleLayout(all, slot, now, seed);
+}
+
+/** 같은 기간에 겹치는 광고 수 (단일 상품 운영의 상한 확인) */
+export function overlappingCount(existing: ReadonlyArray<AdCampaignDoc>, startAt: number, endAt: number, exceptId?: string): number {
+  return existing.filter((c) => c.id !== exceptId && c.startAt < endAt && c.endAt > startAt).length;
 }
 
 /** 같은 상품에서 겹치는 기간에 아직 안 쓴 가장 앞 순번 (다 쓰였으면 5) */

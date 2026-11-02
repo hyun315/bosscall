@@ -18,6 +18,9 @@ import {
   jakartaDayStart,
   nextFreeRank,
   slotLayout,
+  AD_TIERS_ENABLED,
+  MAX_LIVE_ADS,
+  SCREEN_CAP,
   type AdCampaignDoc,
   type AdRequestDoc,
 } from "@/lib/ads";
@@ -29,6 +32,7 @@ import {
   rejectAd,
   setAdCampaignPlace,
   updateAdCampaign,
+  type AdStats,
 } from "@/services/client/actions";
 import { ImageCropper } from "@/components/ads/ImageCropper";
 import { BANNER_SAFE } from "@/components/ads/BannerSpecGuide";
@@ -43,7 +47,7 @@ const slotName = (s: string) => SLOT_INFO.find((x) => x.slot === s)?.title ?? s;
 
 export function AdReviewSection() {
   const toast = useToast();
-  const [data, setData] = useState<{ requests: AdRequestDoc[]; campaigns: AdCampaignDoc[] } | null>(null);
+  const [data, setData] = useState<{ requests: AdRequestDoc[]; campaigns: AdCampaignDoc[]; stats: Record<string, AdStats> } | null>(null);
   const [tab, setTab] = useState<Tab>("pending");
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -114,8 +118,13 @@ export function AdReviewSection() {
       {data && tab === "live" && (
         <div className="space-y-2">
           {campaigns.length === 0 && <p className="card p-4 text-sm text-ink-sub">게재 중인 광고가 없습니다. 빈 자리는 한인업소록이 나옵니다.</p>}
-          {campaigns.length > 0 && <PositionMap campaigns={campaigns} now={now} />}
-          {(["premium", "callBundle"] as const).map((p) => {
+          {campaigns.length > 0 && (AD_TIERS_ENABLED ? <PositionMap campaigns={campaigns} now={now} /> : <QueueView campaigns={campaigns} now={now} />)}
+          {!AD_TIERS_ENABLED &&
+            campaigns
+              .slice()
+              .sort((a, b) => Number(a.endAt <= now) - Number(b.endAt <= now) || a.createdAt - b.createdAt)
+              .map((c) => <CampaignCard key={c.id} c={c} all={campaigns} stats={data.stats[c.id]} now={now} onChanged={load} />)}
+          {AD_TIERS_ENABLED && (["premium", "callBundle"] as const).map((p) => {
             const list = campaigns
               .filter((c) => campaignProduct(c) === p)
               .sort((a, b) => Number(a.endAt <= now) - Number(b.endAt <= now) || (a.rank ?? 5) - (b.rank ?? 5) || a.startAt - b.startAt);
@@ -126,7 +135,7 @@ export function AdReviewSection() {
                   {PRODUCT_INFO[p].name} <span className="font-normal text-ink-sub">· {PRODUCT_INFO[p].desc}</span>
                 </h3>
                 {list.map((c) => (
-                  <CampaignCard key={c.id} c={c} all={campaigns} now={now} onChanged={load} />
+                  <CampaignCard key={c.id} c={c} all={campaigns} stats={data.stats[c.id]} now={now} onChanged={load} />
                 ))}
               </div>
             );
@@ -195,7 +204,7 @@ function RequestCard({
       if (res.ok) {
         toast("승인했습니다. 시작일에 자동으로 올라갑니다.");
         onDone();
-      } else setFull(res.takenBy);
+      } else setFull(res.reason);
     } catch (e) {
       toast(errorMessage(e), "error");
     } finally {
@@ -295,16 +304,18 @@ function RequestCard({
               </select>
             </div>
           </div>
-          <ProductRankPicker
-            value={pick}
-            onChange={setPick}
-            campaigns={campaigns}
-            startAt={win?.startAt ?? null}
-            endAt={win?.endAt ?? null}
-          />
+          {AD_TIERS_ENABLED && (
+            <ProductRankPicker
+              value={pick}
+              onChange={setPick}
+              campaigns={campaigns}
+              startAt={win?.startAt ?? null}
+              endAt={win?.endAt ?? null}
+            />
+          )}
           {full && (
             <p className="rounded-btn bg-warning-soft px-3 py-2 text-sm text-warning-text">
-              {PRODUCT_INFO[pick.product].name} {pick.rank}번 자리는 그 기간에 「{full}」 광고가 쓰고 있습니다. 다른 번호나 시작일을 고르세요.
+              {full}
             </p>
           )}
           <div className="grid grid-cols-2 gap-2">
@@ -328,11 +339,13 @@ const ymd = (ms: number) => new Date(ms + 7 * 3600_000).toISOString().slice(0, 1
 function CampaignCard({
   c,
   all,
+  stats,
   now,
   onChanged,
 }: {
   c: AdCampaignDoc;
   all: AdCampaignDoc[];
+  stats?: AdStats;
   now: number;
   onChanged: () => void;
 }) {
@@ -387,7 +400,7 @@ function CampaignCard({
     try {
       const r = await updateAdCampaign(c.id, patch);
       if (!r.ok) {
-        setFull(r.takenBy);
+        setFull(r.reason);
         return;
       }
       toast("저장했습니다. 몇 분 안에 앱에 반영됩니다.");
@@ -405,12 +418,30 @@ function CampaignCard({
       <div className="flex items-center justify-between gap-2">
         <span className="min-w-0 font-bold text-ink">
           {c.company}
-          <span className="ml-2 rounded-full bg-navy px-2 py-0.5 align-middle text-[11px] font-semibold text-white">{campaignLabel(c)}</span>
+          {AD_TIERS_ENABLED && (
+            <span className="ml-2 rounded-full bg-navy px-2 py-0.5 align-middle text-[11px] font-semibold text-white">{campaignLabel(c)}</span>
+          )}
         </span>
         <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${tone}`}>{state}</span>
       </div>
       <p className="text-sm text-ink-sub">
         {day(c.startAt)} ~ {day(c.endAt - 1)} · {c.slots.map(slotName).join(", ")}
+      </p>
+      {/* 내부 참고용 — 광고주에게 제공하지 않음 */}
+      <p className="grid grid-cols-4 gap-1 rounded-btn bg-bg px-2 py-1.5 text-center text-[11px] text-ink-sub">
+        {(
+          [
+            ["노출", stats?.impressions],
+            ["클릭", stats?.clicks],
+            ["출발지", stats?.pickup],
+            ["목적지", stats?.destination],
+          ] as const
+        ).map(([k, v]) => (
+          <span key={k}>
+            <b className="block text-[14px] text-ink">{(v ?? 0).toLocaleString()}</b>
+            {k}
+          </span>
+        ))}
       </p>
 
       {!editing ? (
@@ -487,14 +518,16 @@ function CampaignCard({
               <input type="date" className="field" value={lastDate} min={startDate} onChange={(e) => setLastDate(e.target.value)} />
             </div>
           </div>
-          <ProductRankPicker
-            value={pick}
-            onChange={setPick}
-            campaigns={all}
-            exceptId={c.id}
-            startAt={jakartaDayStart(startDate)}
-            endAt={(jakartaDayStart(lastDate) ?? c.endAt - 86400_000) + 86400_000}
-          />
+          {AD_TIERS_ENABLED && (
+            <ProductRankPicker
+              value={pick}
+              onChange={setPick}
+              campaigns={all}
+              exceptId={c.id}
+              startAt={jakartaDayStart(startDate)}
+              endAt={(jakartaDayStart(lastDate) ?? c.endAt - 86400_000) + 86400_000}
+            />
+          )}
           <div>
             <span className="label">연결 링크 (비우면 없음)</span>
             <input
@@ -508,7 +541,7 @@ function CampaignCard({
           </div>
           {full && (
             <p className="rounded-btn bg-warning-soft px-3 py-2 text-sm text-warning-text">
-              {PRODUCT_INFO[pick.product].name} {pick.rank}번 자리는 그 기간에 「{full}」 광고가 쓰고 있습니다. 다른 번호나 기간을 고르세요.
+              {full}
             </p>
           )}
           <div className="grid grid-cols-2 gap-2">
@@ -555,6 +588,33 @@ function PositionMap({ campaigns, now }: { campaigns: AdCampaignDoc[]; now: numb
           </ol>
         ))}
       </div>
+    </div>
+  );
+}
+
+/** 선착순 운영: 지금 올라간 광고 순서와 화면별 칸 수 */
+function QueueView({ campaigns, now }: { campaigns: AdCampaignDoc[]; now: number }) {
+  const live = campaigns.filter((c) => c.startAt <= now && c.endAt > now).sort((a, b) => a.createdAt - b.createdAt);
+  const home = SCREEN_CAP.homeBenefits - 1;
+  const call = SCREEN_CAP.pickup - 1;
+  return (
+    <div className="card space-y-2 p-4 text-[13px]">
+      <p className="text-xs font-semibold text-ink-sub">
+        지금 게재 {live.length} / 최대 {MAX_LIVE_ADS}곳 · 선착순(먼저 승인된 순)
+      </p>
+      {live.length > 0 && (
+        <ol className="list-decimal space-y-0.5 pl-5 text-ink">
+          {live.map((c) => (
+            <li key={c.id} className="truncate">
+              {c.company}
+            </li>
+          ))}
+        </ol>
+      )}
+      <p className="text-xs leading-relaxed text-ink-sub">
+        화면마다 맨 위는 한인업소록. 그 아래 홈 {home}칸, 응답 대기·픽업·목적지 {call}칸. 광고가 칸보다 많으면 화면에 들어올 때마다
+        돌아가며 나옵니다.
+      </p>
     </div>
   );
 }
