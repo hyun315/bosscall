@@ -2,7 +2,7 @@
 import { api } from "@/services/client/api";
 import type { CallAction } from "@/lib/callStateMachine";
 import type { ActualFix, NotificationPrefs, PlaceInput, PoiDoc } from "@/types/domain";
-import type { AdCampaignDoc, AdPlace, AdRequestDoc, AdSlotId } from "@/lib/ads";
+import type { AdCampaignDoc, AdPlace, AdRequestDoc } from "@/lib/ads";
 
 /** 서버 API 호출 모음 — UI 컴포넌트는 이 함수들만 사용한다 (코딩규칙 3) */
 
@@ -122,7 +122,7 @@ export const getAdRequests = () => api<{ requests: AdRequestDoc[]; campaigns: Ad
 export const getAdRequest = (id: string) =>
   api<{ request: AdRequestDoc; banner: string | null; detail: string | null }>(`/api/operator/ads/${id}`);
 export const approveAd = (id: string, startDate: string, months: number, rank: number) =>
-  api<{ ok: true; campaignId: string } | { ok: false; fullSlots: AdSlotId[] }>(`/api/operator/ads/${id}`, {
+  api<{ ok: true; campaignId: string } | { ok: false; takenBy: string }>(`/api/operator/ads/${id}`, {
     body: { action: "approve", startDate, months, rank },
   });
 export const rejectAd = (id: string, reason: string) => api(`/api/operator/ads/${id}`, { body: { action: "reject", reason } });
@@ -139,7 +139,7 @@ export const updateAdCampaign = (
     rank?: number;
   },
 ) =>
-  api<{ ok: true; campaignId: string } | { ok: false; fullSlots: AdSlotId[] }>(`/api/operator/ads/${campaignId}`, {
+  api<{ ok: true; campaignId: string } | { ok: false; takenBy: string }>(`/api/operator/ads/${campaignId}`, {
     body: { action: "update", ...patch },
   });
 export const endAdCampaign = (campaignId: string) => api(`/api/operator/ads/${campaignId}`, { body: { action: "end" } });

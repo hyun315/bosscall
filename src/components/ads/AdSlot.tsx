@@ -6,13 +6,12 @@ import { createPortal } from "react-dom";
 import { useReadySession } from "@/hooks/useSession";
 import { useAdCampaigns } from "@/hooks/useAdCampaigns";
 import {
-  AD_POSITIONS,
   SLOT_FALLBACK,
   adLink,
   adsEnabled,
   advertisePath,
   placeHref,
-  liveCampaigns,
+  slotLayout,
   type AdPlace,
   type AdPlaceUse,
   type AdSlotId,
@@ -23,7 +22,8 @@ import { useI18n } from "@/i18n/client";
 
 /**
  * 광고 칸 — 사장님·가족 화면 전용. 기사 계정에는 아무것도 그리지 않는다.
- * 한 화면 AD_POSITIONS(5)칸: 1번 한인업소록 → 프리미엄 1~5 → 호출 묶음 1~5 → 남는 칸은 "빈 광고 자리" 안내.
+ * 한 화면 1~5번 고정 자리 (slotLayout): 유료 광고는 자기 번호 자리에, 픽업·목적지 화면에선 같은 번호면 호출 묶음 우선,
+ * 1번이 비면 한인업소록, 나머지 빈 자리는 "광고 자리 N" 안내. 끝난 광고 자리는 빈칸으로 남는다.
  * 노출은 칸이 화면에 처음 보였을 때 1번, 클릭은 누를 때마다 기록한다 (내부 참고용).
  *
  * 광고에 업소 위치가 있으면 [출발지로 설정·목적지로 설정] 단추가 붙는다.
@@ -47,11 +47,13 @@ export function AdSlot({
   const seen = useRef(false);
   const show = adsEnabled() && role !== "DRIVER";
   const campaigns = useAdCampaigns(show);
-  const paid = liveCampaigns(campaigns, slot, Date.now());
-  const house = SLOT_FALLBACK.filter((c): c is HouseAd => c.kind === "ad");
-  // 남는 칸은 "빈 광고 자리" 안내로 채워 항상 AD_POSITIONS 칸
-  const empty = Math.max(0, AD_POSITIONS - house.length - paid.length);
-  const adIds = [...house.map((c) => c.id), ...paid.map((c) => c.id)].join(",");
+  // 1~5번 고정 자리 — 끝난 광고 자리는 빈칸으로 남는다
+  const cells = slotLayout(campaigns, slot, Date.now());
+  const house = SLOT_FALLBACK.find((c): c is HouseAd => c.kind === "ad");
+  const adIds = cells
+    .map((x) => (x.kind === "paid" ? x.c.id : x.kind === "house" ? house?.id : null))
+    .filter(Boolean)
+    .join(",");
 
   useEffect(() => {
     const el = ref.current;
@@ -77,10 +79,15 @@ export function AdSlot({
 
   return (
     <aside ref={ref} className={`space-y-3 ${className}`}>
-      {house.map((c) => (
-        <BannerCard key={c.id} ad={c} slot={slot} onClick={clickOf(c.id)} />
-      ))}
-      {paid.map((c) => (
+      {cells.map((cell) => {
+        if (cell.kind === "house") {
+          return house ? <BannerCard key="house" ad={house} slot={slot} onClick={clickOf(house.id)} /> : null;
+        }
+        if (cell.kind === "empty") {
+          return <EmptyAdCard key={`e${cell.n}`} n={cell.n} slot={slot} onClick={clickOf("inquiry")} />;
+        }
+        const c = cell.c;
+        return (
         <PaidBanner
           key={c.id}
           company={c.company}
@@ -99,10 +106,8 @@ export function AdSlot({
               : undefined
           }
         />
-      ))}
-      {Array.from({ length: empty }, (_, i) => (
-        <EmptyAdCard key={i} n={house.length + paid.length + i + 1} slot={slot} onClick={clickOf("inquiry")} />
-      ))}
+        );
+      })}
     </aside>
   );
 }

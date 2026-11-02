@@ -10,7 +10,7 @@ import {
   PRODUCT_INFO,
   campaignProduct,
   campaignWindow,
-  fullSlots,
+  rankTaken,
   jakartaDayStart,
   nextFreeRank,
   type AdCampaignDoc,
@@ -19,7 +19,6 @@ import {
   type AdPlace,
   type AdProduct,
   type AdRequestDoc,
-  type AdSlotId,
 } from "@/lib/ads";
 
 /**
@@ -140,7 +139,8 @@ export async function getAdRequestWithImages(id: string): Promise<{ request: AdR
   return { request, banner: toUrl(b), detail: toUrl(d) };
 }
 
-export type ApproveResult = { ok: true; campaignId: string } | { ok: false; fullSlots: AdSlotId[] };
+/** 실패 시 그 번호 자리를 이미 쓰는 광고 업체명 */
+export type ApproveResult = { ok: true; campaignId: string } | { ok: false; takenBy: string };
 
 export async function approveAdRequest(
   id: string,
@@ -162,9 +162,9 @@ export async function approveAdRequest(
 
     const existing = await tx.get(db.collection("adCampaigns").where("endAt", ">", win.startAt));
     const others = existing.docs.map((d) => d.data() as AdCampaignDoc);
-    const full = fullSlots(others, slots, win.startAt, win.endAt);
-    if (full.length > 0) return { ok: false, fullSlots: full };
     const rank = override.rank ?? nextFreeRank(others, r.product, win.startAt, win.endAt);
+    const taken = rankTaken(others, r.product, rank, win.startAt, win.endAt);
+    if (taken) return { ok: false, takenBy: taken.company };
 
     const campRef = db.collection("adCampaigns").doc();
     const now = Date.now();
@@ -280,20 +280,23 @@ export async function updateCampaign(campaignId: string, patch: CampaignPatch): 
     const now = Date.now();
     const update: Partial<AdCampaignDoc> = {};
 
-    if (patch.startDate !== undefined || patch.lastDate !== undefined) {
+    if (patch.startDate !== undefined || patch.lastDate !== undefined || patch.rank !== undefined) {
       const startAt = patch.startDate !== undefined ? jakartaDayStart(patch.startDate) : c.startAt;
       const lastStart = patch.lastDate !== undefined ? jakartaDayStart(patch.lastDate) : c.endAt - 86400_000;
       if (startAt === null) throw bad("시작일");
       if (lastStart === null || lastStart < startAt) throw bad("종료일");
       const endAt = lastStart + 86400_000;
+      const rank = patch.rank ?? c.rank ?? 5;
       const others = await tx.get(db.collection("adCampaigns").where("endAt", ">", startAt));
-      const full = fullSlots(
-        others.docs.map((d) => d.data() as AdCampaignDoc).filter((x) => x.id !== c.id),
-        c.slots,
+      const taken = rankTaken(
+        others.docs.map((d) => d.data() as AdCampaignDoc),
+        campaignProduct(c),
+        rank,
         startAt,
         endAt,
+        c.id,
       );
-      if (full.length > 0) return { ok: false, fullSlots: full };
+      if (taken) return { ok: false, takenBy: taken.company };
       update.startAt = startAt;
       update.endAt = endAt;
     }

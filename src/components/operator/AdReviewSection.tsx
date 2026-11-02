@@ -10,7 +10,6 @@ import {
   AD_RANKS,
   BANNER_SPEC,
   DETAIL_SPEC,
-  MAX_ADS_PER_SLOT,
   PRODUCT_INFO,
   SLOT_INFO,
   campaignLabel,
@@ -18,6 +17,7 @@ import {
   campaignWindow,
   jakartaDayStart,
   nextFreeRank,
+  slotLayout,
   type AdCampaignDoc,
   type AdProduct,
   type AdRequestDoc,
@@ -109,9 +109,23 @@ export function AdReviewSection() {
       {data && tab === "live" && (
         <div className="space-y-2">
           {campaigns.length === 0 && <p className="card p-4 text-sm text-ink-sub">게재 중인 광고가 없습니다. 빈 자리는 한인업소록이 나옵니다.</p>}
-          {campaigns.map((c) => (
-            <CampaignCard key={c.id} c={c} all={campaigns} now={now} onChanged={load} />
-          ))}
+          {campaigns.length > 0 && <PositionMap campaigns={campaigns} now={now} />}
+          {(["premium", "callBundle"] as const).map((p) => {
+            const list = campaigns
+              .filter((c) => campaignProduct(c) === p)
+              .sort((a, b) => Number(a.endAt <= now) - Number(b.endAt <= now) || (a.rank ?? 5) - (b.rank ?? 5) || a.startAt - b.startAt);
+            if (list.length === 0) return null;
+            return (
+              <div key={p} className="space-y-2 pt-2">
+                <h3 className="px-1 text-sm font-bold text-ink">
+                  {PRODUCT_INFO[p].name} <span className="font-normal text-ink-sub">· {PRODUCT_INFO[p].desc}</span>
+                </h3>
+                {list.map((c) => (
+                  <CampaignCard key={c.id} c={c} all={campaigns} now={now} onChanged={load} />
+                ))}
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -158,7 +172,7 @@ function RequestCard({
     win ? nextFreeRank(campaigns, r.product, win.startAt, win.endAt) : 1,
   );
   const [busy, setBusy] = useState<"approve" | "reject" | null>(null);
-  const [full, setFull] = useState<string[] | null>(null);
+  const [full, setFull] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || images) return;
@@ -175,7 +189,7 @@ function RequestCard({
       if (res.ok) {
         toast("승인했습니다. 시작일에 자동으로 올라갑니다.");
         onDone();
-      } else setFull(res.fullSlots);
+      } else setFull(res.takenBy);
     } catch (e) {
       toast(errorMessage(e), "error");
     } finally {
@@ -283,7 +297,7 @@ function RequestCard({
           />
           {full && (
             <p className="rounded-btn bg-warning-soft px-3 py-2 text-sm text-warning-text">
-              이 기간에 자리가 찼습니다 ({full.map(slotName).join(", ")} — 한 화면 유료 광고 최대 {MAX_ADS_PER_SLOT}곳). 시작일을 바꿔 다시 승인하세요.
+              {PRODUCT_INFO[r.product].name} {rank}번 자리는 그 기간에 「{full}」 광고가 쓰고 있습니다. 다른 번호나 시작일을 고르세요.
             </p>
           )}
           <div className="grid grid-cols-2 gap-2">
@@ -325,7 +339,7 @@ function CampaignCard({
   const [rank, setRank] = useState<number>(c.rank ?? 5);
   const product = campaignProduct(c);
   const [busy, setBusy] = useState(false);
-  const [full, setFull] = useState<string[] | null>(null);
+  const [full, setFull] = useState<string | null>(null);
 
   const state = c.endAt <= now ? "종료" : c.startAt <= now ? "게재 중" : "예정";
   const tone =
@@ -363,7 +377,7 @@ function CampaignCard({
     try {
       const r = await updateAdCampaign(c.id, patch);
       if (!r.ok) {
-        setFull(r.fullSlots);
+        setFull(r.takenBy);
         return;
       }
       toast("저장했습니다. 몇 분 안에 앱에 반영됩니다.");
@@ -487,7 +501,7 @@ function CampaignCard({
           </div>
           {full && (
             <p className="rounded-btn bg-warning-soft px-3 py-2 text-sm text-warning-text">
-              이 기간에 자리가 찼습니다 ({full.map(slotName).join(", ")} — 한 화면 유료 광고 최대 {MAX_ADS_PER_SLOT}곳). 기간을 바꿔 주세요.
+              {PRODUCT_INFO[product].name} {rank}번 자리는 그 기간에 「{full}」 광고가 쓰고 있습니다. 다른 번호나 기간을 고르세요.
             </p>
           )}
           <div className="grid grid-cols-2 gap-2">
@@ -525,7 +539,7 @@ function RankPicker({
 }) {
   return (
     <div>
-      <span className="label">노출 순서 · {PRODUCT_INFO[product].name}</span>
+      <span className="label">자리 번호 · {PRODUCT_INFO[product].name}</span>
       <div className="grid grid-cols-5 gap-1.5">
         {AD_RANKS.map((r) => {
           const on = value === r;
@@ -547,8 +561,50 @@ function RankPicker({
         })}
       </div>
       <p className="mt-1 text-xs text-ink-sub">
-        화면 순서: 한인업소록 → 프리미엄 1~5 → 호출 묶음 1~5. 점(•)은 같은 기간에 이미 쓰는 순번 — 겹치면 먼저 시작한 광고가 앞.
+        화면마다 1~5번 고정 자리입니다. 픽업·목적지 화면에선 같은 번호면 호출 묶음이 프리미엄보다 우선, 1번이 비면 한인업소록. 점(•)은 같은 기간에 이미 쓰는 번호입니다.
       </p>
+    </div>
+  );
+}
+
+/** 지금 화면별 1~5번 자리 현황 — 홈·응답 대기(프리미엄만) / 픽업·목적지(호출 묶음 우선) */
+function PositionMap({ campaigns, now }: { campaigns: AdCampaignDoc[]; now: number }) {
+  const cols = [
+    { title: "홈 · 응답 대기", cells: slotLayout(campaigns, "homeBenefits", now) },
+    { title: "픽업 · 목적지", cells: slotLayout(campaigns, "pickup", now) },
+  ];
+  const label = (cell: ReturnType<typeof slotLayout>[number]) =>
+    cell.kind === "paid" ? `${cell.c.company} (${campaignLabel(cell.c)})` : cell.kind === "house" ? "한인업소록" : "빈칸";
+  return (
+    <div className="card overflow-hidden">
+      <p className="border-b border-line px-4 py-2 text-xs font-semibold text-ink-sub">지금 자리 현황</p>
+      <table className="w-full table-fixed text-left text-[13px]">
+        <thead>
+          <tr className="text-ink-sub">
+            <th className="w-8 px-2 py-1.5 text-center">#</th>
+            {cols.map((c) => (
+              <th key={c.title} className="px-2 py-1.5 font-semibold">
+                {c.title}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <tr key={i} className="border-t border-line">
+              <td className="px-2 py-1.5 text-center font-bold text-ink">{i + 1}</td>
+              {cols.map((c) => {
+                const cell = c.cells[i]!;
+                return (
+                  <td key={c.title} className={`truncate px-2 py-1.5 ${cell.kind === "empty" ? "text-ink-faint" : "text-ink"}`}>
+                    {label(cell)}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

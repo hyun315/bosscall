@@ -255,7 +255,7 @@ export default function AdApplyPage() {
             </p>
           )}
           <p className="text-xs leading-relaxed text-ink-sub">
-            한 화면에 광고 5칸이 있고 프리미엄이 호출 묶음보다 앞에 나옵니다. 자리가 찬 기간이면 시작일 조정을 연락드립니다.
+            화면마다 1~5번 고정 자리가 있고, 자리 번호는 검토 후 정해 드립니다. 원하는 번호가 그 기간에 차 있으면 연락드립니다.
           </p>
         </Section>
 

@@ -37,12 +37,13 @@ export const PRODUCT_INFO: Readonly<Record<AdProduct, { name: string; slots: rea
 };
 
 /**
- * 한 화면의 광고 칸 수 — 1번은 한인업소록, 나머지는 순서대로
- * 프리미엄 1~5 → 호출 묶음 1~5 (호출 묶음은 항상 프리미엄 뒤), 남는 칸은 "빈 광고 자리" 안내.
+ * 한 화면의 광고 칸 — 1~5번 고정 자리.
+ *  - 유료 광고는 운영자가 정한 번호 자리에 나온다 (프리미엄 N / 호출 묶음 N).
+ *  - 픽업·목적지 화면에서 같은 번호면 호출 묶음이 우선 (프리미엄은 그 화면에서 빠짐).
+ *  - 1번 자리가 비어 있으면 한인업소록.
+ *  - 기간이 끝난 광고 자리는 빈칸으로 남는다 (아래 광고가 올라오지 않음).
  */
 export const AD_POSITIONS = 5;
-/** 한 화면에 올라가는 유료 광고 상한 (한인업소록 1칸 제외) */
-export const MAX_ADS_PER_SLOT = AD_POSITIONS - 1;
 /** 상품 안 순번 */
 export const AD_RANKS = [1, 2, 3, 4, 5] as const;
 
@@ -161,29 +162,42 @@ export function campaignWindow(startDate: string, months: number): { startAt: nu
   return { startAt, endAt: end };
 }
 
-/** 이 기간에 자리별로 이미 잡힌 광고 수 — 상한(MAX_ADS_PER_SLOT)을 넘는 자리를 돌려준다 */
-export function fullSlots(
-  existing: ReadonlyArray<Pick<AdCampaignDoc, "slots" | "startAt" | "endAt">>,
-  slots: readonly AdSlotId[],
+/** 같은 상품·같은 번호를 겹치는 기간에 이미 쓰는 광고 (없으면 null) */
+export function rankTaken(
+  existing: ReadonlyArray<AdCampaignDoc>,
+  product: AdProduct,
+  rank: number,
   startAt: number,
   endAt: number,
-): AdSlotId[] {
-  return slots.filter((s) => {
-    const overlapping = existing.filter((c) => c.slots.includes(s) && c.startAt < endAt && c.endAt > startAt);
-    return overlapping.length >= MAX_ADS_PER_SLOT;
-  });
+  exceptId?: string,
+): AdCampaignDoc | null {
+  return (
+    existing.find(
+      (c) =>
+        c.id !== exceptId &&
+        campaignProduct(c) === product &&
+        (c.rank ?? 5) === rank &&
+        c.startAt < endAt &&
+        c.endAt > startAt,
+    ) ?? null
+  );
 }
 
-/**
- * 지금 이 자리에 나갈 광고, 보여줄 순서대로 (최대 MAX_ADS_PER_SLOT 개).
- * 프리미엄 → 호출 묶음, 같은 상품 안에서는 순번 → 먼저 시작한 광고.
- */
-export function liveCampaigns(all: readonly AdCampaignDoc[], slot: AdSlotId, now: number): AdCampaignDoc[] {
-  const tier = (c: AdCampaignDoc) => (campaignProduct(c) === "premium" ? 0 : 1);
-  return all
+export type AdCell = { kind: "paid"; n: number; c: AdCampaignDoc } | { kind: "house"; n: number } | { kind: "empty"; n: number };
+
+/** 이 화면의 1~5번 자리에 무엇이 나오는지 */
+export function slotLayout(all: readonly AdCampaignDoc[], slot: AdSlotId, now: number): AdCell[] {
+  const live = all
     .filter((c) => c.slots.includes(slot) && c.startAt <= now && c.endAt > now)
-    .sort((a, b) => tier(a) - tier(b) || (a.rank ?? 5) - (b.rank ?? 5) || a.startAt - b.startAt || a.id.localeCompare(b.id))
-    .slice(0, MAX_ADS_PER_SLOT);
+    .sort((a, b) => a.startAt - b.startAt || a.id.localeCompare(b.id));
+  const at = (product: AdProduct, n: number) => live.find((c) => campaignProduct(c) === product && (c.rank ?? 5) === n);
+  return Array.from({ length: AD_POSITIONS }, (_, i): AdCell => {
+    const n = i + 1;
+    // 호출 묶음 자리(픽업·목적지)에서는 호출 묶음 먼저 — 다른 화면엔 호출 묶음이 없으니 프리미엄
+    const c = at("callBundle", n) ?? at("premium", n);
+    if (c) return { kind: "paid", n, c };
+    return n === 1 ? { kind: "house", n } : { kind: "empty", n };
+  });
 }
 
 /** 같은 상품에서 겹치는 기간에 아직 안 쓴 가장 앞 순번 (다 쓰였으면 5) */

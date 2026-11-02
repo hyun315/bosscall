@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useSearchParam } from "@/hooks/useSearchParam";
 import { BannerCard } from "@/components/ads/AdSlot";
 import { BannerSpecGuide } from "@/components/ads/BannerSpecGuide";
-import { AD_CONTACT_EMAIL, AD_PRODUCTS, HOUSE_AD_SAMPLE, MAX_ADS_PER_SLOT, PRODUCT_INFO, SLOT_INFO, inquiryMailto } from "@/lib/ads";
+import { AD_CONTACT_EMAIL, AD_PRODUCTS, HOUSE_AD_SAMPLE, PRODUCT_INFO, SLOT_INFO, inquiryMailto } from "@/lib/ads";
 
 const SAMPLE = HOUSE_AD_SAMPLE;
 
@@ -100,7 +100,7 @@ export default function AdvertisePage() {
               </Link>
             ))}
           </div>
-          <p className="mt-2 text-xs text-ink-sub">기간 1·3·6개월 · 한 화면에 광고 5칸 (프리미엄이 호출 묶음보다 앞) · 유료 광고는 화면당 최대 {MAX_ADS_PER_SLOT}곳</p>
+          <p className="mt-2 text-xs text-ink-sub">기간 1·3·6개월 · 화면마다 1~5번 고정 자리 · 픽업·목적지 화면에서는 호출 묶음이 우선</p>
         </section>
 
         {/* 광고 자리 */}
