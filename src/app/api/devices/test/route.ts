@@ -14,7 +14,7 @@ export const maxDuration = 20;
  */
 export const POST = route(async (req) => {
   const user = await requireUser(req);
-  await rateLimit(user.uid, "test_push", 5, 600);
+  await rateLimit(user.uid, "test_push", 20, 600); // 설정을 바꿔 가며 여러 번 시험해 보는 경우가 많다
   const db = adminDb();
   const [uSnap, tokens] = await Promise.all([
     db.doc(`users/${user.uid}`).get(),
