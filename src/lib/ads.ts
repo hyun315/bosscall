@@ -38,8 +38,9 @@ export const PRODUCT_INFO: Readonly<Record<AdProduct, { name: string; slots: rea
 
 /**
  * 한 화면의 광고 칸 — 1~5번 고정 자리.
- *  - 유료 광고는 운영자가 정한 번호 자리에 나온다 (프리미엄 N / 호출 묶음 N).
- *  - 픽업·목적지 화면에서 같은 번호면 호출 묶음이 우선 (프리미엄은 그 화면에서 빠짐).
+ *  - 홈·응답 대기 화면: 프리미엄 N 이 N번 자리.
+ *  - 픽업·목적지 화면: 호출 묶음 N 이 N번 자리, 프리미엄은 마지막 호출 묶음 아래에 번호순으로 자동 노출,
+ *    남은 호출 묶음 자리 안내는 맨 아래 (전체 5칸이 될 때까지만).
  *  - 1번 자리가 비어 있으면 한인업소록.
  *  - 기간이 끝난 광고 자리는 빈칸으로 남는다 (아래 광고가 올라오지 않음).
  */
@@ -191,13 +192,29 @@ export function slotLayout(all: readonly AdCampaignDoc[], slot: AdSlotId, now: n
     .filter((c) => c.slots.includes(slot) && c.startAt <= now && c.endAt > now)
     .sort((a, b) => a.startAt - b.startAt || a.id.localeCompare(b.id));
   const at = (product: AdProduct, n: number) => live.find((c) => campaignProduct(c) === product && (c.rank ?? 5) === n);
-  return Array.from({ length: AD_POSITIONS }, (_, i): AdCell => {
-    const n = i + 1;
-    // 호출 묶음 자리(픽업·목적지)에서는 호출 묶음 먼저 — 다른 화면엔 호출 묶음이 없으니 프리미엄
-    const c = at("callBundle", n) ?? at("premium", n);
+  // 호출 묶음 화면(픽업·목적지)은 호출 묶음이 1~5번 자리의 주인, 그 밖의 화면은 프리미엄
+  const callScreen = PRODUCT_INFO.callBundle.slots.includes(slot);
+  const owner: AdProduct = callScreen ? "callBundle" : "premium";
+  const cell = (n: number): AdCell => {
+    const c = at(owner, n);
     if (c) return { kind: "paid", n, c };
     return n === 1 ? { kind: "house", n } : { kind: "empty", n };
-  });
+  };
+  if (!callScreen) return Array.from({ length: AD_POSITIONS }, (_, i) => cell(i + 1));
+
+  // 호출 묶음 화면: 호출 묶음 1~마지막 번호까지는 번호 자리 그대로 (사이 빈칸 유지)
+  const lastBundle = Math.max(0, ...live.filter((c) => campaignProduct(c) === "callBundle").map((c) => c.rank ?? 5));
+  const head = Array.from({ length: Math.max(1, lastBundle) }, (_, i) => cell(i + 1));
+  // 프리미엄은 자동으로 그 아래에 번호순
+  const premium = AD_RANKS.map((r) => at("premium", r))
+    .filter((c): c is AdCampaignDoc => !!c)
+    .map((c): AdCell => ({ kind: "paid", n: AD_POSITIONS + (c.rank ?? 5), c }));
+  // 남은 호출 묶음 번호 자리는 맨 아래 "광고 자리 N" 안내 — 전체가 AD_POSITIONS 칸이 될 때까지만
+  const tail: AdCell[] = [];
+  for (let n = Math.max(2, lastBundle + 1); n <= AD_POSITIONS && head.length + premium.length + tail.length < AD_POSITIONS; n++) {
+    tail.push({ kind: "empty", n });
+  }
+  return [...head, ...premium, ...tail];
 }
 
 /** 같은 상품에서 겹치는 기간에 아직 안 쓴 가장 앞 순번 (다 쓰였으면 5) */

@@ -46,7 +46,7 @@ const camp = (id: string, slots: AdCampaignDoc["slots"], startAt: number, endAt:
   createdAt: 0,
 });
 
-test("slotLayout: 1~5번 고정 자리, 픽업·목적지는 호출 묶음 우선, 1번 비면 한인업소록", () => {
+test("slotLayout: 홈은 프리미엄 고정 자리, 픽업·목적지는 호출 묶음 자리 → 그 아래 프리미엄 자동", () => {
   const P = PRODUCT_INFO.premium.slots;
   const B = PRODUCT_INFO.callBundle.slots;
   const all = [
@@ -57,11 +57,25 @@ test("slotLayout: 1~5번 고정 자리, 픽업·목적지는 호출 묶음 우�
     camp("old", [...P], 0, 100), // 예전 광고: 4곳이면 프리미엄, 번호 없으면 5
   ];
   const show = (slot: "pickup" | "homeBenefits", now: number) =>
-    slotLayout(all, slot, now).map((x) => (x.kind === "paid" ? x.c.id : x.kind));
-  assert.deepEqual(show("homeBenefits", 10), ["house", "p2", "empty", "p4", "old"]);
-  assert.deepEqual(show("pickup", 10), ["b1", "b2", "empty", "p4", "old"]);
-  // b1 이 끝나도 아래 광고가 올라오지 않는다 — 1번은 비면 한인업소록
-  assert.deepEqual(show("pickup", 60), ["house", "b2", "empty", "p4", "old"]);
+    slotLayout(all, slot, now).map((x) => (x.kind === "paid" ? x.c.id : x.kind === "empty" ? `e${x.n}` : x.kind));
+  // 홈: 프리미엄 N 이 N번, 끝난 자리·빈 자리는 빈칸 그대로
+  assert.deepEqual(show("homeBenefits", 10), ["house", "p2", "e3", "p4", "old"]);
+  // 픽업: 호출 묶음 1·2 → 프리미엄 번호순 (5칸이 넘으면 빈 자리 안내 없음)
+  assert.deepEqual(show("pickup", 10), ["b1", "b2", "p2", "p4", "old"]);
+  // b1 이 끝나도 b2 는 2번 자리 그대로 — 1번은 한인업소록
+  assert.deepEqual(show("pickup", 60), ["house", "b2", "p2", "p4", "old"]);
+  // 호출 묶음이 없으면: 한인업소록 → 프리미엄 → 남은 자리 안내 (5칸까지)
+  const onlyP = all.filter((c) => c.id === "p2");
+  assert.deepEqual(
+    slotLayout(onlyP, "pickup", 10).map((x) => (x.kind === "paid" ? x.c.id : x.kind === "empty" ? `e${x.n}` : x.kind)),
+    ["house", "p2", "e2", "e3", "e4"],
+  );
+  // 호출 묶음 3번만 있으면 1·2번 자리는 비어 있는 채로 유지
+  const b3 = [{ ...camp("b3", [...B], 0, 100), product: "callBundle" as const, rank: 3 }];
+  assert.deepEqual(
+    slotLayout(b3, "pickup", 10).map((x) => (x.kind === "paid" ? x.c.id : x.kind === "empty" ? `e${x.n}` : x.kind)),
+    ["house", "e2", "b3", "e4", "e5"],
+  );
   assert.equal(campaignLabel(all[1]!), "호출 묶음 2");
   assert.equal(campaignLabel(all[4]!), "프리미엄 5");
 });

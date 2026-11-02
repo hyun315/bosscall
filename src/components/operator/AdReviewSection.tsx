@@ -525,44 +525,36 @@ function CampaignCard({
   );
 }
 
-/** 지금 화면별 1~5번 자리 현황 — 홈·응답 대기(프리미엄만) / 픽업·목적지(호출 묶음 우선) */
+/** 지금 화면별 광고 순서 — 홈·응답 대기 / 픽업·목적지 (앱에 나오는 순서 그대로) */
 function PositionMap({ campaigns, now }: { campaigns: AdCampaignDoc[]; now: number }) {
   const cols = [
     { title: "홈 · 응답 대기", cells: slotLayout(campaigns, "homeBenefits", now) },
     { title: "픽업 · 목적지", cells: slotLayout(campaigns, "pickup", now) },
   ];
-  const label = (cell: ReturnType<typeof slotLayout>[number]) =>
-    cell.kind === "paid" ? `${cell.c.company} (${campaignLabel(cell.c)})` : cell.kind === "house" ? "한인업소록" : "빈칸";
   return (
     <div className="card overflow-hidden">
-      <p className="border-b border-line px-4 py-2 text-xs font-semibold text-ink-sub">지금 자리 현황</p>
-      <table className="w-full table-fixed text-left text-[13px]">
-        <thead>
-          <tr className="text-ink-sub">
-            <th className="w-8 px-2 py-1.5 text-center">#</th>
-            {cols.map((c) => (
-              <th key={c.title} className="px-2 py-1.5 font-semibold">
-                {c.title}
-              </th>
+      <p className="border-b border-line px-4 py-2 text-xs font-semibold text-ink-sub">지금 화면별 광고 순서 (위에서부터)</p>
+      <div className="grid grid-cols-2 divide-x divide-line">
+        {cols.map((col) => (
+          <ol key={col.title} className="space-y-1 p-3 text-[13px]">
+            <li className="pb-1 text-xs font-semibold text-ink-sub">{col.title}</li>
+            {col.cells.map((cell, i) => (
+              <li key={i} className={`truncate ${cell.kind === "empty" ? "text-ink-faint" : "text-ink"}`}>
+                {cell.kind === "paid" ? (
+                  <>
+                    <span className="mr-1 rounded bg-navy px-1 text-[10px] font-semibold text-white">{campaignLabel(cell.c)}</span>
+                    {cell.c.company}
+                  </>
+                ) : cell.kind === "house" ? (
+                  "한인업소록"
+                ) : (
+                  `빈 자리 (${col.title.startsWith("홈") ? "프리미엄" : "호출 묶음"} ${cell.n})`
+                )}
+              </li>
             ))}
-          </tr>
-        </thead>
-        <tbody>
-          {[0, 1, 2, 3, 4].map((i) => (
-            <tr key={i} className="border-t border-line">
-              <td className="px-2 py-1.5 text-center font-bold text-ink">{i + 1}</td>
-              {cols.map((c) => {
-                const cell = c.cells[i]!;
-                return (
-                  <td key={c.title} className={`truncate px-2 py-1.5 ${cell.kind === "empty" ? "text-ink-faint" : "text-ink"}`}>
-                    {label(cell)}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          </ol>
+        ))}
+      </div>
     </div>
   );
 }

@@ -100,7 +100,7 @@ export default function AdvertisePage() {
               </Link>
             ))}
           </div>
-          <p className="mt-2 text-xs text-ink-sub">기간 1·3·6개월 · 화면마다 1~5번 고정 자리 · 픽업·목적지 화면에서는 호출 묶음이 우선</p>
+          <p className="mt-2 text-xs text-ink-sub">기간 1·3·6개월 · 화면마다 1~5번 고정 자리 · 프리미엄은 픽업·목적지 화면에도 자동 노출 (호출 묶음 아래)</p>
         </section>
 
         {/* 광고 자리 */}
