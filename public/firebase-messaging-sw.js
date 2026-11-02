@@ -30,8 +30,9 @@ self.addEventListener("push", (event) => {
     body: p.body,
     icon: "/icons/icon-192.png",
     badge: "/icons/badge-96.png",
-    // 호출 알림은 호출마다 tag 가 다르다. 그 밖의 알림(테스트 등)은 매번 새 tag — 아이폰은 같은 tag 를 소리 없이 덮어쓴다
-    tag: p.callId ? "call-" + p.callId : (p.type || "bosscall") + "-" + Date.now(),
+    // 알림마다 새 tag — 아이폰은 같은 tag 알림을 소리 없이 덮어쓰므로, 재알림도 매번 "띵" 소리가 나게.
+    // 호출 알림은 "call-<id>-" 로 시작 → 수락·거절하면 앱이 한꺼번에 지운다.
+    tag: (p.callId ? "call-" + p.callId : p.type || "bosscall") + "-" + Date.now(),
     renotify: true,
     requireInteraction: p.urgent,
     vibrate: p.urgent ? [500, 200, 500, 200, 500, 200, 800] : [200],

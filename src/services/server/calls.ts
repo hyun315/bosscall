@@ -402,11 +402,14 @@ async function groupOwnerIds(groupId: string): Promise<string[]> {
   return snap.docs.map((d) => (d.data() as MemberDoc).userId);
 }
 
-/** 응답 재촉 알림: 최소 간격·최대 횟수 (호출 대기 90초 동안 최대 4번) */
-const NUDGE_MIN_INTERVAL_MS = 14_000;
-const NUDGE_MAX = 4;
-/** 서버가 스스로 다시 보내는 간격 — 호출 생성 요청이 끝난 뒤 백그라운드에서 */
-const SERVER_NUDGE_DELAYS_MS = [15_000, 30_000, 45_000] as const;
+/** 응답 재촉 알림: 최소 간격·최대 횟수 */
+const NUDGE_MIN_INTERVAL_MS = 7_000;
+const NUDGE_MAX = 8;
+/**
+ * 서버가 스스로 다시 보내는 시각 — 호출 생성 요청이 끝난 뒤 백그라운드에서 (서버 실행 제한 60초 안).
+ * 앱이 닫힌 아이폰은 알림 "띵"만 낼 수 있으므로, 8초마다 다시 울려 알람처럼 들리게 한다.
+ */
+const SERVER_NUDGE_DELAYS_MS = [8_000, 16_000, 24_000, 32_000, 40_000, 48_000] as const;
 
 /**
  * 기사가 아직 응답하지 않은 호출에 푸시 알림을 다시 보낸다.
