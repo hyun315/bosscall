@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { useReadySession } from "@/hooks/useSession";
 import { useAdCampaigns } from "@/hooks/useAdCampaigns";
 import {
+  AD_POSITIONS,
   SLOT_FALLBACK,
   adLink,
   adsEnabled,
@@ -22,7 +23,7 @@ import { useI18n } from "@/i18n/client";
 
 /**
  * 광고 칸 — 사장님·가족 화면 전용. 기사 계정에는 아무것도 그리지 않는다.
- * 순서: 한인업소록 → 승인된 광고(여러 곳이면 들어올 때마다 돌아가며 하나) → 광고 안내.
+ * 한 화면 AD_POSITIONS(5)칸: 1번 한인업소록 → 프리미엄 1~5 → 호출 묶음 1~5 → 남는 칸은 "빈 광고 자리" 안내.
  * 노출은 칸이 화면에 처음 보였을 때 1번, 클릭은 누를 때마다 기록한다 (내부 참고용).
  *
  * 광고에 업소 위치가 있으면 [여기로 가기] 단추가 붙는다.
@@ -46,11 +47,11 @@ export function AdSlot({
   const seen = useRef(false);
   const show = adsEnabled() && role !== "DRIVER";
   const campaigns = useAdCampaigns(show);
-  const [seed] = useState(() => Math.floor(Math.random() * 1000));
-  const live = liveCampaigns(campaigns, slot, Date.now());
-  const paid = live.length > 0 ? live[seed % live.length] : null;
+  const paid = liveCampaigns(campaigns, slot, Date.now());
   const house = SLOT_FALLBACK.filter((c): c is HouseAd => c.kind === "ad");
-  const adIds = [...house.map((c) => c.id), paid?.id, "inquiry"].filter(Boolean).join(",");
+  // 남는 칸은 "빈 광고 자리" 안내로 채워 항상 AD_POSITIONS 칸
+  const empty = Math.max(0, AD_POSITIONS - house.length - paid.length);
+  const adIds = [...house.map((c) => c.id), ...paid.map((c) => c.id)].join(",");
 
   useEffect(() => {
     const el = ref.current;
@@ -79,26 +80,29 @@ export function AdSlot({
       {house.map((c) => (
         <BannerCard key={c.id} ad={c} slot={slot} onClick={clickOf(c.id)} />
       ))}
-      {paid && (
+      {paid.map((c) => (
         <PaidBanner
-          company={paid.company}
-          bannerUrl={paid.bannerUrl}
-          detailUrl={paid.detailUrl}
-          linkUrl={paid.linkUrl ? adLink(paid.linkUrl, slot) : null}
-          onOpen={clickOf(paid.id)}
+          key={c.id}
+          company={c.company}
+          bannerUrl={c.bannerUrl}
+          detailUrl={c.detailUrl}
+          linkUrl={c.linkUrl ? adLink(c.linkUrl, slot) : null}
+          onOpen={clickOf(c.id)}
           onGo={
-            paid.place && !noDestination
+            c.place && !noDestination
               ? (use: AdPlaceUse) => {
-                  const place = paid.place!;
-                  trackClient("ad_click", groupId, { slot, ad: paid.id, action: use });
+                  const place = c.place!;
+                  trackClient("ad_click", groupId, { slot, ad: c.id, action: use });
                   if (onPlace) onPlace(place, use);
                   else router.push(placeHref(place, use));
                 }
               : undefined
           }
         />
-      )}
-      <InquiryCard slot={slot} onClick={clickOf("inquiry")} />
+      ))}
+      {Array.from({ length: empty }, (_, i) => (
+        <EmptyAdCard key={i} n={house.length + paid.length + i + 1} slot={slot} onClick={clickOf("inquiry")} />
+      ))}
     </aside>
   );
 }
@@ -301,21 +305,22 @@ function AdDetail({
   );
 }
 
-/** 빈 칸 — 광고 안내 페이지로 */
-function InquiryCard({ slot, onClick }: { slot: AdSlotId; onClick: () => void }) {
+/** 비어 있는 광고 자리 — 번호와 함께 "광고가 올라갈 자리" 안내, 누르면 광고 안내 페이지 */
+function EmptyAdCard({ n, slot, onClick }: { n: number; slot: AdSlotId; onClick: () => void }) {
   const { t } = useI18n();
   return (
     <Link
       href={advertisePath(slot)}
       onClick={onClick}
-      className="flex items-center gap-3 rounded-card border border-dashed border-action/40 bg-action-soft/60 px-4 py-4 active:bg-action-soft"
+      className="flex items-center gap-3 rounded-card border border-dashed border-action/40 bg-action-soft/50 px-4 py-3 active:bg-action-soft"
     >
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-btn bg-surface text-2xl shadow-card" aria-hidden>
-        📣
+      <span className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-btn bg-surface text-action shadow-card" aria-hidden>
+        <span className="text-[10px] font-semibold leading-none">AD</span>
+        <span className="text-[17px] font-extrabold leading-tight">{n}</span>
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-bold text-ink">{t("ad.inquiryTitle")}</span>
-        <span className="mt-0.5 block text-sm text-ink-sub">{t("ad.inquiryShort")}</span>
+        <span className="block text-[15px] font-bold text-ink">{t("ad.emptyTitle", { n })}</span>
+        <span className="mt-0.5 block truncate text-xs text-ink-sub">{t("ad.inquiryShort")}</span>
       </span>
       <span className="shrink-0 text-sm font-semibold text-action">{t("ad.inquiryMore")} ›</span>
     </Link>

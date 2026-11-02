@@ -36,8 +36,15 @@ export const PRODUCT_INFO: Readonly<Record<AdProduct, { name: string; slots: rea
   },
 };
 
-/** 한 자리에 동시에 돌아가며 나오는 광고주 수 상한 */
-export const MAX_ADS_PER_SLOT = 3;
+/**
+ * 한 화면의 광고 칸 수 — 1번은 한인업소록, 나머지는 순서대로
+ * 프리미엄 1~5 → 호출 묶음 1~5 (호출 묶음은 항상 프리미엄 뒤), 남는 칸은 "빈 광고 자리" 안내.
+ */
+export const AD_POSITIONS = 5;
+/** 한 화면에 올라가는 유료 광고 상한 (한인업소록 1칸 제외) */
+export const MAX_ADS_PER_SLOT = AD_POSITIONS - 1;
+/** 상품 안 순번 */
+export const AD_RANKS = [1, 2, 3, 4, 5] as const;
 
 export const AD_MONTHS = [1, 3, 6] as const;
 export type AdMonths = (typeof AD_MONTHS)[number];
@@ -119,7 +126,20 @@ export interface AdCampaignDoc {
   detailUrl: string;
   linkUrl: string | null;
   place?: AdPlace | null;
+  /** 없으면(예전 광고) 자리 수로 판단: 4곳이면 프리미엄 */
+  product?: AdProduct;
+  /** 상품 안 순번 1~5 (없으면 5) */
+  rank?: number;
   createdAt: number;
+}
+
+export function campaignProduct(c: Pick<AdCampaignDoc, "product" | "slots">): AdProduct {
+  return c.product ?? (c.slots.length >= PRODUCT_INFO.premium.slots.length ? "premium" : "callBundle");
+}
+
+/** "프리미엄 2" 같은 표시 */
+export function campaignLabel(c: Pick<AdCampaignDoc, "product" | "slots" | "rank">): string {
+  return `${PRODUCT_INFO[campaignProduct(c)].name} ${c.rank ?? 5}`;
 }
 
 /** "YYYY-MM-DD" 자카르타 0시 (UTC+7, 서머타임 없음) */
@@ -154,11 +174,32 @@ export function fullSlots(
   });
 }
 
-/** 지금 이 자리에 나갈 수 있는 광고 (시작일 순으로 고정 정렬) */
+/**
+ * 지금 이 자리에 나갈 광고, 보여줄 순서대로 (최대 MAX_ADS_PER_SLOT 개).
+ * 프리미엄 → 호출 묶음, 같은 상품 안에서는 순번 → 먼저 시작한 광고.
+ */
 export function liveCampaigns(all: readonly AdCampaignDoc[], slot: AdSlotId, now: number): AdCampaignDoc[] {
+  const tier = (c: AdCampaignDoc) => (campaignProduct(c) === "premium" ? 0 : 1);
   return all
     .filter((c) => c.slots.includes(slot) && c.startAt <= now && c.endAt > now)
-    .sort((a, b) => a.startAt - b.startAt || a.id.localeCompare(b.id));
+    .sort((a, b) => tier(a) - tier(b) || (a.rank ?? 5) - (b.rank ?? 5) || a.startAt - b.startAt || a.id.localeCompare(b.id))
+    .slice(0, MAX_ADS_PER_SLOT);
+}
+
+/** 같은 상품에서 겹치는 기간에 아직 안 쓴 가장 앞 순번 (다 쓰였으면 5) */
+export function nextFreeRank(
+  existing: ReadonlyArray<AdCampaignDoc>,
+  product: AdProduct,
+  startAt: number,
+  endAt: number,
+  exceptId?: string,
+): number {
+  const used = new Set(
+    existing
+      .filter((c) => c.id !== exceptId && campaignProduct(c) === product && c.startAt < endAt && c.endAt > startAt)
+      .map((c) => c.rank ?? 5),
+  );
+  return AD_RANKS.find((r) => !used.has(r)) ?? 5;
 }
 
 /** 광고 문의 메일 */

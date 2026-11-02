@@ -255,7 +255,7 @@ export default function AdApplyPage() {
             </p>
           )}
           <p className="text-xs leading-relaxed text-ink-sub">
-            한 자리에는 최대 3곳의 광고가 돌아가며 나옵니다. 자리가 찬 기간이면 시작일 조정을 연락드립니다.
+            한 화면에 광고 5칸이 있고 프리미엄이 호출 묶음보다 앞에 나옵니다. 자리가 찬 기간이면 시작일 조정을 연락드립니다.
           </p>
         </Section>
 

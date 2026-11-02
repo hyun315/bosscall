@@ -1,7 +1,7 @@
 import { requireOperator } from "@/lib/server/auth";
 import { ApiError, readJson, routeWithParams } from "@/lib/server/http";
 import { requireId, requireRecord } from "@/lib/validation";
-import { AD_MONTHS } from "@/lib/ads";
+import { AD_MONTHS, AD_RANKS } from "@/lib/ads";
 import {
   approveAdRequest,
   endCampaign,
@@ -28,7 +28,8 @@ export const POST = routeWithParams<{ id: string }>(async (req, params) => {
     case "approve": {
       const startDate = typeof body.startDate === "string" ? body.startDate : undefined;
       const months = AD_MONTHS.find((m) => m === body.months);
-      return approveAdRequest(id, who, { startDate, months });
+      const rank = AD_RANKS.find((r) => r === body.rank);
+      return approveAdRequest(id, who, { startDate, months, rank });
     }
     case "reject": {
       const reason = typeof body.reason === "string" ? body.reason.trim().slice(0, 300) : "";
@@ -55,6 +56,7 @@ export const POST = routeWithParams<{ id: string }>(async (req, params) => {
         startDate: str(body.startDate),
         lastDate: str(body.lastDate),
         linkUrl,
+        rank: AD_RANKS.find((r) => r === body.rank),
       });
     }
     case "end":

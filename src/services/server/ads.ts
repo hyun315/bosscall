@@ -8,9 +8,11 @@ import {
   BANNER_SPEC,
   DETAIL_SPEC,
   PRODUCT_INFO,
+  campaignProduct,
   campaignWindow,
   fullSlots,
   jakartaDayStart,
+  nextFreeRank,
   type AdCampaignDoc,
   type AdIndustry,
   type AdMonths,
@@ -143,7 +145,7 @@ export type ApproveResult = { ok: true; campaignId: string } | { ok: false; full
 export async function approveAdRequest(
   id: string,
   reviewer: string,
-  override: { startDate?: string; months?: number },
+  override: { startDate?: string; months?: number; rank?: number },
 ): Promise<ApproveResult> {
   const db = adminDb();
   const reqRef = db.doc(`adRequests/${id}`);
@@ -159,8 +161,10 @@ export async function approveAdRequest(
     const slots = [...PRODUCT_INFO[r.product].slots];
 
     const existing = await tx.get(db.collection("adCampaigns").where("endAt", ">", win.startAt));
-    const full = fullSlots(existing.docs.map((d) => d.data() as AdCampaignDoc), slots, win.startAt, win.endAt);
+    const others = existing.docs.map((d) => d.data() as AdCampaignDoc);
+    const full = fullSlots(others, slots, win.startAt, win.endAt);
     if (full.length > 0) return { ok: false, fullSlots: full };
+    const rank = override.rank ?? nextFreeRank(others, r.product, win.startAt, win.endAt);
 
     const campRef = db.collection("adCampaigns").doc();
     const now = Date.now();
@@ -175,6 +179,8 @@ export async function approveAdRequest(
       detailUrl: `/api/ad-image/${r.detailImageId}`,
       linkUrl: r.linkUrl,
       place: r.place ?? null,
+      product: r.product,
+      rank,
       createdAt: now,
     };
     tx.create(campRef, campaign);
@@ -251,6 +257,8 @@ export interface CampaignPatch {
   /** "YYYY-MM-DD" 자카르타 — 마지막 날 (그날 밤까지 노출) */
   lastDate?: string;
   linkUrl?: string | null;
+  /** 상품 안 순번 1~5 */
+  rank?: number;
 }
 
 const imageIdOf = (url: string) => /\/api\/ad-image\/([a-f0-9]{24})$/.exec(url)?.[1] ?? null;
@@ -290,6 +298,8 @@ export async function updateCampaign(campaignId: string, patch: CampaignPatch): 
       update.endAt = endAt;
     }
     if (patch.linkUrl !== undefined) update.linkUrl = patch.linkUrl;
+    if (patch.rank !== undefined) update.rank = patch.rank;
+    if (!c.product) update.product = campaignProduct(c); // 예전 광고는 상품을 채워 둔다
 
     for (const [buf, kind, key] of [
       [banner, "banner", "bannerUrl"],

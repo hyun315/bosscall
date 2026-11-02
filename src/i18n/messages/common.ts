@@ -194,7 +194,11 @@ export const commonMsgs = {
   "ad.goHere": { ko: "여기로 가기", id: "Ke sini", en: "Go here" },
   "ad.setPickup": { ko: "출발지로 설정", id: "Jadikan penjemputan", en: "Set as pickup" },
   "ad.setDestination": { ko: "목적지로 설정", id: "Jadikan tujuan", en: "Set as destination" },
-  "ad.inquiryTitle": { ko: "이 자리에 우리 가게를 알리세요", id: "Promosikan usaha Anda di sini", en: "Advertise your business here" },
+  "ad.emptyTitle": {
+    ko: "광고 자리 {n} · 우리 가게를 알리세요",
+    id: "Slot iklan {n} · Promosikan usaha Anda",
+    en: "Ad slot {n} · Advertise here",
+  },
   "ad.inquiryShort": {
     ko: "🎉 신규 출시 기념 · 2027년 3월 31일까지 광고 무료",
     id: "🎉 Promo peluncuran · iklan gratis s.d. 31 Maret 2027",

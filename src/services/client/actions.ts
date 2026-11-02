@@ -121,16 +121,23 @@ export const uploadPois = (csv: string, replace: boolean) =>
 export const getAdRequests = () => api<{ requests: AdRequestDoc[]; campaigns: AdCampaignDoc[] }>("/api/operator/ads");
 export const getAdRequest = (id: string) =>
   api<{ request: AdRequestDoc; banner: string | null; detail: string | null }>(`/api/operator/ads/${id}`);
-export const approveAd = (id: string, startDate: string, months: number) =>
+export const approveAd = (id: string, startDate: string, months: number, rank: number) =>
   api<{ ok: true; campaignId: string } | { ok: false; fullSlots: AdSlotId[] }>(`/api/operator/ads/${id}`, {
-    body: { action: "approve", startDate, months },
+    body: { action: "approve", startDate, months, rank },
   });
 export const rejectAd = (id: string, reason: string) => api(`/api/operator/ads/${id}`, { body: { action: "reject", reason } });
 export const setAdCampaignPlace = (campaignId: string, place: AdPlace | null) =>
   api(`/api/operator/ads/${campaignId}`, { body: { action: "place", place } });
 export const updateAdCampaign = (
   campaignId: string,
-  patch: { bannerImage?: string; detailImage?: string; startDate?: string; lastDate?: string; linkUrl?: string | null },
+  patch: {
+    bannerImage?: string;
+    detailImage?: string;
+    startDate?: string;
+    lastDate?: string;
+    linkUrl?: string | null;
+    rank?: number;
+  },
 ) =>
   api<{ ok: true; campaignId: string } | { ok: false; fullSlots: AdSlotId[] }>(`/api/operator/ads/${campaignId}`, {
     body: { action: "update", ...patch },

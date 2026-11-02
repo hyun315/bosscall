@@ -100,7 +100,7 @@ export default function AdvertisePage() {
               </Link>
             ))}
           </div>
-          <p className="mt-2 text-xs text-ink-sub">기간 1·3·6개월 · 한 자리에 최대 {MAX_ADS_PER_SLOT}곳까지 돌아가며 노출</p>
+          <p className="mt-2 text-xs text-ink-sub">기간 1·3·6개월 · 한 화면에 광고 5칸 (프리미엄이 호출 묶음보다 앞) · 유료 광고는 화면당 최대 {MAX_ADS_PER_SLOT}곳</p>
         </section>
 
         {/* 광고 자리 */}

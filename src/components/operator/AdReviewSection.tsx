@@ -5,7 +5,23 @@ import { Button } from "@/components/common/Button";
 import { useToast } from "@/components/common/Toast";
 import { PaidBanner } from "@/components/ads/AdSlot";
 import { AdPlaceField } from "@/components/ads/AdPlaceField";
-import { AD_MONTHS, BANNER_SPEC, DETAIL_SPEC, PRODUCT_INFO, SLOT_INFO, type AdCampaignDoc, type AdRequestDoc } from "@/lib/ads";
+import {
+  AD_MONTHS,
+  AD_RANKS,
+  BANNER_SPEC,
+  DETAIL_SPEC,
+  MAX_ADS_PER_SLOT,
+  PRODUCT_INFO,
+  SLOT_INFO,
+  campaignLabel,
+  campaignProduct,
+  campaignWindow,
+  jakartaDayStart,
+  nextFreeRank,
+  type AdCampaignDoc,
+  type AdProduct,
+  type AdRequestDoc,
+} from "@/lib/ads";
 import {
   approveAd,
   endAdCampaign,
@@ -78,6 +94,7 @@ export function AdReviewSection() {
             <RequestCard
               key={r.id}
               r={r}
+              campaigns={data.campaigns}
               open={openId === r.id}
               onToggle={() => setOpenId(openId === r.id ? null : r.id)}
               onDone={() => {
@@ -93,7 +110,7 @@ export function AdReviewSection() {
         <div className="space-y-2">
           {campaigns.length === 0 && <p className="card p-4 text-sm text-ink-sub">게재 중인 광고가 없습니다. 빈 자리는 한인업소록이 나옵니다.</p>}
           {campaigns.map((c) => (
-            <CampaignCard key={c.id} c={c} now={now} onChanged={load} />
+            <CampaignCard key={c.id} c={c} all={campaigns} now={now} onChanged={load} />
           ))}
         </div>
       )}
@@ -119,11 +136,27 @@ export function AdReviewSection() {
   );
 }
 
-function RequestCard({ r, open, onToggle, onDone }: { r: AdRequestDoc; open: boolean; onToggle: () => void; onDone: () => void }) {
+function RequestCard({
+  r,
+  campaigns,
+  open,
+  onToggle,
+  onDone,
+}: {
+  r: AdRequestDoc;
+  campaigns: AdCampaignDoc[];
+  open: boolean;
+  onToggle: () => void;
+  onDone: () => void;
+}) {
   const toast = useToast();
   const [images, setImages] = useState<{ banner: string | null; detail: string | null } | null>(null);
   const [startDate, setStartDate] = useState(r.startDate);
   const [months, setMonths] = useState<number>(r.months);
+  const win = campaignWindow(startDate, months);
+  const [rank, setRank] = useState<number>(() =>
+    win ? nextFreeRank(campaigns, r.product, win.startAt, win.endAt) : 1,
+  );
   const [busy, setBusy] = useState<"approve" | "reject" | null>(null);
   const [full, setFull] = useState<string[] | null>(null);
 
@@ -138,7 +171,7 @@ function RequestCard({ r, open, onToggle, onDone }: { r: AdRequestDoc; open: boo
     setBusy("approve");
     setFull(null);
     try {
-      const res = await approveAd(r.id, startDate, months);
+      const res = await approveAd(r.id, startDate, months, rank);
       if (res.ok) {
         toast("승인했습니다. 시작일에 자동으로 올라갑니다.");
         onDone();
@@ -242,9 +275,15 @@ function RequestCard({ r, open, onToggle, onDone }: { r: AdRequestDoc; open: boo
               </select>
             </div>
           </div>
+          <RankPicker
+            product={r.product}
+            value={rank}
+            onChange={setRank}
+            used={win ? usedRanks(campaigns, r.product, win.startAt, win.endAt) : new Set()}
+          />
           {full && (
             <p className="rounded-btn bg-warning-soft px-3 py-2 text-sm text-warning-text">
-              이 기간에 자리가 찼습니다 ({full.map(slotName).join(", ")} — 최대 3곳). 시작일을 바꿔 다시 승인하세요.
+              이 기간에 자리가 찼습니다 ({full.map(slotName).join(", ")} — 한 화면 유료 광고 최대 {MAX_ADS_PER_SLOT}곳). 시작일을 바꿔 다시 승인하세요.
             </p>
           )}
           <div className="grid grid-cols-2 gap-2">
@@ -265,7 +304,17 @@ function RequestCard({ r, open, onToggle, onDone }: { r: AdRequestDoc; open: boo
 const ymd = (ms: number) => new Date(ms + 7 * 3600_000).toISOString().slice(0, 10);
 
 /** 올라간 광고 한 건 — 보기 / 수정(이미지·기간·링크) / 위치 / 내리기 */
-function CampaignCard({ c, now, onChanged }: { c: AdCampaignDoc; now: number; onChanged: () => void }) {
+function CampaignCard({
+  c,
+  all,
+  now,
+  onChanged,
+}: {
+  c: AdCampaignDoc;
+  all: AdCampaignDoc[];
+  now: number;
+  onChanged: () => void;
+}) {
   const toast = useToast();
   const [editing, setEditing] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
@@ -273,6 +322,8 @@ function CampaignCard({ c, now, onChanged }: { c: AdCampaignDoc; now: number; on
   const [startDate, setStartDate] = useState(ymd(c.startAt));
   const [lastDate, setLastDate] = useState(ymd(c.endAt - 1));
   const [link, setLink] = useState(c.linkUrl ?? "");
+  const [rank, setRank] = useState<number>(c.rank ?? 5);
+  const product = campaignProduct(c);
   const [busy, setBusy] = useState(false);
   const [full, setFull] = useState<string[] | null>(null);
 
@@ -286,6 +337,7 @@ function CampaignCard({ c, now, onChanged }: { c: AdCampaignDoc; now: number; on
     setStartDate(ymd(c.startAt));
     setLastDate(ymd(c.endAt - 1));
     setLink(c.linkUrl ?? "");
+    setRank(c.rank ?? 5);
     setFull(null);
     setEditing(true);
   };
@@ -297,6 +349,7 @@ function CampaignCard({ c, now, onChanged }: { c: AdCampaignDoc; now: number; on
     if (startDate !== ymd(c.startAt)) patch.startDate = startDate;
     if (lastDate !== ymd(c.endAt - 1)) patch.lastDate = lastDate;
     if (link.trim() !== (c.linkUrl ?? "")) patch.linkUrl = link.trim() || null;
+    if (rank !== (c.rank ?? 5)) patch.rank = rank;
     if (Object.keys(patch).length === 0) {
       setEditing(false);
       return;
@@ -326,8 +379,11 @@ function CampaignCard({ c, now, onChanged }: { c: AdCampaignDoc; now: number; on
   return (
     <div className={`card space-y-3 p-4 ${state === "종료" ? "opacity-80" : ""}`}>
       <div className="flex items-center justify-between gap-2">
-        <span className="font-bold text-ink">{c.company}</span>
-        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${tone}`}>{state}</span>
+        <span className="min-w-0 font-bold text-ink">
+          {c.company}
+          <span className="ml-2 rounded-full bg-navy px-2 py-0.5 align-middle text-[11px] font-semibold text-white">{campaignLabel(c)}</span>
+        </span>
+        <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${tone}`}>{state}</span>
       </div>
       <p className="text-sm text-ink-sub">
         {day(c.startAt)} ~ {day(c.endAt - 1)} · {c.slots.map(slotName).join(", ")}
@@ -407,6 +463,17 @@ function CampaignCard({ c, now, onChanged }: { c: AdCampaignDoc; now: number; on
               <input type="date" className="field" value={lastDate} min={startDate} onChange={(e) => setLastDate(e.target.value)} />
             </div>
           </div>
+          <RankPicker
+            product={product}
+            value={rank}
+            onChange={setRank}
+            used={usedRanks(
+              all.filter((x) => x.id !== c.id),
+              product,
+              jakartaDayStart(startDate) ?? c.startAt,
+              (jakartaDayStart(lastDate) ?? c.endAt - 86400_000) + 86400_000,
+            )}
+          />
           <div>
             <span className="label">연결 링크 (비우면 없음)</span>
             <input
@@ -420,7 +487,7 @@ function CampaignCard({ c, now, onChanged }: { c: AdCampaignDoc; now: number; on
           </div>
           {full && (
             <p className="rounded-btn bg-warning-soft px-3 py-2 text-sm text-warning-text">
-              이 기간에 자리가 찼습니다 ({full.map(slotName).join(", ")} — 최대 3곳). 기간을 바꿔 주세요.
+              이 기간에 자리가 찼습니다 ({full.map(slotName).join(", ")} — 한 화면 유료 광고 최대 {MAX_ADS_PER_SLOT}곳). 기간을 바꿔 주세요.
             </p>
           )}
           <div className="grid grid-cols-2 gap-2">
@@ -433,6 +500,55 @@ function CampaignCard({ c, now, onChanged }: { c: AdCampaignDoc; now: number; on
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** 같은 상품에서 겹치는 기간에 이미 쓰인 순번 */
+function usedRanks(all: AdCampaignDoc[], product: AdProduct, startAt: number, endAt: number): Set<number> {
+  return new Set(
+    all.filter((c) => campaignProduct(c) === product && c.startAt < endAt && c.endAt > startAt).map((c) => c.rank ?? 5),
+  );
+}
+
+/** 순번 고르기 — 프리미엄 1~5 / 호출 묶음 1~5. 호출 묶음은 항상 프리미엄 뒤에 나온다 */
+function RankPicker({
+  product,
+  value,
+  onChange,
+  used,
+}: {
+  product: AdProduct;
+  value: number;
+  onChange: (r: number) => void;
+  used: Set<number>;
+}) {
+  return (
+    <div>
+      <span className="label">노출 순서 · {PRODUCT_INFO[product].name}</span>
+      <div className="grid grid-cols-5 gap-1.5">
+        {AD_RANKS.map((r) => {
+          const on = value === r;
+          const taken = used.has(r) && !on;
+          return (
+            <button
+              key={r}
+              type="button"
+              onClick={() => onChange(r)}
+              aria-pressed={on}
+              className={`relative min-h-[44px] rounded-btn border text-[15px] font-bold ${
+                on ? "border-action bg-action text-white" : "border-line bg-surface text-ink"
+              }`}
+            >
+              {r}
+              {taken && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-warning" aria-label="사용 중" />}
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-1 text-xs text-ink-sub">
+        화면 순서: 한인업소록 → 프리미엄 1~5 → 호출 묶음 1~5. 점(•)은 같은 기간에 이미 쓰는 순번 — 겹치면 먼저 시작한 광고가 앞.
+      </p>
     </div>
   );
 }
