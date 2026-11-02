@@ -37,16 +37,20 @@ export default function DriverGuidePage() {
             Setelah itu <b>selalu buka BossCall dari ikon</b> di layar utama.
           </Step>
 
-          <Step n={3} title="Nyalakan notifikasi (WAJIB)" warn>
-            Tekan <Btn>Nyalakan notifikasi di perangkat ini</Btn> lalu pilih <b>Izinkan</b>. Tanpa ini HP <b>tidak berbunyi</b> saat layar mati.
+          <Step n={3} title="Ikuti kartu “Siapkan HP” (WAJIB)" warn>
+            Buka BossCall dari ikon. Di beranda ada kartu <b>Siapkan HP 1/3</b>:
             <br />
-            Cek: <b>Pengaturan › Pengaturan notifikasi</b> › <Btn>Kirim tes dalam 5 detik</Btn>, lalu matikan layar.
+            <Btn tone="green">🔔 Nyalakan notifikasi</Btn> → pilih <b>Izinkan</b> → <Btn tone="green">🔊 Kirim tes bunyi</Btn> → matikan layar →
+            jika berbunyi tekan <Btn tone="green">Ya, berbunyi ✓</Btn>
+            <br />
+            Tanpa ini HP <b>tidak berbunyi</b> saat layar mati.
           </Step>
 
           <Step n={4} title="Absen setiap hari">
             Mulai kerja: <Btn tone="green">Mulai Kerja</Btn> &nbsp; Pulang: <Btn tone="dark">Selesai Kerja</Btn>
             <br />
-            Bapak/Ibu <b>hanya bisa memanggil</b> setelah Anda menekan Mulai Kerja.
+            Pertama kali akan ditanya soal berbagi lokasi — cukup pilih sekali. Bapak/Ibu <b>hanya bisa memanggil</b> setelah Anda menekan
+            Mulai Kerja.
           </Step>
         </section>
 

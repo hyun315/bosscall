@@ -20,7 +20,7 @@ const STEPS: Array<{ title: string; body: ReactNode }> = [
     title: "가입하기",
     body: (
       <>
-        <b>{APP_HOST}</b> 접속 → <Chip>Google로 계속</Chip> → 우리 집(그룹) 이름과 기사님 이름을 입력합니다.
+        <b>{APP_HOST}</b> 접속 → <Chip>Google로 계속</Chip> → 우리 가족 이름, 기사님 이름·전화번호를 입력합니다.
       </>
     ),
   },
@@ -37,7 +37,8 @@ const STEPS: Array<{ title: string; body: ReactNode }> = [
     title: "기사님 초대",
     body: (
       <>
-        아래 <Chip>기사</Chip> 탭 → <Chip>기사 초대 링크 만들기</Chip> → 왓츠앱으로 보내기. 기사님께는 인도네시아어 안내가 함께 갑니다.
+        가입 직후 화면(나중에는 <Chip>기사</Chip> 탭 → 기사님)에서 <Chip>기사 초대 링크 만들기</Chip> → <Chip>공유 / 복사</Chip> →
+        왓츠앱. 인도네시아어 안내와 기사용 설명서 링크가 함께 갑니다.
       </>
     ),
   },
@@ -45,7 +46,8 @@ const STEPS: Array<{ title: string; body: ReactNode }> = [
     title: "기사님 부르기",
     body: (
       <>
-        홈 <Chip tone="blue">기사 호출</Chip> → 픽업 위치 → 목적지 → 호출. 기사님이 수락하면 바로 출발하고, 알림이 옵니다.
+        홈 <Chip tone="blue">기사 호출</Chip> → 픽업 위치 → 목적지 → 확인 화면에서 <Chip tone="blue">🚗 기사 호출</Chip>. 기사님이
+        수락하면 바로 출발하고, 알림이 옵니다.
       </>
     ),
   },
@@ -82,7 +84,7 @@ export default function OwnerGuidePage() {
             전화 대신 버튼 하나
           </h1>
           <p className="mt-3 text-[15px] leading-relaxed text-white/75 print:text-[13px]">
-            자카르타 한인 가정을 위한 기사 호출 · 출퇴근 · 급여 앱. 설치 없이 휴대폰 브라우저에서 바로 씁니다.
+            자카르타 한인 가정을 위한 기사 호출 · 출퇴근 · 급여 앱. 앱스토어 설치 없이 휴대폰 브라우저에서 바로 씁니다.
           </p>
           <Link
             href="/"
