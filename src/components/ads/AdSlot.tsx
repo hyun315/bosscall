@@ -1,22 +1,29 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useReadySession } from "@/hooks/useSession";
-import { SLOT_ADS, adLink, adsEnabled, advertisePath, type AdSlotId, type HouseAd } from "@/lib/ads";
+import { useAdCampaigns } from "@/hooks/useAdCampaigns";
+import { SLOT_FALLBACK, adLink, adsEnabled, advertisePath, liveCampaigns, type AdSlotId, type HouseAd } from "@/lib/ads";
 import { trackClient } from "@/services/client/api";
 import { useI18n } from "@/i18n/client";
 
 /**
  * 광고 칸 — 사장님·가족 화면 전용. 기사 계정에는 아무것도 그리지 않는다.
- * 노출은 칸이 화면에 처음 보였을 때 1번, 클릭은 누를 때마다 기록한다.
+ * 승인된 광고가 있으면 그중 하나(들어올 때마다 돌아가며), 없으면 한인업소록. 아래에 광고 안내.
+ * 노출은 칸이 화면에 처음 보였을 때 1번, 클릭은 누를 때마다 기록한다 (내부 참고용).
  */
 export function AdSlot({ slot, className = "" }: { slot: AdSlotId; className?: string }) {
   const { role, groupId } = useReadySession();
   const ref = useRef<HTMLElement | null>(null);
   const seen = useRef(false);
-  const contents = SLOT_ADS[slot];
-  const show = adsEnabled() && role !== "DRIVER" && contents.length > 0;
-  const adIds = contents.map((c) => (c.kind === "ad" ? c.id : "inquiry")).join(",");
+  const show = adsEnabled() && role !== "DRIVER";
+  const campaigns = useAdCampaigns(show);
+  const [seed] = useState(() => Math.floor(Math.random() * 1000));
+  const live = liveCampaigns(campaigns, slot, Date.now());
+  const paid = live.length > 0 ? live[seed % live.length] : null;
+  const contents = paid ? SLOT_FALLBACK.filter((c) => c.kind === "inquiry") : SLOT_FALLBACK;
+  const adIds = [paid?.id, ...contents.map((c) => (c.kind === "ad" ? c.id : "inquiry"))].filter(Boolean).join(",");
 
   useEffect(() => {
     const el = ref.current;
@@ -33,13 +40,24 @@ export function AdSlot({ slot, className = "" }: { slot: AdSlotId; className?: s
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [show, groupId, slot, adIds]);
+    // adIds 가 바뀌는 것(광고 목록 로딩)은 다시 세지 않는다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [show, groupId, slot]);
 
   if (!show) return null;
   const clickOf = (ad: string) => () => trackClient("ad_click", groupId, { slot, ad });
 
   return (
     <aside ref={ref} className={`space-y-3 ${className}`}>
+      {paid && (
+        <PaidBanner
+          company={paid.company}
+          bannerUrl={paid.bannerUrl}
+          detailUrl={paid.detailUrl}
+          linkUrl={paid.linkUrl ? adLink(paid.linkUrl, slot) : null}
+          onOpen={clickOf(paid.id)}
+        />
+      )}
       {contents.map((c) =>
         c.kind === "inquiry" ? (
           <InquiryCard key="inquiry" slot={slot} onClick={clickOf("inquiry")} />
@@ -98,6 +116,91 @@ export function BannerCard({ ad, slot, onClick }: { ad: HouseAd; slot: AdSlotId;
         </span>
       </span>
     </a>
+  );
+}
+
+/**
+ * 광고주 이미지 배너 (1200×400, 3:1 고정) — 누르면 상세 이미지(1080×1350, 4:5)와 링크 버튼.
+ * 광고 신청 화면의 미리보기에서도 같은 컴포넌트를 쓴다.
+ */
+export function PaidBanner({
+  company,
+  bannerUrl,
+  detailUrl,
+  linkUrl,
+  onOpen,
+}: {
+  company: string;
+  bannerUrl: string;
+  detailUrl: string | null;
+  linkUrl: string | null;
+  onOpen?: () => void;
+}) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          onOpen?.();
+          if (detailUrl) setOpen(true);
+          else if (linkUrl) window.open(linkUrl, "_blank", "noopener");
+        }}
+        className="relative block aspect-[3/1] w-full overflow-hidden rounded-card bg-line shadow-card active:scale-[0.99]"
+        aria-label={`${t("ad.label")} · ${company}`}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={bannerUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
+        <span className="absolute left-2 top-2 rounded-md bg-black/55 px-1.5 py-0.5 text-[11px] font-semibold text-white">
+          {t("ad.label")}
+        </span>
+      </button>
+      {open && detailUrl && <AdDetail company={company} detailUrl={detailUrl} linkUrl={linkUrl} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+function AdDetail({ company, detailUrl, linkUrl, onClose }: { company: string; detailUrl: string; linkUrl: string | null; onClose: () => void }) {
+  const { t } = useI18n();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={company}
+      className="fixed inset-0 z-[80] flex flex-col items-center justify-center bg-black/80 px-4 pb-[calc(16px+var(--safe-bottom))] pt-[calc(16px+var(--safe-top))]"
+      onClick={onClose}
+    >
+      <div className="flex w-full max-w-sm flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between text-white">
+          <span className="flex items-center gap-2 text-sm">
+            <span className="rounded-md bg-white/20 px-1.5 py-0.5 text-[11px] font-semibold">{t("ad.label")}</span>
+            {company}
+          </span>
+          <button type="button" onClick={onClose} className="h-10 w-10 rounded-full text-2xl leading-none text-white/80" aria-label={t("common.close")}>
+            ×
+          </button>
+        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={detailUrl} alt="" className="aspect-[4/5] max-h-[70dvh] w-full rounded-card bg-white/10 object-cover" />
+        {linkUrl && (
+          <a
+            href={linkUrl}
+            target="_blank"
+            rel="noopener sponsored"
+            className="flex min-h-[52px] items-center justify-center rounded-btn bg-white text-[15px] font-bold text-navy"
+          >
+            {t("ad.openLink")} →
+          </a>
+        )}
+      </div>
+    </div>,
+    document.body,
   );
 }
 

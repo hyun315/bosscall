@@ -2,6 +2,7 @@
 import { api } from "@/services/client/api";
 import type { CallAction } from "@/lib/callStateMachine";
 import type { ActualFix, NotificationPrefs, PlaceInput, PoiDoc } from "@/types/domain";
+import type { AdCampaignDoc, AdRequestDoc, AdSlotId } from "@/lib/ads";
 
 /** 서버 API 호출 모음 — UI 컴포넌트는 이 함수들만 사용한다 (코딩규칙 3) */
 
@@ -115,3 +116,14 @@ export const getPois = () => api<{ pois: PoiDoc[] }>("/api/operator/pois");
 export const uploadPois = (csv: string, replace: boolean) =>
   api<{ saved: number; errors: { line: number; reason: string }[] }>("/api/operator/pois", { body: { csv, replace } });
 
+
+/* ───────── 광고 신청 검토 (운영자) ───────── */
+export const getAdRequests = () => api<{ requests: AdRequestDoc[]; campaigns: AdCampaignDoc[] }>("/api/operator/ads");
+export const getAdRequest = (id: string) =>
+  api<{ request: AdRequestDoc; banner: string | null; detail: string | null }>(`/api/operator/ads/${id}`);
+export const approveAd = (id: string, startDate: string, months: number) =>
+  api<{ ok: true; campaignId: string } | { ok: false; fullSlots: AdSlotId[] }>(`/api/operator/ads/${id}`, {
+    body: { action: "approve", startDate, months },
+  });
+export const rejectAd = (id: string, reason: string) => api(`/api/operator/ads/${id}`, { body: { action: "reject", reason } });
+export const endAdCampaign = (campaignId: string) => api(`/api/operator/ads/${campaignId}`, { body: { action: "end" } });

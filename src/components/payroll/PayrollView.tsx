@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { AdSlot } from "@/components/ads/AdSlot";
 import { Button } from "@/components/common/Button";
 import { EmptyState, ErrorState, LoadingState, NotificationBanner } from "@/components/common/States";
 import { useToast } from "@/components/common/Toast";
@@ -223,8 +222,6 @@ export function PayrollView({
           )}
         </>
       ) : null}
-
-      {mode === "owner" && <AdSlot slot="payroll" />}
 
       {editing && (
         <PayrollSettingsSheet

@@ -1,6 +1,7 @@
 "use client";
 /**
  * 운영자 도구 — 서비스 운영자(OPERATOR_EMAILS)만 쓰는 화면이라 한국어로만 둔다.
+ *  · 광고 신청 검토·승인, 게재 중인 광고 관리
  *  · 익명 운행 통계 리포트 (CSV 내려받기)
  *  · 자체 장소 목록(POI) 등록 — 운행 도착 지점을 골프장·학교 등으로 분류하는 기준
  */
@@ -9,6 +10,7 @@ import { AppHeader } from "@/components/common/AppHeader";
 import { Button } from "@/components/common/Button";
 import { EmptyState, LoadingState } from "@/components/common/States";
 import { useToast } from "@/components/common/Toast";
+import { AdReviewSection } from "@/components/operator/AdReviewSection";
 import { REPORT_DIMENSIONS, REPORT_MIN_COUNT, type ReportDimension } from "@/lib/tripData";
 import { getOperatorStatus, getPois, getTripReport, uploadPois, type TripReport } from "@/services/client/actions";
 import { errorMessage } from "@/services/client/api";
@@ -45,6 +47,7 @@ export default function OperatorPage() {
         )}
         {allowed && (
           <>
+            <AdReviewSection />
             <ReportSection />
             <PoiSection />
           </>

@@ -230,12 +230,8 @@ function CallView({ callId }: { callId: string }) {
           </section>
         )}
 
-        {/* 광고: 사장님·가족 화면 맨 아래 (버튼과 떨어진 곳). 응답 대기 / 오는 중 / 운행 완료 */}
+        {/* 광고: 사장님·가족 화면 맨 아래 (버튼과 떨어진 곳). 기사님 응답 대기 중에만 */}
         {role !== "DRIVER" && (call.status === "CALLING" || call.status === "RECEIVED") && <AdSlot slot="waiting" />}
-        {role !== "DRIVER" && call.status === "COMPLETED" && <AdSlot slot="tripCompleted" />}
-        {role !== "DRIVER" && ["ACCEPTED", "ON_THE_WAY", "ARRIVED", "TRIP_STARTED"].includes(call.status) && (
-          <AdSlot slot="onTheWay" />
-        )}
       </main>
 
       <ConfirmModal

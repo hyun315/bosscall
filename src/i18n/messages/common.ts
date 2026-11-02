@@ -190,6 +190,7 @@ export const commonMsgs = {
 
   // ── 광고 칸
   "ad.label": { ko: "광고", id: "Iklan", en: "Ad" },
+  "ad.openLink": { ko: "자세히 보기", id: "Lihat selengkapnya", en: "Learn more" },
   "ad.inquiryTitle": { ko: "이 자리에 우리 가게를 알리세요", id: "Promosikan usaha Anda di sini", en: "Advertise your business here" },
   "ad.inquiryShort": {
     ko: "🎉 신규 출시 기념 · 2027년 3월 31일까지 광고 무료",

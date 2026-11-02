@@ -90,6 +90,12 @@ service cloud.firestore {
 
     // invites, analyticsEvents, usageDaily, rateLimits,
     // tripStats(익명 통계)·adProfiles(맞춤 혜택)·pois(자체 장소)·users/{uid}/consentLog 등 그 외 모든 경로: 서버 전용
+    // 승인된 광고 — 로그인한 사용자 누구나 읽기 (쓰기는 서버만)
+    match /adCampaigns/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

@@ -63,11 +63,11 @@ export function useLiveDoc<T>(path: string | null): LiveState<T | null> {
 }
 
 export type Filter =
-  | { type: "where"; field: string; op: "==" | "in" | ">=" | "<" | "<="; value: unknown }
+  | { type: "where"; field: string; op: "==" | "in" | ">" | ">=" | "<" | "<="; value: unknown }
   | { type: "orderBy"; field: string; dir: "asc" | "desc" }
   | { type: "limit"; n: number };
 
-export const w = (field: string, op: "==" | "in" | ">=" | "<" | "<=", value: unknown): Filter => ({
+export const w = (field: string, op: "==" | "in" | ">" | ">=" | "<" | "<=", value: unknown): Filter => ({
   type: "where",
   field,
   op,

@@ -7,14 +7,15 @@ import Link from "next/link";
 import { useState } from "react";
 import { useSearchParam } from "@/hooks/useSearchParam";
 import { BannerCard } from "@/components/ads/AdSlot";
-import { AD_CONTACT_EMAIL, HOUSE_AD_SAMPLE, SLOT_INFO, inquiryMailto } from "@/lib/ads";
+import { BannerSpecGuide } from "@/components/ads/BannerSpecGuide";
+import { AD_CONTACT_EMAIL, AD_PRODUCTS, HOUSE_AD_SAMPLE, MAX_ADS_PER_SLOT, PRODUCT_INFO, SLOT_INFO, inquiryMailto } from "@/lib/ads";
 
 const SAMPLE = HOUSE_AD_SAMPLE;
 
 const STEPS = [
-  { title: "메일로 문의", desc: "업소 이름, 원하는 광고 자리, 게재 기간을 알려주세요." },
-  { title: "광고 내용 전달", desc: "제목 한 줄, 짧은 설명, 연결할 링크(홈페이지·인스타그램·WhatsApp·업소록 페이지)만 있으면 됩니다." },
-  { title: "게재 시작", desc: "확인 후 앱에 바로 올라갑니다." },
+  { title: "신청서 작성", desc: "업체 정보, 광고 상품·기간, 배너와 상세 이미지를 올립니다. 앱에서 보일 모습을 바로 미리 볼 수 있습니다." },
+  { title: "검토", desc: "BossCall이 내용을 확인하고 WhatsApp·카카오톡·이메일로 연락드립니다." },
+  { title: "자동 게재", desc: "승인되면 시작일에 앱에 올라가고, 기간이 끝나면 자동으로 내려갑니다." },
 ];
 
 const RULES = [
@@ -62,12 +63,12 @@ export default function AdvertisePage() {
             BossCall은 자카르타 한인 사장님과 가족이 기사님을 부를 때 쓰는 앱입니다. 어디로 갈지 고르고, 기다리고, 도착하는 순간에
             광고가 함께 보입니다.
           </p>
-          <a
-            href={inquiryMailto(from)}
+          <Link
+            href="/advertise/apply"
             className="mt-6 inline-flex min-h-[52px] items-center gap-2 rounded-btn bg-white px-5 text-[15px] font-bold text-navy"
           >
-            ✉️ 광고 문의하기
-          </a>
+            📝 광고 신청하기
+          </Link>
         </div>
       </header>
 
@@ -79,6 +80,27 @@ export default function AdvertisePage() {
           <div className="mt-4">
             <BannerCard ad={SAMPLE} slot="destinationSearch" onClick={() => undefined} />
           </div>
+        </section>
+
+        {/* 광고 상품 */}
+        <section>
+          <h2 className="text-lg font-bold text-ink">광고 상품</h2>
+          <div className="mt-4 space-y-3">
+            {AD_PRODUCTS.map((p) => (
+              <Link
+                key={p}
+                href={`/advertise/apply?product=${p}`}
+                className="block rounded-card border border-line bg-surface p-4 active:bg-bg"
+              >
+                <span className="flex items-center justify-between">
+                  <span className="text-[17px] font-extrabold text-ink">{PRODUCT_INFO[p].name}</span>
+                  <span className="text-sm font-semibold text-action">신청 ›</span>
+                </span>
+                <span className="mt-1 block text-sm text-ink-sub">{PRODUCT_INFO[p].desc}</span>
+              </Link>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-ink-sub">기간 1·3·6개월 · 한 자리에 최대 {MAX_ADS_PER_SLOT}곳까지 돌아가며 노출</p>
         </section>
 
         {/* 광고 자리 */}
@@ -105,6 +127,15 @@ export default function AdvertisePage() {
           </ul>
         </section>
 
+        {/* 이미지 규격 */}
+        <section>
+          <h2 className="text-lg font-bold text-ink">이미지 규격</h2>
+          <p className="mt-1 text-sm text-ink-sub">모든 광고가 같은 크기로 보이도록 규격을 맞춥니다.</p>
+          <div className="mt-4">
+            <BannerSpecGuide />
+          </div>
+        </section>
+
         {/* 진행 순서 */}
         <section>
           <h2 className="text-lg font-bold text-ink">진행 순서</h2>
@@ -121,7 +152,7 @@ export default function AdvertisePage() {
           </ol>
           <div className="mt-4 rounded-card bg-[#F2C230]/15 px-4 py-3 ring-1 ring-[#F2C230]/50">
             <p className="text-[15px] font-bold text-ink">🎉 신규 출시 기념 · 2027년 3월 31일까지 무료</p>
-            <p className="mt-0.5 text-sm text-ink-sub">이 기간에 문의하시면 게재 비용을 받지 않습니다.</p>
+            <p className="mt-0.5 text-sm text-ink-sub">이 기간에는 게재 비용을 받지 않습니다.</p>
           </div>
         </section>
 
@@ -142,13 +173,19 @@ export default function AdvertisePage() {
 
         {/* 문의 */}
         <section className="rounded-card bg-navy p-5 text-white">
-          <h2 className="text-lg font-bold">광고 문의</h2>
-          <p className="mt-1 text-sm text-white/70">메일 주시면 자리와 일정을 안내해 드립니다. 2027년 3월 31일까지는 무료입니다.</p>
-          <a
-            href={inquiryMailto(from)}
+          <h2 className="text-lg font-bold">광고 신청 · 문의</h2>
+          <p className="mt-1 text-sm text-white/70">2027년 3월 31일까지는 무료입니다. 궁금한 점은 메일로 물어보세요.</p>
+          <Link
+            href="/advertise/apply"
             className="mt-4 flex min-h-[52px] items-center justify-center gap-2 rounded-btn bg-white text-[15px] font-bold text-navy"
           >
-            ✉️ 메일 보내기
+            📝 광고 신청하기
+          </Link>
+          <a
+            href={inquiryMailto(from)}
+            className="mt-3 flex min-h-[48px] items-center justify-center gap-2 rounded-btn bg-white/10 text-[15px] font-semibold ring-1 ring-white/15"
+          >
+            ✉️ 메일로 문의
           </a>
           <button
             type="button"
