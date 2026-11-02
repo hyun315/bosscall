@@ -29,6 +29,12 @@ export function DriverLocationShareCard({ driver, groupId }: { driver: DriverDoc
     try {
       if (!on) askPermissionNow();
       await setLocationSharing(groupId, !on);
+      // 다음 출근 때도 이 선택대로 (출근 단추가 다시 묻지 않음)
+      try {
+        localStorage.setItem("bosscall.shareOnClockIn", on ? "0" : "1");
+      } catch {
+        /* 무시 */
+      }
       toast(on ? t("share.turnedOff") : t("share.turnedOn"), "success");
     } catch (e) {
       toast(errorMessage(e), "error");

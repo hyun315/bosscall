@@ -89,6 +89,44 @@ export const driverMsgs = {
   },
 
   "dhome.clockIn": { ko: "출근하기", id: "Mulai Kerja", en: "Clock in" },
+  "dhome.shareAsk": {
+    ko: "근무 중 내 위치를 사장님께 보여줄까요?",
+    id: "Tunjukkan lokasi Anda ke Bapak/Ibu selama bekerja?",
+    en: "Show your location to your employer while on duty?",
+  },
+  "dhome.shareMore": { ko: "자세히 보기", id: "Lihat detail", en: "Details" },
+  "dhome.shareRemember": {
+    ko: "한 번만 묻습니다. 홈 화면의 위치 공유 카드에서 언제든 바꿀 수 있어요.",
+    id: "Hanya ditanya sekali. Bisa diubah kapan saja di kartu lokasi di beranda.",
+    en: "Asked only once. Change it anytime on the location card at home.",
+  },
+  "setup.title": { ko: "휴대폰 준비", id: "Siapkan HP", en: "Set up your phone" },
+  "setup.pushTitle": { ko: "알림을 켜 주세요", id: "Nyalakan notifikasi", en: "Turn on notifications" },
+  "setup.pushBody": {
+    ko: "알림이 꺼져 있으면 화면이 꺼졌을 때 호출 소리가 나지 않습니다. 단추를 누르고 '허용'을 고르세요.",
+    id: "Tanpa notifikasi, HP tidak berbunyi saat layar mati. Tekan tombol lalu pilih 'Izinkan'.",
+    en: "Without notifications your phone won't ring when the screen is off. Tap the button, then choose 'Allow'.",
+  },
+  "setup.pushButton": { ko: "🔔 알림 켜기", id: "🔔 Nyalakan notifikasi", en: "🔔 Turn on notifications" },
+  "setup.testTitle": { ko: "소리 테스트", id: "Tes bunyi", en: "Sound test" },
+  "setup.testBody": {
+    ko: "단추를 누르고 바로 화면을 끄세요. 5초 뒤 호출 소리가 나면 준비 끝입니다.",
+    id: "Tekan tombol lalu langsung matikan layar. Jika 5 detik kemudian HP berbunyi, semuanya siap.",
+    en: "Tap the button and turn off the screen right away. If it rings in 5 seconds, you're all set.",
+  },
+  "setup.testButton": { ko: "🔊 테스트 소리 받기", id: "🔊 Kirim tes bunyi", en: "🔊 Send a test" },
+  "setup.testWait": {
+    ko: "지금 화면을 끄세요. 5초 뒤 소리가 났나요?",
+    id: "Matikan layar sekarang. Apakah HP berbunyi setelah 5 detik?",
+    en: "Turn off the screen now. Did it ring after 5 seconds?",
+  },
+  "setup.testAgain": { ko: "안 났어요 · 다시", id: "Tidak · Coba lagi", en: "No · Try again" },
+  "setup.testHeard": { ko: "소리 났어요 ✓", id: "Ya, berbunyi ✓", en: "Yes, it rang ✓" },
+  "setup.allDone": {
+    ko: "준비 끝! 이제 출근하면 호출을 받을 수 있어요.",
+    id: "Siap! Tekan Mulai Kerja untuk menerima panggilan.",
+    en: "All set! Clock in to receive calls.",
+  },
   "dhome.clockOut": { ko: "퇴근하기", id: "Selesai Kerja", en: "Clock out" },
   "dhome.finishFirst": {
     ko: "진행 중인 호출을 마친 뒤 퇴근할 수 있습니다.",

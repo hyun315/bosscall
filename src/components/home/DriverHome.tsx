@@ -1,15 +1,14 @@
 "use client";
 import { useState } from "react";
-import { InstallPrompt } from "@/components/common/InstallPrompt";
 import { AppHeader } from "@/components/common/AppHeader";
 import { BottomSheet } from "@/components/common/BottomSheet";
 import { Button } from "@/components/common/Button";
 import { ConfirmModal } from "@/components/common/ConfirmModal";
 import { ErrorState, LoadingState } from "@/components/common/States";
-import { PushPrompt } from "@/components/common/PushPrompt";
 import { useToast } from "@/components/common/Toast";
 import { CallStatusCard } from "@/components/call/CallStatusCard";
 import { DriverLocationShareCard, askPermissionNow } from "@/components/driver/DriverLocationShareCard";
+import { DriverSetupCard } from "@/components/driver/DriverSetupCard";
 import { WorkStatusCard } from "@/components/work/WorkStatusCard";
 import { useActiveCalls } from "@/hooks/useGroupData";
 import { useLiveDoc } from "@/hooks/useLive";
@@ -46,7 +45,8 @@ export function DriverHome() {
   const myCall = active.data.find((c) => c.driverId === driver.id);
   const onDuty = Boolean(driver.currentSessionId);
 
-  const doClock = async (action: "CLOCK_IN" | "CLOCK_OUT", shareLocation = false) => {
+  const doClock = async (action: "CLOCK_IN" | "CLOCK_OUT", shareLocation = false, remember = false) => {
+    if (remember) saveShareChoice(shareLocation);
     setBusy(true);
     if (action === "CLOCK_IN" && shareLocation) askPermissionNow();
     try {
@@ -65,9 +65,8 @@ export function DriverHome() {
     <>
       <AppHeader />
       <main className="mx-auto flex max-w-md flex-col gap-5 px-4 pb-6 pt-4">
-        {/* 기사: 홈 화면 앱이어야 화면이 꺼져도 호출 알림 — 맨 위에 강조 */}
-        <InstallPrompt emphasis groupId={groupId} />
-        <PushPrompt groupId={groupId} />
+        {/* 휴대폰 준비 (홈 화면 추가 → 알림 → 소리 테스트) — 한 번에 한 단계, 끝나면 사라짐 */}
+        <DriverSetupCard groupId={groupId} />
         <WorkStatusCard driver={driver} tz={tz} />
         <DriverLocationShareCard driver={driver} groupId={groupId} />
 
@@ -92,7 +91,18 @@ export function DriverHome() {
               {t("dhome.clockOut")}
             </Button>
           ) : (
-            <Button variant="success" size="cta" block loading={busy} onClick={() => setClockInSheet(true)}>
+            <Button
+              variant="success"
+              size="cta"
+              block
+              loading={busy}
+              onClick={() => {
+                // 위치 공유는 처음 한 번만 묻고, 그다음부터는 지난번 선택대로 한 번에 출근
+                const saved = savedShareChoice();
+                if (saved === null) setClockInSheet(true);
+                else void doClock("CLOCK_IN", saved);
+              }}
+            >
               {t("dhome.clockIn")}
             </Button>
           )}
@@ -103,22 +113,25 @@ export function DriverHome() {
       {/* 출근 전 위치 공유 안내·선택 — 기사가 직접 고른다 */}
       <BottomSheet open={clockInSheet} onClose={() => !busy && setClockInSheet(false)} title={t("dhome.clockIn")}>
         <div className="space-y-4">
-          <div className="rounded-card bg-action-soft p-4 text-[15px] leading-relaxed text-navy">
-            <p className="font-semibold">📍 {t("share.titleOn")}</p>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink-sub">
-              <li>{t("dhome.consent1")}</li>
+          {/* 처음 한 번만 묻는다 — 짧게. 자세한 내용은 펼쳐 보기 */}
+          <p className="text-[17px] font-bold leading-snug text-ink">📍 {t("dhome.shareAsk")}</p>
+          <p className="text-[15px] leading-relaxed text-ink-sub">{t("dhome.consent1")}</p>
+          <details className="rounded-btn bg-bg px-3 py-2 text-sm text-ink-sub">
+            <summary className="cursor-pointer font-semibold text-ink">{t("dhome.shareMore")}</summary>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
               <li>{t("dhome.consent2")}</li>
               <li>{t("dhome.consent3")}</li>
               <li>{t("dhome.consent4")}</li>
               <li>{t("dhome.consent5")}</li>
             </ul>
-          </div>
-          <Button variant="success" size="cta" block loading={busy} onClick={() => void doClock("CLOCK_IN", true)}>
+          </details>
+          <Button variant="success" size="cta" block loading={busy} onClick={() => void doClock("CLOCK_IN", true, true)}>
             {t("dhome.clockInShare")}
           </Button>
-          <Button variant="secondary" block disabled={busy} onClick={() => void doClock("CLOCK_IN", false)}>
+          <Button variant="secondary" block disabled={busy} onClick={() => void doClock("CLOCK_IN", false, true)}>
             {t("dhome.clockInNoShare")}
           </Button>
+          <p className="text-center text-xs text-ink-faint">{t("dhome.shareRemember")}</p>
         </div>
       </BottomSheet>
 
@@ -133,4 +146,22 @@ export function DriverHome() {
       />
     </>
   );
+}
+
+/* 출근 때 위치 공유 선택 — 이 휴대폰에 기억 (홈의 위치 공유 카드에서 언제든 끄고 켤 수 있음) */
+const SHARE_KEY = "bosscall.shareOnClockIn";
+function savedShareChoice(): boolean | null {
+  try {
+    const v = localStorage.getItem(SHARE_KEY);
+    return v === "1" ? true : v === "0" ? false : null;
+  } catch {
+    return null;
+  }
+}
+function saveShareChoice(on: boolean): void {
+  try {
+    localStorage.setItem(SHARE_KEY, on ? "1" : "0");
+  } catch {
+    /* 무시 */
+  }
 }
