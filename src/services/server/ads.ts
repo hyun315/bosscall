@@ -145,7 +145,7 @@ export type ApproveResult = { ok: true; campaignId: string } | { ok: false; take
 export async function approveAdRequest(
   id: string,
   reviewer: string,
-  override: { startDate?: string; months?: number; rank?: number },
+  override: { startDate?: string; months?: number; rank?: number; product?: AdProduct },
 ): Promise<ApproveResult> {
   const db = adminDb();
   const reqRef = db.doc(`adRequests/${id}`);
@@ -158,12 +158,14 @@ export async function approveAdRequest(
     const months = override.months ?? r.months;
     const win = campaignWindow(startDate, months);
     if (!win) throw bad("시작일");
-    const slots = [...PRODUCT_INFO[r.product].slots];
+    // 운영자가 상품을 바꿔 승인할 수 있다 (프리미엄 ↔ 호출 묶음)
+    const product = override.product ?? r.product;
+    const slots = [...PRODUCT_INFO[product].slots];
 
     const existing = await tx.get(db.collection("adCampaigns").where("endAt", ">", win.startAt));
     const others = existing.docs.map((d) => d.data() as AdCampaignDoc);
-    const rank = override.rank ?? nextFreeRank(others, r.product, win.startAt, win.endAt);
-    const taken = rankTaken(others, r.product, rank, win.startAt, win.endAt);
+    const rank = override.rank ?? nextFreeRank(others, product, win.startAt, win.endAt);
+    const taken = rankTaken(others, product, rank, win.startAt, win.endAt);
     if (taken) return { ok: false, takenBy: taken.company };
 
     const campRef = db.collection("adCampaigns").doc();
@@ -179,7 +181,7 @@ export async function approveAdRequest(
       detailUrl: `/api/ad-image/${r.detailImageId}`,
       linkUrl: r.linkUrl,
       place: r.place ?? null,
-      product: r.product,
+      product,
       rank,
       createdAt: now,
     };
@@ -190,6 +192,7 @@ export async function approveAdRequest(
       status: "APPROVED",
       startDate,
       months,
+      product,
       reviewedAt: now,
       reviewedBy: reviewer,
       campaignId: campRef.id,
@@ -259,6 +262,8 @@ export interface CampaignPatch {
   linkUrl?: string | null;
   /** 상품 안 순번 1~5 */
   rank?: number;
+  /** 프리미엄 ↔ 호출 묶음 변경 (보여줄 화면도 바뀜) */
+  product?: AdProduct;
 }
 
 const imageIdOf = (url: string) => /\/api\/ad-image\/([a-f0-9]{24})$/.exec(url)?.[1] ?? null;
@@ -280,7 +285,8 @@ export async function updateCampaign(campaignId: string, patch: CampaignPatch): 
     const now = Date.now();
     const update: Partial<AdCampaignDoc> = {};
 
-    if (patch.startDate !== undefined || patch.lastDate !== undefined || patch.rank !== undefined) {
+    const product = patch.product ?? campaignProduct(c);
+    if (patch.startDate !== undefined || patch.lastDate !== undefined || patch.rank !== undefined || patch.product !== undefined) {
       const startAt = patch.startDate !== undefined ? jakartaDayStart(patch.startDate) : c.startAt;
       const lastStart = patch.lastDate !== undefined ? jakartaDayStart(patch.lastDate) : c.endAt - 86400_000;
       if (startAt === null) throw bad("시작일");
@@ -290,7 +296,7 @@ export async function updateCampaign(campaignId: string, patch: CampaignPatch): 
       const others = await tx.get(db.collection("adCampaigns").where("endAt", ">", startAt));
       const taken = rankTaken(
         others.docs.map((d) => d.data() as AdCampaignDoc),
-        campaignProduct(c),
+        product,
         rank,
         startAt,
         endAt,
@@ -302,7 +308,10 @@ export async function updateCampaign(campaignId: string, patch: CampaignPatch): 
     }
     if (patch.linkUrl !== undefined) update.linkUrl = patch.linkUrl;
     if (patch.rank !== undefined) update.rank = patch.rank;
-    if (!c.product) update.product = campaignProduct(c); // 예전 광고는 상품을 채워 둔다
+    if (patch.product !== undefined || !c.product) {
+      update.product = product; // 예전 광고는 상품을 채워 둔다
+      update.slots = [...PRODUCT_INFO[product].slots];
+    }
 
     for (const [buf, kind, key] of [
       [banner, "banner", "bannerUrl"],
@@ -320,4 +329,18 @@ export async function updateCampaign(campaignId: string, patch: CampaignPatch): 
     if (update.linkUrl !== undefined) tx.update(db.doc(`adRequests/${c.requestId}`), { linkUrl: update.linkUrl });
     return { ok: true, campaignId: c.id };
   });
+}
+
+/**
+ * 운영자가 직접 올리기 — 자리가 비어 있는지 먼저 보고, 신청서를 만든 뒤 바로 승인한다.
+ * 자리가 차 있으면 아무것도 만들지 않고 그 자리를 쓰는 업체명을 돌려준다.
+ */
+export async function createAdByOperator(input: AdRequestInput, rank: number, operator: string): Promise<ApproveResult> {
+  const win = campaignWindow(input.startDate, input.months);
+  if (!win) throw bad("시작일");
+  const snap = await adminDb().collection("adCampaigns").where("endAt", ">", win.startAt).get();
+  const taken = rankTaken(snap.docs.map((d) => d.data() as AdCampaignDoc), input.product, rank, win.startAt, win.endAt);
+  if (taken) return { ok: false, takenBy: taken.company };
+  const { id } = await createAdRequest(input);
+  return approveAdRequest(id, operator, { rank, product: input.product });
 }

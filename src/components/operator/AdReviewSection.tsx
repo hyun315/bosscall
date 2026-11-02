@@ -1,5 +1,6 @@
 "use client";
 /** 운영자 도구 › 광고 신청 검토 · 게재 관리 (한국어 전용) */
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/common/Button";
 import { useToast } from "@/components/common/Toast";
@@ -7,7 +8,6 @@ import { PaidBanner } from "@/components/ads/AdSlot";
 import { AdPlaceField } from "@/components/ads/AdPlaceField";
 import {
   AD_MONTHS,
-  AD_RANKS,
   BANNER_SPEC,
   DETAIL_SPEC,
   PRODUCT_INFO,
@@ -19,7 +19,6 @@ import {
   nextFreeRank,
   slotLayout,
   type AdCampaignDoc,
-  type AdProduct,
   type AdRequestDoc,
 } from "@/lib/ads";
 import {
@@ -33,6 +32,7 @@ import {
 } from "@/services/client/actions";
 import { ImageCropper } from "@/components/ads/ImageCropper";
 import { BANNER_SAFE } from "@/components/ads/BannerSpecGuide";
+import { ProductRankPicker, type ProductRank } from "@/components/operator/ProductRankPicker";
 import { errorMessage } from "@/services/client/api";
 
 type Tab = "pending" | "live" | "done";
@@ -65,7 +65,12 @@ export function AdReviewSection() {
 
   return (
     <section className="space-y-3">
-      <h2 className="section-title">광고 신청</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="section-title mb-0">광고 신청</h2>
+        <Link href="/operator/ads/new" className="rounded-full bg-action px-3 py-1.5 text-sm font-bold text-white active:bg-action-dark">
+          + 광고 직접 올리기
+        </Link>
+      </div>
       <div className="flex gap-1 rounded-btn bg-line/60 p-1">
         {(
           [
@@ -168,9 +173,10 @@ function RequestCard({
   const [startDate, setStartDate] = useState(r.startDate);
   const [months, setMonths] = useState<number>(r.months);
   const win = campaignWindow(startDate, months);
-  const [rank, setRank] = useState<number>(() =>
-    win ? nextFreeRank(campaigns, r.product, win.startAt, win.endAt) : 1,
-  );
+  const [pick, setPick] = useState<ProductRank>(() => ({
+    product: r.product,
+    rank: win ? nextFreeRank(campaigns, r.product, win.startAt, win.endAt) : 1,
+  }));
   const [busy, setBusy] = useState<"approve" | "reject" | null>(null);
   const [full, setFull] = useState<string | null>(null);
 
@@ -185,7 +191,7 @@ function RequestCard({
     setBusy("approve");
     setFull(null);
     try {
-      const res = await approveAd(r.id, startDate, months, rank);
+      const res = await approveAd(r.id, startDate, months, pick.rank, pick.product);
       if (res.ok) {
         toast("승인했습니다. 시작일에 자동으로 올라갑니다.");
         onDone();
@@ -289,15 +295,16 @@ function RequestCard({
               </select>
             </div>
           </div>
-          <RankPicker
-            product={r.product}
-            value={rank}
-            onChange={setRank}
-            used={win ? usedRanks(campaigns, r.product, win.startAt, win.endAt) : new Set()}
+          <ProductRankPicker
+            value={pick}
+            onChange={setPick}
+            campaigns={campaigns}
+            startAt={win?.startAt ?? null}
+            endAt={win?.endAt ?? null}
           />
           {full && (
             <p className="rounded-btn bg-warning-soft px-3 py-2 text-sm text-warning-text">
-              {PRODUCT_INFO[r.product].name} {rank}번 자리는 그 기간에 「{full}」 광고가 쓰고 있습니다. 다른 번호나 시작일을 고르세요.
+              {PRODUCT_INFO[pick.product].name} {pick.rank}번 자리는 그 기간에 「{full}」 광고가 쓰고 있습니다. 다른 번호나 시작일을 고르세요.
             </p>
           )}
           <div className="grid grid-cols-2 gap-2">
@@ -336,8 +343,7 @@ function CampaignCard({
   const [startDate, setStartDate] = useState(ymd(c.startAt));
   const [lastDate, setLastDate] = useState(ymd(c.endAt - 1));
   const [link, setLink] = useState(c.linkUrl ?? "");
-  const [rank, setRank] = useState<number>(c.rank ?? 5);
-  const product = campaignProduct(c);
+  const [pick, setPick] = useState<ProductRank>({ product: campaignProduct(c), rank: c.rank ?? 5 });
   const [busy, setBusy] = useState(false);
   const [full, setFull] = useState<string | null>(null);
 
@@ -351,7 +357,7 @@ function CampaignCard({
     setStartDate(ymd(c.startAt));
     setLastDate(ymd(c.endAt - 1));
     setLink(c.linkUrl ?? "");
-    setRank(c.rank ?? 5);
+    setPick({ product: campaignProduct(c), rank: c.rank ?? 5 });
     setFull(null);
     setEditing(true);
   };
@@ -363,7 +369,11 @@ function CampaignCard({
     if (startDate !== ymd(c.startAt)) patch.startDate = startDate;
     if (lastDate !== ymd(c.endAt - 1)) patch.lastDate = lastDate;
     if (link.trim() !== (c.linkUrl ?? "")) patch.linkUrl = link.trim() || null;
-    if (rank !== (c.rank ?? 5)) patch.rank = rank;
+    if (pick.rank !== (c.rank ?? 5)) patch.rank = pick.rank;
+    if (pick.product !== campaignProduct(c)) {
+      patch.product = pick.product;
+      patch.rank = pick.rank;
+    }
     if (Object.keys(patch).length === 0) {
       setEditing(false);
       return;
@@ -477,16 +487,13 @@ function CampaignCard({
               <input type="date" className="field" value={lastDate} min={startDate} onChange={(e) => setLastDate(e.target.value)} />
             </div>
           </div>
-          <RankPicker
-            product={product}
-            value={rank}
-            onChange={setRank}
-            used={usedRanks(
-              all.filter((x) => x.id !== c.id),
-              product,
-              jakartaDayStart(startDate) ?? c.startAt,
-              (jakartaDayStart(lastDate) ?? c.endAt - 86400_000) + 86400_000,
-            )}
+          <ProductRankPicker
+            value={pick}
+            onChange={setPick}
+            campaigns={all}
+            exceptId={c.id}
+            startAt={jakartaDayStart(startDate)}
+            endAt={(jakartaDayStart(lastDate) ?? c.endAt - 86400_000) + 86400_000}
           />
           <div>
             <span className="label">연결 링크 (비우면 없음)</span>
@@ -501,7 +508,7 @@ function CampaignCard({
           </div>
           {full && (
             <p className="rounded-btn bg-warning-soft px-3 py-2 text-sm text-warning-text">
-              {PRODUCT_INFO[product].name} {rank}번 자리는 그 기간에 「{full}」 광고가 쓰고 있습니다. 다른 번호나 기간을 고르세요.
+              {PRODUCT_INFO[pick.product].name} {pick.rank}번 자리는 그 기간에 「{full}」 광고가 쓰고 있습니다. 다른 번호나 기간을 고르세요.
             </p>
           )}
           <div className="grid grid-cols-2 gap-2">
@@ -514,55 +521,6 @@ function CampaignCard({
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-/** 같은 상품에서 겹치는 기간에 이미 쓰인 순번 */
-function usedRanks(all: AdCampaignDoc[], product: AdProduct, startAt: number, endAt: number): Set<number> {
-  return new Set(
-    all.filter((c) => campaignProduct(c) === product && c.startAt < endAt && c.endAt > startAt).map((c) => c.rank ?? 5),
-  );
-}
-
-/** 순번 고르기 — 프리미엄 1~5 / 호출 묶음 1~5. 호출 묶음은 항상 프리미엄 뒤에 나온다 */
-function RankPicker({
-  product,
-  value,
-  onChange,
-  used,
-}: {
-  product: AdProduct;
-  value: number;
-  onChange: (r: number) => void;
-  used: Set<number>;
-}) {
-  return (
-    <div>
-      <span className="label">자리 번호 · {PRODUCT_INFO[product].name}</span>
-      <div className="grid grid-cols-5 gap-1.5">
-        {AD_RANKS.map((r) => {
-          const on = value === r;
-          const taken = used.has(r) && !on;
-          return (
-            <button
-              key={r}
-              type="button"
-              onClick={() => onChange(r)}
-              aria-pressed={on}
-              className={`relative min-h-[44px] rounded-btn border text-[15px] font-bold ${
-                on ? "border-action bg-action text-white" : "border-line bg-surface text-ink"
-              }`}
-            >
-              {r}
-              {taken && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-warning" aria-label="사용 중" />}
-            </button>
-          );
-        })}
-      </div>
-      <p className="mt-1 text-xs text-ink-sub">
-        화면마다 1~5번 고정 자리입니다. 픽업·목적지 화면에선 같은 번호면 호출 묶음이 프리미엄보다 우선, 1번이 비면 한인업소록. 점(•)은 같은 기간에 이미 쓰는 번호입니다.
-      </p>
     </div>
   );
 }

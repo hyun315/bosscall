@@ -2,7 +2,7 @@
 import { api } from "@/services/client/api";
 import type { CallAction } from "@/lib/callStateMachine";
 import type { ActualFix, NotificationPrefs, PlaceInput, PoiDoc } from "@/types/domain";
-import type { AdCampaignDoc, AdPlace, AdRequestDoc } from "@/lib/ads";
+import type { AdCampaignDoc, AdPlace, AdProduct, AdRequestDoc } from "@/lib/ads";
 
 /** 서버 API 호출 모음 — UI 컴포넌트는 이 함수들만 사용한다 (코딩규칙 3) */
 
@@ -121,9 +121,9 @@ export const uploadPois = (csv: string, replace: boolean) =>
 export const getAdRequests = () => api<{ requests: AdRequestDoc[]; campaigns: AdCampaignDoc[] }>("/api/operator/ads");
 export const getAdRequest = (id: string) =>
   api<{ request: AdRequestDoc; banner: string | null; detail: string | null }>(`/api/operator/ads/${id}`);
-export const approveAd = (id: string, startDate: string, months: number, rank: number) =>
+export const approveAd = (id: string, startDate: string, months: number, rank: number, product: AdProduct) =>
   api<{ ok: true; campaignId: string } | { ok: false; takenBy: string }>(`/api/operator/ads/${id}`, {
-    body: { action: "approve", startDate, months, rank },
+    body: { action: "approve", startDate, months, rank, product },
   });
 export const rejectAd = (id: string, reason: string) => api(`/api/operator/ads/${id}`, { body: { action: "reject", reason } });
 export const setAdCampaignPlace = (campaignId: string, place: AdPlace | null) =>
@@ -137,9 +137,27 @@ export const updateAdCampaign = (
     lastDate?: string;
     linkUrl?: string | null;
     rank?: number;
+    product?: AdProduct;
   },
 ) =>
   api<{ ok: true; campaignId: string } | { ok: false; takenBy: string }>(`/api/operator/ads/${campaignId}`, {
     body: { action: "update", ...patch },
   });
+/** 운영자가 광고를 처음부터 직접 올림 (바로 승인) */
+export const createAdDirect = (body: {
+  company: string;
+  industry: string;
+  contactName: string;
+  whatsapp: string;
+  kakaoId: string;
+  email: string;
+  product: AdProduct;
+  rank: number;
+  months: number;
+  startDate: string;
+  linkUrl: string;
+  place: AdPlace | null;
+  bannerImage: string;
+  detailImage: string;
+}) => api<{ ok: true; campaignId: string } | { ok: false; takenBy: string }>("/api/operator/ads", { body });
 export const endAdCampaign = (campaignId: string) => api(`/api/operator/ads/${campaignId}`, { body: { action: "end" } });
