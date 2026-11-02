@@ -78,14 +78,15 @@ function audioContext(): AudioContext | null {
       ? undefined
       : window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!Ctor) return null;
-  // 아이폰: 무음 모드(스위치)면 소리를 내지 않는다 — 억지로 울리지 않음 ("ambient" = 무음 스위치를 따름)
+  ctx = new Ctor();
+  // 아이폰: "playback" — BossCall이 뒤로 가 있어도(다른 앱·홈 화면) 알람이 계속 울린다.
+  // ("ambient"로 바꿨더니 앱이 뒤로 가는 순간 소리가 끊겼다. 대신 무음 스위치와 상관없이 울린다)
   try {
     const nav = navigator as unknown as { audioSession?: { type: string } };
-    if (nav.audioSession) nav.audioSession.type = "ambient";
+    if (nav.audioSession) nav.audioSession.type = "playback";
   } catch {
     /* 미지원 */
   }
-  ctx = new Ctor();
   return ctx;
 }
 
@@ -200,7 +201,7 @@ function stopVibrate(): void {
 /**
  * 호출 알람 시작 — 응답할 때까지 반복. 진동은 항상 같이 (안드로이드).
  * sound=false 면 진동만 (설정 › 호출 소리 끔).
- * 아이폰은 무음 모드면 소리가 나지 않는다 (휴대폰 설정을 존중).
+ * 아이폰은 BossCall이 뒤에 있어도 울리도록 "playback" 으로 재생한다 (무음 스위치와 무관).
  */
 export function startCallAlarm(sound = true): void {
   if (previewTimer) clearTimeout(previewTimer);
