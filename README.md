@@ -217,8 +217,8 @@ npm run typecheck
 |---|---|
 | `homeBenefits` | 홈 · 최근 호출 위 |
 | `waiting` | 기사 호출 직후, 기사님 응답 기다리는 화면 맨 아래 |
-| `pickup` | 호출 › 픽업 위치 화면 맨 아래 |
-| `destinationSearch` | 호출 › 목적지 고르기 화면 맨 아래 |
+| `pickup` | 호출 › 픽업 위치 화면, 즐겨찾기 바로 아래 |
+| `destinationSearch` | 호출 › 목적지 고르기 화면, 즐겨찾기 바로 아래 |
 
 ### 판매 상품 (`src/lib/ads.ts` 의 `PRODUCT_INFO`)
 

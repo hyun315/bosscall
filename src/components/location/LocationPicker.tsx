@@ -165,14 +165,12 @@ export function LocationPicker({
       </Button>
 
       {favoritesList}
-      {recentsList}
       {error && <p className="text-sm text-danger">{error}</p>}
 
-      {/* 광고: 맨 아래 (호출 화면에서만 넘겨받음 — 사장님·가족만, 기사 계정엔 그리지 않음) */}
-      {adSlot && (
-        <AdSlot slot={adSlot} onDestination={onAdDestination} />
-      )}
+      {/* 광고: 즐겨찾기 바로 아래, 최근 장소 위 (호출 화면에서만 넘겨받음 — 사장님·가족만, 기사 계정엔 그리지 않음) */}
+      {adSlot && <AdSlot slot={adSlot} onDestination={onAdDestination} />}
 
+      {recentsList}
 
       {currentFix && (
         <MapPicker
