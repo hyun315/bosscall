@@ -128,4 +128,11 @@ export const approveAd = (id: string, startDate: string, months: number) =>
 export const rejectAd = (id: string, reason: string) => api(`/api/operator/ads/${id}`, { body: { action: "reject", reason } });
 export const setAdCampaignPlace = (campaignId: string, place: AdPlace | null) =>
   api(`/api/operator/ads/${campaignId}`, { body: { action: "place", place } });
+export const updateAdCampaign = (
+  campaignId: string,
+  patch: { bannerImage?: string; detailImage?: string; startDate?: string; lastDate?: string; linkUrl?: string | null },
+) =>
+  api<{ ok: true; campaignId: string } | { ok: false; fullSlots: AdSlotId[] }>(`/api/operator/ads/${campaignId}`, {
+    body: { action: "update", ...patch },
+  });
 export const endAdCampaign = (campaignId: string) => api(`/api/operator/ads/${campaignId}`, { body: { action: "end" } });

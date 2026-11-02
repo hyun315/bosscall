@@ -10,6 +10,7 @@ import {
   PRODUCT_INFO,
   campaignWindow,
   fullSlots,
+  jakartaDayStart,
   type AdCampaignDoc,
   type AdIndustry,
   type AdMonths,
@@ -240,4 +241,70 @@ export async function endCampaign(campaignId: string): Promise<void> {
 export async function listActiveCampaigns(now = Date.now()): Promise<AdCampaignDoc[]> {
   const snap = await adminDb().collection("adCampaigns").where("endAt", ">", now).get();
   return snap.docs.map((d) => d.data() as AdCampaignDoc);
+}
+
+export interface CampaignPatch {
+  bannerDataUrl?: string;
+  detailDataUrl?: string;
+  /** "YYYY-MM-DD" 자카르타 — 시작일 */
+  startDate?: string;
+  /** "YYYY-MM-DD" 자카르타 — 마지막 날 (그날 밤까지 노출) */
+  lastDate?: string;
+  linkUrl?: string | null;
+}
+
+const imageIdOf = (url: string) => /\/api\/ad-image\/([a-f0-9]{24})$/.exec(url)?.[1] ?? null;
+
+/**
+ * 게재 중·예정·종료된 광고 고치기 (운영자) — 배너·상세 이미지 교체, 기간 변경, 링크 변경.
+ * 이미지는 새 id 로 저장해 주소가 바뀌므로 오래 캐시된 옛 이미지가 남지 않는다.
+ */
+export async function updateCampaign(campaignId: string, patch: CampaignPatch): Promise<ApproveResult> {
+  const db = adminDb();
+  const ref = db.doc(`adCampaigns/${campaignId}`);
+  const banner = patch.bannerDataUrl ? decodeImage(patch.bannerDataUrl, BANNER_SPEC) : null;
+  const detail = patch.detailDataUrl ? decodeImage(patch.detailDataUrl, DETAIL_SPEC) : null;
+
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw notFound();
+    const c = snap.data() as AdCampaignDoc;
+    const now = Date.now();
+    const update: Partial<AdCampaignDoc> = {};
+
+    if (patch.startDate !== undefined || patch.lastDate !== undefined) {
+      const startAt = patch.startDate !== undefined ? jakartaDayStart(patch.startDate) : c.startAt;
+      const lastStart = patch.lastDate !== undefined ? jakartaDayStart(patch.lastDate) : c.endAt - 86400_000;
+      if (startAt === null) throw bad("시작일");
+      if (lastStart === null || lastStart < startAt) throw bad("종료일");
+      const endAt = lastStart + 86400_000;
+      const others = await tx.get(db.collection("adCampaigns").where("endAt", ">", startAt));
+      const full = fullSlots(
+        others.docs.map((d) => d.data() as AdCampaignDoc).filter((x) => x.id !== c.id),
+        c.slots,
+        startAt,
+        endAt,
+      );
+      if (full.length > 0) return { ok: false, fullSlots: full };
+      update.startAt = startAt;
+      update.endAt = endAt;
+    }
+    if (patch.linkUrl !== undefined) update.linkUrl = patch.linkUrl;
+
+    for (const [buf, kind, key] of [
+      [banner, "banner", "bannerUrl"],
+      [detail, "detail", "detailUrl"],
+    ] as const) {
+      if (!buf) continue;
+      const newRef = db.collection("adImages").doc(randomBytes(12).toString("hex"));
+      tx.create(newRef, { requestId: c.requestId, kind, contentType: "image/jpeg", data: buf, public: true, createdAt: now });
+      update[key] = `/api/ad-image/${newRef.id}`;
+      const oldId = imageIdOf(c[key]);
+      if (oldId) tx.delete(db.doc(`adImages/${oldId}`));
+    }
+
+    if (Object.keys(update).length > 0) tx.update(ref, update);
+    if (update.linkUrl !== undefined) tx.update(db.doc(`adRequests/${c.requestId}`), { linkUrl: update.linkUrl });
+    return { ok: true, campaignId: c.id };
+  });
 }

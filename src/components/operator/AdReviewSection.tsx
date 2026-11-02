@@ -5,8 +5,18 @@ import { Button } from "@/components/common/Button";
 import { useToast } from "@/components/common/Toast";
 import { PaidBanner } from "@/components/ads/AdSlot";
 import { AdPlaceField } from "@/components/ads/AdPlaceField";
-import { AD_MONTHS, PRODUCT_INFO, SLOT_INFO, type AdCampaignDoc, type AdRequestDoc } from "@/lib/ads";
-import { approveAd, endAdCampaign, getAdRequest, getAdRequests, rejectAd, setAdCampaignPlace } from "@/services/client/actions";
+import { AD_MONTHS, BANNER_SPEC, DETAIL_SPEC, PRODUCT_INFO, SLOT_INFO, type AdCampaignDoc, type AdRequestDoc } from "@/lib/ads";
+import {
+  approveAd,
+  endAdCampaign,
+  getAdRequest,
+  getAdRequests,
+  rejectAd,
+  setAdCampaignPlace,
+  updateAdCampaign,
+} from "@/services/client/actions";
+import { ImageCropper } from "@/components/ads/ImageCropper";
+import { BANNER_SAFE } from "@/components/ads/BannerSpecGuide";
 import { errorMessage } from "@/services/client/api";
 
 type Tab = "pending" | "live" | "done";
@@ -31,7 +41,11 @@ export function AdReviewSection() {
   const now = Date.now();
   const pending = data?.requests.filter((r) => r.status === "PENDING") ?? [];
   const done = data?.requests.filter((r) => r.status !== "PENDING") ?? [];
-  const campaigns = (data?.campaigns ?? []).filter((c) => c.endAt > now);
+  // 게재 중·예정 먼저, 그다음 최근 종료(90일) — 종료된 것도 기간을 늘려 다시 올릴 수 있게
+  const campaigns = [...(data?.campaigns ?? [])].sort(
+    (a, b) => Number(a.endAt <= now) - Number(b.endAt <= now) || a.startAt - b.startAt,
+  );
+  const liveCount = campaigns.filter((c) => c.endAt > now).length;
 
   return (
     <section className="space-y-3">
@@ -40,7 +54,7 @@ export function AdReviewSection() {
         {(
           [
             ["pending", `검토 대기 ${pending.length}`],
-            ["live", `게재 중·예정 ${campaigns.length}`],
+            ["live", `게재 광고 ${liveCount}`],
             ["done", "처리 완료"],
           ] as const
         ).map(([k, label]) => (
@@ -79,55 +93,7 @@ export function AdReviewSection() {
         <div className="space-y-2">
           {campaigns.length === 0 && <p className="card p-4 text-sm text-ink-sub">게재 중인 광고가 없습니다. 빈 자리는 한인업소록이 나옵니다.</p>}
           {campaigns.map((c) => (
-            <div key={c.id} className="card space-y-2 p-4">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-bold text-ink">{c.company}</span>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-semibold ${c.startAt <= now ? "bg-success-soft text-success" : "bg-warning-soft text-warning-text"}`}
-                >
-                  {c.startAt <= now ? "게재 중" : "예정"}
-                </span>
-              </div>
-              <p className="text-sm text-ink-sub">
-                {day(c.startAt)} ~ {day(c.endAt - 1)} · {c.slots.map(slotName).join(", ")}
-              </p>
-              <PaidBanner
-                company={c.company}
-                bannerUrl={c.bannerUrl}
-                detailUrl={c.detailUrl}
-                linkUrl={c.linkUrl}
-                onGo={c.place ? () => undefined : undefined}
-              />
-              <div>
-                <span className="label">업소 위치 ([여기로 가기] 단추)</span>
-                <AdPlaceField
-                  value={c.place ?? null}
-                  onChange={(p) => {
-                    setAdCampaignPlace(c.id, p)
-                      .then(() => {
-                        toast(p ? "위치를 넣었습니다. 몇 분 안에 앱에 반영됩니다." : "위치를 지웠습니다.");
-                        load();
-                      })
-                      .catch((e) => toast(errorMessage(e), "error"));
-                  }}
-                />
-              </div>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  if (!window.confirm(`${c.company} 광고를 지금 내릴까요?`)) return;
-                  endAdCampaign(c.id)
-                    .then(() => {
-                      toast("광고를 내렸습니다.");
-                      load();
-                    })
-                    .catch((e) => toast(errorMessage(e), "error"));
-                }}
-              >
-                지금 내리기
-              </Button>
-            </div>
+            <CampaignCard key={c.id} c={c} now={now} onChanged={load} />
           ))}
         </div>
       )}
@@ -287,6 +253,182 @@ function RequestCard({ r, open, onToggle, onDone }: { r: AdRequestDoc; open: boo
             </Button>
             <Button loading={busy === "approve"} disabled={busy !== null} onClick={() => void approve()}>
               승인
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** 자카르타 날짜 "YYYY-MM-DD" */
+const ymd = (ms: number) => new Date(ms + 7 * 3600_000).toISOString().slice(0, 10);
+
+/** 올라간 광고 한 건 — 보기 / 수정(이미지·기간·링크) / 위치 / 내리기 */
+function CampaignCard({ c, now, onChanged }: { c: AdCampaignDoc; now: number; onChanged: () => void }) {
+  const toast = useToast();
+  const [editing, setEditing] = useState(false);
+  const [banner, setBanner] = useState<string | null>(null);
+  const [detail, setDetail] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState(ymd(c.startAt));
+  const [lastDate, setLastDate] = useState(ymd(c.endAt - 1));
+  const [link, setLink] = useState(c.linkUrl ?? "");
+  const [busy, setBusy] = useState(false);
+  const [full, setFull] = useState<string[] | null>(null);
+
+  const state = c.endAt <= now ? "종료" : c.startAt <= now ? "게재 중" : "예정";
+  const tone =
+    state === "게재 중" ? "bg-success-soft text-success" : state === "예정" ? "bg-warning-soft text-warning-text" : "bg-line text-ink-sub";
+
+  const open = () => {
+    setBanner(null);
+    setDetail(null);
+    setStartDate(ymd(c.startAt));
+    setLastDate(ymd(c.endAt - 1));
+    setLink(c.linkUrl ?? "");
+    setFull(null);
+    setEditing(true);
+  };
+
+  const save = async () => {
+    const patch: Parameters<typeof updateAdCampaign>[1] = {};
+    if (banner) patch.bannerImage = banner;
+    if (detail) patch.detailImage = detail;
+    if (startDate !== ymd(c.startAt)) patch.startDate = startDate;
+    if (lastDate !== ymd(c.endAt - 1)) patch.lastDate = lastDate;
+    if (link.trim() !== (c.linkUrl ?? "")) patch.linkUrl = link.trim() || null;
+    if (Object.keys(patch).length === 0) {
+      setEditing(false);
+      return;
+    }
+    if (lastDate < startDate) {
+      toast("종료일이 시작일보다 빠릅니다.", "error");
+      return;
+    }
+    setBusy(true);
+    setFull(null);
+    try {
+      const r = await updateAdCampaign(c.id, patch);
+      if (!r.ok) {
+        setFull(r.fullSlots);
+        return;
+      }
+      toast("저장했습니다. 몇 분 안에 앱에 반영됩니다.");
+      setEditing(false);
+      onChanged();
+    } catch (e) {
+      toast(errorMessage(e), "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className={`card space-y-3 p-4 ${state === "종료" ? "opacity-80" : ""}`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-bold text-ink">{c.company}</span>
+        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${tone}`}>{state}</span>
+      </div>
+      <p className="text-sm text-ink-sub">
+        {day(c.startAt)} ~ {day(c.endAt - 1)} · {c.slots.map(slotName).join(", ")}
+      </p>
+
+      {!editing ? (
+        <>
+          <PaidBanner
+            company={c.company}
+            bannerUrl={c.bannerUrl}
+            detailUrl={c.detailUrl}
+            linkUrl={c.linkUrl}
+            onGo={c.place ? () => undefined : undefined}
+          />
+          <div>
+            <span className="label">업소 위치 ([여기로 가기] 단추)</span>
+            <AdPlaceField
+              value={c.place ?? null}
+              onChange={(p) => {
+                setAdCampaignPlace(c.id, p)
+                  .then(() => {
+                    toast(p ? "위치를 넣었습니다. 몇 분 안에 앱에 반영됩니다." : "위치를 지웠습니다.");
+                    onChanged();
+                  })
+                  .catch((e) => toast(errorMessage(e), "error"));
+              }}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="secondary" size="sm" onClick={open}>
+              ✏️ 수정
+            </Button>
+            {state !== "종료" ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  if (!window.confirm(`${c.company} 광고를 지금 내릴까요?`)) return;
+                  endAdCampaign(c.id)
+                    .then(() => {
+                      toast("광고를 내렸습니다.");
+                      onChanged();
+                    })
+                    .catch((e) => toast(errorMessage(e), "error"));
+                }}
+              >
+                지금 내리기
+              </Button>
+            ) : (
+              <span className="self-center text-center text-xs text-ink-sub">기간을 늘리면 다시 올라갑니다</span>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className="space-y-4 rounded-btn bg-bg p-3">
+          <div>
+            <span className="label">
+              배너 ({BANNER_SPEC.w}×{BANNER_SPEC.h}) — 바꿀 때만 새 이미지 선택
+            </span>
+            <ImageCropper spec={BANNER_SPEC} value={banner ?? c.bannerUrl} onChange={setBanner} safe={BANNER_SAFE} />
+          </div>
+          <div>
+            <span className="label">
+              상세 이미지 ({DETAIL_SPEC.w}×{DETAIL_SPEC.h})
+            </span>
+            <div className="mx-auto w-2/3">
+              <ImageCropper spec={DETAIL_SPEC} value={detail ?? c.detailUrl} onChange={setDetail} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <span className="label">시작일</span>
+              <input type="date" className="field" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            </div>
+            <div>
+              <span className="label">마지막 날</span>
+              <input type="date" className="field" value={lastDate} min={startDate} onChange={(e) => setLastDate(e.target.value)} />
+            </div>
+          </div>
+          <div>
+            <span className="label">연결 링크 (비우면 없음)</span>
+            <input
+              className="field"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              inputMode="url"
+              autoCapitalize="none"
+              placeholder="https://…"
+            />
+          </div>
+          {full && (
+            <p className="rounded-btn bg-warning-soft px-3 py-2 text-sm text-warning-text">
+              이 기간에 자리가 찼습니다 ({full.map(slotName).join(", ")} — 최대 3곳). 기간을 바꿔 주세요.
+            </p>
+          )}
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="secondary" disabled={busy} onClick={() => setEditing(false)}>
+              취소
+            </Button>
+            <Button loading={busy} onClick={() => void save()}>
+              저장
             </Button>
           </div>
         </div>

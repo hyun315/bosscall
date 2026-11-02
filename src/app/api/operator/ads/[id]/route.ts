@@ -2,7 +2,15 @@ import { requireOperator } from "@/lib/server/auth";
 import { ApiError, readJson, routeWithParams } from "@/lib/server/http";
 import { requireId, requireRecord } from "@/lib/validation";
 import { AD_MONTHS } from "@/lib/ads";
-import { approveAdRequest, endCampaign, getAdRequestWithImages, parseAdPlace, rejectAdRequest, setAdPlace } from "@/services/server/ads";
+import {
+  approveAdRequest,
+  endCampaign,
+  getAdRequestWithImages,
+  parseAdPlace,
+  rejectAdRequest,
+  setAdPlace,
+  updateCampaign,
+} from "@/services/server/ads";
 
 /** 신청서 한 건 (이미지 포함) */
 export const GET = routeWithParams<{ id: string }>(async (req, params) => {
@@ -31,6 +39,24 @@ export const POST = routeWithParams<{ id: string }>(async (req, params) => {
     case "place":
       await setAdPlace(id, parseAdPlace(body.place));
       return { ok: true };
+    case "update": {
+      const str = (v: unknown) => (typeof v === "string" && v ? v : undefined);
+      let linkUrl: string | null | undefined;
+      if (body.linkUrl === null || body.linkUrl === "") linkUrl = null;
+      else if (typeof body.linkUrl === "string") {
+        const l = body.linkUrl.trim();
+        const u = /^https?:\/\//.test(l) ? l : `https://${l}`;
+        if (u.length > 500 || !/^https:\/\/[^\s]+$/.test(u)) throw new ApiError(400, "BAD_REQUEST", "val.format", { field: "연결 링크" });
+        linkUrl = u;
+      }
+      return updateCampaign(id, {
+        bannerDataUrl: str(body.bannerImage),
+        detailDataUrl: str(body.detailImage),
+        startDate: str(body.startDate),
+        lastDate: str(body.lastDate),
+        linkUrl,
+      });
+    }
     case "end":
       await endCampaign(id);
       return { ok: true };
@@ -38,3 +64,4 @@ export const POST = routeWithParams<{ id: string }>(async (req, params) => {
       throw new ApiError(400, "BAD_REQUEST", "val.invalid", { field: "action" });
   }
 });
+export const maxDuration = 30;
