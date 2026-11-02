@@ -71,10 +71,11 @@ test("예외 전이: CALLING → DECLINED / CANCELLED / TIMEOUT, ACCEPTED → CA
   assert.equal(evaluateTransition(call("CALLING", { expiresAt: NOW - 1 }), "TIMEOUT", otherMember, NOW).ok, true);
 });
 
-test("이동 시작 이후(ON_THE_WAY~)에는 취소 불가 — 명세 예외 목록에 없음", () => {
-  for (const s of ["ON_THE_WAY", "ARRIVED", "TRIP_STARTED"] as const) {
-    assert.equal(evaluateTransition(call(s), "CANCEL", owner, NOW).ok, false, s);
+test("운행 시작 전(이동 중·도착)까지는 취소 가능, 운행 시작 후에는 불가", () => {
+  for (const s of ["ON_THE_WAY", "ARRIVED"] as const) {
+    assert.equal(evaluateTransition(call(s), "CANCEL", owner, NOW).ok, true, s);
   }
+  assert.equal(evaluateTransition(call("TRIP_STARTED"), "CANCEL", owner, NOW).ok, false);
 });
 
 test("취소는 호출자 본인 또는 OWNER만", () => {

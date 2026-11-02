@@ -141,7 +141,7 @@ function CallView({ callId }: { callId: string }) {
   const canCancel =
     role !== "DRIVER" &&
     (call.callerId === uid || role === "OWNER") &&
-    (call.status === "CALLING" || call.status === "RECEIVED" || call.status === "ACCEPTED");
+    ["CALLING", "RECEIVED", "ACCEPTED", "ON_THE_WAY", "ARRIVED"].includes(call.status);
   const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
 
   const timeline = events.data.map((e) => ({
@@ -244,7 +244,7 @@ function CallView({ callId }: { callId: string }) {
       <ConfirmModal
         open={confirm === "CANCEL"}
         title={t("call.cancelConfirmTitle")}
-        message={call.status === "ACCEPTED" ? t("call.cancelAcceptedNote") : undefined}
+        message={call.status === "ACCEPTED" || call.status === "ON_THE_WAY" || call.status === "ARRIVED" ? t("call.cancelAcceptedNote") : undefined}
         confirmLabel={t("call.cancel")}
         cancelLabel={t("common.goBack")}
         tone="danger"

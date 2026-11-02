@@ -2,7 +2,8 @@
  * Call State Machine — 명세서 §7.
  *
  * 정상 흐름: CREATED → CALLING → RECEIVED → ACCEPTED → ON_THE_WAY → ARRIVED → TRIP_STARTED → COMPLETED
- * 예외:     CALLING → DECLINED | TIMEOUT | CANCELLED,  ACCEPTED → CANCELLED
+ * 예외:     CALLING → DECLINED | TIMEOUT | CANCELLED,  ACCEPTED·ON_THE_WAY·ARRIVED → CANCELLED
+ *           (수락 = 바로 출발이라 이동 중·도착 후에도 운행 시작 전까지는 취소할 수 있어야 한다)
  *
  * [명세 해석] RECEIVED(기사 화면에 표시됨)는 기사가 아직 응답하지 않은 상태이므로
  * CALLING과 동일하게 DECLINED / TIMEOUT / CANCELLED 로 갈 수 있게 했다.
@@ -40,7 +41,7 @@ export const TRANSITIONS: Readonly<Record<CallAction, TransitionRule>> = {
   RECEIVE: { from: ["CALLING"], to: "RECEIVED", actor: "ASSIGNED_DRIVER" },
   ACCEPT: { from: ["RECEIVED"], to: "ACCEPTED", actor: "ASSIGNED_DRIVER" },
   DECLINE: { from: ["CALLING", "RECEIVED"], to: "DECLINED", actor: "ASSIGNED_DRIVER" },
-  CANCEL: { from: ["CALLING", "RECEIVED", "ACCEPTED"], to: "CANCELLED", actor: "CALLER_OR_OWNER" },
+  CANCEL: { from: ["CALLING", "RECEIVED", "ACCEPTED", "ON_THE_WAY", "ARRIVED"], to: "CANCELLED", actor: "CALLER_OR_OWNER" },
   TIMEOUT: { from: ["CALLING", "RECEIVED"], to: "TIMEOUT", actor: "ANY_MEMBER_AFTER_EXPIRY" },
   DEPART: { from: ["ACCEPTED"], to: "ON_THE_WAY", actor: "ASSIGNED_DRIVER" },
   ARRIVE: { from: ["ON_THE_WAY"], to: "ARRIVED", actor: "ASSIGNED_DRIVER" },
