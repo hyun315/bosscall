@@ -90,3 +90,26 @@ export async function unregisterThisDevice(): Promise<void> {
     await deleteToken(getMessaging(firebaseApp())).catch(() => undefined);
   }
 }
+
+/**
+ * 출근 단추처럼 사용자가 누른 순간에 부른다 — 따로 "알림 켜기"를 누르지 않아도 되게.
+ * 권한 창은 누른 동작 안에서 바로 띄워야 하므로(아이폰) 기다리지 않고 먼저 요청하고, 허용되면 기기를 등록한다.
+ * 이미 허용돼 있으면 기기 등록만 확인한다. 실패해도 출근은 그대로 진행.
+ */
+export function ensurePushOnTap(groupId: string | null): void {
+  try {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission === "default") {
+      void Notification.requestPermission()
+        .then((p) => {
+          trackClient(p === "granted" ? "notification_permission_granted" : "notification_permission_denied", groupId);
+          if (p === "granted") return refreshPushTokenSilently();
+        })
+        .catch(() => undefined);
+    } else if (Notification.permission === "granted") {
+      void refreshPushTokenSilently().catch(() => undefined);
+    }
+  } catch {
+    /* 미지원 브라우저 */
+  }
+}

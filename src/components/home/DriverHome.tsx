@@ -14,6 +14,8 @@ import { useActiveCalls } from "@/hooks/useGroupData";
 import { useLiveDoc } from "@/hooks/useLive";
 import { useReadySession } from "@/hooks/useSession";
 import { clock } from "@/services/client/actions";
+import { primeAlarmAudio } from "@/services/client/alarm";
+import { ensurePushOnTap } from "@/services/client/push";
 import { errorMessage } from "@/services/client/api";
 import type { DriverDoc } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
@@ -47,8 +49,13 @@ export function DriverHome() {
 
   const doClock = async (action: "CLOCK_IN" | "CLOCK_OUT", shareLocation = false, remember = false) => {
     if (remember) saveShareChoice(shareLocation);
+    if (action === "CLOCK_IN") {
+      // 출근 한 번으로 호출 받을 준비 끝: 알림 권한·기기 등록, 호출 소리, (선택 시) 위치 — 따로 누를 필요 없게
+      ensurePushOnTap(groupId);
+      primeAlarmAudio();
+      if (shareLocation) askPermissionNow();
+    }
     setBusy(true);
-    if (action === "CLOCK_IN" && shareLocation) askPermissionNow();
     try {
       await clock(groupId, action, shareLocation);
       toast(action === "CLOCK_IN" ? t("dhome.clockedIn") : t("dhome.clockedOut"), "success");

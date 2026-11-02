@@ -259,3 +259,8 @@ function closeCallNotifications(callId: string): void {
     .then((ns) => ns.forEach((n) => n.close()))
     .catch(() => undefined);
 }
+
+/** 사용자가 단추를 누른 그 순간에 부른다 — 호출 소리를 미리 열어 둔다 (출근 단추 등) */
+export function primeAlarmAudio(): void {
+  unlock();
+}
