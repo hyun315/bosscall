@@ -600,7 +600,7 @@ function QueueView({ campaigns, now }: { campaigns: AdCampaignDoc[]; now: number
   return (
     <div className="card space-y-2 p-4 text-[13px]">
       <p className="text-xs font-semibold text-ink-sub">
-        지금 게재 {live.length} / 최대 {MAX_LIVE_ADS}곳 · 선착순(먼저 승인된 순)
+        지금 게재 {live.length} / 최대 {MAX_LIVE_ADS}곳 · 승인 순서 (노출 순서는 무작위)
       </p>
       {live.length > 0 && (
         <ol className="list-decimal space-y-0.5 pl-5 text-ink">
@@ -612,8 +612,8 @@ function QueueView({ campaigns, now }: { campaigns: AdCampaignDoc[]; now: number
         </ol>
       )}
       <p className="text-xs leading-relaxed text-ink-sub">
-        화면마다 맨 위는 한인업소록. 그 아래 홈 {home}칸, 응답 대기·픽업·목적지 {call}칸. 광고가 칸보다 많으면 화면에 들어올 때마다
-        돌아가며 나옵니다.
+        화면마다 맨 위는 한인업소록, 그 아래 광고 홈 {home}칸 · 응답 대기·픽업·목적지 {call}칸 (픽업·목적지는 최근 장소 아래). 무료
+        기간이라 화면에 들어올 때마다 무작위 순서로 나오고, 칸보다 많으면 그중 일부만 나옵니다.
       </p>
     </div>
   );

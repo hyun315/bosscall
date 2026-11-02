@@ -273,7 +273,7 @@ export function AdApplyForm({ mode }: { mode: "public" | "operator" }) {
           {!AD_TIERS_ENABLED ? (
             <div className="rounded-card border border-line bg-surface p-4">
               <p className="text-[17px] font-extrabold text-ink">보스콜 광고</p>
-              <p className="mt-1 text-sm text-ink-sub">아래 4개 화면에 모두 나옵니다. 무료 기간에는 선착순으로 올라갑니다.</p>
+              <p className="mt-1 text-sm text-ink-sub">아래 4개 화면에 모두 나옵니다. 무료 기간에는 모든 광고가 무작위 순서로 고르게 노출됩니다.</p>
               <span className="mt-3 flex flex-wrap gap-1.5">
                 {SLOT_INFO.map((si) => (
                   <span key={si.slot} className="rounded-full bg-action-soft px-2.5 py-1 text-xs font-semibold text-action">
@@ -361,7 +361,7 @@ export function AdApplyForm({ mode }: { mode: "public" | "operator" }) {
             <p className="text-xs leading-relaxed text-ink-sub">
               {AD_TIERS_ENABLED
                 ? "화면마다 1~5번 고정 자리가 있고, 자리 번호는 검토 후 정해 드립니다. 원하는 번호가 그 기간에 차 있으면 연락드립니다."
-                : `동시에 최대 ${MAX_LIVE_ADS}곳까지 올라가며, 화면 칸보다 많으면 돌아가며 노출됩니다. 무료 기간에 입점한 업체에는 유료 전환 때 창립 광고주 혜택을 드립니다.`}
+                : `화면마다 광고 5칸, 동시에 최대 ${MAX_LIVE_ADS}곳까지 올라가며 무작위 순서로 노출됩니다. 무료 기간에 입점한 업체에는 유료 전환 때 창립 광고주 혜택을 드립니다.`}
             </p>
           )}
         </Section>

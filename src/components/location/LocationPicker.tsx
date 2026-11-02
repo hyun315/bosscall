@@ -167,10 +167,13 @@ export function LocationPicker({
       {favoritesList}
       {error && <p className="text-sm text-danger">{error}</p>}
 
-      {/* 광고: 즐겨찾기 바로 아래, 최근 장소 위 (호출 화면에서만 넘겨받음 — 사장님·가족만, 기사 계정엔 그리지 않음) */}
-      {adSlot && <AdSlot slot={adSlot} onPlace={onAdPlace} />}
+      {/* 광고 (호출 화면에서만 넘겨받음 — 사장님·가족만, 기사 계정엔 그리지 않음):
+          즐겨찾기 아래에는 한인업소록 하나, 나머지는 최근 장소 아래 — 자주 누르는 최근 장소를 밀어내지 않게 */}
+      {adSlot && <AdSlot slot={adSlot} onPlace={onAdPlace} part="top" />}
 
       {recentsList}
+
+      {adSlot && <AdSlot slot={adSlot} onPlace={onAdPlace} part="rest" />}
 
       {currentFix && (
         <MapPicker

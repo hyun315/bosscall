@@ -29,13 +29,13 @@ export const AD_TIERS_ENABLED = false;
 
 /** 단일 상품 운영 시: 화면별 광고 칸 수 (한인업소록 포함) */
 export const SCREEN_CAP: Readonly<Record<AdSlotId, number>> = {
-  homeBenefits: 3,
-  waiting: 2,
-  pickup: 2,
-  destinationSearch: 2,
+  homeBenefits: 5,
+  waiting: 5,
+  pickup: 5,
+  destinationSearch: 5,
 };
 /** 단일 상품 운영 시: 같은 기간에 동시에 올릴 수 있는 광고 수 (넘치면 돌아가며 노출이 너무 묽어진다) */
-export const MAX_LIVE_ADS = 6;
+export const MAX_LIVE_ADS = 12;
 
 export const AD_PRODUCTS = ["premium", "callBundle"] as const;
 export type AdProduct = (typeof AD_PRODUCTS)[number];
@@ -237,7 +237,7 @@ export function slotLayout(all: readonly AdCampaignDoc[], slot: AdSlotId, now: n
 
 /**
  * 단일 상품 운영(선착순) — 1번 한인업소록, 그다음 먼저 승인된 광고부터.
- * 화면 칸(SCREEN_CAP)보다 광고가 많으면 seed 로 시작점을 돌려 들어올 때마다 다른 광고가 나온다.
+ * 유료 광고는 들어올 때마다 무작위 순서, 칸(SCREEN_CAP)보다 많으면 그중 일부만.
  * 자리가 남으면 맨 아래 "광고 자리" 안내 1칸.
  */
 export function simpleLayout(all: readonly AdCampaignDoc[], slot: AdSlotId, now: number, seed: number): AdCell[] {
@@ -246,14 +246,29 @@ export function simpleLayout(all: readonly AdCampaignDoc[], slot: AdSlotId, now:
     .filter((c) => c.startAt <= now && c.endAt > now)
     .sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id));
   const paidCap = Math.max(0, SCREEN_CAP[slot] - 1);
-  let shown = live;
-  if (live.length > paidCap) {
-    const start = ((seed % live.length) + live.length) % live.length;
-    shown = [...live.slice(start), ...live.slice(0, start)].slice(0, paidCap);
-  }
+  // 무료 기간: 화면에 들어올 때마다 무작위 순서 (seed 로 섞음 — 같은 화면 안에서는 순서 고정)
+  const shown = seededShuffle(live, seed).slice(0, paidCap);
   const cells: AdCell[] = [{ kind: "house", n: 1 }, ...shown.map((c, i): AdCell => ({ kind: "paid", n: i + 2, c }))];
   if (live.length < paidCap) cells.push({ kind: "empty", n: cells.length + 1 });
   return cells;
+}
+
+/** seed 로 정해지는 무작위 순서 (Fisher–Yates + mulberry32 — 작은 seed 도 고르게 섞인다) */
+export function seededShuffle<T>(arr: readonly T[], seed: number): T[] {
+  const a = [...arr];
+  let x = seed >>> 0;
+  const rand = () => {
+    x = (x + 0x6d2b79f5) >>> 0;
+    let t = x;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [a[i], a[j]] = [a[j]!, a[i]!];
+  }
+  return a;
 }
 
 /** 지금 쓰는 배치 (스위치에 따라) */

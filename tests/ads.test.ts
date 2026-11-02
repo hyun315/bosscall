@@ -116,29 +116,36 @@ test("placeHref: 출발지·목적지 /call/new 주소", () => {
   assert.equal(k.searchParams.get("dest"), null);
 });
 
-test("simpleLayout: 한인업소록 → 선착순, 칸 수 제한, 넘치면 돌아가며, 남으면 안내 1칸", () => {
+test("simpleLayout: 한인업소록 → 광고 무작위 순서, 화면 5칸, 남으면 안내 1칸", () => {
   const mk = (id: string, createdAt: number, slots: AdCampaignDoc["slots"] = [...PRODUCT_INFO.premium.slots]) => ({
     ...camp(id, slots, 0, 100),
     createdAt,
   });
   const ids = (cells: ReturnType<typeof simpleLayout>) => cells.map((x) => (x.kind === "paid" ? x.c.id : x.kind));
-  assert.equal(SCREEN_CAP.homeBenefits, 3);
-  assert.equal(SCREEN_CAP.pickup, 2);
+  for (const s of ["homeBenefits", "waiting", "pickup", "destinationSearch"] as const) assert.equal(SCREEN_CAP[s], 5);
   // 광고 없음
   assert.deepEqual(ids(simpleLayout([], "homeBenefits", 10, 0)), ["house", "empty"]);
-  assert.deepEqual(ids(simpleLayout([], "pickup", 10, 0)), ["house", "empty"]);
-  // 1곳: 홈은 칸이 남아 안내, 픽업은 꽉 참. 호출 묶음으로 올렸던 광고도 홈에 나온다
-  const one = [mk("a", 1, [...PRODUCT_INFO.callBundle.slots])];
-  assert.deepEqual(ids(simpleLayout(one, "homeBenefits", 10, 0)), ["house", "a", "empty"]);
-  assert.deepEqual(ids(simpleLayout(one, "pickup", 10, 0)), ["house", "a"]);
-  // 3곳 (선착순 a, b, c): 홈 2칸, 픽업 1칸 — seed 로 시작점만 돈다
-  const three = [mk("c", 3), mk("a", 1), mk("b", 2)];
-  assert.deepEqual(ids(simpleLayout(three, "homeBenefits", 10, 0)), ["house", "a", "b"]);
-  assert.deepEqual(ids(simpleLayout(three, "homeBenefits", 10, 2)), ["house", "c", "a"]);
-  assert.deepEqual(ids(simpleLayout(three, "pickup", 10, 1)), ["house", "b"]);
+  // 2곳: 호출 묶음으로 올렸던 광고도 모든 화면에, 칸이 남아 안내 1칸
+  const two = [mk("a", 1, [...PRODUCT_INFO.callBundle.slots]), mk("b", 2)];
+  const l2 = ids(simpleLayout(two, "homeBenefits", 10, 7));
+  assert.equal(l2[0], "house");
+  assert.deepEqual([...l2.slice(1, 3)].sort(), ["a", "b"]);
+  assert.equal(l2[3], "empty");
+  // 6곳: 광고 4칸만, 안내 없음. seed 가 같으면 같은 순서, 여러 seed 로 보면 모두 고르게 나온다
+  const six = ["a", "b", "c", "d", "e", "f"].map((id, i) => mk(id, i));
+  const one = ids(simpleLayout(six, "pickup", 10, 42));
+  assert.equal(one.length, 5);
+  assert.equal(one[0], "house");
+  assert.ok(!one.includes("empty"));
+  assert.deepEqual(one, ids(simpleLayout(six, "pickup", 10, 42)));
+  const seen = new Map<string, number>();
+  for (let seed = 1; seed <= 600; seed++) {
+    for (const id of ids(simpleLayout(six, "pickup", 10, seed)).slice(1)) seen.set(id, (seen.get(id) ?? 0) + 1);
+  }
+  for (const id of ["a", "b", "c", "d", "e", "f"]) assert.ok((seen.get(id) ?? 0) > 300, `${id} ${seen.get(id)}`);
   // 끝난 광고는 빠진다
-  assert.deepEqual(ids(simpleLayout(three, "homeBenefits", 100, 0)), ["house", "empty"]);
-  assert.equal(overlappingCount(three, 50, 150), 3);
-  assert.equal(overlappingCount(three, 50, 150, "a"), 2);
-  assert.equal(overlappingCount(three, 100, 150), 0);
+  assert.deepEqual(ids(simpleLayout(six, "homeBenefits", 100, 0)), ["house", "empty"]);
+  assert.equal(overlappingCount(six, 50, 150), 6);
+  assert.equal(overlappingCount(six, 50, 150, "a"), 5);
+  assert.equal(overlappingCount(six, 100, 150), 0);
 });

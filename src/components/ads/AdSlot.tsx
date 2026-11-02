@@ -35,11 +35,14 @@ export function AdSlot({
   className = "",
   onPlace,
   noDestination = false,
+  part = "all",
 }: {
   slot: AdSlotId;
   className?: string;
   onPlace?: (p: AdPlace, use: AdPlaceUse) => void;
   noDestination?: boolean;
+  /** 픽업·목적지 화면처럼 나눠 놓을 때: top = 첫 칸(한인업소록)만, rest = 나머지 */
+  part?: "all" | "top" | "rest";
 }) {
   const { role, groupId } = useReadySession();
   const { t } = useI18n();
@@ -51,7 +54,8 @@ export function AdSlot({
   // 1~5번 고정 자리 — 끝난 광고 자리는 빈칸으로 남는다
   // 광고가 칸보다 많으면 들어올 때마다 다른 광고부터 (선착순 순서는 유지)
   const [seed] = useState(() => Math.floor(Math.random() * 1000));
-  const cells = screenLayout(campaigns, slot, Date.now(), seed);
+  const allCells = screenLayout(campaigns, slot, Date.now(), seed);
+  const cells = part === "top" ? allCells.slice(0, 1) : part === "rest" ? allCells.slice(1) : allCells;
   const house = SLOT_FALLBACK.find((c): c is HouseAd => c.kind === "ad");
   const adIds = cells
     .map((x) => (x.kind === "paid" ? x.c.id : x.kind === "house" ? house?.id : null))
@@ -112,7 +116,7 @@ export function AdSlot({
         );
       })}
       {/* 칸이 다 차서 "광고 자리" 안내가 없을 때도 광고 신청으로 가는 길은 남긴다 (작은 한 줄) */}
-      {!cells.some((c) => c.kind === "empty") && (
+      {part !== "top" && !allCells.some((c) => c.kind === "empty") && (
         <Link
           href={advertisePath(slot)}
           onClick={clickOf("inquiry")}

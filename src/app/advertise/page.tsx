@@ -114,7 +114,7 @@ export default function AdvertisePage() {
           <p className="mt-2 text-xs text-ink-sub">
             {AD_TIERS_ENABLED
               ? "기간 1·3·6개월 · 화면마다 1~5번 고정 자리 · 프리미엄은 픽업·목적지 화면에도 자동 노출 (호출 묶음 아래)"
-              : `기간 1·3·6개월 · 무료 기간 선착순 · 동시에 최대 ${MAX_LIVE_ADS}곳, 화면 칸보다 많으면 돌아가며 노출`}
+              : `기간 1·3·6개월 · 화면마다 광고 5칸 · 무료 기간에는 무작위 순서로 노출 · 동시에 최대 ${MAX_LIVE_ADS}곳`}
           </p>
         </section>
 
@@ -168,7 +168,7 @@ export default function AdvertisePage() {
           <div className="mt-4 rounded-card bg-[#F2C230]/15 px-4 py-3 ring-1 ring-[#F2C230]/50">
             <p className="text-[15px] font-bold text-ink">🎉 신규 출시 기념 · 2027년 3월 31일까지 무료</p>
             <p className="mt-0.5 text-sm text-ink-sub">
-              이 기간에는 게재 비용을 받지 않습니다. 선착순으로 올라가며, 무료 기간에 입점한 업체에는 유료 전환 때 <b>창립 광고주 혜택</b>을
+              이 기간에는 게재 비용을 받지 않고 모든 광고를 무작위 순서로 고르게 보여 드립니다. 무료 기간에 입점한 업체에는 유료 전환 때 <b>창립 광고주 혜택</b>을
               드립니다.
             </p>
           </div>
