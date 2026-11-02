@@ -9,7 +9,8 @@ export const PATCH = routeWithParams<{ groupId: string }>(async (req, params) =>
   const groupId = requireId(params.groupId, "field.group");
   await requireMember(groupId, user.uid, ["OWNER"]);
   const body = requireRecord(await readJson(req));
-  const patch: { name?: string; timezone?: string } = {};
+  const patch: { name?: string; timezone?: string; mainDriverId?: string | null } = {};
+  if (body.mainDriverId !== undefined) patch.mainDriverId = body.mainDriverId === null ? null : requireId(body.mainDriverId, "field.driver");
   if (body.name !== undefined) patch.name = requireString(body.name, "field.groupName", { max: 40 });
   if (body.timezone !== undefined) patch.timezone = requireOneOf(body.timezone, SUPPORTED_TIMEZONES, "field.timezone");
   await updateGroup(groupId, user.uid, patch);

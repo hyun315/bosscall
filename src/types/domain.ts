@@ -76,6 +76,8 @@ export interface GroupDoc {
   ownerId: string;
   timezone: string;
   plan: PlanId;
+  /** 메인 기사 — 홈·호출 화면에 기본으로 보이는 기사 (없으면 첫 기사) */
+  mainDriverId?: string | null;
   createdAt: number;
   updatedAt: number;
 }

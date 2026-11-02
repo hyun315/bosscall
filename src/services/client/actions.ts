@@ -9,7 +9,7 @@ import type { AdCampaignDoc, AdPlace, AdProduct, AdRequestDoc } from "@/lib/ads"
 export const createGroup = (body: { name: string; driverName: string; driverPhone: string | null; timezone: string }) =>
   api<{ groupId: string; driverId: string }>("/api/groups", { body });
 
-export const updateGroup = (groupId: string, body: { name?: string; timezone?: string }) =>
+export const updateGroup = (groupId: string, body: { name?: string; timezone?: string; mainDriverId?: string | null }) =>
   api(`/api/groups/${groupId}`, { method: "PATCH", body });
 
 export const updateMe = (body: {

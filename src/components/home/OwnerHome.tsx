@@ -15,8 +15,11 @@ import { useDriverLocation } from "@/components/driver/DriverLocationMap";
 import { formatAgo, isStale } from "@/lib/locationShare";
 import { useActiveCalls, useCallsBetween, useDrivers, useRecentCalls } from "@/hooks/useGroupData";
 import { useReadySession } from "@/hooks/useSession";
-import { toWhatsAppNumber } from "@/lib/format";
-import { canCreateCall } from "@/lib/permissions";
+import { DRIVER_STATUS_LABEL, toWhatsAppNumber } from "@/lib/format";
+import { canCreateCall, mainDriverOf } from "@/lib/permissions";
+import { useToast } from "@/components/common/Toast";
+import { updateGroup } from "@/services/client/actions";
+import { errorMessage } from "@/services/client/api";
 import { formatTime, startOfDay } from "@/lib/time";
 import type { DriverDoc } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
@@ -36,11 +39,31 @@ export function OwnerHome() {
   const active = useActiveCalls(groupId);
   const today = useCallsBetween(groupId, dayStart, dayStart + 86400000);
   const recent = useRecentCalls(groupId, 5);
-  const location = useDriverLocation(groupId, drivers.data[0]);
+  // 기사가 여러 명이면 메인 기사만 보여 주고, 다른 기사는 [다른 기사 N명]을 눌렀을 때만
+  const [viewId, setViewId] = useState<string | null>(null);
+  const [showOthers, setShowOthers] = useState(false);
+  const main = mainDriverOf(drivers.data, group.mainDriverId);
+  const driver: DriverDoc | undefined = drivers.data.find((d) => d.id === viewId) ?? main;
+  const others = drivers.data.filter((d) => d.id !== driver?.id);
+  const location = useDriverLocation(groupId, driver);
+  const [savingMain, setSavingMain] = useState(false);
+  const toast = useToast();
 
   if (drivers.loading) return <LoadingState full />;
 
-  const driver: DriverDoc | undefined = drivers.data[0];
+  const makeMain = async () => {
+    if (!driver) return;
+    setSavingMain(true);
+    try {
+      await updateGroup(groupId, { mainDriverId: driver.id });
+      setViewId(null);
+      toast(t("home.mainSet", { name: driver.displayName }), "success");
+    } catch (e) {
+      toast(errorMessage(e), "error");
+    } finally {
+      setSavingMain(false);
+    }
+  };
   const myActive = active.data;
   const driverActive = driver ? myActive.find((c) => c.driverId === driver.id) : undefined;
   const hasEverCalled = recent.data.length > 0;
@@ -110,6 +133,49 @@ export function OwnerHome() {
         ) : (
           <div className="space-y-2">
             <DriverCard driver={driver} tz={tz} size="lg" href={`/drivers/${driver.id}`} />
+            {others.length > 0 && (
+              <div className="px-1">
+                <div className="flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowOthers((v) => !v)}
+                    className="min-h-[40px] text-sm font-semibold text-action"
+                    aria-expanded={showOthers}
+                  >
+                    {t("home.otherDrivers", { n: others.length })} {showOthers ? "▲" : "▼"}
+                  </button>
+                  {driver.id !== main?.id && role === "OWNER" && (
+                    <button
+                      type="button"
+                      disabled={savingMain}
+                      onClick={() => void makeMain()}
+                      className="min-h-[40px] text-sm font-semibold text-ink-sub"
+                    >
+                      ★ {t("home.makeMain")}
+                    </button>
+                  )}
+                </div>
+                {showOthers && (
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {others.map((d) => (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => {
+                          setViewId(d.id);
+                          setShowOthers(false);
+                        }}
+                        className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-semibold text-ink"
+                      >
+                        {d.id === main?.id ? "★ " : ""}
+                        {d.displayName}
+                        <span className="ml-1 text-xs font-normal text-ink-sub">· {t(DRIVER_STATUS_LABEL[d.status].key)}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {/* 관리자: 기사가 출근을 깜빡했을 때 대신 처리 (퇴근은 기사 상세 화면에서) */}
             {!driver.currentSessionId && <OwnerClockButton driver={driver} compact />}
             {driver.currentSessionId && (
@@ -169,7 +235,7 @@ export function OwnerHome() {
               <NotificationBanner tone="info">{t("home.busyNote")}</NotificationBanner>
             )}
             <Link
-              href="/call/new"
+              href={driver.id === main?.id ? "/call/new" : `/call/new?driver=${driver.id}`}
               aria-disabled={blocker !== null}
               onClick={(e) => blocker !== null && e.preventDefault()}
               className={`flex min-h-[72px] w-full items-center justify-center gap-3 rounded-card text-xl font-extrabold text-white transition-transform active:scale-[0.98] ${

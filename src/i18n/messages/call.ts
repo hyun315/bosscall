@@ -6,6 +6,7 @@ export const callMsgs = {
   "newCall.whereMeet": { ko: "픽업 위치", id: "Lokasi jemput", en: "Pickup location" },
   "newCall.whereGo": { ko: "어디로 갈까요?", id: "Mau ke mana?", en: "Where to?" },
   "newCall.confirm": { ko: "호출 내용을 확인하세요", id: "Periksa detail panggilan", en: "Review your call" },
+  "newCall.otherDriver": { ko: "다른 기사", id: "Sopir lain", en: "Other driver" },
   "newCall.driverCannotCall": {
     ko: "기사 계정은 호출할 수 없습니다.",
     id: "Akun sopir tidak bisa membuat panggilan.",

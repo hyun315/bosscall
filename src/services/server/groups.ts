@@ -81,13 +81,17 @@ export async function createGroup(uid: string, input: CreateGroupInput): Promise
 export async function updateGroup(
   groupId: string,
   actorId: string,
-  patch: { name?: string; timezone?: string },
+  patch: { name?: string; timezone?: string; mainDriverId?: string | null },
 ): Promise<void> {
   const db = adminDb();
   const ref = db.doc(`groups/${groupId}`);
   await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
+    const [snap, dSnap] = await Promise.all([
+      tx.get(ref),
+      patch.mainDriverId ? tx.get(db.doc(`groups/${groupId}/drivers/${patch.mainDriverId}`)) : Promise.resolve(null),
+    ]);
     if (!snap.exists) throw notFound("err.groupNotFound");
+    if (dSnap && (!dSnap.exists || (dSnap.data() as DriverDoc).removedAt)) throw notFound("err.driverNotFound");
     const before = snap.data() as GroupDoc;
     const next = { ...patch, updatedAt: Date.now() };
     tx.update(ref, next);

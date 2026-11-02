@@ -12,6 +12,11 @@ export const PLAN_LIMITS: Readonly<Record<PlanId, { maxDrivers: number; maxFamil
   PREMIUM: { maxDrivers: 10, maxFamilyMembers: 30 },
 };
 
+/** 메인 기사 (지정했고 아직 있으면 그 기사, 아니면 첫 기사) */
+export function mainDriverOf<T extends { id: string }>(drivers: readonly T[], mainDriverId: string | null | undefined): T | undefined {
+  return drivers.find((d) => d.id === mainDriverId) ?? drivers[0];
+}
+
 export function canCreateCall(role: MemberRole): boolean {
   return role === "OWNER" || role === "MEMBER";
 }

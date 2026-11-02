@@ -11,7 +11,7 @@ import { useDrivers, useFavorites, useRecentCalls } from "@/hooks/useGroupData";
 import { useLiveDoc } from "@/hooks/useLive";
 import { useSearchParam } from "@/hooks/useSearchParam";
 import { useReadySession } from "@/hooks/useSession";
-import { canCreateCall } from "@/lib/permissions";
+import { canCreateCall, mainDriverOf } from "@/lib/permissions";
 import { createCall } from "@/services/client/actions";
 import { callSidePlace, resolvePlace } from "@/services/client/places";
 import { ClientApiError, errorMessage } from "@/services/client/api";
@@ -39,7 +39,7 @@ type Step = "pickup" | "destination" | "confirm";
 
 /** §5 CALL FLOW — C01 Pickup → C02 Destination → C03 Confirm */
 export default function NewCallPage() {
-  const { groupId, member, role } = useReadySession();
+  const { groupId, member, role, group } = useReadySession();
   const { t } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -72,9 +72,14 @@ export default function NewCallPage() {
     [drivers.data],
   );
 
+  // 기본 기사: 홈에서 고른 기사(?driver=) → 메인 기사 → 근무 중인 첫 기사
+  const wantDriver = useSearchParam("driver");
+  const main = mainDriverOf(eligible, wantDriver ?? group.mainDriverId);
+  const [showOtherDrivers, setShowOtherDrivers] = useState(false);
   useEffect(() => {
-    if (!driverId && eligible[0]) setDriverId(eligible[0].id);
-  }, [eligible, driverId]);
+    if (wantDriver === undefined) return; // 주소를 아직 못 읽음
+    if (!driverId && main) setDriverId(main.id);
+  }, [main, driverId, wantDriver]);
 
   // 재호출: 이전 호출 내용으로 바로 확인 단계
   useEffect(() => {
@@ -311,7 +316,17 @@ export default function NewCallPage() {
               </div>
               <div className="p-4">
                 <span className="text-sm text-ink-sub">{t("role.DRIVER")}</span>
-                {eligible.length > 1 ? (
+                {eligible.length > 1 && !showOtherDrivers ? (
+                  // 기사가 여럿이어도 기본은 메인 기사 하나만 — 바꾸려면 [다른 기사]
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <p className="font-semibold text-ink">
+                      {selectedDriver ? t("driver.nameTitle", { name: selectedDriver.displayName }) : t("newCall.noDriverOnDuty")}
+                    </p>
+                    <button type="button" onClick={() => setShowOtherDrivers(true)} className="text-sm font-semibold text-action">
+                      {t("newCall.otherDriver")} ›
+                    </button>
+                  </div>
+                ) : eligible.length > 1 ? (
                   <div className="mt-2 flex flex-wrap gap-2">
                     {eligible.map((d) => (
                       <button
