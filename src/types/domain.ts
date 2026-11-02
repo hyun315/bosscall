@@ -108,6 +108,8 @@ export interface DriverDoc {
   locationSharing?: boolean;
   /** 위치 공유 안내에 처음 동의한 시각 */
   locationConsentAt?: number | null;
+  /** 삭제한 시각 — 목록에서 숨기고 호출·초대 불가. 지난 호출·근무 기록은 그대로 남긴다 */
+  removedAt?: number | null;
   createdAt: number;
   updatedAt: number;
 }

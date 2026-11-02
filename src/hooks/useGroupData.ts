@@ -6,8 +6,12 @@ import type { CallDoc, DriverDoc, FavoriteLocationDoc, MemberDoc, WorkSessionDoc
 
 /** 그룹 범위 데이터 구독 모음 — 모든 경로가 groups/{groupId} 하위이므로 tenant 격리가 유지된다 */
 
-export function useDrivers(groupId: string | null) {
-  return useLiveQuery<DriverDoc>(groupId ? `groups/${groupId}/drivers` : null, [ob("createdAt", "asc")]);
+/** 기사 목록 — 삭제한 기사는 빼고. 지난 기록 화면처럼 이름이 필요한 곳은 includeRemoved */
+export function useDrivers(groupId: string | null, opts: { includeRemoved?: boolean } = {}) {
+  const s = useLiveQuery<DriverDoc>(groupId ? `groups/${groupId}/drivers` : null, [ob("createdAt", "asc")]);
+  const includeRemoved = opts.includeRemoved === true;
+  const data = useMemo(() => (includeRemoved ? s.data : s.data.filter((d) => !d.removedAt)), [s.data, includeRemoved]);
+  return { ...s, data };
 }
 
 export function useMembers(groupId: string | null) {

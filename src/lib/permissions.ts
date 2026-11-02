@@ -7,7 +7,8 @@ import type { MemberRole, PlanId } from "@/types/domain";
 
 export const PLAN_LIMITS: Readonly<Record<PlanId, { maxDrivers: number; maxFamilyMembers: number }>> = {
   // [결정 필요] 명세 §22 "가족 구성원 제한"의 구체 숫자가 없어 임시로 5명(Owner 제외)으로 둔다.
-  FREE: { maxDrivers: 1, maxFamilyMembers: 5 },
+  // 유료 요금제가 아직 없어 무료도 기사 3명까지 (가정마다 기사 1~2명 + 교체 여유)
+  FREE: { maxDrivers: 3, maxFamilyMembers: 5 },
   PREMIUM: { maxDrivers: 10, maxFamilyMembers: 30 },
 };
 

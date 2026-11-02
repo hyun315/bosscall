@@ -44,7 +44,7 @@ export async function clock(
         ? tx.get(db.collection(`groups/${groupId}/calls`).where("status", "in", [...PENDING_STATUSES, ...IN_PROGRESS_STATUSES]))
         : Promise.resolve(null),
     ]);
-    if (!dSnap.exists) throw notFound("err.driverNotFound");
+    if (!dSnap.exists || (dSnap.data() as DriverDoc).removedAt) throw notFound("err.driverNotFound");
     const driver = dSnap.data() as DriverDoc;
     driverSnapshot = driver;
     if (!byOwner && driver.userId !== member.userId) throw badRequest("err.notLinkedDriver");

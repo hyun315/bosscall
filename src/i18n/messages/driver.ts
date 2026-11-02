@@ -219,6 +219,16 @@ export const driverMsgs = {
   // ── 기사 관리 (§9)
   "drivers.title": { ko: "우리 기사", id: "Sopir kami", en: "Our drivers" },
   "drivers.add": { ko: "기사 추가", id: "Tambah sopir", en: "Add driver" },
+  "drivers.edit": { ko: "수정", id: "Ubah", en: "Edit" },
+  "drivers.remove": { ko: "기사 삭제", id: "Hapus sopir", en: "Delete driver" },
+  "drivers.removeTitle": { ko: "기사 삭제", id: "Hapus sopir", en: "Delete driver" },
+  "drivers.removeHint": {
+    ko: "목록과 호출에서 빠지고, 연결된 기사 앱도 끊깁니다. 지난 호출·근무·급여 기록은 그대로 남습니다.",
+    id: "Sopir hilang dari daftar dan panggilan, dan aplikasinya terputus. Riwayat panggilan, kerja, dan gaji tetap tersimpan.",
+    en: "Removed from the list and calls, and their app is disconnected. Past calls, work and pay records are kept.",
+  },
+  "drivers.removeConfirmTitle": { ko: "{name} 기사님을 삭제할까요?", id: "Hapus sopir {name}?", en: "Delete driver {name}?" },
+  "drivers.removedToast": { ko: "기사를 삭제했습니다.", id: "Sopir dihapus.", en: "Driver deleted." },
   "drivers.addedToast": {
     ko: "기사를 추가했습니다. 초대 링크를 보내주세요.",
     id: "Sopir ditambahkan. Kirimkan tautan undangan.",
@@ -236,7 +246,7 @@ export const driverMsgs = {
   "drivers.tabWork": { ko: "근무기록", id: "Catatan kerja", en: "Work log" },
   "drivers.tabCalls": { ko: "호출기록", id: "Riwayat panggilan", en: "Calls" },
   "drivers.tabPay": { ko: "급여", id: "Gaji", en: "Pay" },
-  "drivers.tabInfo": { ko: "기본정보", id: "Info", en: "Info" },
+  "drivers.tabInfo": { ko: "정보·수정", id: "Info", en: "Info" },
   "drivers.noWork30": {
     ko: "최근 30일 근무 기록이 없습니다.",
     id: "Tidak ada catatan kerja 30 hari terakhir.",

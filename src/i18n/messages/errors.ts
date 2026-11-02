@@ -177,6 +177,11 @@ export const errorMsgs = {
   "err.cannotRemoveSelf": { ko: "본인은 삭제할 수 없습니다.", id: "Anda tidak bisa menghapus diri sendiri.", en: "You can't remove yourself." },
   "err.memberNotFound": { ko: "구성원을 찾을 수 없습니다.", id: "Anggota tidak ditemukan.", en: "Member not found." },
   "err.cannotRemoveOwner": { ko: "관리자는 삭제할 수 없습니다.", id: "Admin tidak bisa dihapus.", en: "The owner can't be removed." },
+  "err.driverBusyRemove": {
+    ko: "진행 중이거나 응답 대기 중인 호출이 있어 삭제할 수 없습니다. 호출을 끝내거나 취소한 뒤 다시 시도하세요.",
+    id: "Sopir masih punya panggilan aktif. Selesaikan atau batalkan panggilan dulu.",
+    en: "This driver has an active call. Finish or cancel it first.",
+  },
   "err.driverBusyUnlink": {
     ko: "운행 중인 기사는 연결 해제할 수 없습니다.",
     id: "Sopir yang sedang bertugas tidak bisa diputus.",

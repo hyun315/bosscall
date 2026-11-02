@@ -20,7 +20,7 @@ import { OwnerClockButton } from "@/components/driver/OwnerClockButton";
 import { DRIVER_STATUS_LABEL, toWhatsAppNumber } from "@/lib/format";
 import { isOwner } from "@/lib/permissions";
 import { formatTime, startOfDay, startOfMonth } from "@/lib/time";
-import { removeMember, updateDriver } from "@/services/client/actions";
+import { removeDriver, removeMember, updateDriver } from "@/services/client/actions";
 import { errorMessage } from "@/services/client/api";
 import type { DriverDoc, PayrollSettingsDoc } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
@@ -73,7 +73,17 @@ export default function DriverDetailPage() {
 
   return (
     <>
-      <AppHeader title={driver.displayName} back="/drivers" />
+      <AppHeader
+        title={driver.displayName}
+        back="/drivers"
+        right={
+          isOwner(role) && !driver.removedAt ? (
+            <button type="button" onClick={() => setTab("info")} className="rounded-full px-3 py-1.5 text-sm font-semibold text-action">
+              ✏️ {t("drivers.edit")}
+            </button>
+          ) : undefined
+        }
+      />
       <main className="mx-auto max-w-md space-y-4 px-4 pb-6 pt-3">
         <div className="card divide-y divide-line">
           <Row label={t("drivers.status")} value={<StatusBadge label={t(s.key)} tone={s.tone} />} />
@@ -182,7 +192,7 @@ export default function DriverDetailPage() {
             </div>
           ))}
 
-        {tab === "info" && <DriverInfo driver={driver} groupId={groupId} groupName={group.name} canEdit={isOwner(role)} />}
+        {tab === "info" && <DriverInfo driver={driver} groupId={groupId} groupName={group.name} canEdit={isOwner(role) && !driver.removedAt} />}
       </main>
     </>
   );
@@ -204,6 +214,22 @@ function DriverInfo({ driver, groupId, groupName, canEdit }: { driver: DriverDoc
   const [phone, setPhone] = useState(driver.phone ?? "");
   const [busy, setBusy] = useState(false);
   const [confirmUnlink, setConfirmUnlink] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
+  const router = useRouter();
+
+  const remove = async () => {
+    setBusy(true);
+    try {
+      await removeDriver(groupId, driver.id);
+      toast(t("drivers.removedToast"), "success");
+      router.replace("/drivers");
+    } catch (e) {
+      toast(errorMessage(e), "error");
+      setConfirmRemove(false);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const save = async () => {
     setBusy(true);
@@ -267,6 +293,27 @@ function DriverInfo({ driver, groupId, groupName, canEdit }: { driver: DriverDoc
           )}
         </div>
       )}
+
+      {canEdit && (
+        <div className="card space-y-2 p-4">
+          <p className="text-[15px] font-semibold text-ink">{t("drivers.removeTitle")}</p>
+          <p className="text-sm leading-relaxed text-ink-sub">{t("drivers.removeHint")}</p>
+          <Button variant="danger" block onClick={() => setConfirmRemove(true)}>
+            {t("drivers.remove")}
+          </Button>
+        </div>
+      )}
+
+      <ConfirmModal
+        open={confirmRemove}
+        title={t("drivers.removeConfirmTitle", { name: driver.displayName })}
+        message={t("drivers.removeHint")}
+        confirmLabel={t("drivers.remove")}
+        tone="danger"
+        loading={busy}
+        onConfirm={() => void remove()}
+        onCancel={() => setConfirmRemove(false)}
+      />
 
       <ConfirmModal
         open={confirmUnlink}

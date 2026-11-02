@@ -28,6 +28,8 @@ export const sendTestPush = () => api<{ ok: boolean; devices: number }>("/api/de
 export const addDriver = (groupId: string, displayName: string, phone: string | null) =>
   api<{ driverId: string }>("/api/drivers", { body: { groupId, displayName, phone } });
 
+export const removeDriver = (groupId: string, driverId: string) =>
+  api(`/api/drivers/${driverId}`, { method: "DELETE", body: { groupId } });
 export const updateDriver = (groupId: string, driverId: string, body: { displayName?: string; phone?: string | null }) =>
   api(`/api/drivers/${driverId}`, { method: "PATCH", body: { groupId, ...body } });
 

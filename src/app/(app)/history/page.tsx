@@ -55,7 +55,7 @@ export default function HistoryPage() {
   // 근무·급여 탭에서는 호출 목록을 구독하지 않는다
   const calls = useCallsBetween(tab === "work" || tab === "pay" ? null : groupId, from, to);
   const sessions = useWorkSessionsBetween(!isDriver && tab === "work" ? groupId : null, from, to);
-  const drivers = useDrivers(groupId);
+  const drivers = useDrivers(groupId, { includeRemoved: true });
   const members = useMembers(groupId);
   // 기사 본인: 사장님이 공개한 경우에만 급여 조건을 읽을 수 있다 (비공개면 권한 오류 → 탭 숨김)
   const myPay = useLiveDoc<PayrollSettingsDoc>(isDriver && member.driverId ? `groups/${groupId}/payrollSettings/${member.driverId}` : null);

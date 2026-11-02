@@ -94,7 +94,7 @@ export async function createCall(
       tx.get(driverRef),
       tx.get(db.collection(`groups/${groupId}/calls`).where("status", "in", [...ACTIVE_STATUSES])),
     ]);
-    if (!dSnap.exists) throw notFound("err.driverNotFound");
+    if (!dSnap.exists || (dSnap.data() as DriverDoc).removedAt) throw notFound("err.driverNotFound");
     const driver = dSnap.data() as DriverDoc;
     if (!driver.userId) throw conflict("err.driverNotConnected", "DRIVER_NOT_CONNECTED");
     if (driver.status === "OFF_DUTY" || driver.status === "INACTIVE") {

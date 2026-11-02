@@ -120,7 +120,8 @@ export async function addDriver(
     if (!g.exists) throw notFound("err.groupNotFound");
     const plan = (g.data() as GroupDoc).plan;
     const existing = await tx.get(db.collection(`groups/${groupId}/drivers`));
-    if (existing.size >= PLAN_LIMITS[plan].maxDrivers) {
+    const current = existing.docs.filter((d) => !(d.data() as DriverDoc).removedAt).length; // 삭제한 기사는 세지 않음
+    if (current >= PLAN_LIMITS[plan].maxDrivers) {
       throw conflict("err.planDriverLimit", "PLAN_LIMIT", { max: PLAN_LIMITS[plan].maxDrivers });
     }
     const now = Date.now();
@@ -152,7 +153,7 @@ export async function updateDriver(
   const ref = db.doc(`groups/${groupId}/drivers/${driverId}`);
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
-    if (!snap.exists) throw notFound("err.driverNotFound");
+    if (!snap.exists || (snap.data() as DriverDoc).removedAt) throw notFound("err.driverNotFound");
     const before = snap.data() as DriverDoc;
     tx.update(ref, { ...patch, updatedAt: Date.now() });
     writeAudit(
@@ -164,6 +165,73 @@ export async function updateDriver(
         targetId: driverId,
         before: { displayName: before.displayName, phone: before.phone },
         after: { displayName: patch.displayName ?? before.displayName, phone: patch.phone ?? before.phone },
+      },
+      tx,
+    );
+  });
+}
+
+/**
+ * 기사 삭제 (Owner) — 목록에서 사라지고 호출·초대할 수 없다. 연결된 기사 계정은 그룹에서 빠진다.
+ * 지난 호출·근무·급여 기록은 지우지 않는다 (호출 문서에 기사 이름이 남아 있음).
+ * 진행 중이거나 응답 대기 중인 호출이 있으면 막는다. 근무 중이면 퇴근 처리한다.
+ */
+export async function removeDriver(groupId: string, driverId: string, actorId: string): Promise<void> {
+  const db = adminDb();
+  const driverRef = db.doc(`groups/${groupId}/drivers/${driverId}`);
+  await db.runTransaction(async (tx) => {
+    // ── 읽기
+    const [dSnap, activeSnap] = await Promise.all([
+      tx.get(driverRef),
+      tx.get(db.collection(`groups/${groupId}/calls`).where("driverId", "==", driverId)),
+    ]);
+    if (!dSnap.exists) throw notFound("err.driverNotFound");
+    const driver = dSnap.data() as DriverDoc;
+    if (driver.removedAt) return;
+    const now = Date.now();
+    const busy = activeSnap.docs
+      .map((d) => d.data() as { status: string; expiresAt: number })
+      .some((c) =>
+        ["ACCEPTED", "ON_THE_WAY", "ARRIVED", "TRIP_STARTED"].includes(c.status) ||
+        (["CALLING", "RECEIVED"].includes(c.status) && c.expiresAt > now),
+      );
+    if (busy) throw conflict("err.driverBusyRemove", "DRIVER_BUSY");
+    const memberRef = driver.userId ? db.doc(`groups/${groupId}/members/${driver.userId}`) : null;
+    const userRef = driver.userId ? db.doc(`users/${driver.userId}`) : null;
+    const [mSnap, uSnap] = await Promise.all([
+      memberRef ? tx.get(memberRef) : Promise.resolve(null),
+      userRef ? tx.get(userRef) : Promise.resolve(null),
+    ]);
+
+    // ── 쓰기
+    if (driver.currentSessionId) {
+      tx.update(db.doc(`groups/${groupId}/workSessions/${driver.currentSessionId}`), { clockOutAt: now, clockOutBy: actorId });
+    }
+    if (memberRef && mSnap?.exists && (mSnap.data() as MemberDoc).role === "DRIVER") tx.delete(memberRef);
+    if (userRef && uSnap?.exists) {
+      const u = uSnap.data() as UserDoc;
+      tx.update(userRef, {
+        groupIds: FieldValue.arrayRemove(groupId),
+        ...(u.activeGroupId === groupId ? { activeGroupId: null } : {}),
+      });
+    }
+    tx.update(driverRef, {
+      removedAt: now,
+      userId: null,
+      status: "INACTIVE",
+      currentSessionId: null,
+      locationSharing: false,
+      updatedAt: now,
+    });
+    tx.delete(db.doc(`groups/${groupId}/driverLocations/${driverId}`));
+    writeAudit(
+      groupId,
+      {
+        action: "DRIVER_REMOVED",
+        actorId,
+        targetType: "driver",
+        targetId: driverId,
+        before: { displayName: driver.displayName, phone: driver.phone, userId: driver.userId },
       },
       tx,
     );
@@ -194,7 +262,7 @@ export async function createInvite(
   if (input.role === "DRIVER") {
     if (!input.driverId) throw badRequest("err.chooseDriver");
     const d = await db.doc(`groups/${groupId}/drivers/${input.driverId}`).get();
-    if (!d.exists) throw notFound("err.driverNotFound");
+    if (!d.exists || (d.data() as DriverDoc).removedAt) throw notFound("err.driverNotFound");
     if ((d.data() as DriverDoc).userId) throw conflict("err.alreadyConnected", "ALREADY_CONNECTED");
   }
 
@@ -283,7 +351,7 @@ export async function acceptInvite(code: string, uid: string): Promise<{ groupId
       if (!inv.driverId) throw badRequest("err.inviteBroken");
       driverRef = db.doc(`groups/${inv.groupId}/drivers/${inv.driverId}`);
       const dSnap = await tx.get(driverRef);
-      if (!dSnap.exists) throw notFound("err.driverNotFound");
+      if (!dSnap.exists || (dSnap.data() as DriverDoc).removedAt) throw notFound("err.driverNotFound");
       if ((dSnap.data() as DriverDoc).userId) throw conflict("err.alreadyConnected", "ALREADY_CONNECTED");
     } else {
       const members = await tx.get(db.collection(`groups/${inv.groupId}/members`).where("role", "==", "MEMBER"));
