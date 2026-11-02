@@ -42,6 +42,7 @@ export function AdSlot({
   noDestination?: boolean;
 }) {
   const { role, groupId } = useReadySession();
+  const { t } = useI18n();
   const router = useRouter();
   const ref = useRef<HTMLElement | null>(null);
   const seen = useRef(false);
@@ -110,6 +111,16 @@ export function AdSlot({
         />
         );
       })}
+      {/* 칸이 다 차서 "광고 자리" 안내가 없을 때도 광고 신청으로 가는 길은 남긴다 (작은 한 줄) */}
+      {!cells.some((c) => c.kind === "empty") && (
+        <Link
+          href={advertisePath(slot)}
+          onClick={clickOf("inquiry")}
+          className="flex items-center justify-center gap-1 py-1 text-[13px] font-semibold text-ink-sub active:text-action"
+        >
+          📣 {t("ad.inquiryLine")} ›
+        </Link>
+      )}
     </aside>
   );
 }

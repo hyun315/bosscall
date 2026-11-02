@@ -204,4 +204,9 @@ export const commonMsgs = {
     en: "🎉 Launch offer · free ads until March 31, 2027",
   },
   "ad.inquiryMore": { ko: "광고 안내", id: "Info iklan", en: "Learn more" },
+  "ad.inquiryLine": {
+    ko: "우리 가게도 광고하기 · 2027년 3월까지 무료",
+    id: "Pasang iklan usaha Anda · gratis s.d. Maret 2027",
+    en: "Advertise your business · free until March 2027",
+  },
 } satisfies Record<string, Tri>;
