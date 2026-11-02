@@ -49,7 +49,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     isDriver && driverId ? `groups/${session.groupId}/calls` : null,
     [w("cancelAlertFor", "==", driverId)],
   ).data;
-  useIncomingCallAlarm(active.data, driverId, isDriver && session.me?.callAlarmSound !== false, cancelAlerts);
+  useIncomingCallAlarm(active.data, driverId, isDriver, cancelAlerts, session.me?.callAlarmSound !== false);
 
   useEffect(() => {
     if (!incomingId) return;

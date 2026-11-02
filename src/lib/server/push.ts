@@ -108,9 +108,9 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
       inboxWrite = batch.commit();
     }
 
-    // 호출 알림 소리: 기사가 설정에서 끈 경우에만 무음. 설정하지 않았으면 항상 소리
-    // 기사가 호출 소리를 끈 경우에만 무음 (호출·취소 알람)
-    const silentFor = (u: UserDoc) => (req.type === "CALL_CREATED" || !!req.urgent) && u.callAlarmSound === false;
+    // 알림을 억지로 무음으로 보내지 않는다 — 무음이면 진동까지 꺼진다.
+    // 소리/진동/무음은 휴대폰 모드가 정한다 (무음·진동 모드면 진동만). 앱 안 알람 소리는 callAlarmSound 로 끈다.
+    const silentFor = (_u: UserDoc) => false;
     const tokenEntries: Array<{ uid: string; token: string; locale: Locale; silent: boolean }> = [];
     for (const u of recipients) {
       for (const d of tokensByUser.get(u.id)?.docs ?? []) {

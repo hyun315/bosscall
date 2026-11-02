@@ -22,6 +22,8 @@ export function useIncomingCallAlarm(
   driverId: string | null,
   enabled: boolean,
   cancelAlerts: CallDoc[] = [],
+  /** false = 진동만 (설정에서 호출 소리를 끔) */
+  sound = true,
 ): void {
   const [tick, setTick] = useState(0);
   // silenceCall 이 불리면 다시 계산
@@ -41,9 +43,9 @@ export function useIncomingCallAlarm(
   const ring = waiting.length > 0 || cancelled.length > 0;
 
   useEffect(() => {
-    if (ring) startCallAlarm();
+    if (ring) startCallAlarm(sound);
     else stopCallAlarm();
-  }, [ring]);
+  }, [ring, sound]);
 
   // 응답 대기 시간이 끝나면 (서버 TIMEOUT 처리 전이라도) 소리를 멈춘다
   useEffect(() => {

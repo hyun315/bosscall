@@ -50,16 +50,16 @@ export const driverMsgs = {
   "alarm.sound.ring": { ko: "전화벨", id: "Dering telepon", en: "Phone ring" },
   "alarm.sound.chime": { ko: "차임", id: "Lonceng", en: "Chime" },
   "alarm.sound.beep": { ko: "삐삐", id: "Bip", en: "Beep" },
-  "alarm.soundOn": { ko: "호출 소리", id: "Suara panggilan", en: "Call sound" },
+  "alarm.soundOn": { ko: "앱 알람 소리", id: "Suara alarm aplikasi", en: "In-app alarm sound" },
   "alarm.soundOnDesc": {
-    ko: "켜짐 — 화면이 꺼져 있어도 휴대폰 알림음이 울립니다",
-    id: "Aktif — notifikasi tetap berbunyi walau layar mati",
-    en: "On — the phone rings even with the screen off",
+    ko: "켜짐 — 소리와 진동이 함께 울립니다. 아이폰은 무음 모드면 소리 없이 울립니다. 안드로이드는 미디어 소리 크기를 따르니, 조용히 해야 할 땐 이 단추를 끄세요",
+    id: "Aktif — bunyi dan getar bersamaan. iPhone mode senyap: tanpa bunyi. Android mengikuti volume media — matikan tombol ini jika harus tenang",
+    en: "On — sound and vibration together. iPhone in silent mode: no sound. Android follows media volume — turn this off when you need quiet",
   },
   "alarm.soundOffDesc": {
-    ko: "꺼짐 — 소리 없이 알림만 표시됩니다",
-    id: "Mati — notifikasi muncul tanpa suara",
-    en: "Off — notifications show without sound",
+    ko: "꺼짐 — 앱에서는 진동만 합니다. 휴대폰 알림은 휴대폰 모드(소리·진동·무음)를 따릅니다",
+    id: "Mati — aplikasi hanya bergetar. Notifikasi HP mengikuti mode HP (bunyi/getar/senyap)",
+    en: "Off — the app vibrates only. Phone notifications follow the phone's mode",
   },
   "alarm.testTitle": { ko: "화면이 꺼져도 울리는지 확인", id: "Cek bunyi saat layar mati", en: "Check it rings with the screen off" },
   "alarm.testDesc": {
@@ -78,9 +78,9 @@ export const driverMsgs = {
   "alarm.preview": { ko: "듣기", id: "Dengar", en: "Play" },
   "alarm.previewAria": { ko: "{name} 미리 듣기", id: "Dengarkan {name}", en: "Preview {name}" },
   "alarm.note": {
-    ko: "새 호출이 오면 수락하거나 거절할 때까지 계속 울립니다. 앱을 화면에 켜 둔 동안 이 소리가 나고, 앱이 뒤에 있거나 닫혀 있으면 휴대폰 알림이 15초 간격으로 3번 더 울립니다. 휴대폰 소리 크기를 키워 두세요.",
-    id: "Saat ada panggilan baru, alarm terus berbunyi sampai Anda menerima atau menolak. Suara ini berbunyi selama aplikasi terbuka di layar; jika aplikasi di latar belakang atau tertutup, notifikasi HP berbunyi lagi 3 kali tiap 15 detik. Besarkan volume HP Anda.",
-    en: "A new call keeps ringing until you accept or decline. This sound plays while the app is open on screen; if the app is in the background or closed, the phone notification rings 3 more times, every 15 seconds. Keep your volume up.",
+    ko: "새 호출이 오면 수락하거나 거절할 때까지 계속 울립니다. 앱을 화면에 켜 둔 동안 이 소리가 나고, 앱이 뒤에 있거나 닫혀 있으면 휴대폰 알림이 15초 간격으로 3번 더 울립니다. 휴대폰 알림은 휴대폰 모드를 따라 무음·진동 모드면 진동만 합니다.",
+    id: "Saat ada panggilan baru, alarm terus berbunyi sampai Anda menerima atau menolak. Suara ini berbunyi selama aplikasi terbuka di layar; jika aplikasi di latar belakang atau tertutup, notifikasi HP berbunyi lagi 3 kali tiap 15 detik. Notifikasi HP mengikuti mode HP: mode senyap/getar hanya bergetar.",
+    en: "A new call keeps ringing until you accept or decline. This sound plays while the app is open on screen; if the app is in the background or closed, the phone notification rings 3 more times, every 15 seconds. Phone notifications follow the phone mode: silent/vibrate means vibration only.",
   },
   "alarm.tapToSound": {
     ko: "🔊 여기를 누르면 알람 소리가 납니다",
