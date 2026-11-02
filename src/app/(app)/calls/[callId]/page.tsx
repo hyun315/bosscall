@@ -14,7 +14,7 @@ import { LocationCard } from "@/components/location/LocationCard";
 import { lim, ob, useLiveDoc, useLiveQuery } from "@/hooks/useLive";
 import { useSearchParam } from "@/hooks/useSearchParam";
 import { useReadySession } from "@/hooks/useSession";
-import { isPending, isTerminal, type CallAction } from "@/lib/callStateMachine";
+import { TRANSITIONS, isPending, isTerminal, type CallAction } from "@/lib/callStateMachine";
 import { CALL_STATUS_LABEL, googleMapsDirectionsUrl, shortPlace, toWhatsAppNumber } from "@/lib/format";
 import { formatTime } from "@/lib/time";
 import { transitionCall, updateMe } from "@/services/client/actions";
@@ -22,7 +22,7 @@ import { quickFix } from "@/services/client/places";
 import { silenceCall, unsilenceCall } from "@/services/client/alarm";
 import { coordsGone } from "@/lib/tripData";
 import { ClientApiError, errorMessage } from "@/services/client/api";
-import type { CallDoc, CallEventDoc, DriverDoc, MemberDoc } from "@/types/domain";
+import type { CallDoc, CallEventDoc, CallStatus, DriverDoc, MemberDoc } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
 import type { MsgKey } from "@/i18n/index";
 
@@ -65,7 +65,14 @@ function CallView({ callId }: { callId: string }) {
   const router = useRouter();
   const toast = useToast();
   const callState = useLiveDoc<CallDoc>(`groups/${groupId}/calls/${callId}`);
-  const call = callState.data;
+  // 누르는 즉시 다음 화면으로 — 서버 응답·실시간 반영을 기다리지 않는다. 실패하면 되돌린다.
+  const [optimistic, setOptimistic] = useState<{ from: CallStatus; to: CallStatus } | null>(null);
+  const liveCall = callState.data;
+  const call = liveCall && optimistic && liveCall.status === optimistic.from ? { ...liveCall, status: optimistic.to } : liveCall;
+  useEffect(() => {
+    // 서버 상태가 바뀌면(반영됨) 임시 상태를 버린다
+    if (optimistic && liveCall && liveCall.status !== optimistic.from) setOptimistic(null);
+  }, [liveCall?.status, optimistic]);
   const events = useLiveQuery<CallEventDoc>(`groups/${groupId}/calls/${callId}/events`, [ob("createdAt", "asc"), lim(30)]);
   const driverDoc = useLiveDoc<DriverDoc>(call ? `groups/${groupId}/drivers/${call.driverId}` : null);
   const callerDoc = useLiveDoc<MemberDoc>(call ? `groups/${groupId}/members/${call.callerId}` : null);
@@ -85,6 +92,9 @@ function CallView({ callId }: { callId: string }) {
     // 기사가 수락·거절을 누르면 서버 응답을 기다리지 않고 알람을 바로 끈다
     const respond = isAssignedDriver && (action === "ACCEPT" || action === "DECLINE");
     if (respond) silenceCall(callId);
+    if (!opts.silent && liveCall) {
+      setOptimistic({ from: liveCall.status, to: action === "ACCEPT" ? "ON_THE_WAY" : TRANSITIONS[action].to });
+    }
     try {
       // 탑승 시작·운행 완료: 실제 출발·도착 지점 (위치 권한이 이미 있을 때만)
       const fix = isAssignedDriver && (action === "START_TRIP" || action === "COMPLETE") ? await quickFix() : null;
@@ -95,6 +105,7 @@ function CallView({ callId }: { callId: string }) {
       const stale = e instanceof ClientApiError && e.code === "INVALID_STATE";
       if (!opts.silent && !stale) toast(errorMessage(e), "error");
       if (respond && !stale) unsilenceCall(callId); // 처리 실패 → 아직 응답 전이므로 다시 울림
+      if (!opts.silent) setOptimistic(null);
       setConfirm(null);
       throw e;
     } finally {
