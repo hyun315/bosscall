@@ -179,7 +179,7 @@ export function PaidBanner({
   detailUrl: string | null;
   linkUrl: string | null;
   onOpen?: () => void;
-  /** 있으면 배너 아래와 상세 화면에 [출발지로 설정]/[목적지로 설정] */
+  /** 있으면 배너 사진 안과 상세 화면에 [출발지로 설정]/[목적지로 설정] */
   onGo?: (use: AdPlaceUse) => void;
 }) {
   const { t } = useI18n();
@@ -203,26 +203,26 @@ export function PaidBanner({
           {t("ad.label")}
         </span>
       </button>
-      </div>
-      {/* 배너 바로 아래 — 이미지를 가리지 않게 단추 두 개를 따로 둔다 */}
+      {/* 배너 사진 안 오른쪽 아래 — 출발지·목적지 단추 */}
       {onGo && (
-        <div className="-mt-1.5 grid grid-cols-2 gap-2">
+        <div className="absolute bottom-2 right-2 flex gap-1.5">
           <button
             type="button"
             onClick={() => onGo("pickup")}
-            className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-btn border border-line bg-surface text-[14px] font-bold text-navy shadow-card active:scale-[0.98]"
+            className="inline-flex h-8 items-center gap-1 rounded-full bg-white/95 px-2.5 text-[12px] font-bold text-navy shadow-card ring-1 ring-black/10 backdrop-blur active:scale-95"
           >
             📍 {t("ad.setPickup")}
           </button>
           <button
             type="button"
             onClick={() => onGo("destination")}
-            className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-btn bg-action text-[14px] font-bold text-white shadow-card active:scale-[0.98]"
+            className="inline-flex h-8 items-center gap-1 rounded-full bg-action/95 px-2.5 text-[12px] font-bold text-white shadow-card ring-1 ring-black/10 backdrop-blur active:scale-95"
           >
             🎯 {t("ad.setDestination")}
           </button>
         </div>
       )}
+      </div>
       {open && detailUrl && (
         <AdDetail
           company={company}
