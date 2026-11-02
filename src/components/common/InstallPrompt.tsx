@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/common/Button";
 import {
+  androidNonChrome,
+  openInChromeAndroid,
   canPromptInstall,
   dismissInstall,
   initInstallCapture,
@@ -134,6 +136,13 @@ export function InstallPrompt({
             <span>{t("install.iosStep3")}</span>
           </li>
         </ol>
+      ) : platform === "android" && androidNonChrome() ? (
+        <div className="mt-3 space-y-2">
+          <p className="rounded-btn bg-warning-soft px-3 py-2 text-sm leading-relaxed text-warning-text">{t("install.useChrome")}</p>
+          <Button block onClick={openInChromeAndroid}>
+            {t("inapp.openChrome")}
+          </Button>
+        </div>
       ) : canPrompt ? (
         <Button block className="mt-3" loading={busy} onClick={() => void install()}>
           {t("install.androidButton")}

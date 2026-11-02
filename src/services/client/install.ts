@@ -111,3 +111,20 @@ export function inAppBrowser(): InAppBrowser | null {
   if (/; wv\)/.test(ua) || /everytimeApp|Whale\/.*inapp/i.test(ua)) return "other";
   return null;
 }
+
+/**
+ * 안드로이드에서 Chrome 이 아닌 브라우저(삼성 인터넷·웨일·파이어폭스 등)인지.
+ * 삼성 인터넷이 만드는 홈 화면 앱은 Google Play 프로텍트가 "안전하지 않은 앱"으로 막는다 → Chrome 으로 설치해야 한다.
+ */
+export function androidNonChrome(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  if (!/Android/i.test(ua)) return false;
+  return !/Chrome\/\d/.test(ua) || /SamsungBrowser|Whale|EdgA|OPR|Firefox|YaBrowser|; wv\)/i.test(ua);
+}
+
+/** 지금 주소를 안드로이드 Chrome 으로 연다 */
+export function openInChromeAndroid(): void {
+  const l = window.location;
+  window.location.href = `intent://${l.host}${l.pathname}${l.search}${l.hash}#Intent;scheme=https;package=com.android.chrome;end`;
+}

@@ -28,8 +28,8 @@ const STEPS: Array<{ title: string; body: ReactNode }> = [
     title: "홈 화면에 추가 · 알림 켜기",
     body: (
       <>
-        아이폰은 Safari <b>공유 버튼 → 홈 화면에 추가</b>, 안드로이드는 Chrome <b>⋮ → 앱 설치</b>. 홈 화면 아이콘으로 열고 알림을
-        허용하세요.
+        아이폰은 Safari <b>공유 버튼 → 홈 화면에 추가</b>, 안드로이드는 <b>꼭 Chrome</b>에서 <b>⋮ → 앱 설치</b> (삼성 인터넷으로 설치하면
+        Play 프로텍트가 막습니다). 홈 화면 아이콘으로 열고 알림을 허용하세요.
       </>
     ),
   },

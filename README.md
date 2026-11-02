@@ -307,8 +307,9 @@ npm run typecheck
 
 카카오톡·라인·인스타그램 등 앱 안의 브라우저에서는 구글 로그인이 막히고(disallowed_useragent) 알림·홈 화면 추가도 안 됩니다.
 - `public/open-external.js` (루트 layout `<head>` 에서 앱보다 먼저 실행):
-  - 카카오톡 → `kakaotalk://web/openExternal?url=…` (아이폰·안드로이드 모두 기본 브라우저로)
+  - 카카오톡 → 아이폰 `kakaotalk://web/openExternal?url=…` (Safari), 안드로이드는 **Chrome intent** (기본 브라우저가 삼성 인터넷이면 아래 문제)
   - 라인 → `?openExternalBrowser=1`
   - 안드로이드의 그 밖의 인앱(인스타그램·페이스북·네이버 등) → Chrome intent
   - 같은 탭에서 한 번만 시도 (실패 시 반복 방지)
 - 자동으로 못 빠져나가면(아이폰 인스타그램·페이스북 등) `InAppBrowserNotice`: "Safari로 열기 / Chrome으로 열기" 다시 시도, 링크 복사, 메뉴 위치 안내 (한·인니·영). "그냥 여기서 보기"로 닫을 수 있음.
+- **안드로이드는 Chrome 으로 설치**: 삼성 인터넷 등으로 "홈 화면에 추가/설치"하면 만들어지는 앱을 Google Play 프로텍트가 "안전하지 않은 앱 차단됨(이전 Android 버전용)"으로 막습니다. Chrome 이 만드는 앱은 문제없음. 그래서 안드로이드에서 Chrome 이 아니면 설치 안내 카드가 "Chrome으로 열기" 단추를 대신 보여주고(`androidNonChrome`), 안내장에도 적어 둠.

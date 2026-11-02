@@ -4,7 +4,7 @@
  * — 외부 브라우저로 여는 방법 안내 + 다시 시도 + 링크 복사. 닫으면 이 탭에서는 다시 띄우지 않는다.
  */
 import { useEffect, useState } from "react";
-import { inAppBrowser, installPlatform, type InAppBrowser } from "@/services/client/install";
+import { inAppBrowser, installPlatform, openInChromeAndroid, type InAppBrowser } from "@/services/client/install";
 import { useI18n } from "@/i18n/client";
 
 const DISMISS = "bosscall.inappDismissed";
@@ -29,13 +29,12 @@ export function InAppBrowserNotice() {
   const href = typeof window === "undefined" ? "" : window.location.href;
 
   const retry = () => {
-    if (kind === "kakao") {
+    if (kind === "kakao" && ios) {
       window.location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(href)}`;
     } else if (kind === "line") {
       window.location.href = href + (href.includes("?") ? "&" : "?") + "openExternalBrowser=1";
     } else if (!ios) {
-      const l = window.location;
-      window.location.href = `intent://${l.host}${l.pathname}${l.search}${l.hash}#Intent;scheme=https;package=com.android.chrome;end`;
+      openInChromeAndroid();
     }
   };
   const copy = async () => {

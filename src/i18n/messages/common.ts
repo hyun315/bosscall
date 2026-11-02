@@ -167,6 +167,11 @@ export const commonMsgs = {
   "inapp.copy": { ko: "링크 복사 (브라우저에 붙여넣기)", id: "Salin link (tempel di browser)", en: "Copy link (paste in your browser)" },
   "inapp.copied": { ko: "복사했습니다 — 브라우저 주소창에 붙여넣으세요", id: "Tersalin — tempel di alamat browser", en: "Copied — paste it in your browser" },
   "inapp.continue": { ko: "그냥 여기서 보기", id: "Tetap lihat di sini", en: "Stay here" },
+  "install.useChrome": {
+    ko: "안드로이드는 Chrome에서 설치하세요. 삼성 인터넷 등 다른 브라우저로 설치하면 Google Play 프로텍트가 '안전하지 않은 앱'으로 막습니다.",
+    id: "Di Android, pasang lewat Chrome. Jika dipasang dari Samsung Internet atau browser lain, Google Play Protect akan memblokirnya.",
+    en: "On Android, install from Chrome. Installing from Samsung Internet or other browsers gets blocked by Google Play Protect.",
+  },
   "install.title": { ko: "홈 화면에 BossCall 추가하기", id: "Tambahkan BossCall ke layar utama", en: "Add BossCall to your home screen" },
   "install.whyDriver": {
     ko: "홈 화면 앱으로 써야 화면이 꺼져 있어도 호출 알림이 옵니다. 꼭 해주세요.",

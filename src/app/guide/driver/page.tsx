@@ -81,6 +81,9 @@ export default function DriverGuidePage() {
         <section>
           <h2 className="text-[16px] font-bold text-ink print:text-[14px]">Penting</h2>
           <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-ink print:space-y-0.5 print:text-[12px]">
+            <Li>
+              Android: pasang <b>lewat Chrome</b>, jangan lewat Samsung Internet — akan diblokir Google Play Protect.
+            </Li>
             <Li>Jangan matikan notifikasi BossCall dan jangan mode senyap untuk BossCall.</Li>
             <Li>Android: matikan &quot;hemat baterai / optimasi baterai&quot; untuk Chrome supaya notifikasi tidak terlambat.</Li>
             <Li>Berbagi lokasi hanya saat jam kerja, dan hanya jika Anda menyalakannya.</Li>
