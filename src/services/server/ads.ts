@@ -209,3 +209,9 @@ export async function endCampaign(campaignId: string): Promise<void> {
   if (!snap.exists) throw notFound();
   await ref.update({ endAt: Math.min((snap.data() as AdCampaignDoc).endAt, Date.now()) });
 }
+
+/** 앱에 보여줄 광고 — 끝나지 않은 것 전부 (시작 전 것은 앱이 시작 시각에 맞춰 보여준다) */
+export async function listActiveCampaigns(now = Date.now()): Promise<AdCampaignDoc[]> {
+  const snap = await adminDb().collection("adCampaigns").where("endAt", ">", now).get();
+  return snap.docs.map((d) => d.data() as AdCampaignDoc);
+}

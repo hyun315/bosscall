@@ -1,12 +1,38 @@
 "use client";
-import { w, useLiveQuery } from "@/hooks/useLive";
+import { useEffect, useState } from "react";
 import type { AdCampaignDoc } from "@/lib/ads";
 
 /**
- * 끝나지 않은 승인 광고. 여러 광고 자리가 같은 조건으로 구독하면 Firestore SDK가 연결 하나로 묶는다.
- * 조건 값은 하루 단위로만 바뀌게 해서 구독을 다시 만들지 않는다.
+ * 게재 중·예정 광고. 여러 광고 자리가 한 번 받아 온 목록을 같이 쓰고, 2분이 지나면 다시 받는다.
  */
+const REFRESH_MS = 2 * 60_000;
+let cache: { at: number; data: AdCampaignDoc[] } | null = null;
+let inflight: Promise<AdCampaignDoc[]> | null = null;
+
+function load(): Promise<AdCampaignDoc[]> {
+  if (cache && Date.now() - cache.at < REFRESH_MS) return Promise.resolve(cache.data);
+  inflight ??= fetch("/api/ad-campaigns")
+    .then((r) => (r.ok ? (r.json() as Promise<{ campaigns: AdCampaignDoc[] }>) : { campaigns: [] }))
+    .then((j) => {
+      cache = { at: Date.now(), data: j.campaigns ?? [] };
+      return cache.data;
+    })
+    .catch(() => cache?.data ?? [])
+    .finally(() => {
+      inflight = null;
+    });
+  return inflight;
+}
+
 export function useAdCampaigns(enabled: boolean): AdCampaignDoc[] {
-  const day = Math.floor(Date.now() / 86400_000) * 86400_000;
-  return useLiveQuery<AdCampaignDoc>(enabled ? "adCampaigns" : null, [w("endAt", ">", day)]).data;
+  const [data, setData] = useState<AdCampaignDoc[]>(() => cache?.data ?? []);
+  useEffect(() => {
+    if (!enabled) return;
+    let alive = true;
+    void load().then((d) => alive && setData(d));
+    return () => {
+      alive = false;
+    };
+  }, [enabled]);
+  return data;
 }

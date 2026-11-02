@@ -242,7 +242,7 @@ npm run typecheck
 - `adRequests/{id}` 신청서 · `adImages/{id}` 이미지(문서 1개당 1장, 650KB 이하) · `adCampaigns/{id}` 승인된 광고. Firebase Storage(유료 요금제 필요) 없이 동작합니다.
 - 이미지는 승인된 것만 `/api/ad-image/<id>` 로 공개되며 1년 캐시. 반려된 신청의 이미지는 삭제.
 - 남용 방지: IP별 시간당 5건, 전체 하루 200건, 숨은 입력칸.
-- `firestore.rules`: `adCampaigns` 는 로그인 사용자 읽기 전용 — **규칙을 다시 배포해야 합니다** (Firebase 콘솔 › Firestore › 규칙에 붙여넣기).
+- 앱은 `/api/ad-campaigns`(서버가 읽어 줌, CDN 1분 캐시)로 광고 목록을 받습니다. Firestore 규칙 변경이 필요 없습니다. 승인 후 앱에 보이기까지 최대 약 3분.
 
 ### 결제 (나중에)
 신규 출시 기념 **2027년 3월 31일까지 무료**라 지금은 결제 단계가 없습니다. 유료 전환 때 신청 제출 뒤 결제(PG: 인도네시아는 Xendit·Midtrans, 한국 원화는 토스페이먼츠·포트원) → 결제 완료된 신청만 검토 대기에 올리는 단계를 넣습니다. 반려 시 자동 환불.
