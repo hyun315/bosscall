@@ -3,6 +3,7 @@ import type { Tri } from "@/i18n/core";
 /** 설정·가족·장소·알림 설정·프로필 */
 export const settingsMsgs = {
   "settings.family": { ko: "가족 구성원", id: "Anggota keluarga", en: "Family members" },
+  "settings.guide": { ko: "사용 안내", id: "Panduan", en: "How to use" },
   "settings.places": { ko: "장소 관리", id: "Kelola tempat", en: "Places" },
   "settings.notifications": { ko: "알림 설정", id: "Pengaturan notifikasi", en: "Notification settings" },
   "settings.language": { ko: "언어", id: "Bahasa", en: "Language" },

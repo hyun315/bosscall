@@ -289,3 +289,11 @@ npm run typecheck
 - **수락은 한 번에**: 기사가 [수락]을 바로 누르면 서버가 RECEIVED+ACCEPTED 를 한 트랜잭션에서 처리합니다 (왕복 1번).
 - **앱 열기**: Firestore 로컬 캐시(persistentLocalCache)로 지난 화면을 즉시 보여주고, 푸시 토큰은 같은 토큰이면 24시간에 한 번만 서버에 등록합니다.
 - **현재 위치**: 근무 중 위치 공유로 받아 둔 30초 이내 값이 있으면 GPS를 기다리지 않고 바로 지도를 엽니다 (핀으로 확인).
+
+## 17. 사용 안내장
+
+- **사장님용** `/guide` (한국어, 로그인 없이 열림): 좋은 점 4가지 · 시작 4단계 · 알아두면 좋은 것. **WhatsApp으로 기사님께 보내기** 단추가 기사용 안내 링크를 인도네시아어 문구와 함께 보냅니다.
+- **기사용** `/guide/driver` (인도네시아어): 가입 → 홈 화면 추가 → 알림 허용(필수, 테스트 방법) → 출근·퇴근, 호출 받기(실제 단추 모양), 취소 알림 [OK, mengerti], 주의사항(배터리 최적화 등).
+- 기사 초대 메시지에 기사용 안내 링크가 자동으로 붙고, 설정 › **사용 안내**에서 역할에 맞는 안내가 열립니다.
+- 인쇄: 각 페이지의 인쇄 단추(인쇄용 레이아웃 + QR), 또는 A4 한 장 PDF `public/guide/bosscall-guide-owner.pdf`, `bosscall-guide-driver-id.pdf`.
+- PDF 다시 만들기: `scripts/guide/` (owner.html·driver.html·base.css → `node render.js`, QR은 `python3 qr.py <작업폴더> public/guide` — 외부 라이브러리 없이 생성·검증). 앱 문구를 바꾸면 이 HTML도 같이 고치세요.
