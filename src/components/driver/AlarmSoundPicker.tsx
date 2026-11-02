@@ -5,6 +5,7 @@ import { useToast } from "@/components/common/Toast";
 import { useReadySession } from "@/hooks/useSession";
 import { ALARM_SOUNDS, DEFAULT_ALARM_SOUND, type AlarmSoundId } from "@/lib/alarmSounds";
 import { sendTestPush, updateMe } from "@/services/client/actions";
+import { TestPushResult } from "@/components/common/TestPushResult";
 import { errorMessage } from "@/services/client/api";
 import { getAlarmSound, installAlarmUnlock, previewAlarm, setAlarmSound } from "@/services/client/alarm";
 import { useI18n } from "@/i18n/client";
@@ -44,9 +45,11 @@ export function AlarmSoundPicker() {
     previewAlarm(id);
   };
 
+  const [sentAt, setSentAt] = useState<number | null>(null);
   const test = async () => {
     setTesting(true);
     try {
+      setSentAt(Date.now());
       const r = await sendTestPush();
       toast(r.devices > 0 ? t("alarm.testSent") : t("alarm.testNoDevice"), r.devices > 0 ? "success" : "error");
     } catch (e) {
@@ -115,6 +118,7 @@ export function AlarmSoundPicker() {
         <Button block variant="secondary" loading={testing} onClick={() => void test()}>
           🔔 {t("alarm.testButton")}
         </Button>
+          <TestPushResult sentAt={sentAt} />
       </div>
     </section>
   );

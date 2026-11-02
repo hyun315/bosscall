@@ -23,7 +23,7 @@ export const POST = route(async (req) => {
   const groupId = (uSnap.data() as UserDoc | undefined)?.activeGroupId ?? "none";
   after(async () => {
     await new Promise((r) => setTimeout(r, 5000));
-    await notifyUsers([user.uid], {
+    const r = await notifyUsers([user.uid], {
       type: "CALL_CREATED",
       groupId,
       callId: null,
@@ -33,6 +33,8 @@ export const POST = route(async (req) => {
       urgent: true,
       inbox: false,
     });
+    // 결과를 남겨 테스트 화면이 바로 보여준다 (보냈는지 / 애플·구글이 거절했는지 / 무음 설정인지)
+    await db.doc(`users/${user.uid}`).set({ lastTestPush: { at: Date.now(), ...r, errors: r.errors.slice(0, 3) } }, { merge: true });
   });
   return { ok: true, devices: tokens.size };
 });

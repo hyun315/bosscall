@@ -46,9 +46,20 @@ function userLocale(u: UserDoc): Locale {
  * 그리고 짧은 제목·본문만. 앱이 열리면 callId로 최신 정보를 다시 조회한다.
  * 발송 실패가 호출 처리를 막지 않도록 예외를 삼킨다.
  */
-export async function notifyUsers(userIds: string[], req: PushRequest): Promise<void> {
+/** 발송 결과 — 알림 테스트 진단용 */
+export interface PushResult {
+  tokens: number;
+  success: number;
+  /** 실패한 기기의 오류 코드 (중복 제거) */
+  errors: string[];
+  /** 기사가 호출 소리를 꺼서 무음으로 보냈는지 */
+  silent: boolean;
+}
+
+export async function notifyUsers(userIds: string[], req: PushRequest): Promise<PushResult> {
+  const result: PushResult = { tokens: 0, success: 0, errors: [], silent: false };
   const unique = [...new Set(userIds)];
-  if (unique.length === 0) return;
+  if (unique.length === 0) return result;
   const db = adminDb();
   const now = Date.now();
 
@@ -109,8 +120,11 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
     }
     if (tokenEntries.length === 0) {
       await Promise.all([inboxWrite, track("push_sent", null, req.groupId, { type: req.type, tokens: 0, success: 0 })]);
-      return;
+      return result;
     }
+    result.tokens = tokenEntries.length;
+    result.silent = tokenEntries.some((t) => t.silent);
+    const errorCodes = new Set<string>();
 
     let success = 0;
     const cleanup: Promise<unknown>[] = [];
@@ -141,6 +155,7 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
       // 만료/잘못된 토큰 정리
       res.responses.forEach((r, i) => {
         const code = r.error?.code ?? "";
+        if (code) errorCodes.add(code);
         const entry = entries[i];
         if (
           entry &&
@@ -154,7 +169,11 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
     }));
     await Promise.all([...cleanup, inboxWrite]);
     await track("push_sent", null, req.groupId, { type: req.type, tokens: tokenEntries.length, success });
+    result.success = success;
+    result.errors = [...errorCodes];
   } catch (e) {
     console.error("[push] failed", req.type, e);
+    result.errors = [...result.errors, e instanceof Error ? e.message.slice(0, 120) : "unknown"];
   }
+  return result;
 }

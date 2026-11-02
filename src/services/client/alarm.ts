@@ -40,6 +40,91 @@ let state: AlarmState = { wanted: false, playing: false, blocked: false };
 const listeners = new Set<Listener>();
 const buffers = new Map<AlarmSoundId, AudioBuffer>();
 
+/* ───────── iPhone·iPad: <audio> 요소로 재생 ─────────
+ * iOS의 Web Audio는 무음 스위치에 묶여 소리가 안 나거나, resume()이 끝나지 않고 멈춰 있는 일이 잦다.
+ * <audio> 요소는 무음 스위치와 상관없이 재생되고, 사용자 동작 안에서 한 번 재생해 두면
+ * 이후(호출이 왔을 때)에도 동작 없이 다시 재생할 수 있다.
+ */
+let el: HTMLAudioElement | null = null;
+let elUnlocked = false;
+const wavUrls = new Map<AlarmSoundId, string>();
+
+function isIOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function wavUrl(id: AlarmSoundId): string {
+  const hit = wavUrls.get(id);
+  if (hit) return hit;
+  const rate = 44100;
+  const samples = renderAlarmCycle(id, rate);
+  const buf = new ArrayBuffer(44 + samples.length * 2);
+  const v = new DataView(buf);
+  const str = (o: number, t: string) => {
+    for (let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i));
+  };
+  str(0, "RIFF");
+  v.setUint32(4, 36 + samples.length * 2, true);
+  str(8, "WAVE");
+  str(12, "fmt ");
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true);
+  v.setUint32(28, rate * 2, true);
+  v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true);
+  str(36, "data");
+  v.setUint32(40, samples.length * 2, true);
+  for (let i = 0; i < samples.length; i++) {
+    const x = Math.max(-1, Math.min(1, samples[i] ?? 0));
+    v.setInt16(44 + i * 2, x < 0 ? x * 0x8000 : x * 0x7fff, true);
+  }
+  const url = URL.createObjectURL(new Blob([buf], { type: "audio/wav" }));
+  wavUrls.set(id, url);
+  return url;
+}
+
+function audioEl(): HTMLAudioElement {
+  if (!el) {
+    el = new Audio();
+    el.loop = true;
+    el.preload = "auto";
+    el.setAttribute("playsinline", "");
+    try {
+      // 무음 스위치가 켜져 있어도 알람으로 재생 (지원하는 iOS에서)
+      const nav = navigator as unknown as { audioSession?: { type: string } };
+      if (nav.audioSession) nav.audioSession.type = "playback";
+    } catch {
+      /* 미지원 */
+    }
+  }
+  return el;
+}
+
+function setElSound(a: HTMLAudioElement, id: AlarmSoundId): void {
+  const url = wavUrl(id);
+  if (a.src !== url) a.src = url;
+}
+
+/** 사용자 동작 안에서 — 소리 없이 한 번 재생해 두어 나중에 호출이 오면 바로 울리게 한다 */
+function unlockEl(): void {
+  if (elUnlocked || state.wanted) return;
+  const a = audioEl();
+  setElSound(a, currentSound ?? getAlarmSound());
+  a.muted = true;
+  a.play()
+    .then(() => {
+      if (!state.wanted && !previewTimer) a.pause();
+      a.muted = false;
+      elUnlocked = true;
+    })
+    .catch(() => {
+      a.muted = false;
+    });
+}
+
 function emit(next: Partial<AlarmState>): void {
   state = { ...state, ...next };
   for (const l of listeners) l(state);
@@ -102,6 +187,11 @@ function running(): boolean {
 
 /** 첫 터치 때 오디오를 연다. 막혀 있는 동안 울려야 하면 바로 울린다. */
 function unlock(): void {
+  if (isIOS()) {
+    unlockEl();
+    if (state.wanted && !state.playing) startSource(currentSound ?? getAlarmSound());
+    return;
+  }
   const c = audioContext();
   if (!c) return;
   void c
@@ -132,6 +222,10 @@ export function installAlarmUnlock(): void {
     // 다른 앱에 다녀오면 iOS가 오디오를 멈춘다 → 돌아왔을 때 다시 울린다
     if (document.visibilityState === "visible" && state.wanted) {
       stopSource();
+      if (isIOS()) {
+        startSource(currentSound ?? getAlarmSound());
+        return;
+      }
       void ctx?.resume().then(() => {
         if (state.wanted) startSource(currentSound ?? getAlarmSound());
       });
@@ -140,6 +234,21 @@ export function installAlarmUnlock(): void {
 }
 
 function startSource(id: AlarmSoundId): void {
+  if (isIOS()) {
+    const a = audioEl();
+    a.pause();
+    setElSound(a, id);
+    a.currentTime = 0;
+    a.muted = false;
+    currentSound = id;
+    a.play()
+      .then(() => {
+        elUnlocked = true;
+        emit({ playing: true, blocked: false });
+      })
+      .catch(() => emit({ playing: false, blocked: true }));
+    return;
+  }
   const c = audioContext();
   if (!c) return;
   stopSource();
@@ -158,6 +267,7 @@ function startSource(id: AlarmSoundId): void {
 }
 
 function stopSource(): void {
+  if (el) el.pause();
   if (source) {
     try {
       source.stop();
@@ -201,8 +311,10 @@ export function startCallAlarm(): void {
   if (state.wanted && source && currentSound === id) return;
   currentSound = id;
   emit({ wanted: true });
-  audioContext();
-  if (ctx && !running()) void ctx.resume().catch(() => undefined); // 이미 허용된 경우엔 바로 열린다
+  if (!isIOS()) {
+    audioContext();
+    if (ctx && !running()) void ctx.resume().catch(() => undefined); // 이미 허용된 경우엔 바로 열린다
+  }
   startSource(id);
   startVibrate();
 }
@@ -217,16 +329,30 @@ export function stopCallAlarm(): void {
 /** 설정 화면 미리듣기 — 버튼을 누른 동작 안에서 호출되므로 막히지 않는다 */
 export function previewAlarm(id: AlarmSoundId): void {
   if (state.wanted) return; // 실제 호출이 울리는 중에는 미리듣기 안 함
-  const c = audioContext();
-  if (!c) return;
-  void c.resume().then(() => {
-    startSource(id);
+  const ms = Math.max(1500, Math.ceil(alarmCycleSeconds(id) * 2) * 1000);
+  const stopLater = () => {
     if (previewTimer) clearTimeout(previewTimer);
-    const ms = Math.max(1500, Math.ceil(alarmCycleSeconds(id) * 2) * 1000);
     previewTimer = setTimeout(() => {
       previewTimer = null;
       if (!state.wanted) stopSource();
     }, ms);
+  };
+  if (isIOS()) {
+    // 누른 동작 안에서 바로 play() — promise를 기다렸다 재생하면 iOS가 막는다
+    startSource(id);
+    stopLater();
+    return;
+  }
+  const c = audioContext();
+  if (!c) return;
+  if (c.state === "running") {
+    startSource(id);
+    stopLater();
+    return;
+  }
+  void c.resume().then(() => {
+    startSource(id);
+    stopLater();
   });
 }
 

@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/common/Button";
 import { InstallPrompt } from "@/components/common/InstallPrompt";
 import { useToast } from "@/components/common/Toast";
+import { TestPushResult } from "@/components/common/TestPushResult";
 import { sendTestPush } from "@/services/client/actions";
 import { errorMessage } from "@/services/client/api";
 import { isStandaloneApp, subscribeInstall } from "@/services/client/install";
@@ -25,6 +26,7 @@ export function DriverSetupCard({ groupId }: { groupId: string }) {
   const [push, setPush] = useState<PushState | null>(null);
   const [tested, setTested] = useState(true);
   const [testSent, setTestSent] = useState(false);
+  const [sentAt, setSentAt] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -63,6 +65,7 @@ export function DriverSetupCard({ groupId }: { groupId: string }) {
   const test = async () => {
     setBusy(true);
     try {
+      setSentAt(Date.now());
       const r = await sendTestPush();
       if (r.devices > 0) setTestSent(true);
       else toast(t("alarm.testNoDevice"), "error");
@@ -126,6 +129,8 @@ export function DriverSetupCard({ groupId }: { groupId: string }) {
               {t("setup.testButton")}
             </Button>
           ) : (
+            <>
+            <TestPushResult sentAt={sentAt} />
             <div className="grid grid-cols-2 gap-2">
               <Button variant="secondary" size="lg" block onClick={() => setTestSent(false)}>
                 {t("setup.testAgain")}
@@ -134,6 +139,7 @@ export function DriverSetupCard({ groupId }: { groupId: string }) {
                 {t("setup.testHeard")}
               </Button>
             </div>
+            </>
           )}
         </div>
       )}

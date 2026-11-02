@@ -101,6 +101,63 @@ export const driverMsgs = {
     en: "Asked only once. Change it anytime on the location card at home.",
   },
   "setup.title": { ko: "휴대폰 준비", id: "Siapkan HP", en: "Set up your phone" },
+  "ptest.waiting": { ko: "보내는 중… (5초)", id: "Mengirim… (5 detik)", en: "Sending… (5 seconds)" },
+  "ptest.noDevice": {
+    ko: "이 기기가 알림 받을 기기로 등록되어 있지 않습니다.",
+    id: "Perangkat ini belum terdaftar untuk menerima notifikasi.",
+    en: "This device isn't registered for notifications.",
+  },
+  "ptest.failed": {
+    ko: "보내기에 실패했습니다 (알림 서버가 거절).",
+    id: "Gagal mengirim (ditolak server notifikasi).",
+    en: "Sending failed (rejected by the push service).",
+  },
+  "ptest.reRegister": { ko: "이 기기 다시 등록", id: "Daftarkan ulang perangkat ini", en: "Re-register this device" },
+  "ptest.silent": {
+    ko: "호출 소리가 꺼져 있어 소리 없이 보냈습니다. 위의 '호출 소리'를 켜 주세요.",
+    id: "Bunyi panggilan dimatikan, jadi dikirim tanpa suara. Nyalakan 'bunyi panggilan' di atas.",
+    en: "Call sound is off, so it was sent silently. Turn on call sound above.",
+  },
+  "ptest.sent": {
+    ko: "서버가 이 계정 기기로 알림을 보냈습니다 ({all}대 중 {ok}대 성공).",
+    id: "Server sudah mengirim notifikasi ({ok} dari {all} perangkat berhasil).",
+    en: "The server sent the notification ({ok} of {all} devices succeeded).",
+  },
+  "ptest.ifNoSound": {
+    ko: "그래도 소리가 안 났다면 휴대폰 설정 문제입니다. 순서대로 확인하세요:",
+    id: "Jika tetap tidak berbunyi, periksa pengaturan HP:",
+    en: "If it still didn't ring, check your phone settings:",
+  },
+  "ptest.ios1": {
+    ko: "무음 모드·집중 모드(방해 금지·수면)를 끄세요.",
+    id: "Matikan mode senyap dan Fokus (Jangan Ganggu/Tidur).",
+    en: "Turn off silent mode and Focus (Do Not Disturb/Sleep).",
+  },
+  "ptest.ios2": {
+    ko: "설정 › 알림 › BossCall › '알림 허용'과 '사운드'를 켜세요.",
+    id: "Pengaturan › Notifikasi › BossCall › nyalakan 'Izinkan Notifikasi' dan 'Suara'.",
+    en: "Settings › Notifications › BossCall › turn on 'Allow Notifications' and 'Sounds'.",
+  },
+  "ptest.ios3": {
+    ko: "BossCall은 홈 화면 아이콘으로 열어야 합니다 (Safari 탭이 아니라).",
+    id: "Buka BossCall dari ikon layar utama (bukan tab Safari).",
+    en: "Open BossCall from the home-screen icon (not a Safari tab).",
+  },
+  "ptest.and1": {
+    ko: "무음·진동 모드와 방해 금지를 끄세요.",
+    id: "Matikan mode senyap/getar dan Jangan Ganggu.",
+    en: "Turn off silent/vibrate and Do Not Disturb.",
+  },
+  "ptest.and2": {
+    ko: "설정 › 애플리케이션 › BossCall(또는 Chrome) › 알림 › '소리'·'팝업으로 표시'를 켜세요.",
+    id: "Pengaturan › Aplikasi › BossCall (atau Chrome) › Notifikasi › nyalakan 'Suara' dan 'Pop-up'.",
+    en: "Settings › Apps › BossCall (or Chrome) › Notifications › turn on 'Sound' and 'Pop-up'.",
+  },
+  "ptest.and3": {
+    ko: "배터리 절약에서 BossCall·Chrome을 '제한 없음'으로 두세요.",
+    id: "Di penghemat baterai, atur BossCall/Chrome ke 'Tidak dibatasi'.",
+    en: "In battery saver, set BossCall/Chrome to 'Unrestricted'.",
+  },
   "setup.pushTitle": { ko: "알림을 켜 주세요", id: "Nyalakan notifikasi", en: "Turn on notifications" },
   "setup.pushBody": {
     ko: "알림이 꺼져 있으면 화면이 꺼졌을 때 호출 소리가 나지 않습니다. 단추를 누르고 '허용'을 고르세요.",
