@@ -4,6 +4,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { BottomNavigation } from "@/components/common/BottomNavigation";
 import { LoadingState } from "@/components/common/States";
 import { ConsentSheet } from "@/components/privacy/ConsentSheet";
+import { CancelAlert } from "@/components/driver/CancelAlert";
+import { useLiveQuery, w } from "@/hooks/useLive";
+import type { CallDoc } from "@/types/domain";
 import { useDriverLocationSharing } from "@/hooks/useDriverLocationSharing";
 import { useIncomingCallAlarm } from "@/hooks/useCallAlarm";
 import { useActiveCalls } from "@/hooks/useGroupData";
@@ -41,7 +44,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     active.data.find((c) => c.driverId === driverId && c.status === "CALLING" && c.expiresAt > Date.now())?.id ?? null;
   // 응답할 때까지 호출 알람 반복 (앱이 화면에 열려 있는 동안)
   // 호출 소리를 끈 기사는 앱 안 알람도 울리지 않는다 (설정하지 않았으면 켜짐)
-  useIncomingCallAlarm(active.data, driverId, isDriver && session.me?.callAlarmSound !== false);
+  // 호출자가 취소한 호출은 기사가 [확인]할 때까지 같은 알람 + 화면 안내
+  const cancelAlerts = useLiveQuery<CallDoc>(
+    isDriver && driverId ? `groups/${session.groupId}/calls` : null,
+    [w("cancelAlertFor", "==", driverId)],
+  ).data;
+  useIncomingCallAlarm(active.data, driverId, isDriver && session.me?.callAlarmSound !== false, cancelAlerts);
 
   useEffect(() => {
     if (!incomingId) return;
@@ -58,6 +66,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       {!hideNav && <BottomNavigation role={session.member.role} />}
       {/* 선택 동의는 호출하는 쪽(사장님·가족)에게만 묻는다 */}
       {!isDriver && session.me && <ConsentSheet me={session.me} />}
+      {isDriver && session.groupId && <CancelAlert groupId={session.groupId} alerts={cancelAlerts} />}
     </div>
   );
 }

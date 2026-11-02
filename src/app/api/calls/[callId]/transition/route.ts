@@ -22,4 +22,4 @@ export const POST = routeWithParams<{ callId: string }>(async (req, params) => {
   }, optionalFix(body.fix));
 });
 
-export const maxDuration = 30;
+export const maxDuration = 60;

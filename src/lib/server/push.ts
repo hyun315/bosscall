@@ -64,6 +64,7 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
       .map((s) => s.data() as UserDoc)
       .filter((u) => {
         const prefs = u.notificationPrefs ?? { callUpdates: true, workEvents: true };
+        if (req.urgent) return true; // 기사 호출·취소 알람은 끌 수 없음
         if (CALL_UPDATE_TYPES.includes(req.type)) return prefs.callUpdates !== false;
         if (WORK_TYPES.includes(req.type)) return prefs.workEvents !== false;
         return true; // CALL_CREATED(기사 대상)는 끌 수 없음
@@ -97,7 +98,8 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
     }
 
     // 호출 알림 소리: 기사가 설정에서 끈 경우에만 무음. 설정하지 않았으면 항상 소리
-    const silentFor = (u: UserDoc) => req.type === "CALL_CREATED" && u.callAlarmSound === false;
+    // 기사가 호출 소리를 끈 경우에만 무음 (호출·취소 알람)
+    const silentFor = (u: UserDoc) => (req.type === "CALL_CREATED" || !!req.urgent) && u.callAlarmSound === false;
     const tokenEntries: Array<{ uid: string; token: string; locale: Locale; silent: boolean }> = [];
     for (const u of recipients) {
       for (const d of tokensByUser.get(u.id)?.docs ?? []) {

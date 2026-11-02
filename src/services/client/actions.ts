@@ -55,6 +55,10 @@ export const createCall = (groupId: string, driverId: string, pickup: PlaceInput
 export const transitionCall = (groupId: string, callId: string, action: CallAction, fix?: ActualFix | null) =>
   api<{ status: string }>(`/api/calls/${callId}/transition`, { body: { groupId, action, fix: fix ?? null } });
 
+/** 기사: "호출이 취소되었습니다" 확인 */
+export const ackCancelledCall = (groupId: string, callId: string) =>
+  api(`/api/calls/${callId}/ack-cancel`, { body: { groupId } });
+
 export const clock = (groupId: string, action: "CLOCK_IN" | "CLOCK_OUT", shareLocation = false) =>
   api<{ sessionId: string }>("/api/work", { body: { groupId, action, shareLocation } });
 

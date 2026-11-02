@@ -109,6 +109,13 @@ export const callMsgs = {
   "call.respondWithin": { ko: "{s}초 안에 응답해주세요", id: "Jawab dalam {s} detik", en: "Respond within {s}s" },
   "call.accept": { ko: "호출 수락", id: "Terima panggilan", en: "Accept call" },
   "call.decline": { ko: "지금은 어려워요", id: "Tidak bisa sekarang", en: "Can't right now" },
+  "cancelAlert.title": { ko: "호출이 취소되었습니다", id: "Panggilan dibatalkan", en: "The call was cancelled" },
+  "cancelAlert.body": {
+    ko: "{caller}님이 호출을 취소했습니다.",
+    id: "{caller} membatalkan panggilan.",
+    en: "{caller} cancelled the call.",
+  },
+  "cancelAlert.ok": { ko: "확인", id: "OK, mengerti", en: "OK" },
   "call.declineConfirmTitle": {
     ko: "지금은 어렵다고 응답할까요?",
     id: "Jawab tidak bisa sekarang?",

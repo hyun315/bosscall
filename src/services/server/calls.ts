@@ -265,6 +265,8 @@ export async function transitionCall(
     const fixOk = fix !== null && actor.role === "DRIVER" && actor.driverId === call.driverId && acceptableFix(fix, now);
     if (fixOk && r.to === "TRIP_STARTED") fields.actualPickup = fix;
     if (fixOk && r.to === "COMPLETED") fields.actualDropoff = fix;
+    // 기사가 아닌 사람이 취소 → 기사가 [확인]할 때까지 기사 앱에서 알람
+    if (r.to === "CANCELLED" && actor.role !== "DRIVER") fields.cancelAlertFor = call.driverId;
     tx.update(callRef, fields);
     appendEvent(tx, call, {
       eventType: r.to,
@@ -331,10 +333,8 @@ export async function transitionCall(
         );
         break;
       case "CANCELLED": {
-        const targets = [...toCaller];
-        if (driverUserId && driverUserId !== actor.userId) targets.push(driverUserId);
         tasks.push(
-          notifyUsers(targets, {
+          notifyUsers(toCaller, {
             type: "CALL_CANCELLED",
             groupId,
             callId,
@@ -344,6 +344,11 @@ export async function transitionCall(
             path,
           }),
         );
+        // 기사: 호출 알람처럼 소리·진동, 확인할 때까지 다시 보낸다
+        if (driverUserId && driverUserId !== actor.userId && call.cancelAlertFor) {
+          tasks.push(sendCancelAlert(driverUserId, groupId, callId, call.callerName, true));
+          tasks.push(repeatCancelAlerts(groupId, callId, driverUserId, call.callerName));
+        }
         break;
       }
       case "COMPLETED":
@@ -424,6 +429,47 @@ async function nudgeDriver(groupId: string, callId: string): Promise<{ sent: boo
  * 그래서 호출을 만든 뒤 서버가 15·30·45초에 아직 응답이 없으면 알림을 다시 보낸다
  * (호출자 화면이 닫혀 있어도). 응답·취소·시간 초과가 되면 nudgeDriver 가 아무것도 보내지 않는다.
  */
+function sendCancelAlert(driverUserId: string, groupId: string, callId: string, caller: string, inbox: boolean) {
+  return notifyUsers([driverUserId], {
+    type: "CALL_CANCELLED",
+    groupId,
+    callId,
+    titleKey: "push.cancelledDriver.title",
+    bodyKey: "push.cancelledDriver.body",
+    params: { caller },
+    path: `/calls/${callId}?g=${groupId}`,
+    urgent: true,
+    inbox,
+  });
+}
+
+/** 취소 알림도 호출처럼 — 기사가 [확인]하지 않으면 15·30·45초에 다시 보낸다 */
+async function repeatCancelAlerts(groupId: string, callId: string, driverUserId: string, caller: string): Promise<void> {
+  const start = Date.now();
+  for (const at of SERVER_NUDGE_DELAYS_MS) {
+    const wait = start + at - Date.now();
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    try {
+      const snap = await adminDb().doc(`groups/${groupId}/calls/${callId}`).get();
+      if (!(snap.data() as CallDoc | undefined)?.cancelAlertFor) return; // 확인함 → 중단
+      await sendCancelAlert(driverUserId, groupId, callId, caller, false);
+    } catch (e) {
+      console.error("[cancel-alert] repeat failed", e);
+      return;
+    }
+  }
+}
+
+/** 기사가 취소 알림을 [확인] — 알람 멈춤 */
+export async function ackCancelAlert(groupId: string, callId: string, driverId: string | null): Promise<void> {
+  const ref = adminDb().doc(`groups/${groupId}/calls/${callId}`);
+  const snap = await ref.get();
+  if (!snap.exists) throw notFound("err.callNotFound");
+  const call = snap.data() as CallDoc;
+  if (!driverId || call.driverId !== driverId) throw forbidden();
+  if (call.cancelAlertFor) await ref.update({ cancelAlertFor: null, cancelAckAt: Date.now() });
+}
+
 export async function repeatNudges(groupId: string, callId: string): Promise<void> {
   const start = Date.now();
   for (const at of SERVER_NUDGE_DELAYS_MS) {

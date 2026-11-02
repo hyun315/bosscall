@@ -255,6 +255,9 @@ export interface CallDoc {
   /** 응답 대기 중 기사에게 다시 보낸 알림 (호출자 화면이 열려 있는 동안 서버가 간격 제한) */
   lastNudgeAt?: number | null;
   nudgeCount?: number;
+  /** 호출자가 취소했는데 기사가 아직 [확인]을 안 누름 → 그 기사 id (기사 앱이 알람을 울린다). 확인하면 null */
+  cancelAlertFor?: string | null;
+  cancelAckAt?: number | null;
   status: CallStatus;
   createdAt: number;
   expiresAt: number;

@@ -20,6 +20,7 @@ import { CALL_STATUS_LABEL, googleMapsDirectionsUrl, shortPlace, toWhatsAppNumbe
 import { formatTime } from "@/lib/time";
 import { transitionCall, updateMe } from "@/services/client/actions";
 import { quickFix } from "@/services/client/places";
+import { silenceCall, unsilenceCall } from "@/services/client/alarm";
 import { coordsGone } from "@/lib/tripData";
 import { ClientApiError, errorMessage } from "@/services/client/api";
 import type { CallDoc, CallEventDoc, DriverDoc, MemberDoc } from "@/types/domain";
@@ -82,6 +83,9 @@ function CallView({ callId }: { callId: string }) {
   const run = async (action: CallAction, opts: { silent?: boolean } = {}) => {
     // 자동 처리(전달됨·시간 초과)는 버튼을 잠그지 않는다 — 기사가 곧바로 수락할 수 있게
     if (!opts.silent) setBusyAction(action);
+    // 기사가 수락·거절을 누르면 서버 응답을 기다리지 않고 알람을 바로 끈다
+    const respond = isAssignedDriver && (action === "ACCEPT" || action === "DECLINE");
+    if (respond) silenceCall(callId);
     try {
       // 탑승 시작·운행 완료: 실제 출발·도착 지점 (위치 권한이 이미 있을 때만)
       const fix = isAssignedDriver && (action === "START_TRIP" || action === "COMPLETE") ? await quickFix() : null;
@@ -91,6 +95,7 @@ function CallView({ callId }: { callId: string }) {
       // 이미 다른 사람이 처리한 경우(상태 불일치)는 화면이 실시간으로 갱신되므로 조용히 넘어간다
       const stale = e instanceof ClientApiError && e.code === "INVALID_STATE";
       if (!opts.silent && !stale) toast(errorMessage(e), "error");
+      if (respond && !stale) unsilenceCall(callId); // 처리 실패 → 아직 응답 전이므로 다시 울림
       setConfirm(null);
       throw e;
     } finally {
@@ -156,6 +161,8 @@ function CallView({ callId }: { callId: string }) {
             seconds={seconds}
             busyAction={busyAction}
             onAction={(a) => {
+              // 거절: 확인 창을 띄우는 순간 소리부터 끈다 (돌아가기를 누르면 다시 울림)
+              if (a === "DECLINE") silenceCall(callId);
               if (a === "DECLINE" || a === "COMPLETE") setConfirm(a);
               // 전달됨 전에 수락해도 서버가 전달됨 → 수락 순서를 한 번에 기록한다
               else void run(a).catch(() => undefined);
@@ -254,7 +261,10 @@ function CallView({ callId }: { callId: string }) {
         tone="danger"
         loading={busyAction === "DECLINE"}
         onConfirm={() => void run("DECLINE").catch(() => undefined)}
-        onCancel={() => setConfirm(null)}
+        onCancel={() => {
+          setConfirm(null);
+          unsilenceCall(callId);
+        }}
       />
       <ConfirmModal
         open={confirm === "COMPLETE"}

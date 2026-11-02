@@ -229,3 +229,33 @@ export function previewAlarm(id: AlarmSoundId): void {
     }, ms);
   });
 }
+
+/* ───────── 누르는 즉시 멈추기 ─────────
+ * 수락·거절·확인을 누르면 서버 응답·실시간 반영을 기다리지 않고 바로 소리를 끈다.
+ * 같은 호출은 다시 울리지 않는다 (서버 처리가 실패하면 unsilenceCall 로 되돌린다).
+ */
+const silenced = new Set<string>();
+
+export function silenceCall(callId: string): void {
+  silenced.add(callId);
+  stopCallAlarm();
+  closeCallNotifications(callId);
+  emit({});
+}
+
+export function unsilenceCall(callId: string): void {
+  if (silenced.delete(callId)) emit({});
+}
+
+export function isCallSilenced(callId: string): boolean {
+  return silenced.has(callId);
+}
+
+/** 이 호출의 휴대폰 알림(푸시)도 같이 지운다 */
+function closeCallNotifications(callId: string): void {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+  void navigator.serviceWorker.ready
+    .then((reg) => reg.getNotifications({ tag: `call-${callId}` }))
+    .then((ns) => ns.forEach((n) => n.close()))
+    .catch(() => undefined);
+}

@@ -41,6 +41,12 @@ export const pushMsgs = {
     en: "Driver {driver} can't take it right now.",
   },
   "push.cancelled.title": { ko: "호출 취소", id: "Panggilan dibatalkan", en: "Call cancelled" },
+  "push.cancelledDriver.title": { ko: "🚫 호출이 취소되었습니다", id: "🚫 Panggilan dibatalkan", en: "🚫 Call cancelled" },
+  "push.cancelledDriver.body": {
+    ko: "{caller}님이 호출을 취소했습니다. 앱에서 [확인]을 눌러주세요.",
+    id: "{caller} membatalkan panggilan. Tekan [OK] di aplikasi.",
+    en: "{caller} cancelled the call. Tap [OK] in the app.",
+  },
   "push.cancelled.body": {
     ko: "{caller}님의 호출이 취소되었습니다.",
     id: "Panggilan dari {caller} dibatalkan.",
