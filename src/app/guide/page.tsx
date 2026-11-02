@@ -45,7 +45,7 @@ const STEPS: Array<{ title: string; body: ReactNode }> = [
     title: "기사님 부르기",
     body: (
       <>
-        홈 <Chip tone="blue">기사 호출</Chip> → 픽업 위치 → 목적지 → 호출. 기사님이 수락하면 알림이 옵니다.
+        홈 <Chip tone="blue">기사 호출</Chip> → 픽업 위치 → 목적지 → 호출. 기사님이 수락하면 바로 출발하고, 알림이 옵니다.
       </>
     ),
   },

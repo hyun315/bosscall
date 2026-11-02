@@ -267,6 +267,19 @@ export async function transitionCall(
     if (fixOk && r.to === "COMPLETED") fields.actualDropoff = fix;
     // 기사가 아닌 사람이 취소 → 기사가 [확인]할 때까지 기사 앱에서 알람
     if (r.to === "CANCELLED" && actor.role !== "DRIVER") fields.cancelAlertFor = call.driverId;
+
+    // 수락 = 출발: 기사가 수락하면 같은 트랜잭션에서 '출발했어요'까지 기록한다 (기사가 누를 단추 하나 줄임)
+    let finalStatus = r.to;
+    let departEvent: { from: CallStatus; to: CallStatus } | null = null;
+    if (action === "ACCEPT" && r.to === "ACCEPTED") {
+      const r2 = evaluateTransition({ ...call, status: r.to }, "DEPART", evalActor, now);
+      if (r2.ok) {
+        Object.assign(fields, timestampFieldsFor(r2.to, now), { status: r2.to });
+        finalStatus = r2.to;
+        departEvent = { from: r2.from, to: r2.to };
+      }
+    }
+
     tx.update(callRef, fields);
     appendEvent(tx, call, {
       eventType: r.to,
@@ -276,10 +289,20 @@ export async function transitionCall(
       createdAt: now,
       metadata: { action },
     });
+    if (departEvent) {
+      appendEvent(tx, call, {
+        eventType: departEvent.to,
+        fromStatus: departEvent.from,
+        actorId: actor.userId,
+        actorRole: actor.role,
+        createdAt: now + 1,
+        metadata: { action: "DEPART", auto: true },
+      });
+    }
 
     if (dSnap.exists) {
       const driver = dSnap.data() as DriverDoc;
-      const nextStatus = driverStatusAfter(r.to, driver.status);
+      const nextStatus = driverStatusAfter(finalStatus, driver.status);
       if (nextStatus !== driver.status) tx.update(driverRef, { status: nextStatus, updatedAt: now });
     }
     return {
@@ -371,7 +394,7 @@ export async function transitionCall(
     }
     await Promise.all(tasks);
   });
-  return { status: to };
+  return { status: call.status };
 }
 
 async function groupOwnerIds(groupId: string): Promise<string[]> {

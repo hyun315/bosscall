@@ -63,10 +63,11 @@ export default function DriverGuidePage() {
               Tidak bisa sekarang
             </span>
           </div>
-          <p className="mt-3 text-sm text-ink print:mt-2 print:text-[12px]">Setelah menerima, tekan sesuai urutan:</p>
+          <p className="mt-3 text-sm text-ink print:mt-2 print:text-[12px]">
+            Setelah menerima, langsung berangkat. Lalu tekan sesuai urutan:
+          </p>
           <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[13px] print:text-[11px]">
-            <Btn tone="blue">Saya berangkat</Btn>›<Btn tone="blue">Saya sudah tiba</Btn>›<Btn tone="blue">Mulai perjalanan</Btn>›
-            <Btn tone="blue">Selesaikan perjalanan</Btn>
+            <Btn tone="blue">Saya sudah tiba</Btn>›<Btn tone="blue">Mulai perjalanan</Btn>›<Btn tone="blue">Selesaikan perjalanan</Btn>
           </div>
         </section>
 

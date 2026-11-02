@@ -30,9 +30,9 @@ export const pushMsgs = {
   },
   "push.accepted.title": { ko: "✓ 호출 수락", id: "✓ Panggilan diterima", en: "✓ Call accepted" },
   "push.accepted.body": {
-    ko: "{driver} 기사님이 {caller}님의 호출을 수락했습니다.",
-    id: "Sopir {driver} menerima panggilan dari {caller}.",
-    en: "Driver {driver} accepted {caller}'s call.",
+    ko: "{driver} 기사님이 {caller}님의 호출을 수락하고 출발했습니다.",
+    id: "Sopir {driver} menerima panggilan dari {caller} dan sudah berangkat.",
+    en: "Driver {driver} accepted {caller}'s call and is on the way.",
   },
   "push.declined.title": { ko: "호출 거절", id: "Panggilan ditolak", en: "Call declined" },
   "push.declined.body": {
