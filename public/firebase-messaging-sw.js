@@ -24,28 +24,21 @@ function readPayload(event) {
   }
 }
 
-// 아이폰·아이패드(Safari)인지 — 지원하지 않는 옵션을 넣으면 알림이 소리 없이 표시되는 경우가 있어 최소 옵션만 쓴다
-const IS_APPLE = /iPhone|iPad|iPod|Macintosh/.test(self.navigator.userAgent) && !/Chrome|CriOS|Android/.test(self.navigator.userAgent);
-
 self.addEventListener("push", (event) => {
   const p = readPayload(event);
-  // 아이폰(Safari)은 renotify 를 지원하지 않아, 같은 tag 알림은 소리·배너 없이 조용히 바뀐다.
-  // → 매번 다른 tag 를 써서 항상 울리게 한다. (호출 알림은 "call-<id>-" 로 시작 — 수락하면 한꺼번에 지움)
-  const tag = (p.callId ? "call-" + p.callId : p.type || "bosscall") + "-" + Date.now();
-  const options = IS_APPLE
-    ? { body: p.body, icon: "/icons/icon-192.png", tag: tag, data: { url: p.url } }
-    : {
-        body: p.body,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/badge-96.png",
-        tag: tag,
-        renotify: true,
-        requireInteraction: p.urgent,
-        vibrate: p.urgent ? [500, 200, 500, 200, 500, 200, 800] : [200],
-        data: { url: p.url },
-      };
-  // 무음 요청일 때만 silent 를 넣는다 (기본은 휴대폰 알림음 — 무음·진동 모드면 휴대폰이 알아서 진동)
-  if (p.silent) options.silent = true;
+  const options = {
+    body: p.body,
+    icon: "/icons/icon-192.png",
+    badge: "/icons/badge-96.png",
+    // 호출 알림은 호출마다 tag 가 다르다. 그 밖의 알림(테스트 등)은 매번 새 tag — 아이폰은 같은 tag 를 소리 없이 덮어쓴다
+    tag: p.callId ? "call-" + p.callId : (p.type || "bosscall") + "-" + Date.now(),
+    renotify: true,
+    requireInteraction: p.urgent,
+    vibrate: p.urgent ? [500, 200, 500, 200, 500, 200, 800] : [200],
+    // 기사가 호출 소리를 끈 경우에만 무음. 기본은 항상 소리 (휴대폰 알림음)
+    silent: p.silent,
+    data: { url: p.url },
+  };
   event.waitUntil(self.registration.showNotification(p.title, options));
 });
 
