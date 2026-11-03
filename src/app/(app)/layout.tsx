@@ -50,6 +50,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   ).data;
   useDriverAlarm({
     enabled: isDriver,
+    groupId: session.groupId,
     driverId,
     calls: active.data,
     alerts: cancelAlerts,

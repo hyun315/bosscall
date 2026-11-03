@@ -324,12 +324,12 @@ function sections(t: T): ManualSection[] {
       ],
       tip: {
         ios: t(
-          <>iPhone: jika BossCall tertutup, hanya bunyi notifikasi singkat. Biarkan BossCall terbuka saat menunggu supaya berbunyi terus.</>,
-          <>아이폰은 앱이 닫혀 있으면 짧은 알림 소리만 납니다. 대기할 때는 BossCall을 화면에 열어 두면 계속 울립니다.</>,
+          <>Jika layar mati atau BossCall tidak dibuka, notifikasi berbunyi tiap 5 detik sampai Anda menjawab. Buka notifikasi — alarm berbunyi terus di aplikasi.</>,
+          <>화면이 꺼져 있거나 BossCall이 열려 있지 않으면 응답할 때까지 알림이 5초마다 울립니다. 알림을 눌러 열면 앱에서 경보음이 계속 울립니다.</>,
         ),
         android: t(
-          <>Jika layar mati, notifikasi tetap berbunyi. Tekan notifikasi untuk membuka panggilan.</>,
-          <>화면이 꺼져 있어도 알림이 울립니다. 알림을 누르면 호출 화면이 열립니다.</>,
+          <>Jika layar mati, notifikasi berbunyi dan bergetar tiap 5 detik sampai Anda menjawab. Tekan notifikasi untuk membuka panggilan.</>,
+          <>화면이 꺼져 있어도 응답할 때까지 알림이 5초마다 울리고 진동합니다. 알림을 누르면 호출 화면이 열립니다.</>,
         ),
       },
     },

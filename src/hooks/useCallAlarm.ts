@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { isPending } from "@/lib/callStateMachine";
 import {
   installAlarmUnlock,
@@ -9,6 +9,7 @@ import {
   subscribeAlarm,
   type AlarmState,
 } from "@/services/client/alarm";
+import { transitionCall } from "@/services/client/actions";
 import type { CallDoc } from "@/types/domain";
 
 /**
@@ -19,11 +20,13 @@ import type { CallDoc } from "@/types/domain";
  */
 export function useDriverAlarm(opts: {
   enabled: boolean;
+  groupId: string | null;
   driverId: string | null;
   calls: CallDoc[];
   alerts: CallDoc[];
 }): void {
-  const { enabled, driverId, calls, alerts } = opts;
+  const { enabled, groupId, driverId, calls, alerts } = opts;
+  const [tick, setTick] = useState(0);
   // silenceCall 이 불리면 다시 계산
   const [, setVersion] = useState(0);
   useEffect(() => subscribeAlarm(() => setVersion((v) => v + 1)), []);
@@ -32,7 +35,29 @@ export function useDriverAlarm(opts: {
     if (enabled) installAlarmUnlock();
   }, [enabled]);
 
-  const waiting = enabled ? calls.filter((c) => c.driverId === driverId && isPending(c.status) && !isCallSilenced(c.id)) : [];
+  const now = Date.now();
+  const mine = enabled ? calls.filter((c) => c.driverId === driverId && isPending(c.status)) : [];
+  const waiting = mine.filter((c) => c.expiresAt > now && !isCallSilenced(c.id));
+  const expiredIds = mine.filter((c) => c.expiresAt <= now).map((c) => c.id).join(",");
+  const nextExpiry = waiting.length > 0 ? Math.min(...waiting.map((c) => c.expiresAt)) : null;
+
+  // 응답 시간이 끝나는 순간 다시 계산 (응답 대기 알람 → 놓친 호출 알람으로)
+  useEffect(() => {
+    if (nextExpiry === null) return;
+    const id = setTimeout(() => setTick((t) => t + 1), Math.max(0, nextExpiry - Date.now()) + 50);
+    return () => clearTimeout(id);
+  }, [nextExpiry, tick]);
+
+  // 시간이 지났는데 아직 '응답 대기'로 남은 호출 → 서버에 시간 초과를 알린다 (서버가 확인하고 놓친 호출 알람을 건다)
+  const timeoutSent = useRef(new Set<string>());
+  useEffect(() => {
+    if (!groupId || !expiredIds) return;
+    for (const id of expiredIds.split(",")) {
+      if (timeoutSent.current.has(id)) continue;
+      timeoutSent.current.add(id);
+      void transitionCall(groupId, id, "TIMEOUT").catch(() => undefined);
+    }
+  }, [groupId, expiredIds]);
   const unacked = enabled ? alerts.filter((c) => !isCallSilenced(`cancel-${c.id}`)) : [];
   const ring = waiting.length > 0 || unacked.length > 0;
 

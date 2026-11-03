@@ -83,6 +83,7 @@ async function alertOnce(groupId: string, callId: string, loopId: string): Promi
       path,
       urgent: true,
       inbox: false,
+      noStats: true,
     });
   } else {
     const missed = call.status === "TIMEOUT";
@@ -96,6 +97,7 @@ async function alertOnce(groupId: string, callId: string, loopId: string): Promi
       path,
       urgent: true,
       inbox: false,
+      noStats: true,
     });
   }
   return true;

@@ -24,6 +24,8 @@ export interface PushRequest {
   urgent?: boolean;
   /** false 면 알림함에 기록하지 않고 푸시만 보낸다 (응답 재촉 알림) */
   inbox?: boolean;
+  /** 통계에 남기지 않음 — 5초마다 반복하는 알림 (기록이 수백 건 쌓이지 않게) */
+  noStats?: boolean;
 }
 
 const CALL_UPDATE_TYPES: readonly NotificationType[] = [
@@ -52,12 +54,10 @@ export interface PushResult {
   success: number;
   /** 실패한 기기의 오류 코드 (중복 제거) */
   errors: string[];
-  /** 기사가 호출 소리를 꺼서 무음으로 보냈는지 */
-  silent: boolean;
 }
 
 export async function notifyUsers(userIds: string[], req: PushRequest): Promise<PushResult> {
-  const result: PushResult = { tokens: 0, success: 0, errors: [], silent: false };
+  const result: PushResult = { tokens: 0, success: 0, errors: [] };
   const unique = [...new Set(userIds)];
   if (unique.length === 0) return result;
   const db = adminDb();
@@ -109,29 +109,28 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
     }
 
     // 알림은 항상 소리로 보낸다 (무음으로 보내면 진동까지 꺼진다). 휴대폰이 무음이면 휴대폰이 진동으로 바꾼다.
-    const silentFor = (_u: UserDoc) => false;
-    const tokenEntries: Array<{ uid: string; token: string; locale: Locale; silent: boolean }> = [];
+    const tokenEntries: Array<{ uid: string; token: string; locale: Locale }> = [];
     for (const u of recipients) {
       for (const d of tokensByUser.get(u.id)?.docs ?? []) {
         const token = d.get("token");
-        if (typeof token === "string") tokenEntries.push({ uid: u.id, token, locale: userLocale(u), silent: silentFor(u) });
+        if (typeof token === "string") tokenEntries.push({ uid: u.id, token, locale: userLocale(u) });
       }
     }
+    const log = (tokens: number, success: number) =>
+      req.noStats ? Promise.resolve() : track("push_sent", null, req.groupId, { type: req.type, tokens, success });
     if (tokenEntries.length === 0) {
-      await Promise.all([inboxWrite, track("push_sent", null, req.groupId, { type: req.type, tokens: 0, success: 0 })]);
+      await Promise.all([inboxWrite, log(0, 0)]);
       return result;
     }
     result.tokens = tokenEntries.length;
-    result.silent = tokenEntries.some((t) => t.silent);
     const errorCodes = new Set<string>();
 
     let success = 0;
     const cleanup: Promise<unknown>[] = [];
-    const groups = [...new Set(tokenEntries.map((t) => `${t.locale}|${t.silent ? 1 : 0}`))];
-    // 언어·소리 묶음별 발송을 동시에
-    await Promise.all(groups.map(async (g) => {
-      const [locale, silentFlag] = g.split("|") as [Locale, string];
-      const entries = tokenEntries.filter((t) => t.locale === locale && (t.silent ? "1" : "0") === silentFlag);
+    const locales = [...new Set(tokenEntries.map((t) => t.locale))];
+    // 언어별 발송을 동시에
+    await Promise.all(locales.map(async (locale) => {
+      const entries = tokenEntries.filter((t) => t.locale === locale);
       const text = textFor(locale);
       const res = await adminMessaging().sendEachForMulticast({
         tokens: entries.map((t) => t.token),
@@ -144,7 +143,6 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
           body: text.body,
           url: req.path,
           urgent: req.urgent ? "1" : "0",
-          silent: silentFlag,
         },
         webpush: {
           headers: { Urgency: "high", TTL: req.urgent ? "120" : "3600" },
@@ -156,18 +154,17 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
         const code = r.error?.code ?? "";
         if (code) errorCodes.add(code);
         const entry = entries[i];
+        // 기기 등록이 끝난 경우만 지운다 (invalid-argument 는 보낸 내용 문제일 수 있어 지우지 않는다)
         if (
           entry &&
-          (code === "messaging/registration-token-not-registered" ||
-            code === "messaging/invalid-registration-token" ||
-            code === "messaging/invalid-argument")
+          (code === "messaging/registration-token-not-registered" || code === "messaging/invalid-registration-token")
         ) {
           cleanup.push(db.doc(`users/${entry.uid}/deviceTokens/${tokenDocId(entry.token)}`).delete());
         }
       });
     }));
     await Promise.all([...cleanup, inboxWrite]);
-    await track("push_sent", null, req.groupId, { type: req.type, tokens: tokenEntries.length, success });
+    await log(tokenEntries.length, success);
     result.success = success;
     result.errors = [...errorCodes];
   } catch (e) {

@@ -22,10 +22,6 @@ export const PATCH = route(async (req) => {
     if (!isLocale(body.locale)) throw new ValidationError("val.invalid", { field: "@field.locale" });
     patch.locale = body.locale;
   }
-  if (body.callAlarmSound !== undefined) {
-    if (typeof body.callAlarmSound !== "boolean") throw new ValidationError("val.invalid", { field: "@field.notifSettings" });
-    patch.callAlarmSound = body.callAlarmSound;
-  }
   if (body.consents !== undefined) {
     const c = requireRecord(body.consents, "field.consents");
     if (typeof c.analytics !== "boolean" || typeof c.marketing !== "boolean") {

@@ -55,10 +55,8 @@ export interface UserDoc {
   notificationPrefs: NotificationPrefs;
   /** 화면·알림 언어 (ko | id | en). 없으면 기기 언어 */
   locale?: "ko" | "id" | "en";
-  /** 기사: 호출 알림 소리 (없으면 켜짐 — 설정하지 않았으면 무조건 소리) */
-  callAlarmSound?: boolean;
   /** 마지막 알림 테스트 결과 (서버 발송 기준) — 테스트 화면에서 원인 찾기용 */
-  lastTestPush?: { at: number; tokens: number; success: number; errors: string[]; silent: boolean } | null;
+  lastTestPush?: { at: number; tokens: number; success: number; errors: string[] } | null;
   /** 선택 동의 — 없으면 아직 묻지 않은 상태 */
   consents?: UserConsents;
   createdAt: number;

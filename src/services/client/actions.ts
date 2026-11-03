@@ -19,7 +19,6 @@ export const updateMe = (body: {
   notificationPrefs?: Partial<NotificationPrefs>;
   locale?: "ko" | "id" | "en";
   consents?: { analytics: boolean; marketing: boolean };
-  callAlarmSound?: boolean;
 }) => api("/api/me", { method: "PATCH", body });
 
 /** 이 계정의 모든 기기로 5초 뒤 테스트 알림 (화면을 끄고 소리 확인용) */

@@ -271,7 +271,8 @@ export async function transitionCall(
     // 기사가 아닌 사람이 취소 → 기사가 [확인]할 때까지 기사 앱에서 알람
     if (r.to === "CANCELLED" && actor.role !== "DRIVER") fields.cancelAlertFor = call.driverId;
     // 응답 시간이 지남(놓친 호출) → 기사가 [확인]할 때까지 알람
-    if (r.to === "TIMEOUT" && !opts.quietTimeout) fields.cancelAlertFor = call.driverId;
+    // (오래전에 끝난 호출을 뒤늦게 정리하는 경우엔 울리지 않는다)
+    if (r.to === "TIMEOUT" && !opts.quietTimeout && now - call.expiresAt < 10 * 60_000) fields.cancelAlertFor = call.driverId;
 
     // 수락 = 출발: 기사가 수락하면 같은 트랜잭션에서 '출발했어요'까지 기록한다 (기사가 누를 단추 하나 줄임)
     let finalStatus = r.to;

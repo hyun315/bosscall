@@ -59,9 +59,6 @@ function ResultLine({ sentAt }: { sentAt: number }) {
       </div>
     );
   }
-  if (r.silent) {
-    return <p className="rounded-btn bg-warning-soft px-3 py-2.5 text-sm text-warning-text">🔕 {t("ptest.silent")}</p>;
-  }
   return (
     <div className="space-y-2 rounded-btn bg-success-soft px-3 py-3 text-sm leading-relaxed text-ink">
       <p className="font-bold text-success">✓ {t("ptest.sent", { ok: r.success, all: r.tokens })}</p>

@@ -141,11 +141,7 @@ export const driverMsgs = {
     en: "No result from the server. Try again in a moment.",
   },
   "ptest.reRegister": { ko: "이 기기 다시 등록", id: "Daftarkan ulang perangkat ini", en: "Re-register this device" },
-  "ptest.silent": {
-    ko: "호출 소리가 꺼져 있어 소리 없이 보냈습니다. 위의 '호출 소리'를 켜 주세요.",
-    id: "Bunyi panggilan dimatikan, jadi dikirim tanpa suara. Nyalakan 'bunyi panggilan' di atas.",
-    en: "Call sound is off, so it was sent silently. Turn on call sound above.",
-  },
+
   "ptest.sent": {
     ko: "서버가 이 계정 기기로 알림을 보냈습니다 ({all}대 중 {ok}대 성공).",
     id: "Server sudah mengirim notifikasi ({ok} dari {all} perangkat berhasil).",
