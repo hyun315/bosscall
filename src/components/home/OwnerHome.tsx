@@ -47,6 +47,7 @@ export function OwnerHome() {
   const others = drivers.data.filter((d) => d.id !== driver?.id);
   const location = useDriverLocation(groupId, driver);
   const [savingMain, setSavingMain] = useState(false);
+  const [requesting, setRequesting] = useState(false);
   const toast = useToast();
 
   if (drivers.loading) return <LoadingState full />;
@@ -77,7 +78,6 @@ export function OwnerHome() {
   const todayCount = today.data.length;
   // 오늘 이 기사가 놓친 호출 (응답 시간 초과)
   const missedToday = driver ? today.data.filter((c) => c.driverId === driver.id && c.status === "TIMEOUT").length : 0;
-  const [requesting, setRequesting] = useState(false);
   const askClockIn = async () => {
     if (!driver) return;
     setRequesting(true);
