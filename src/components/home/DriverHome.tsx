@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useState } from "react";
 import { AppHeader } from "@/components/common/AppHeader";
 import { BottomSheet } from "@/components/common/BottomSheet";
@@ -24,7 +25,7 @@ import { useI18n } from "@/i18n/client";
 export function DriverHome() {
   const { groupId, member, tz } = useReadySession();
   const toast = useToast();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const driverState = useLiveDoc<DriverDoc>(member.driverId ? `groups/${groupId}/drivers/${member.driverId}` : null);
   const active = useActiveCalls(groupId);
   const [busy, setBusy] = useState(false);
@@ -115,6 +116,23 @@ export function DriverHome() {
           )}
           {myCall && onDuty && <p className="mt-2 text-center text-sm text-ink-sub">{t("dhome.finishFirst")}</p>}
         </div>
+
+        {/* 기사용 사용 설명서 — 기사님 언어로 (한국어면 한국어 설명서) */}
+        <Link
+          href={`/manual/driver${locale === "ko" ? "?lang=ko" : ""}`}
+          className="card flex min-h-[60px] items-center gap-3 px-4 py-3 active:bg-bg"
+        >
+          <span className="text-2xl" aria-hidden>
+            📖
+          </span>
+          <span className="flex-1">
+            <span className="block text-[15px] font-bold text-ink">{t("dhome.manual")}</span>
+            <span className="block text-sm text-ink-sub">{t("dhome.manualDesc")}</span>
+          </span>
+          <span className="text-ink-faint" aria-hidden>
+            ›
+          </span>
+        </Link>
       </main>
 
       {/* 출근 전 위치 공유 안내·선택 — 기사가 직접 고른다 */}

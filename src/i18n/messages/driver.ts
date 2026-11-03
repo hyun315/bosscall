@@ -226,6 +226,12 @@ export const driverMsgs = {
     id: "Siap! Tekan Mulai Kerja untuk menerima panggilan.",
     en: "All set! Clock in to receive calls.",
   },
+  "dhome.manual": { ko: "사용 설명서", id: "Panduan pemakaian", en: "How to use" },
+  "dhome.manualDesc": {
+    ko: "설치 · 알림 켜기 · 호출 받기 · 문제 해결",
+    id: "Pasang · nyalakan notifikasi · terima panggilan · jika ada masalah",
+    en: "Install · notifications · taking calls · troubleshooting",
+  },
   "dhome.clockOut": { ko: "퇴근하기", id: "Selesai Kerja", en: "Clock out" },
   "dhome.finishFirst": {
     ko: "진행 중인 호출을 마친 뒤 퇴근할 수 있습니다.",
