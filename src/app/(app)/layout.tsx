@@ -5,10 +5,10 @@ import { BottomNavigation } from "@/components/common/BottomNavigation";
 import { LoadingState } from "@/components/common/States";
 import { ConsentSheet } from "@/components/privacy/ConsentSheet";
 import { CancelAlert } from "@/components/driver/CancelAlert";
-import { useLiveQuery, w } from "@/hooks/useLive";
-import type { CallDoc } from "@/types/domain";
+import { useLiveDoc, useLiveQuery, w } from "@/hooks/useLive";
+import type { CallDoc, DriverDoc } from "@/types/domain";
 import { useDriverLocationSharing } from "@/hooks/useDriverLocationSharing";
-import { useIncomingCallAlarm } from "@/hooks/useCallAlarm";
+import { useDriverAlarm } from "@/hooks/useCallAlarm";
 import { useActiveCalls } from "@/hooks/useGroupData";
 import { useSession } from "@/hooks/useSession";
 import { refreshPushTokenSilently } from "@/services/client/push";
@@ -42,14 +42,20 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   // 휴대폰에 저장된 지난 화면에서 이미 끝난 호출로 이동하지 않도록 응답 시간이 남은 호출만
   const incomingId =
     active.data.find((c) => c.driverId === driverId && c.status === "CALLING" && c.expiresAt > Date.now())?.id ?? null;
-  // 응답할 때까지 호출 알람 반복 (앱이 화면에 열려 있는 동안)
-  // 호출 소리를 끈 기사는 앱 안 알람도 울리지 않는다 (설정하지 않았으면 켜짐)
-  // 호출자가 취소한 호출은 기사가 [확인]할 때까지 같은 알람 + 화면 안내
+  // 기사 알람: 응답 대기 호출은 수락·거절할 때까지, 취소·놓친 호출은 [확인]할 때까지 계속 울린다.
+  // 근무 중이면 앱을 깨어 있게 해서, 뒤에 있거나 화면이 꺼져도 호출이 오면 바로 울린다.
   const cancelAlerts = useLiveQuery<CallDoc>(
     isDriver && driverId ? `groups/${session.groupId}/calls` : null,
     [w("cancelAlertFor", "==", driverId)],
   ).data;
-  useIncomingCallAlarm(active.data, driverId, isDriver, cancelAlerts, session.me?.callAlarmSound !== false);
+  const myDriver = useLiveDoc<DriverDoc>(isDriver && driverId ? `groups/${session.groupId}/drivers/${driverId}` : null).data;
+  useDriverAlarm({
+    enabled: isDriver,
+    driverId,
+    onDuty: Boolean(myDriver?.currentSessionId),
+    calls: active.data,
+    alerts: cancelAlerts,
+  });
 
   useEffect(() => {
     if (!incomingId) return;

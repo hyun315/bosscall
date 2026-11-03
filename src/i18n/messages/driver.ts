@@ -50,17 +50,6 @@ export const driverMsgs = {
   "alarm.sound.ring": { ko: "전화벨", id: "Dering telepon", en: "Phone ring" },
   "alarm.sound.chime": { ko: "차임", id: "Lonceng", en: "Chime" },
   "alarm.sound.beep": { ko: "삐삐", id: "Bip", en: "Beep" },
-  "alarm.soundOn": { ko: "앱 알람 소리", id: "Suara alarm aplikasi", en: "In-app alarm sound" },
-  "alarm.soundOnDesc": {
-    ko: "켜짐 — 소리와 진동이 함께 울립니다. 아이폰은 무음 모드면 소리 없이 울립니다. 안드로이드는 미디어 소리 크기를 따르니, 조용히 해야 할 땐 이 단추를 끄세요",
-    id: "Aktif — bunyi dan getar bersamaan. iPhone mode senyap: tanpa bunyi. Android mengikuti volume media — matikan tombol ini jika harus tenang",
-    en: "On — sound and vibration together. iPhone in silent mode: no sound. Android follows media volume — turn this off when you need quiet",
-  },
-  "alarm.soundOffDesc": {
-    ko: "꺼짐 — 앱에서는 진동만 합니다. 휴대폰 알림은 휴대폰 모드(소리·진동·무음)를 따릅니다",
-    id: "Mati — aplikasi hanya bergetar. Notifikasi HP mengikuti mode HP (bunyi/getar/senyap)",
-    en: "Off — the app vibrates only. Phone notifications follow the phone's mode",
-  },
   "alarm.testTitle": { ko: "화면이 꺼져도 울리는지 확인", id: "Cek bunyi saat layar mati", en: "Check it rings with the screen off" },
   "alarm.testDesc": {
     ko: "버튼을 누르고 바로 화면을 끄세요. 5초 뒤 호출과 같은 알림이 옵니다. 소리가 안 나면 휴대폰 알림 설정과 무음 모드를 확인해주세요.",
@@ -78,15 +67,12 @@ export const driverMsgs = {
   "alarm.preview": { ko: "듣기", id: "Dengar", en: "Play" },
   "alarm.previewAria": { ko: "{name} 미리 듣기", id: "Dengarkan {name}", en: "Preview {name}" },
   "alarm.note": {
-    ko: "새 호출이 오면 수락하거나 거절할 때까지 계속 울립니다. 앱을 화면에 켜 둔 동안 이 소리가 나고, 앱이 뒤에 있거나 닫혀 있으면 휴대폰 알림이 8초마다 다시 울립니다(약 1분). 휴대폰 알림은 휴대폰 모드를 따라 무음·진동 모드면 진동만 합니다.",
-    id: "Saat ada panggilan baru, alarm terus berbunyi sampai Anda menerima atau menolak. Suara ini berbunyi selama aplikasi terbuka di layar; jika aplikasi di latar belakang atau tertutup, notifikasi HP berbunyi lagi tiap 8 detik (sekitar 1 menit). Notifikasi HP mengikuti mode HP: mode senyap/getar hanya bergetar.",
-    en: "A new call keeps ringing until you accept or decline. This sound plays while the app is open on screen; if the app is in the background or closed, the phone notification rings again every 8 seconds (about a minute). Phone notifications follow the phone mode: silent/vibrate means vibration only.",
+    ko: "호출이 오면 수락·거절할 때까지, 취소되거나 놓친 호출은 [확인]을 누를 때까지 계속 울립니다. 무음 모드여도 울리고, 안드로이드는 진동도 같이 합니다. 출근하면 자동으로 켜지고, 앱이 뒤에 있거나 화면이 꺼져 있어도 울립니다. 앱을 완전히 닫으면 휴대폰 알림이 8초마다 울립니다.",
+    id: "Saat ada panggilan, alarm berbunyi terus sampai Anda menerima/menolak; panggilan dibatalkan atau terlewat berbunyi sampai Anda menekan [OK]. Tetap berbunyi dalam mode senyap, dan Android juga bergetar. Otomatis aktif saat Mulai Kerja, juga saat aplikasi di latar belakang atau layar mati. Jika aplikasi ditutup, notifikasi HP berbunyi tiap 8 detik.",
+    en: "A call rings until you accept or decline; a cancelled or missed call rings until you tap [OK]. It rings even in silent mode, and Android also vibrates. It turns on automatically when you clock in and keeps working in the background or with the screen off. If the app is fully closed, a phone notification rings every 8 seconds.",
   },
-  "alarm.tapToSound": {
-    ko: "🔊 여기를 누르면 알람 소리가 납니다",
-    id: "🔊 Ketuk di sini untuk menyalakan suara alarm",
-    en: "🔊 Tap here to turn on the alarm sound",
-  },
+
+
 
   "dhome.clockIn": { ko: "출근하기", id: "Mulai Kerja", en: "Clock in" },
   "dhome.shareAsk": {

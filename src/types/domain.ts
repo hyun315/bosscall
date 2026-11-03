@@ -258,10 +258,9 @@ export interface CallDoc {
   actualPickup?: ActualFix | null;
   actualDropoff?: ActualFix | null;
   tripStartedAt?: number | null;
-  /** 응답 대기 중 기사에게 다시 보낸 알림 (호출자 화면이 열려 있는 동안 서버가 간격 제한) */
-  lastNudgeAt?: number | null;
-  nudgeCount?: number;
-  /** 호출자가 취소했는데 기사가 아직 [확인]을 안 누름 → 그 기사 id (기사 앱이 알람을 울린다). 확인하면 null */
+  /** 서버의 기사 알림 반복 — 지금 돌고 있는 반복의 id (새 반복이 시작되면 이전 반복은 멈춘다) */
+  alertLoopId?: string | null;
+  /** 호출이 취소됐거나 응답 시간이 지났는데 기사가 아직 [확인]을 안 누름 → 그 기사 id (알람이 울린다). 확인하면 null */
   cancelAlertFor?: string | null;
   cancelAckAt?: number | null;
   status: CallStatus;

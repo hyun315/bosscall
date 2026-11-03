@@ -3,9 +3,10 @@ import { requireMember, requireUser } from "@/lib/server/auth";
 import { readJson, route } from "@/lib/server/http";
 import { rateLimit } from "@/lib/server/rateLimit";
 import { requireId, requirePlace, requireRecord } from "@/lib/validation";
-import { createCall, repeatNudges } from "@/services/server/calls";
+import { createCall } from "@/services/server/calls";
+import { startDriverAlerts } from "@/services/server/driverAlerts";
 
-/** 응답 후에도 45초 동안 기사에게 알림을 다시 보내야 하므로 함수 실행 시간을 늘린다 */
+/** 응답 후에도 기사에게 알림을 계속 다시 보내야 하므로 함수 실행 시간을 늘린다 (48초씩 이어 달리기) */
 export const maxDuration = 60;
 
 /** 호출 생성 — OWNER/MEMBER. 기사는 호출할 수 없다. */
@@ -23,7 +24,7 @@ export const POST = route(async (req) => {
     pickup: requirePlace(body.pickup, "field.pickup"),
     destination: requirePlace(body.destination, "field.destination"),
   });
-  // 응답은 바로 돌려주고, 기사 응답이 없으면 15·30·45초에 알림을 다시 보낸다
-  after(() => repeatNudges(groupId, result.callId));
+  // 응답은 바로 돌려주고, 기사가 수락·거절할 때까지 8초마다 알림을 다시 보낸다
+  after(() => startDriverAlerts(groupId, result.callId));
   return result;
 });

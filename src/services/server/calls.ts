@@ -11,6 +11,7 @@ import {
 } from "@/lib/callStateMachine";
 import { track, type AnalyticsEvent } from "@/lib/server/analytics";
 import { conflict, forbidden, notFound, ApiError } from "@/lib/server/http";
+import { startDriverAlerts } from "@/services/server/driverAlerts";
 import { notifyUsers } from "@/lib/server/push";
 import { runAfterResponse } from "@/lib/server/defer";
 import { acceptableFix, geoExpiryFor } from "@/lib/tripData";
@@ -63,7 +64,7 @@ async function expireStaleCalls(groupId: string, driverId: string): Promise<void
     const c = d.data() as CallDoc;
     if (c.driverId === driverId && c.expiresAt <= now) {
       try {
-        await transitionCall(groupId, c.id, "TIMEOUT", { userId: "system", role: "SYSTEM", driverId: null });
+        await transitionCall(groupId, c.id, "TIMEOUT", { userId: "system", role: "SYSTEM", driverId: null }, null, { quietTimeout: true });
       } catch (e) {
         if (!(e instanceof ApiError)) throw e; // 이미 다른 요청이 처리한 경우 무시
       }
@@ -212,6 +213,8 @@ export async function transitionCall(
   actor: ActorContext,
   /** 기사 기기 GPS — 탑승 시작·운행 완료 때만 저장 (실제 출발·도착 지점, 자체 데이터) */
   fix: ActualFix | null = null,
+  /** 새 호출을 만들면서 지난 호출을 정리하는 시간 초과 — 기사에게 '놓친 호출' 알람을 따로 울리지 않는다 */
+  opts: { quietTimeout?: boolean } = {},
 ): Promise<{ status: CallStatus }> {
   const db = adminDb();
   const callRef = db.doc(`groups/${groupId}/calls/${callId}`);
@@ -267,6 +270,8 @@ export async function transitionCall(
     if (fixOk && r.to === "COMPLETED") fields.actualDropoff = fix;
     // 기사가 아닌 사람이 취소 → 기사가 [확인]할 때까지 기사 앱에서 알람
     if (r.to === "CANCELLED" && actor.role !== "DRIVER") fields.cancelAlertFor = call.driverId;
+    // 응답 시간이 지남(놓친 호출) → 기사가 [확인]할 때까지 알람
+    if (r.to === "TIMEOUT" && !opts.quietTimeout) fields.cancelAlertFor = call.driverId;
 
     // 수락 = 출발: 기사가 수락하면 같은 트랜잭션에서 '출발했어요'까지 기록한다 (기사가 누를 단추 하나 줄임)
     let finalStatus = r.to;
@@ -367,13 +372,20 @@ export async function transitionCall(
             path,
           }),
         );
-        // 기사: 호출 알람처럼 소리·진동, 확인할 때까지 다시 보낸다
+        // 기사: 호출 알람처럼 소리·진동, [확인]할 때까지 다시 보낸다
         if (driverUserId && driverUserId !== actor.userId && call.cancelAlertFor) {
-          tasks.push(sendCancelAlert(driverUserId, groupId, callId, call.callerName, true));
-          tasks.push(repeatCancelAlerts(groupId, callId, driverUserId, call.callerName));
+          tasks.push(sendDriverAlert(driverUserId, groupId, callId, call.callerName, "CANCELLED", true));
+          tasks.push(startDriverAlerts(groupId, callId));
         }
         break;
       }
+      case "TIMEOUT":
+        // 놓친 호출 — 기사가 [확인]할 때까지 알람. (서버 반복 중에 처리된 경우엔 그 반복이 이어서 보낸다)
+        if (driverUserId && call.cancelAlertFor) {
+          tasks.push(sendDriverAlert(driverUserId, groupId, callId, call.callerName, "TIMEOUT", true));
+          if (actor.role !== "SYSTEM") tasks.push(startDriverAlerts(groupId, callId));
+        }
+        break;
       case "COMPLETED":
         // 익명 통계·관심 분류 — 동의한 호출자만. 실패해도 운행 완료에는 영향 없음
         tasks.push(recordCompletedTrip(call).catch((e) => console.error("tripData", e)));
@@ -402,88 +414,27 @@ async function groupOwnerIds(groupId: string): Promise<string[]> {
   return snap.docs.map((d) => (d.data() as MemberDoc).userId);
 }
 
-/** 응답 재촉 알림: 최소 간격·최대 횟수 */
-const NUDGE_MIN_INTERVAL_MS = 7_000;
-const NUDGE_MAX = 8;
-/**
- * 서버가 스스로 다시 보내는 시각 — 호출 생성 요청이 끝난 뒤 백그라운드에서 (서버 실행 제한 60초 안).
- * 앱이 닫힌 아이폰은 알림 "띵"만 낼 수 있으므로, 8초마다 다시 울려 알람처럼 들리게 한다.
- */
-const SERVER_NUDGE_DELAYS_MS = [8_000, 16_000, 24_000, 32_000, 40_000, 48_000] as const;
-
-/**
- * 기사가 아직 응답하지 않은 호출에 푸시 알림을 다시 보낸다.
- * 앱이 닫혀 있는 기사 휴대폰은 웹앱이 소리를 계속 낼 수 없으므로, 호출자 화면이 열려 있는 동안
- * 일정 간격으로 알림을 다시 울리게 한다. 간격·횟수는 서버가 강제한다.
- */
-async function nudgeDriver(groupId: string, callId: string): Promise<{ sent: boolean }> {
-  const db = adminDb();
-  const callRef = db.doc(`groups/${groupId}/calls/${callId}`);
-  const result = await db.runTransaction(async (tx) => {
-    const snap = await tx.get(callRef);
-    if (!snap.exists) throw notFound("err.callNotFound");
-    const call = snap.data() as CallDoc;
-    const now = Date.now();
-    const waiting = (call.status === "CALLING" || call.status === "RECEIVED") && call.expiresAt > now;
-    const count = call.nudgeCount ?? 0;
-    const recent = call.lastNudgeAt != null && now - call.lastNudgeAt < NUDGE_MIN_INTERVAL_MS;
-    if (!waiting || recent || count >= NUDGE_MAX) return null;
-    tx.update(callRef, { lastNudgeAt: now, nudgeCount: count + 1 });
-    return call;
-  });
-  if (!result) return { sent: false };
-
-  const dSnap = await db.doc(`groups/${groupId}/drivers/${result.driverId}`).get();
-  const driverUserId = (dSnap.data() as DriverDoc | undefined)?.userId;
-  if (!driverUserId) return { sent: false };
-  await notifyUsers([driverUserId], {
-    type: "CALL_CREATED",
-    groupId,
-    callId,
-    titleKey: "push.callReminder.title",
-    bodyKey: "push.callReminder.body",
-    params: { caller: result.callerName },
-    path: `/calls/${callId}?g=${groupId}`,
-    urgent: true,
-    inbox: false,
-  });
-  return { sent: true };
-}
-
-/**
- * 기사 앱이 뒤에 있거나 닫혀 있으면 웹앱은 소리를 직접 반복할 수 없다.
- * 그래서 호출을 만든 뒤 서버가 15·30·45초에 아직 응답이 없으면 알림을 다시 보낸다
- * (호출자 화면이 닫혀 있어도). 응답·취소·시간 초과가 되면 nudgeDriver 가 아무것도 보내지 않는다.
- */
-function sendCancelAlert(driverUserId: string, groupId: string, callId: string, caller: string, inbox: boolean) {
+/** 기사에게 취소·놓친 호출 알림 (알람처럼 소리·진동) */
+function sendDriverAlert(
+  driverUserId: string,
+  groupId: string,
+  callId: string,
+  caller: string,
+  kind: "CANCELLED" | "TIMEOUT",
+  inbox: boolean,
+) {
+  const missed = kind === "TIMEOUT";
   return notifyUsers([driverUserId], {
     type: "CALL_CANCELLED",
     groupId,
     callId,
-    titleKey: "push.cancelledDriver.title",
-    bodyKey: "push.cancelledDriver.body",
+    titleKey: missed ? "push.missedDriver.title" : "push.cancelledDriver.title",
+    bodyKey: missed ? "push.missedDriver.body" : "push.cancelledDriver.body",
     params: { caller },
     path: `/calls/${callId}?g=${groupId}`,
     urgent: true,
     inbox,
   });
-}
-
-/** 취소 알림도 호출처럼 — 기사가 [확인]하지 않으면 15·30·45초에 다시 보낸다 */
-async function repeatCancelAlerts(groupId: string, callId: string, driverUserId: string, caller: string): Promise<void> {
-  const start = Date.now();
-  for (const at of SERVER_NUDGE_DELAYS_MS) {
-    const wait = start + at - Date.now();
-    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-    try {
-      const snap = await adminDb().doc(`groups/${groupId}/calls/${callId}`).get();
-      if (!(snap.data() as CallDoc | undefined)?.cancelAlertFor) return; // 확인함 → 중단
-      await sendCancelAlert(driverUserId, groupId, callId, caller, false);
-    } catch (e) {
-      console.error("[cancel-alert] repeat failed", e);
-      return;
-    }
-  }
 }
 
 /** 기사가 취소 알림을 [확인] — 알람 멈춤 */
@@ -495,23 +446,5 @@ export async function ackCancelAlert(groupId: string, callId: string, driverId: 
   if (!driverId || call.driverId !== driverId) throw forbidden();
   if (call.cancelAlertFor) await ref.update({ cancelAlertFor: null, cancelAckAt: Date.now() });
 }
-
-export async function repeatNudges(groupId: string, callId: string): Promise<void> {
-  const start = Date.now();
-  for (const at of SERVER_NUDGE_DELAYS_MS) {
-    const wait = start + at - Date.now();
-    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-    try {
-      const snap = await adminDb().doc(`groups/${groupId}/calls/${callId}`).get();
-      const status = (snap.data() as CallDoc | undefined)?.status;
-      if (status !== "CALLING" && status !== "RECEIVED") return; // 응답했거나 끝남 → 중단
-      await nudgeDriver(groupId, callId);
-    } catch (e) {
-      console.error("[nudge] repeat failed", e);
-      return;
-    }
-  }
-}
-
 
 export { expireStaleCalls };

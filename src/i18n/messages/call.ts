@@ -116,6 +116,12 @@ export const callMsgs = {
     id: "{caller} membatalkan panggilan.",
     en: "{caller} cancelled the call.",
   },
+  "cancelAlert.missedTitle": { ko: "놓친 호출이 있습니다", id: "Ada panggilan terlewat", en: "You missed a call" },
+  "cancelAlert.missedBody": {
+    ko: "{caller}님의 호출에 응답 시간이 지났습니다. 사장님께 연락해 주세요.",
+    id: "Waktu menjawab panggilan dari {caller} sudah habis. Silakan hubungi beliau.",
+    en: "Time ran out on {caller}'s call. Please get in touch.",
+  },
   "cancelAlert.ok": { ko: "확인", id: "OK, mengerti", en: "OK" },
   "call.declineConfirmTitle": {
     ko: "지금은 어렵다고 응답할까요?",

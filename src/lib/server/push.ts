@@ -108,8 +108,7 @@ export async function notifyUsers(userIds: string[], req: PushRequest): Promise<
       inboxWrite = batch.commit();
     }
 
-    // 알림을 억지로 무음으로 보내지 않는다 — 무음이면 진동까지 꺼진다.
-    // 소리/진동/무음은 휴대폰 모드가 정한다 (무음·진동 모드면 진동만). 앱 안 알람 소리는 callAlarmSound 로 끈다.
+    // 알림은 항상 소리로 보낸다 (무음으로 보내면 진동까지 꺼진다). 휴대폰이 무음이면 휴대폰이 진동으로 바꾼다.
     const silentFor = (_u: UserDoc) => false;
     const tokenEntries: Array<{ uid: string; token: string; locale: Locale; silent: boolean }> = [];
     for (const u of recipients) {

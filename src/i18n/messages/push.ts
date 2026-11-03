@@ -47,6 +47,12 @@ export const pushMsgs = {
     id: "{company} ({industry}) — tinjau di Alat operator.",
     en: "{company} ({industry}) — review it in Operator tools.",
   },
+  "push.missedDriver.title": { ko: "⏰ 놓친 호출이 있습니다", id: "⏰ Ada panggilan terlewat", en: "⏰ You missed a call" },
+  "push.missedDriver.body": {
+    ko: "{caller}님의 호출에 응답하지 못했습니다. 앱에서 [확인]을 누르고 연락해 주세요.",
+    id: "Panggilan dari {caller} tidak dijawab. Tekan [OK] di aplikasi lalu hubungi beliau.",
+    en: "You didn't answer {caller}'s call. Tap [OK] in the app and get in touch.",
+  },
   "push.cancelledDriver.title": { ko: "🚫 호출이 취소되었습니다", id: "🚫 Panggilan dibatalkan", en: "🚫 Call cancelled" },
   "push.cancelledDriver.body": {
     ko: "{caller}님이 호출을 취소했습니다. 앱에서 [확인]을 눌러주세요.",
