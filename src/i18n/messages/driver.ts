@@ -67,9 +67,9 @@ export const driverMsgs = {
   "alarm.preview": { ko: "듣기", id: "Dengar", en: "Play" },
   "alarm.previewAria": { ko: "{name} 미리 듣기", id: "Dengarkan {name}", en: "Preview {name}" },
   "alarm.note": {
-    ko: "호출이 오면 수락·거절할 때까지, 취소되거나 놓친 호출은 [확인]을 누를 때까지 계속 울립니다. 무음 모드여도 울리고, 안드로이드는 진동도 같이 합니다. 출근하면 자동으로 켜지고, 앱이 뒤에 있거나 화면이 꺼져 있어도 울립니다. 앱을 완전히 닫으면 휴대폰 알림이 8초마다 울립니다.",
-    id: "Saat ada panggilan, alarm berbunyi terus sampai Anda menerima/menolak; panggilan dibatalkan atau terlewat berbunyi sampai Anda menekan [OK]. Tetap berbunyi dalam mode senyap, dan Android juga bergetar. Otomatis aktif saat Mulai Kerja, juga saat aplikasi di latar belakang atau layar mati. Jika aplikasi ditutup, notifikasi HP berbunyi tiap 8 detik.",
-    en: "A call rings until you accept or decline; a cancelled or missed call rings until you tap [OK]. It rings even in silent mode, and Android also vibrates. It turns on automatically when you clock in and keeps working in the background or with the screen off. If the app is fully closed, a phone notification rings every 8 seconds.",
+    ko: "호출이 오면 수락·거절할 때까지, 취소되거나 놓친 호출은 [확인]을 누를 때까지 계속 울립니다. 무음 모드여도 울리고, 안드로이드는 진동도 같이 합니다. 출근하면 자동으로 켜집니다. 앱이 뒤에 있거나 화면이 꺼져 있으면 휴대폰 알림이 5초마다 울리고, 알림을 눌러 앱을 열면 경보음이 계속 울립니다.",
+    id: "Saat ada panggilan, alarm berbunyi terus sampai Anda menerima/menolak; panggilan dibatalkan atau terlewat berbunyi sampai Anda menekan [OK]. Tetap berbunyi dalam mode senyap, dan Android juga bergetar. Otomatis aktif saat Mulai Kerja. Jika aplikasi di latar belakang atau layar mati, notifikasi HP berbunyi tiap 5 detik; buka notifikasi dan alarm berbunyi terus.",
+    en: "A call rings until you accept or decline; a cancelled or missed call rings until you tap [OK]. It rings even in silent mode, and Android also vibrates. It turns on automatically when you clock in. With the app in the background or the screen off, a phone notification rings every 5 seconds; open it and the alarm keeps ringing.",
   },
 
 

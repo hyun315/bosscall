@@ -24,7 +24,7 @@ export const POST = route(async (req) => {
     pickup: requirePlace(body.pickup, "field.pickup"),
     destination: requirePlace(body.destination, "field.destination"),
   });
-  // 응답은 바로 돌려주고, 기사가 수락·거절할 때까지 8초마다 알림을 다시 보낸다
+  // 응답은 바로 돌려주고, 기사가 수락·거절할 때까지 5초마다 알림을 다시 보낸다
   after(() => startDriverAlerts(groupId, result.callId));
   return result;
 });

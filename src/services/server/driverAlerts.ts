@@ -8,7 +8,7 @@ import type { CallDoc, DriverDoc } from "@/types/domain";
 /**
  * 기사 알람 — 서버 쪽 (앱이 닫혀 있거나 화면이 꺼진 기사 휴대폰용).
  *
- * 웹앱은 닫혀 있으면 소리를 직접 낼 수 없다. 그래서 기사가 [확인]할 때까지 서버가 8초마다
+ * 웹앱은 닫혀 있으면 소리를 직접 낼 수 없다. 그래서 기사가 [확인]할 때까지 서버가 5초마다
  * 휴대폰 알림을 다시 보낸다 (알림마다 새 알림 → 매번 알림음·진동).
  *   - 응답 대기 중인 호출: 수락·거절할 때까지
  *   - 호출이 취소됨 / 응답 시간이 지남(놓친 호출): 기사가 [확인]할 때까지 (call.cancelAlertFor)
@@ -17,7 +17,7 @@ import type { CallDoc, DriverDoc } from "@/types/domain";
  * (최대 10분). 같은 호출에 반복이 두 개 돌지 않도록 call.alertLoopId 가 다르면 멈춘다.
  */
 
-const EVERY_MS = 8_000;
+const EVERY_MS = 5_000;
 const SLICE_MS = 48_000;
 const MAX_MS = 10 * 60_000;
 
@@ -30,7 +30,7 @@ export async function startDriverAlerts(groupId: string, callId: string): Promis
   await runAlertSlice(groupId, callId, loopId, Date.now());
 }
 
-/** 한 조각(약 48초) 동안 8초마다 알림. 끝나면 필요할 때 다음 조각을 부른다. */
+/** 한 조각(약 48초) 동안 5초마다 알림. 끝나면 필요할 때 다음 조각을 부른다. */
 export async function runAlertSlice(groupId: string, callId: string, loopId: string, startedAt: number): Promise<void> {
   const sliceStart = Date.now();
   while (Date.now() - sliceStart < SLICE_MS) {

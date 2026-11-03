@@ -5,8 +5,8 @@ import { BottomNavigation } from "@/components/common/BottomNavigation";
 import { LoadingState } from "@/components/common/States";
 import { ConsentSheet } from "@/components/privacy/ConsentSheet";
 import { CancelAlert } from "@/components/driver/CancelAlert";
-import { useLiveDoc, useLiveQuery, w } from "@/hooks/useLive";
-import type { CallDoc, DriverDoc } from "@/types/domain";
+import { useLiveQuery, w } from "@/hooks/useLive";
+import type { CallDoc } from "@/types/domain";
 import { useDriverLocationSharing } from "@/hooks/useDriverLocationSharing";
 import { useDriverAlarm } from "@/hooks/useCallAlarm";
 import { useActiveCalls } from "@/hooks/useGroupData";
@@ -43,16 +43,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const incomingId =
     active.data.find((c) => c.driverId === driverId && c.status === "CALLING" && c.expiresAt > Date.now())?.id ?? null;
   // 기사 알람: 응답 대기 호출은 수락·거절할 때까지, 취소·놓친 호출은 [확인]할 때까지 계속 울린다.
-  // 근무 중이면 앱을 깨어 있게 해서, 뒤에 있거나 화면이 꺼져도 호출이 오면 바로 울린다.
+  // 앱이 뒤에 있거나 닫혀 있으면 서버가 5초마다 휴대폰 알림을 보낸다 (driverAlerts).
   const cancelAlerts = useLiveQuery<CallDoc>(
     isDriver && driverId ? `groups/${session.groupId}/calls` : null,
     [w("cancelAlertFor", "==", driverId)],
   ).data;
-  const myDriver = useLiveDoc<DriverDoc>(isDriver && driverId ? `groups/${session.groupId}/drivers/${driverId}` : null).data;
   useDriverAlarm({
     enabled: isDriver,
     driverId,
-    onDuty: Boolean(myDriver?.currentSessionId),
     calls: active.data,
     alerts: cancelAlerts,
   });

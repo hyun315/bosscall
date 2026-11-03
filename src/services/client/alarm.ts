@@ -13,11 +13,12 @@ import {
  * 원칙 (사장님 결정): 홈 화면에 추가 = 소리에 동의. 기사가 [확인]할 때까지 경보음처럼 계속 울린다.
  *   - 소리: 휴대폰 무음 스위치와 상관없이 울린다 (아이폰 audioSession "playback").
  *   - 진동: 소리와 항상 같이 (안드로이드). 아이폰 웹앱은 진동을 낼 수 없어, 무음일 땐 휴대폰 알림이 진동한다.
- *   - 대기(근무 중): 출근하면 들리지 않는 아주 작은 소리를 계속 틀어 둔다. 그래야 BossCall이 뒤로 가거나
- *     화면이 꺼져도 앱이 멈추지 않고, 호출이 오는 순간 바로 알람으로 바꿔 울릴 수 있다.
+ *   - 배터리 때문에 대기 중에는 아무 소리도 틀지 않는다 (사장님 결정). 그래서 BossCall이 뒤에 있거나 화면이
+ *     꺼져 있으면 휴대폰이 앱을 재운다 → 그때는 서버가 5초마다 보내는 휴대폰 알림(배너+알림음)이 울린다.
+ *     알림을 보고 앱을 열면 그때부터 경보음이 끊김 없이 울린다. 울리던 중 화면을 꺼도 계속 울린다.
  *   - 휴대폰은 "사용자가 화면을 한 번 누른 뒤"에만 앱 소리를 허락한다. 출근 단추·화면 아무 곳을 누르는
  *     순간 소리를 연다. 앱을 새로 연 직후엔 첫 터치에서 열린다.
- *   - 앱이 완전히 닫혀 있으면 이 파일은 동작하지 않는다 → 서버가 8초마다 휴대폰 알림을 보낸다 (driverAlerts).
+ *   - 서버 반복 알림: services/server/driverAlerts.ts
  */
 
 const STORAGE_KEY = "bosscall.alarmSound";
@@ -36,11 +37,9 @@ type Listener = (s: AlarmState) => void;
 
 let ctx: AudioContext | null = null;
 let alarmNode: AudioBufferSourceNode | null = null;
-let keepAliveNode: AudioBufferSourceNode | null = null;
 let alarmSound: AlarmSoundId | null = null;
 let vibrateTimer: ReturnType<typeof setInterval> | null = null;
 let previewTimer: ReturnType<typeof setTimeout> | null = null;
-let onDuty = false;
 let installed = false;
 let state: AlarmState = { wanted: false, playing: false, blocked: false };
 const listeners = new Set<Listener>();
@@ -91,7 +90,7 @@ function audio(): AudioContext | null {
   }
   // 전화가 오거나 다른 앱이 소리를 가져가면 멈춘다 → 돌아오면 다시
   ctx.onstatechange = () => {
-    if (ctx?.state !== "running" && (state.wanted || onDuty)) void ctx?.resume().catch(() => undefined);
+    if (ctx?.state !== "running" && state.wanted) void ctx?.resume().catch(() => undefined);
     if (ctx?.state === "running") refresh();
   };
   return ctx;
@@ -106,18 +105,6 @@ function alarmBuffer(c: AudioContext, id: AlarmSoundId): AudioBuffer {
   const samples = renderAlarmCycle(id, c.sampleRate);
   const buf = c.createBuffer(1, samples.length, c.sampleRate);
   buf.getChannelData(0).set(samples);
-  buffers.set(key, buf);
-  return buf;
-}
-
-/** 들리지 않는 대기음 (앱이 멈추지 않게) — 아주 작은 잡음. 완전한 0은 "재생 안 함"으로 보는 휴대폰이 있다 */
-function keepAliveBuffer(c: AudioContext): AudioBuffer {
-  const key = `keepalive@${c.sampleRate}`;
-  const hit = buffers.get(key);
-  if (hit) return hit;
-  const buf = c.createBuffer(1, c.sampleRate * 2, c.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.0008;
   buffers.set(key, buf);
   return buf;
 }
@@ -141,7 +128,7 @@ function stopNode(n: AudioBufferSourceNode | null): void {
   n.disconnect();
 }
 
-/** 지금 상태에 맞게 소리를 맞춘다: 알람 / 대기음 / 없음. force = 사용자가 방금 누름(바로 재생을 건다) */
+/** 지금 상태에 맞게 소리를 맞춘다: 알람 / 없음. force = 사용자가 방금 누름(바로 재생을 건다) */
 function refresh(force = false): void {
   const c = audio();
   if (!c) return;
@@ -157,13 +144,6 @@ function refresh(force = false): void {
   } else if (!alarmNode || alarmNode.buffer !== alarmBuffer(c, want)) {
     stopNode(alarmNode);
     alarmNode = loop(c, alarmBuffer(c, want));
-  }
-  // 대기음 — 근무 중이고 알람이 안 울릴 때
-  const idle = onDuty && !alarmNode;
-  if (idle && !keepAliveNode) keepAliveNode = loop(c, keepAliveBuffer(c));
-  if (!idle && keepAliveNode) {
-    stopNode(keepAliveNode);
-    keepAliveNode = null;
   }
   emit({ playing: !!alarmNode && state.wanted, blocked: false });
 }
@@ -184,7 +164,7 @@ export function installAlarmUnlock(): void {
   const opts = { capture: true, passive: true } as const;
   for (const ev of ["pointerdown", "touchend", "keydown"]) window.addEventListener(ev, unlock, opts);
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && (state.wanted || onDuty)) {
+    if (document.visibilityState === "visible" && state.wanted) {
       void ctx?.resume().then(() => refresh()).catch(() => undefined);
     }
   });
@@ -214,16 +194,8 @@ function stopVibrate(): void {
 
 /* ───────── 바깥에서 쓰는 것 ───────── */
 
-/** 근무 중 여부 — 근무 중이면 대기음으로 앱을 깨어 있게 한다 */
-export function setOnDuty(on: boolean): void {
-  if (onDuty === on) return;
-  onDuty = on;
-  if (ctx) refresh();
-}
-
 /** 출근 단추 등 사용자가 누른 순간에 부른다 — 알람 소리를 켠다 */
 export function primeAlarmAudio(): void {
-  onDuty = true;
   unlock();
 }
 
