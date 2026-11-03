@@ -35,6 +35,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* 카카오톡 등 인앱 브라우저 → 외부 브라우저 (앱 코드보다 먼저) */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="/open-external.js" />
+        <script src="/recover.js" />
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
         <link
           rel="stylesheet"
