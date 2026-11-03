@@ -17,6 +17,7 @@ import { useLiveDoc } from "@/hooks/useLive";
 import { useReadySession } from "@/hooks/useSession";
 import { DriverLocationMap } from "@/components/driver/DriverLocationMap";
 import { OwnerClockButton } from "@/components/driver/OwnerClockButton";
+import { ClockInReminderCard } from "@/components/driver/ClockInReminderCard";
 import { DRIVER_STATUS_LABEL, toWhatsAppNumber } from "@/lib/format";
 import { isOwner } from "@/lib/permissions";
 import { formatTime, startOfDay, startOfMonth } from "@/lib/time";
@@ -97,6 +98,9 @@ export default function DriverDetailPage() {
 
         {/* 관리자: 기사가 깜빡했을 때 대신 출근/퇴근 */}
         <OwnerClockButton driver={driver} />
+
+        {/* 사장님: 출근 깜빡 알림 */}
+        {isOwner(role) && driver.userId && <ClockInReminderCard groupId={groupId} driver={driver} />}
 
         {driver.currentSessionId && <DriverLocationMap groupId={groupId} driver={driver} />}
 

@@ -112,6 +112,8 @@ export interface DriverDoc {
   locationConsentAt?: number | null;
   /** 삭제한 시각 — 목록에서 숨기고 호출·초대 불가. 지난 호출·근무 기록은 그대로 남긴다 */
   removedAt?: number | null;
+  /** 출근 깜빡 알림 — 이 요일·시각이 지나도 출근 전이면 기사에게 하루 한 번 알림 (null = 끔) */
+  clockInReminder?: { time: string; days: number[] } | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -325,7 +327,9 @@ export type NotificationType =
   | "DRIVER_CLOCK_IN"
   | "DRIVER_CLOCK_OUT"
   | "AD_REQUEST"
-  | "TEST_PUSH";
+  | "TEST_PUSH"
+  | "CLOCK_IN_REQUEST"
+  | "CLOCK_IN_REMINDER";
 
 export interface NotificationDoc {
   id: string;

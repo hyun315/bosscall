@@ -47,6 +47,18 @@ export const pushMsgs = {
     id: "{company} ({industry}) — tinjau di Alat operator.",
     en: "{company} ({industry}) — review it in Operator tools.",
   },
+  "push.clockInRequest.title": { ko: "🕘 출근 요청", id: "🕘 Diminta mulai kerja", en: "🕘 Please clock in" },
+  "push.clockInRequest.body": {
+    ko: "{caller}님이 출근을 요청했습니다. BossCall을 열고 [출근하기]를 눌러 주세요.",
+    id: "{caller} meminta Anda mulai kerja. Buka BossCall dan tekan [Mulai Kerja].",
+    en: "{caller} asked you to clock in. Open BossCall and tap [Clock in].",
+  },
+  "push.clockInReminder.title": { ko: "🕘 출근을 눌러 주세요", id: "🕘 Jangan lupa Mulai Kerja", en: "🕘 Don't forget to clock in" },
+  "push.clockInReminder.body": {
+    ko: "출근 시각({time})이 지났습니다. BossCall을 열고 [출근하기]를 눌러야 호출을 받을 수 있어요.",
+    id: "Sudah lewat jam mulai kerja ({time}). Buka BossCall dan tekan [Mulai Kerja] agar bisa menerima panggilan.",
+    en: "It's past your start time ({time}). Open BossCall and tap [Clock in] to receive calls.",
+  },
   "push.missedDriver.title": { ko: "⏰ 놓친 호출이 있습니다", id: "⏰ Ada panggilan terlewat", en: "⏰ You missed a call" },
   "push.missedDriver.body": {
     ko: "{caller}님의 호출에 응답하지 못했습니다. 앱에서 [확인]을 누르고 연락해 주세요.",

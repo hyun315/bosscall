@@ -29,6 +29,12 @@ export const addDriver = (groupId: string, displayName: string, phone: string | 
 
 export const removeDriver = (groupId: string, driverId: string) =>
   api(`/api/drivers/${driverId}`, { method: "DELETE", body: { groupId } });
+/** 출근 요청 — 기사에게 "출근을 눌러 주세요" 알림 */
+export const requestClockIn = (groupId: string, driverId: string) =>
+  api<{ ok: true }>(`/api/drivers/${driverId}/clock-in-request`, { method: "POST", body: { groupId } });
+/** 출근 깜빡 알림 설정 (time=null 이면 끄기) */
+export const setClockInReminder = (groupId: string, driverId: string, time: string | null, days: number[] = []) =>
+  api<{ ok: true }>(`/api/drivers/${driverId}/reminder`, { method: "POST", body: { groupId, time, days } });
 export const updateDriver = (groupId: string, driverId: string, body: { displayName?: string; phone?: string | null }) =>
   api(`/api/drivers/${driverId}`, { method: "PATCH", body: { groupId, ...body } });
 

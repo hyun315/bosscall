@@ -367,3 +367,12 @@ npm run typecheck
   - `call.alertLoopId`: 새 반복이 시작되면 이전 반복은 멈춘다(중복 방지). 응답 시간이 지나면 반복 안에서 TIMEOUT 처리 → 놓친 호출 알람으로 이어진다.
   - 이어 부르기 주소: `NEXT_PUBLIC_APP_URL` → 없으면 `VERCEL_PROJECT_PRODUCTION_URL`.
 - 아이폰 웹앱은 진동을 직접 낼 수 없다. 무음 모드에선 휴대폰 알림이 진동한다(설정 › 사운드 및 햅틱 › 무음 모드에서 햅틱).
+
+## 25. 출근 요청 · 출근 깜빡 알림 · 놓친 호출 표시
+
+- **출근 요청** (사장님·가족): 기사가 퇴근 상태일 때 홈의 경고 안내에서 `🕘 출근 요청 보내기` → 기사 휴대폰에 "출근을 눌러 주세요" 알림. 10분에 3번까지. `POST /api/drivers/[id]/clock-in-request`
+- **출근 깜빡 알림** (사장님 설정): 기사 화면(기사 탭 → 기사님)의 카드에서 출근 시각·요일을 정하면, 그 시각이 지나도 출근 전일 때 기사에게 하루 한 번 알림(정한 시각부터 3시간 안).
+  - 저장: `drivers.clockInReminder` (화면 표시) + `clockInReminders/{groupId}_{driverId}` (정기 실행 목록, 서버 전용)
+  - 정기 실행: `.github/workflows/clockin-reminders.yml` 이 10분마다 `GET /api/cron/clockin-reminders` 호출. 하루 한 번만 보내도록 서버가 표시하므로 여러 번 불려도 안전(비밀값 불필요). GitHub Actions 의 정기 실행은 몇 분 늦어질 수 있다.
+  - 계산: `lib/clockInReminder.ts` (테스트 `tests/clockInReminder.test.ts`)
+- **놓친 호출 표시**: 사장 홈에 "오늘 ○○님이 응답하지 못한 호출 N건" — 누르면 기록으로.

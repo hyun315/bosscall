@@ -18,7 +18,7 @@ import { useReadySession } from "@/hooks/useSession";
 import { DRIVER_STATUS_LABEL, toWhatsAppNumber } from "@/lib/format";
 import { canCreateCall, mainDriverOf } from "@/lib/permissions";
 import { useToast } from "@/components/common/Toast";
-import { updateGroup } from "@/services/client/actions";
+import { requestClockIn, updateGroup } from "@/services/client/actions";
 import { errorMessage } from "@/services/client/api";
 import { formatTime, startOfDay } from "@/lib/time";
 import type { DriverDoc } from "@/types/domain";
@@ -75,6 +75,21 @@ export function OwnerHome() {
   else if (driver.status === "OFF_DUTY") blocker = "OFF_DUTY";
 
   const todayCount = today.data.length;
+  // 오늘 이 기사가 놓친 호출 (응답 시간 초과)
+  const missedToday = driver ? today.data.filter((c) => c.driverId === driver.id && c.status === "TIMEOUT").length : 0;
+  const [requesting, setRequesting] = useState(false);
+  const askClockIn = async () => {
+    if (!driver) return;
+    setRequesting(true);
+    try {
+      await requestClockIn(groupId, driver.id);
+      toast(t("home.clockInRequested", { name: driver.displayName }), "success");
+    } catch (e) {
+      toast(errorMessage(e), "error");
+    } finally {
+      setRequesting(false);
+    }
+  };
   const workLabel =
     driver?.currentSessionId && driver.lastClockInAt ? `${formatTime(driver.lastClockInAt, tz)}~` : t("driverStatus.OFF_DUTY");
 
@@ -213,22 +228,28 @@ export function OwnerHome() {
               </NotificationBanner>
             )}
             {blocker === "OFF_DUTY" && (
-              <NotificationBanner
-                tone="warning"
-                action={
-                  driver.phone ? (
+              <NotificationBanner tone="warning">
+                <span className="block">{t("err.driverOffDuty")}</span>
+                <span className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={requesting}
+                    onClick={() => void askClockIn()}
+                    className="min-h-[40px] whitespace-nowrap rounded-btn bg-action px-3 text-sm font-bold text-white disabled:opacity-60"
+                  >
+                    🕘 {t("home.requestClockIn")}
+                  </button>
+                  {driver.phone && (
                     <a
                       href={`https://wa.me/${toWhatsAppNumber(driver.phone)}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="whitespace-nowrap rounded-btn bg-surface px-3 py-2 text-sm font-semibold text-ink"
+                      className="flex min-h-[40px] items-center whitespace-nowrap rounded-btn bg-surface px-3 text-sm font-semibold text-ink"
                     >
                       {t("home.contactDriver")}
                     </a>
-                  ) : undefined
-                }
-              >
-                {t("err.driverOffDuty")}
+                  )}
+                </span>
               </NotificationBanner>
             )}
             {blocker === "BUSY" && (
@@ -245,6 +266,15 @@ export function OwnerHome() {
               <span aria-hidden>🚗</span> {t("home.callDriver")}
             </Link>
           </div>
+        )}
+
+        {/* 오늘 놓친 호출 */}
+        {driver && missedToday > 0 && (
+          <Link href="/history" className="block">
+            <NotificationBanner tone="warning">
+              ⏰ {t("home.missedToday", { name: driver.displayName, n: missedToday })} ›
+            </NotificationBanner>
+          </Link>
         )}
 
         {/* 오늘 요약 */}

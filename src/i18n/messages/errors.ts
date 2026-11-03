@@ -77,6 +77,7 @@ export const errorMsgs = {
   "field.capturedAt": { ko: "측정 시각", id: "waktu pengukuran", en: "measurement time" },
   "field.setting": { ko: "설정", id: "pengaturan", en: "setting" },
   "field.name": { ko: "이름", id: "nama", en: "name" },
+  "field.reminder": { ko: "출근 알림 시각·요일", id: "jam & hari pengingat", en: "reminder time & days" },
   "field.notifSettings": { ko: "알림 설정", id: "pengaturan notifikasi", en: "notification settings" },
   "field.member": { ko: "구성원", id: "anggota", en: "member" },
   "field.monthlyBase": { ko: "기본급", id: "gaji pokok", en: "base salary" },
@@ -235,6 +236,7 @@ export const errorMsgs = {
     id: "Hanya akun sopir yang bisa absen masuk/pulang.",
     en: "Only driver accounts can clock in or out.",
   },
+  "err.driverAlreadyOnDuty": { ko: "기사님이 이미 출근했습니다.", id: "Sopir sudah mulai kerja.", en: "The driver is already clocked in." },
   "err.alreadyClockedIn": { ko: "이미 출근 상태입니다.", id: "Anda sudah mulai kerja.", en: "You're already clocked in." },
   "err.notClockedIn": { ko: "출근 기록이 없습니다.", id: "Belum ada catatan mulai kerja.", en: "You're not clocked in." },
   "err.finishTripFirst": {

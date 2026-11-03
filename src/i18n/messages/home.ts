@@ -24,6 +24,17 @@ export const homeMsgs = {
     en: "You can call once the driver connects via the invite link.",
   },
   "home.contactDriver": { ko: "기사에게 연락하기", id: "Hubungi sopir", en: "Contact driver" },
+  "home.requestClockIn": { ko: "출근 요청 보내기", id: "Minta mulai kerja", en: "Ask to clock in" },
+  "home.clockInRequested": {
+    ko: "{name}님께 출근 요청을 보냈습니다.",
+    id: "Permintaan mulai kerja dikirim ke {name}.",
+    en: "Sent {name} a request to clock in.",
+  },
+  "home.missedToday": {
+    ko: "오늘 {name}님이 응답하지 못한 호출 {n}건",
+    id: "{n} panggilan hari ini tidak dijawab {name}",
+    en: "{name} missed {n} call(s) today",
+  },
   "home.busyNote": {
     ko: "진행 중인 호출이 끝나면 새로 호출할 수 있습니다.",
     id: "Anda bisa memanggil lagi setelah panggilan saat ini selesai.",

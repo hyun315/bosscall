@@ -1,0 +1,13 @@
+# 출근 깜빡 알림 — 10분마다 서버에 "보낼 차례인 기사가 있는지" 확인을 부탁한다.
+# (Vercel 무료 요금제의 정기 실행은 하루 1번뿐이라 GitHub Actions 를 쓴다. 기사마다 하루 한 번만 보내므로 여러 번 불려도 안전)
+name: clockin-reminders
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: curl -fsS --max-time 60 https://bosscall-ten.vercel.app/api/cron/clockin-reminders
