@@ -98,7 +98,7 @@ export function ManualShell({
             </Link>
             {top}
           </div>
-          <p className="mt-4 text-[13px] font-bold tracking-wide text-[#F2C230]">{text.kicker}</p>
+          <p className="mt-4 text-[13px] font-bold tracking-wide text-brand-teal">{text.kicker}</p>
           <h1 className="mt-1 text-[28px] font-extrabold leading-tight [text-wrap:balance]">{text.title}</h1>
           <p className="mt-2 text-[16px] leading-relaxed text-white/80">{text.lead}</p>
         </div>
@@ -155,7 +155,7 @@ export function ManualShell({
                 <h2 className="flex items-center gap-2 text-[22px] font-extrabold text-ink">
                   <span
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[15px] text-white ${
-                      s.warn ? "bg-danger" : "bg-navy"
+                      s.warn ? "bg-danger-solid" : "bg-navy"
                     }`}
                   >
                     {i + 1}
@@ -220,9 +220,9 @@ export function B({ children, tone = "gray" }: { children: ReactNode; tone?: "gr
   const cls = {
     gray: "bg-surface text-ink ring-1 ring-line",
     blue: "bg-action text-white",
-    green: "bg-success text-white",
+    green: "bg-success-solid text-white",
     dark: "bg-navy text-white",
-    red: "bg-danger text-white",
+    red: "bg-danger-solid text-white",
   }[tone];
   return <span className={`mx-0.5 inline-block whitespace-nowrap rounded-lg px-2 py-0.5 text-[0.95em] font-bold ${cls}`}>{children}</span>;
 }
@@ -244,8 +244,8 @@ export function MockCard({ children }: { children: ReactNode }) {
   return <div className="rounded-xl bg-surface p-2.5 ring-1 ring-line">{children}</div>;
 }
 
-/** 노란 테두리 = "여기를 누르세요" */
-export const HL = "ring-4 ring-[#F2C230]";
+/** 파란 테두리(흰 틈 포함) = "여기를 누르세요" */
+export const HL = "ring-[3px] ring-action ring-offset-2 ring-offset-surface";
 
 /** 아이폰 Safari — 아래 공유 단추 → 홈 화면에 추가 */
 export function IosAddToHomeMock({ share, add, more }: { share: string; add: string; more: string }) {
@@ -253,7 +253,7 @@ export function IosAddToHomeMock({ share, add, more }: { share: string; add: str
     <Phone
       title={<span className="mx-auto rounded-md bg-line/70 px-6 py-0.5 text-[10px] font-semibold text-ink-sub">🔒 bosscall-ten.vercel.app</span>}
       bar={
-        <div className="flex items-center justify-around border-t border-line bg-surface py-2 text-[15px] text-action">
+        <div className="flex items-center justify-around border-t border-line bg-surface py-2 text-[15px] text-link">
           <span>‹</span>
           <span>›</span>
           <span className={`rounded-md px-1 ${HL}`}>⬆︎</span>
@@ -305,8 +305,8 @@ export function PermissionMock({ os, q, allow, deny }: { os: Os; q: string; allo
         <p className="text-[11px] font-bold leading-snug text-ink">{q}</p>
         {os === "ios" ? (
           <div className="mt-2 grid grid-cols-2 gap-1 border-t border-line pt-1.5 text-[11px]">
-            <span className="py-1 text-action">{deny}</span>
-            <span className={`rounded-md py-1 font-bold text-action ${HL}`}>{allow}</span>
+            <span className="py-1 text-link">{deny}</span>
+            <span className={`rounded-md py-1 font-bold text-link ${HL}`}>{allow}</span>
           </div>
         ) : (
           <div className="mt-2 space-y-1 text-[11px]">
@@ -330,7 +330,7 @@ export function SettingsMock({ path, rows }: { path: string; rows: Array<{ label
         >
           <span className="font-semibold">{r.label}</span>
           {r.on !== undefined && (
-            <span className={`flex h-4 w-7 items-center rounded-full px-0.5 ${r.on ? "justify-end bg-success" : "bg-line"}`}>
+            <span className={`flex h-4 w-7 items-center rounded-full px-0.5 ${r.on ? "justify-end bg-success-solid" : "bg-line"}`}>
               <span className="h-3 w-3 rounded-full bg-white" />
             </span>
           )}

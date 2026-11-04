@@ -13,6 +13,7 @@ import {
 } from "@/lib/location/googleMaps";
 import type { PlaceInput } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
+import { IconMap } from "@/components/brand/Icons";
 
 /**
  * 지도에서 선택 (§5 C01 "지도에서 선택", §34.2 지도 선택 → 좌표 → Geocoding → 주소)
@@ -169,9 +170,7 @@ export function MapPicker({
       <div className="relative flex-1">
         {mapError ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
-            <span className="text-4xl" aria-hidden>
-              🗺
-            </span>
+            <IconMap className="h-10 w-10 text-ink-sub" />
             <p className="font-semibold text-ink">{t("map.cannotShow")}</p>
             <p className="text-sm text-ink-sub">{mapError}</p>
           </div>
@@ -180,7 +179,13 @@ export function MapPicker({
             <div ref={el} className="absolute inset-0 bg-line/40" />
             {/* 중앙 고정 핀 */}
             <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full" aria-hidden>
-              <div className={`text-4xl drop-shadow transition-transform ${moving ? "-translate-y-2" : ""}`}>📍</div>
+              <div className={`drop-shadow-md transition-transform ${moving ? "-translate-y-2" : ""}`}>
+                {/* 지도 가운데 핀 — 브랜드 블루, 흰 테두리 */}
+                <svg viewBox="0 0 32 40" className="h-11 w-9">
+                  <path d="M16 39s13-12.2 13-23A13 13 0 0 0 3 16c0 10.8 13 23 13 23Z" fill="#1479C9" stroke="#fff" strokeWidth="2.5" />
+                  <circle cx="16" cy="16" r="5" fill="#fff" />
+                </svg>
+              </div>
             </div>
             <button
               onClick={goToMyLocation}

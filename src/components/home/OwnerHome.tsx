@@ -23,6 +23,7 @@ import { errorMessage } from "@/services/client/api";
 import { formatTime, startOfDay } from "@/lib/time";
 import type { DriverDoc } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
+import { IconAlarm, IconCar, IconPin } from "@/components/brand/Icons";
 
 /** §4 OWNER HOME — 홈에서 1번의 추가 판단만으로 기사를 호출할 수 있어야 한다 */
 export function OwnerHome() {
@@ -115,7 +116,7 @@ export function OwnerHome() {
                 </span>
                 {t("home.stepDriver")}
                 {(blocker === "NOT_CONNECTED" || blocker === "NO_DRIVER") && (
-                  <Link href={driver ? `/drivers/${driver.id}` : "/drivers"} className="ml-auto text-sm font-semibold text-action">
+                  <Link href={driver ? `/drivers/${driver.id}` : "/drivers"} className="ml-auto text-sm font-semibold text-link">
                     {t("home.invite")} ›
                   </Link>
                 )}
@@ -154,7 +155,7 @@ export function OwnerHome() {
                   <button
                     type="button"
                     onClick={() => setShowOthers((v) => !v)}
-                    className="min-h-[40px] text-sm font-semibold text-action"
+                    className="min-h-[40px] text-sm font-semibold text-link"
                     aria-expanded={showOthers}
                   >
                     {t("home.otherDrivers", { n: others.length })} {showOthers ? "▲" : "▼"}
@@ -198,7 +199,7 @@ export function OwnerHome() {
                 href={`/drivers/${driver.id}`}
                 className="card flex min-h-[52px] items-center gap-3 px-4 text-[15px] active:bg-bg"
               >
-                <span aria-hidden>📍</span>
+                <IconPin className="h-5 w-5 text-link" />
                 <span className="flex-1 font-semibold text-ink">{t("home.driverLocation")}</span>
                 <span
                   className={`text-sm ${
@@ -237,7 +238,7 @@ export function OwnerHome() {
                     onClick={() => void askClockIn()}
                     className="min-h-[40px] whitespace-nowrap rounded-btn bg-action px-3 text-sm font-bold text-white disabled:opacity-60"
                   >
-                    🕘 {t("home.requestClockIn")}
+                    <IconAlarm className="mr-1 inline h-4 w-4 align-[-3px]" />{t("home.requestClockIn")}
                   </button>
                   {driver.phone && (
                     <a
@@ -263,7 +264,7 @@ export function OwnerHome() {
                 blocker === null ? "bg-action shadow-modal" : "pointer-events-none bg-action/35"
               }`}
             >
-              <span aria-hidden>🚗</span> {t("home.callDriver")}
+              <IconCar className="h-7 w-7" /> {t("home.callDriver")}
             </Link>
           </div>
         )}
@@ -272,7 +273,7 @@ export function OwnerHome() {
         {driver && missedToday > 0 && (
           <Link href="/history" className="block">
             <NotificationBanner tone="warning">
-              ⏰ {t("home.missedToday", { name: driver.displayName, n: missedToday })} ›
+              <IconAlarm className="mr-1.5 inline h-4 w-4 align-[-3px]" />{t("home.missedToday", { name: driver.displayName, n: missedToday })} ›
             </NotificationBanner>
           </Link>
         )}
@@ -302,7 +303,7 @@ export function OwnerHome() {
           <div className="mb-2 flex items-center justify-between px-1">
             <h2 className="text-sm font-semibold text-ink-sub">{t("home.recentCalls")}</h2>
             {recent.data.length > 0 && (
-              <Link href="/history" className="text-sm font-semibold text-action">
+              <Link href="/history" className="text-sm font-semibold text-link">
                 {t("common.all")} ›
               </Link>
             )}

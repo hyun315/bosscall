@@ -26,6 +26,7 @@ import { errorMessage } from "@/services/client/api";
 import type { DriverDoc, PayrollSettingsDoc } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
 import type { MsgKey } from "@/i18n/index";
+import { IconEdit, IconHistory, IconInbox } from "@/components/brand/Icons";
 
 type Tab = "work" | "calls" | "pay" | "info";
 
@@ -79,8 +80,8 @@ export default function DriverDetailPage() {
         back="/drivers"
         right={
           isOwner(role) && !driver.removedAt ? (
-            <button type="button" onClick={() => setTab("info")} className="rounded-full px-3 py-1.5 text-sm font-semibold text-action">
-              ✏️ {t("drivers.edit")}
+            <button type="button" onClick={() => setTab("info")} className="rounded-full px-3 py-1.5 text-sm font-semibold text-link">
+              <IconEdit className="mr-1 inline h-4 w-4 align-[-2px]" />{t("drivers.edit")}
             </button>
           ) : undefined
         }
@@ -113,7 +114,7 @@ export default function DriverDetailPage() {
               href={`https://wa.me/${toWhatsAppNumber(driver.phone)}`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex min-h-[48px] items-center justify-center rounded-btn bg-[#25D366] font-semibold text-white"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-btn bg-[#0E7A52] font-semibold text-white"
             >
               WhatsApp
             </a>
@@ -166,7 +167,7 @@ export default function DriverDetailPage() {
           (sessions.loading ? (
             <LoadingState />
           ) : sessions.data.filter((x) => x.driverId === driverId).length === 0 ? (
-            <EmptyState icon="🕘" title={t("drivers.noWork30")} />
+            <EmptyState icon={<IconHistory className="h-7 w-7" />} title={t("drivers.noWork30")} />
           ) : (
             <div className="card divide-y divide-line overflow-hidden">
               {sessions.data
@@ -187,7 +188,7 @@ export default function DriverDetailPage() {
 
         {tab === "calls" &&
           (mine.length === 0 ? (
-            <EmptyState icon="🗂" title={t("drivers.noCallsMonth")} />
+            <EmptyState icon={<IconInbox className="h-7 w-7" />} title={t("drivers.noCallsMonth")} />
           ) : (
             <div className="card divide-y divide-line overflow-hidden">
               {mine.map((c) => (

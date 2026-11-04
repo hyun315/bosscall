@@ -19,6 +19,7 @@ import {
 } from "@/lib/ads";
 import { trackClient } from "@/services/client/api";
 import { useI18n } from "@/i18n/client";
+import { IconFlag, IconPin } from "@/components/brand/Icons";
 
 /**
  * 광고 칸 — 사장님·가족 화면 전용. 기사 계정에는 아무것도 그리지 않는다.
@@ -120,9 +121,9 @@ export function AdSlot({
         <Link
           href={advertisePath(slot)}
           onClick={clickOf("inquiry")}
-          className="flex items-center justify-center gap-1 py-1 text-[13px] font-semibold text-ink-sub active:text-action"
+          className="flex items-center justify-center gap-1 py-1 text-[13px] font-semibold text-ink-sub active:text-link"
         >
-          📣 {t("ad.inquiryLine")} ›
+          {t("ad.inquiryLine")} ›
         </Link>
       )}
     </aside>
@@ -142,7 +143,7 @@ export function BannerCard({ ad, slot, onClick }: { ad: HouseAd; slot: AdSlotId;
     >
       {/* 배경 장식 */}
       <span aria-hidden className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-action/40 blur-2xl" />
-      <span aria-hidden className="pointer-events-none absolute -bottom-16 -left-8 h-36 w-36 rounded-full bg-[#F2C230]/20 blur-2xl" />
+      <span aria-hidden className="pointer-events-none absolute -bottom-16 -left-8 h-36 w-36 rounded-full bg-brand-teal/25 blur-2xl" />
       <span aria-hidden className="pointer-events-none absolute right-4 top-10 select-none text-[64px] leading-none opacity-90 drop-shadow-lg">
         {ad.icon}
       </span>
@@ -153,7 +154,7 @@ export function BannerCard({ ad, slot, onClick }: { ad: HouseAd; slot: AdSlotId;
       </span>
 
       {ad.stat && (
-        <span className="relative mt-3 block text-[13px] font-semibold tracking-wide text-[#F2C230]">{ad.stat[locale]}</span>
+        <span className="relative mt-3 block text-[13px] font-semibold tracking-wide text-brand-teal">{ad.stat[locale]}</span>
       )}
       <span className="relative mt-1 block max-w-[78%] text-[19px] font-extrabold leading-snug [text-wrap:balance]">
         {ad.title[locale]}
@@ -228,14 +229,14 @@ export function PaidBanner({
             onClick={() => onGo("pickup")}
             className="inline-flex h-8 items-center gap-1 rounded-full bg-white/95 px-2.5 text-[12px] font-bold text-navy shadow-card ring-1 ring-black/10 backdrop-blur active:scale-95"
           >
-            📍 {t("ad.setPickup")}
+            <IconPin className="h-3.5 w-3.5" /> {t("ad.setPickup")}
           </button>
           <button
             type="button"
             onClick={() => onGo("destination")}
             className="inline-flex h-8 items-center gap-1 rounded-full bg-action/95 px-2.5 text-[12px] font-bold text-white shadow-card ring-1 ring-black/10 backdrop-blur active:scale-95"
           >
-            🎯 {t("ad.setDestination")}
+            <IconFlag className="h-3.5 w-3.5" /> {t("ad.setDestination")}
           </button>
         </div>
       )}
@@ -306,14 +307,14 @@ function AdDetail({
               onClick={() => onGo("pickup")}
               className="flex min-h-[52px] items-center justify-center gap-1.5 rounded-btn bg-white text-[15px] font-bold text-navy"
             >
-              📍 {t("ad.setPickup")}
+              <IconPin className="h-3.5 w-3.5" /> {t("ad.setPickup")}
             </button>
             <button
               type="button"
               onClick={() => onGo("destination")}
               className="flex min-h-[52px] items-center justify-center gap-1.5 rounded-btn bg-action text-[15px] font-bold text-white"
             >
-              🎯 {t("ad.setDestination")}
+              <IconFlag className="h-3.5 w-3.5" /> {t("ad.setDestination")}
             </button>
           </div>
         )}
@@ -342,7 +343,7 @@ function EmptyAdCard({ n, slot, onClick }: { n: number; slot: AdSlotId; onClick:
       onClick={onClick}
       className="flex items-center gap-3 rounded-card border border-dashed border-action/40 bg-action-soft/50 px-4 py-3 active:bg-action-soft"
     >
-      <span className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-btn bg-surface text-action shadow-card" aria-hidden>
+      <span className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-btn bg-surface text-link shadow-card" aria-hidden>
         <span className="text-[10px] font-semibold leading-none">AD</span>
         <span className="text-[17px] font-extrabold leading-tight">{n}</span>
       </span>
@@ -350,7 +351,7 @@ function EmptyAdCard({ n, slot, onClick }: { n: number; slot: AdSlotId; onClick:
         <span className="block text-[15px] font-bold text-ink">{t("ad.emptyTitle", { n })}</span>
         <span className="mt-0.5 block truncate text-xs text-ink-sub">{t("ad.inquiryShort")}</span>
       </span>
-      <span className="shrink-0 text-sm font-semibold text-action">{t("ad.inquiryMore")} ›</span>
+      <span className="shrink-0 text-sm font-semibold text-link">{t("ad.inquiryMore")} ›</span>
     </Link>
   );
 }

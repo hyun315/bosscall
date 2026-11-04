@@ -14,10 +14,10 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const VARIANT: Record<Variant, string> = {
   primary: "bg-action text-white active:bg-action-dark disabled:bg-action/40",
-  secondary: "bg-surface text-ink border border-line active:bg-bg disabled:text-ink-faint",
-  danger: "bg-danger text-white active:brightness-95 disabled:bg-danger/40",
-  success: "bg-success text-white active:brightness-95 disabled:bg-success/40",
-  ghost: "bg-transparent text-action active:bg-action-soft disabled:text-ink-faint",
+  secondary: "bg-surface text-ink border border-line-strong active:bg-bg disabled:text-ink-faint",
+  danger: "bg-danger-solid text-white active:brightness-95 disabled:bg-danger-solid/40",
+  success: "bg-success-solid text-white active:brightness-95 disabled:bg-success-solid/40",
+  ghost: "bg-transparent text-link active:bg-action-soft disabled:text-ink-faint",
 };
 
 const SIZE: Record<Size, string> = {

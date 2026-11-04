@@ -205,7 +205,7 @@ export function AdApplyForm({ mode }: { mode: "public" | "operator" }) {
           </Link>
           <h1 className="mt-4 text-[24px] font-extrabold">BossCall 광고 신청</h1>
           <p className="mt-1 text-sm text-white/70">작성 5분 · 검토 후 승인되면 자동 게재</p>
-          <span className="mt-3 inline-block rounded-full bg-[#F2C230] px-2.5 py-0.5 text-[12px] font-bold text-navy">
+          <span className="mt-3 inline-block rounded-full bg-brand-teal px-2.5 py-0.5 text-[12px] font-bold text-navy">
             🎉 신규 출시 기념 · 2027년 3월 31일까지 무료
           </span>
         </div>
@@ -276,7 +276,7 @@ export function AdApplyForm({ mode }: { mode: "public" | "operator" }) {
               <p className="mt-1 text-sm text-ink-sub">아래 4개 화면에 모두 나옵니다. 무료 기간에는 모든 광고가 무작위 순서로 고르게 노출됩니다.</p>
               <span className="mt-3 flex flex-wrap gap-1.5">
                 {SLOT_INFO.map((si) => (
-                  <span key={si.slot} className="rounded-full bg-action-soft px-2.5 py-1 text-xs font-semibold text-action">
+                  <span key={si.slot} className="rounded-full bg-action-soft px-2.5 py-1 text-xs font-semibold text-link">
                     {si.icon} {si.title}
                   </span>
                 ))}
@@ -315,7 +315,7 @@ export function AdApplyForm({ mode }: { mode: "public" | "operator" }) {
                     {info.slots.map((s) => {
                       const si = SLOT_INFO.find((x) => x.slot === s);
                       return (
-                        <span key={s} className="rounded-full bg-action-soft px-2.5 py-1 text-xs font-semibold text-action">
+                        <span key={s} className="rounded-full bg-action-soft px-2.5 py-1 text-xs font-semibold text-link">
                           {si?.icon} {si?.title}
                         </span>
                       );

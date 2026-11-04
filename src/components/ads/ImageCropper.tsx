@@ -197,7 +197,7 @@ export function ImageCropper({
               className="flex-1 accent-action"
               aria-label="확대"
             />
-            <button type="button" onClick={() => fileRef.current?.click()} className="text-sm font-semibold text-action">
+            <button type="button" onClick={() => fileRef.current?.click()} className="text-sm font-semibold text-link">
               다시 선택
             </button>
           </div>

@@ -4,6 +4,7 @@
  * 오류 내용은 작게 보여 준다 (캡처해서 보내면 원인을 바로 알 수 있게).
  */
 import { useEffect } from "react";
+import { IconRefresh } from "@/components/brand/Icons";
 
 const STALE = /ChunkLoadError|Loading chunk|Loading CSS chunk|dynamically imported module|Importing a module script failed/i;
 
@@ -23,9 +24,9 @@ export function CrashScreen({ error, reset }: { error: Error & { digest?: string
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-bg px-6 text-center">
-      <p className="text-5xl" aria-hidden>
-        🔄
-      </p>
+      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-action-soft text-link" aria-hidden>
+        <IconRefresh className="h-8 w-8" />
+      </span>
       <h1 className="text-xl font-extrabold text-ink">화면을 다시 열어 주세요</h1>
       <p className="text-[15px] leading-relaxed text-ink-sub">
         잠시 문제가 생겼습니다. 아래 단추를 누르면 다시 열립니다.
@@ -40,7 +41,7 @@ export function CrashScreen({ error, reset }: { error: Error & { digest?: string
         다시 열기 · Buka lagi
       </button>
       {reset && (
-        <button type="button" onClick={reset} className="text-sm font-semibold text-action">
+        <button type="button" onClick={reset} className="text-sm font-semibold text-link">
           이 화면만 다시 시도
         </button>
       )}

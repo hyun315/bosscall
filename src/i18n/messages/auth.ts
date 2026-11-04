@@ -3,16 +3,26 @@ import type { Tri } from "@/i18n/core";
 /** 브랜드·로그인·온보딩·초대 수락·시간대·언어 */
 export const authMsgs = {
   // ── 브랜드 (명세 §31)
-  "brand.tagline": { ko: "내 기사, 한 번에 호출.", id: "Sopir Anda, sekali tekan.", en: "Your driver, one tap away." },
+  // 공식 슬로건은 모든 언어에서 영어 그대로 (2026-11-04 결정) — 아래 설명만 각 언어로
+  "brand.slogan": {
+    ko: "Your Family. Your Driver. Your Peace of Mind.",
+    id: "Your Family. Your Driver. Your Peace of Mind.",
+    en: "Your Family. Your Driver. Your Peace of Mind.",
+  },
+  "brand.sloganDesc": {
+    ko: "가족과 기사님의 하루를 편하게 잇습니다.",
+    id: "Menghubungkan hari keluarga dan sopir dengan mudah.",
+    en: "Connecting your family and your driver, every day.",
+  },
   "brand.desc1": {
-    ko: "전화도, 주소 설명도 필요 없습니다.",
-    id: "Tidak perlu menelepon atau menjelaskan alamat.",
-    en: "No phone calls, no explaining addresses.",
+    ko: "기사님 호출, 이동 상황, 근무 기록을 한곳에서.",
+    id: "Panggil sopir, pantau perjalanan, dan catat jam kerja di satu tempat.",
+    en: "Call your driver, follow each trip, and keep work hours in one place.",
   },
   "brand.desc2": {
-    ko: "위치를 선택하고 버튼 한 번이면 됩니다.",
-    id: "Pilih lokasi, lalu tekan satu tombol.",
-    en: "Pick a location and tap once.",
+    ko: "앱 설치 없이 휴대폰 브라우저에서 바로 시작합니다.",
+    id: "Langsung mulai dari browser HP, tanpa instal aplikasi.",
+    en: "Start right away in your phone's browser — no app store needed.",
   },
 
   // ── 로그인

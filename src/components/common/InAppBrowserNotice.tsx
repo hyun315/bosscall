@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import { inAppBrowser, installPlatform, openInChromeAndroid, type InAppBrowser } from "@/services/client/install";
 import { useI18n } from "@/i18n/client";
+import { IconGlobe } from "@/components/brand/Icons";
 
 const DISMISS = "bosscall.inappDismissed";
 
@@ -58,9 +59,9 @@ export function InAppBrowserNotice() {
   return (
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-4 sm:items-center">
       <div className="w-full max-w-sm rounded-card bg-surface p-5 shadow-modal">
-        <p className="text-3xl" aria-hidden>
-          🌐
-        </p>
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-action-soft text-link" aria-hidden>
+          <IconGlobe className="h-6 w-6" />
+        </span>
         <h2 className="mt-2 text-[19px] font-extrabold text-ink">{t("inapp.title")}</h2>
         <p className="mt-1 text-[15px] leading-relaxed text-ink-sub">{t("inapp.body")}</p>
         <p className="mt-3 rounded-btn bg-bg px-3 py-2.5 text-sm leading-relaxed text-ink">

@@ -34,6 +34,7 @@ function adStoredPlace(pl: AdPlace): StoredPlace {
   };
 }
 import { useI18n } from "@/i18n/client";
+import { IconBan, IconCar } from "@/components/brand/Icons";
 
 type Step = "pickup" | "destination" | "confirm";
 
@@ -182,7 +183,7 @@ export default function NewCallPage() {
       <>
         <AppHeader title={t("home.callDriver")} back="/home" />
         <main className="mx-auto max-w-md px-4 pt-6">
-          <EmptyState icon="🚫" title={t("newCall.driverCannotCall")} />
+          <EmptyState icon={<IconBan className="h-7 w-7" />} title={t("newCall.driverCannotCall")} />
         </main>
       </>
     );
@@ -289,7 +290,7 @@ export default function NewCallPage() {
                   lng={pickup.lng}
                   placeId={pickup.placeId}
                   action={
-                    <button onClick={() => setStep("pickup")} className="text-sm font-semibold text-action">
+                    <button onClick={() => setStep("pickup")} className="text-sm font-semibold text-link">
                       {t("common.change")}
                     </button>
                   }
@@ -304,7 +305,7 @@ export default function NewCallPage() {
                   lng={destination.lng}
                   placeId={destination.placeId}
                   action={
-                    <button onClick={() => setStep("destination")} className="text-sm font-semibold text-action">
+                    <button onClick={() => setStep("destination")} className="text-sm font-semibold text-link">
                       {t("common.change")}
                     </button>
                   }
@@ -322,7 +323,7 @@ export default function NewCallPage() {
                     <p className="font-semibold text-ink">
                       {selectedDriver ? t("driver.nameTitle", { name: selectedDriver.displayName }) : t("newCall.noDriverOnDuty")}
                     </p>
-                    <button type="button" onClick={() => setShowOtherDrivers(true)} className="text-sm font-semibold text-action">
+                    <button type="button" onClick={() => setShowOtherDrivers(true)} className="text-sm font-semibold text-link">
                       {t("newCall.otherDriver")} ›
                     </button>
                   </div>
@@ -354,7 +355,7 @@ export default function NewCallPage() {
               loading={submitting}
               disabled={!driverId || !eligible.some((d) => d.id === driverId)}
               onClick={() => void submit()}
-              icon={<span aria-hidden>🚗</span>}
+              icon={<IconCar />}
             >
               {t("home.callDriver")}
             </Button>

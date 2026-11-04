@@ -14,6 +14,7 @@ import { CALL_STATUS_LABEL } from "@/lib/format";
 import { isOwner } from "@/lib/permissions";
 import { formatDate, formatDuration, startOfDay, startOfMonth, workDurationMs } from "@/lib/time";
 import { CALL_STATUSES, type CallDoc, type CallStatus, type DriverDoc, type PayrollSettingsDoc } from "@/types/domain";
+import { IconHistory, IconInbox } from "@/components/brand/Icons";
 
 type Tab = "calls" | "trips" | "work" | "pay";
 type Range = "today" | "7d" | "30d" | "month";
@@ -195,7 +196,7 @@ export default function HistoryPage() {
           ) : calls.error ? (
             <ErrorState title={calls.error} onRetry={() => window.location.reload()} />
           ) : grouped.length === 0 ? (
-            <EmptyState icon="🗂" title={tab === "trips" ? t("hist.noTrips") : t("hist.noCalls")} />
+            <EmptyState icon={<IconInbox className="h-7 w-7" />} title={tab === "trips" ? t("hist.noTrips") : t("hist.noCalls")} />
           ) : (
             <>
               <p className="px-1 text-sm text-ink-sub">{t("hist.count", { n: filtered.length })}</p>
@@ -216,7 +217,7 @@ export default function HistoryPage() {
         ) : sessions.error ? (
           <ErrorState title={sessions.error} onRetry={() => window.location.reload()} />
         ) : sessionList.length === 0 ? (
-          <EmptyState icon="🕘" title={t("hist.noWork")} description={t("hist.noWorkDesc")} />
+          <EmptyState icon={<IconHistory className="h-7 w-7" />} title={t("hist.noWork")} description={t("hist.noWorkDesc")} />
         ) : (
           <>
             <div className="card flex items-center justify-between p-4">

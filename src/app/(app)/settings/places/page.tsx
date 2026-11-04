@@ -15,6 +15,7 @@ import { createFavorite, deleteFavorite } from "@/services/client/actions";
 import { errorMessage } from "@/services/client/api";
 import { PLACE_CATEGORIES, type FavoriteLocationDoc, type PlaceCategory, type PlaceInput } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
+import { IconStar } from "@/components/brand/Icons";
 
 const PRESETS = ["Home", "Office", "School", "Country Club"];
 /** 이름 예시를 누르면 분류도 함께 고른다 */
@@ -53,7 +54,7 @@ export default function PlacesPage() {
         ) : favorites.error ? (
           <ErrorState title={favorites.error} />
         ) : favorites.data.length === 0 ? (
-          <EmptyState icon="⭐" title={t("places.empty")} description={t("places.emptyDesc")} />
+          <EmptyState icon={<IconStar className="h-7 w-7" />} title={t("places.empty")} description={t("places.emptyDesc")} />
         ) : (
           <div className="card divide-y divide-line overflow-hidden">
             {favorites.data.map((f) => (
@@ -143,7 +144,7 @@ function AddFavoriteSheet({ groupId, onClose }: { groupId: string; onClose: () =
                 aria-checked={category === c}
                 onClick={() => setCategory(category === c ? null : c)}
                 className={`min-h-[40px] rounded-full border px-3 text-sm ${
-                  category === c ? "border-action bg-action-soft font-semibold text-action" : "border-line text-ink-sub"
+                  category === c ? "border-action bg-action-soft font-semibold text-link" : "border-line text-ink-sub"
                 }`}
               >
                 {t(`cat.${c}`)}
@@ -158,7 +159,7 @@ function AddFavoriteSheet({ groupId, onClose }: { groupId: string; onClose: () =
               name={place.name}
               address={place.address}
               action={
-                <button onClick={() => setPlace(null)} className="text-sm font-semibold text-action">
+                <button onClick={() => setPlace(null)} className="text-sm font-semibold text-link">
                   {t("common.change")}
                 </button>
               }

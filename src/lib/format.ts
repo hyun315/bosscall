@@ -2,7 +2,7 @@
 import type { MsgKey } from "@/i18n/index";
 import type { CallStatus, DriverStatus } from "@/types/domain";
 
-export type Tone = "success" | "warning" | "danger" | "info" | "neutral";
+export type Tone = "success" | "warning" | "danger" | "info" | "neutral" | "connected";
 
 export const CALL_STATUS_LABEL: Readonly<Record<CallStatus, { key: MsgKey; tone: Tone }>> = {
   CREATED: { key: "callStatus.CREATED", tone: "info" },
@@ -19,7 +19,7 @@ export const CALL_STATUS_LABEL: Readonly<Record<CallStatus, { key: MsgKey; tone:
 };
 
 export const DRIVER_STATUS_LABEL: Readonly<Record<DriverStatus, { key: MsgKey; tone: Tone; dot: string }>> = {
-  ON_DUTY: { key: "driverStatus.ON_DUTY", tone: "success", dot: "🟢" },
+  ON_DUTY: { key: "driverStatus.ON_DUTY", tone: "connected", dot: "🟢" },
   BUSY: { key: "driverStatus.BUSY", tone: "warning", dot: "🟠" },
   OFF_DUTY: { key: "driverStatus.OFF_DUTY", tone: "neutral", dot: "⚪" },
   INACTIVE: { key: "driverStatus.INACTIVE", tone: "neutral", dot: "⚪" },

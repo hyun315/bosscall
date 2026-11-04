@@ -3,48 +3,65 @@
 @tailwind utilities;
 
 :root {
-  /* 휴대폰 설정을 따라 밝은 화면 / 다크 모드. 브라우저가 멋대로 칠하지 않도록 두 모드 색을 직접 정한다 */
+  /*
+   * 디자인 토큰 (2026-11-04 브랜드 리뉴얼 승인안)
+   *  - 브랜드 컬러(로고·장식): tailwind.config.ts 의 brand.blue/navy/teal/gray — 값을 바꾸지 않는다
+   *  - UI 컬러(화면 요소): 아래 변수 — WCAG AA (글자 4.5:1, 큰 글자·UI 요소 3:1) 를 계산해 정한 값
+   *  - 휴대폰 설정을 따라 밝은 화면 / 다크 모드
+   */
   color-scheme: light dark;
-  --c-brand: 11 23 54;
-  --c-action: 37 99 235;
-  --c-action-dark: 29 78 216;
-  --c-action-soft: 239 244 255;
-  --c-success: 22 163 74;
-  --c-success-soft: 236 253 243;
-  --c-warning: 245 158 11;
-  --c-warning-soft: 255 248 230;
-  --c-warning-text: 180 83 9;
-  --c-danger: 220 38 38;
-  --c-danger-soft: 254 242 242;
-  --c-bg: 247 248 250;
-  --c-surface: 255 255 255;
-  --c-ink: 17 24 39;
-  --c-ink-sub: 107 114 128;
-  --c-ink-faint: 156 163 175;
-  --c-line: 229 231 235;
+  --c-brand: 16 42 67;          /* 제목 글자 #102A43 (14.6:1) */
+  --c-logo-word: 16 42 67;      /* 로고 워드마크 — 밝은 배경 남색 */
+  --c-navy: 16 42 67;           /* 남색 띠(헤더 배너 바탕) #102A43, 흰 글자 14.6:1 */
+  --c-action: 20 121 201;       /* 주요 단추 바탕 #1479C9, 흰 글자 4.56:1 (16px 굵게 이상) */
+  --c-action-dark: 15 94 158;   /* 누른 상태 #0F5E9E */
+  --c-action-soft: 232 242 251; /* 선택·안내 바탕 #E8F2FB */
+  --c-link: 15 100 168;         /* 작은 파란 글자·링크 #0F64A8 (흰 6.2 / 회색 5.7 / 연파랑 5.4) */
+  --c-teal: 22 124 112;         /* 연결·근무 중 상태 글자·아이콘 #167C70 (5.1:1) */
+  --c-teal-soft: 237 247 244;   /* 연결 상태 바탕 #EDF7F4 */
+  --c-success: 21 128 61;       /* 완료·수락 #15803D (5.0:1) */
+  --c-success-soft: 239 248 241;
+  --c-warning: 245 158 11;      /* 주의 아이콘·테두리 (글자는 warning-text) */
+  --c-warning-soft: 255 246 224;
+  --c-warning-text: 154 91 6;   /* #9A5B06 (연노랑 위 5.0:1) */
+  --c-danger: 198 40 40;        /* 취소·오류 #C62828 (5.6:1, 흰 글자 5.6:1) */
+  --c-danger-soft: 253 236 236;
+  --c-bg: 244 247 250;          /* 화면 바탕 #F4F7FA */
+  --c-surface: 255 255 255;     /* 카드·입력창 */
+  --c-ink: 16 42 67;            /* 본문 #102A43 */
+  --c-ink-sub: 82 96 109;       /* 설명 #52606D (6.5 / 6.0) */
+  --c-ink-faint: 91 112 134;    /* 시간·안내 문구 #5B7086 (5.1 / 4.8) */
+  --c-line: 221 227 234;        /* 카드 테두리·구분선 #DDE3EA (장식) */
+  --c-line-strong: 122 138 158; /* 입력창·토글 테두리 #7A8A9E (3.5 / 3.3) */
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
 }
 
 @media screen and (prefers-color-scheme: dark) {
   :root {
-    --c-brand: 236 240 248;
-    --c-action: 59 130 246;
-    --c-action-dark: 37 99 235;
-    --c-action-soft: 26 38 66;
-    --c-success: 34 197 94;
-    --c-success-soft: 18 40 28;
+    --c-brand: 230 237 243;
+    --c-logo-word: 255 255 255;   /* 어두운 배경용 로고: 워드마크 흰색 */
+    --c-navy: 28 53 80;           /* #1C3550 — 바탕(#0B1622)과 구분되는 남색, 흰 글자 12:1 */
+    --c-action: 20 121 201;       /* 단추 바탕은 같은 #1479C9 (흰 글자 4.56:1) */
+    --c-action-dark: 15 94 158;
+    --c-action-soft: 22 44 68;
+    --c-link: 90 174 235;         /* #5AAEEB (카드 위 6.8:1) */
+    --c-teal: 79 193 172;         /* #4FC1AC (7.4:1) */
+    --c-teal-soft: 17 48 46;
+    --c-success: 74 222 128;      /* 9.4:1 */
+    --c-success-soft: 18 44 30;
     --c-warning: 245 158 11;
-    --c-warning-soft: 44 35 16;
-    --c-warning-text: 251 191 36;
-    --c-danger: 239 68 68;
-    --c-danger-soft: 48 20 22;
-    --c-bg: 14 16 20;
-    --c-surface: 26 29 35;
-    --c-ink: 240 242 246;
-    --c-ink-sub: 160 167 180;
-    --c-ink-faint: 110 117 130;
-    --c-line: 44 49 58;
+    --c-warning-soft: 46 36 14;
+    --c-warning-text: 251 191 36; /* 9.8:1 */
+    --c-danger: 248 113 113;      /* 5.9:1 */
+    --c-danger-soft: 52 22 26;
+    --c-bg: 11 22 34;             /* #0B1622 */
+    --c-surface: 19 33 47;        /* #13212F */
+    --c-ink: 230 237 243;         /* 13.8:1 */
+    --c-ink-sub: 159 179 200;     /* 7.6:1 */
+    --c-ink-faint: 127 150 173;   /* 5.3:1 */
+    --c-line: 36 54 74;
+    --c-line-strong: 92 113 137;  /* #5C7189 (3.3:1) */
   }
 }
 
@@ -67,7 +84,7 @@ body {
     @apply rounded-card border border-line bg-surface shadow-card;
   }
   .field {
-    @apply w-full rounded-btn border border-line bg-surface px-4 py-3 text-base text-ink outline-none transition placeholder:text-ink-faint focus:border-action focus:ring-2 focus:ring-action/20;
+    @apply w-full rounded-btn border border-line-strong bg-surface px-4 py-3 text-base text-ink outline-none transition placeholder:text-ink-faint focus:border-action focus:ring-2 focus:ring-action/25;
   }
   .label {
     @apply mb-1.5 block text-sm font-medium text-ink-sub;

@@ -1,4 +1,5 @@
 import type { Locale, Tri } from "@/i18n/core";
+import { aboutMsgs } from "@/i18n/messages/about";
 import { authMsgs } from "@/i18n/messages/auth";
 import { callMsgs } from "@/i18n/messages/call";
 import { commonMsgs } from "@/i18n/messages/common";
@@ -13,6 +14,7 @@ import { pushMsgs } from "@/i18n/messages/push";
 import { settingsMsgs } from "@/i18n/messages/settings";
 
 export const NAMESPACES = {
+  about: aboutMsgs,
   auth: authMsgs,
   call: callMsgs,
   common: commonMsgs,
@@ -28,6 +30,7 @@ export const NAMESPACES = {
 } as const;
 
 export const MESSAGES = {
+  ...aboutMsgs,
   ...authMsgs,
   ...callMsgs,
   ...commonMsgs,

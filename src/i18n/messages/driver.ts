@@ -206,14 +206,14 @@ export const driverMsgs = {
     id: "Tanpa notifikasi, HP tidak berbunyi saat layar mati. Tekan tombol lalu pilih 'Izinkan'.",
     en: "Without notifications your phone won't ring when the screen is off. Tap the button, then choose 'Allow'.",
   },
-  "setup.pushButton": { ko: "🔔 알림 켜기", id: "🔔 Nyalakan notifikasi", en: "🔔 Turn on notifications" },
+  "setup.pushButton": { ko: "알림 켜기", id: "Nyalakan notifikasi", en: "Turn on notifications" },
   "setup.testTitle": { ko: "소리 테스트", id: "Tes bunyi", en: "Sound test" },
   "setup.testBody": {
     ko: "단추를 누르고 바로 화면을 끄세요. 5초 뒤 호출 소리가 나면 준비 끝입니다.",
     id: "Tekan tombol lalu langsung matikan layar. Jika 5 detik kemudian HP berbunyi, semuanya siap.",
     en: "Tap the button and turn off the screen right away. If it rings in 5 seconds, you're all set.",
   },
-  "setup.testButton": { ko: "🔊 테스트 소리 받기", id: "🔊 Kirim tes bunyi", en: "🔊 Send a test" },
+  "setup.testButton": { ko: "테스트 소리 받기", id: "Kirim tes bunyi", en: "Send a test" },
   "setup.testWait": {
     ko: "지금 화면을 끄세요. 5초 뒤 소리가 났나요?",
     id: "Matikan layar sekarang. Apakah HP berbunyi setelah 5 detik?",

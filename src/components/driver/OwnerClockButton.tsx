@@ -46,13 +46,13 @@ export function OwnerClockButton({ driver, compact = false }: { driver: DriverDo
         <button
           type="button"
           onClick={() => setConfirm(true)}
-          className="min-h-[44px] w-full rounded-btn text-sm font-semibold text-action active:bg-action-soft"
+          className="min-h-[44px] w-full rounded-btn text-sm font-semibold text-link active:bg-action-soft"
         >
           {t(onDuty ? "ownerClock.outButton" : "ownerClock.inButton")}
         </button>
       ) : (
         <Button variant="secondary" block onClick={() => setConfirm(true)}>
-          {onDuty ? "⚪ " : "🟢 "}
+          <span aria-hidden className={`mr-1 inline-block h-2.5 w-2.5 rounded-full ${onDuty ? "bg-ink-faint" : "bg-teal"}`} />
           {t(onDuty ? "ownerClock.outButton" : "ownerClock.inButton")}
         </Button>
       )}

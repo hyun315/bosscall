@@ -11,6 +11,7 @@ import { formatDate, formatMonth, formatTime, nextMonthStart, prevMonthStart, st
 import type { PayrollSettingsDoc } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
 import { weekdayShort } from "@/lib/time";
+import { IconWallet } from "@/components/brand/Icons";
 
 /**
  * 월별 급여 — 기본급 + 시간외 수당, 일별 근무내역 (보스첵 요구사항).
@@ -62,7 +63,7 @@ export function PayrollView({
     return mode === "owner" ? (
       <>
         <EmptyState
-          icon="💰"
+          icon={<IconWallet className="h-7 w-7" />}
           title={t("pay.setupTitle")}
           description={t("pay.setupDesc")}
           action={<Button block onClick={() => setEditing(true)}>{t("pay.setupButton")}</Button>}
@@ -72,7 +73,7 @@ export function PayrollView({
         )}
       </>
     ) : (
-      <EmptyState icon="💰" title={t("pay.notShared")} />
+      <EmptyState icon={<IconWallet className="h-7 w-7" />} title={t("pay.notShared")} />
     );
   }
 
@@ -191,7 +192,7 @@ export function PayrollView({
                     <div className="text-right text-sm tabular-nums">
                       <p className="font-semibold text-ink">{formatMinutes(d.workedMin, locale)}</p>
                       {d.overtimeMin > 0 && (
-                        <p className="font-semibold text-action">{t("pay.overtimeShort", { dur: formatMinutes(d.overtimeMin, locale) })}</p>
+                        <p className="font-semibold text-link">{t("pay.overtimeShort", { dur: formatMinutes(d.overtimeMin, locale) })}</p>
                       )}
                     </div>
                   </div>

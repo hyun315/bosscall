@@ -104,7 +104,7 @@ export const callMsgs = {
   },
   "call.cancelledTitle": { ko: "호출이 취소되었습니다.", id: "Panggilan dibatalkan.", en: "The call was cancelled." },
   "call.callAgain": { ko: "다시 호출", id: "Panggil lagi", en: "Call again" },
-  "call.callDriverPhone": { ko: "📞 기사님께 전화", id: "📞 Telepon sopir", en: "📞 Phone the driver" },
+  "call.callDriverPhone": { ko: "기사님께 전화", id: "Telepon sopir", en: "Phone the driver" },
 
   // ── 기사 화면 (D02)
   "call.respondWithin": { ko: "{s}초 안에 응답해주세요", id: "Jawab dalam {s} detik", en: "Respond within {s}s" },

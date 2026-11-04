@@ -12,7 +12,7 @@ export default function DriverGuidePage() {
     <main lang="id" className="min-h-dvh bg-bg pb-[calc(40px+var(--safe-bottom))] print:min-h-0 print:bg-white print:pb-0">
       <header className="bg-navy px-5 pb-7 pt-[calc(24px+var(--safe-top))] text-white print:px-8 print:pb-4 print:pt-5">
         <div className="mx-auto max-w-md print:max-w-none">
-          <p className="text-[13px] font-semibold tracking-wide text-[#F2C230]">BossCall · Panduan untuk Sopir</p>
+          <p className="text-[13px] font-semibold tracking-wide text-brand-teal">BossCall · Panduan untuk Sopir</p>
           <h1 className="mt-2 text-[26px] font-extrabold leading-tight [text-wrap:balance] print:text-[24px]">
             Bapak/Ibu akan memanggil Anda lewat BossCall
           </h1>
@@ -60,7 +60,7 @@ export default function DriverGuidePage() {
             HP berbunyi terus sampai Anda menjawab. Tekan salah satu:
           </p>
           <div className="mt-3 grid grid-cols-2 gap-2">
-            <span className="flex min-h-[48px] items-center justify-center rounded-btn bg-success text-[15px] font-bold text-white print:min-h-[38px] print:text-[13px]">
+            <span className="flex min-h-[48px] items-center justify-center rounded-btn bg-success-solid text-[15px] font-bold text-white print:min-h-[38px] print:text-[13px]">
               ✓ Terima panggilan
             </span>
             <span className="flex min-h-[48px] items-center justify-center rounded-btn border border-line bg-surface text-[15px] font-semibold text-ink print:min-h-[38px] print:text-[13px]">
@@ -112,7 +112,7 @@ export default function DriverGuidePage() {
         <a
           href="/guide/bosscall-guide-driver-id.pdf"
           download
-          className="-mt-5 block text-center text-sm font-semibold text-action print:hidden"
+          className="-mt-5 block text-center text-sm font-semibold text-link print:hidden"
         >
           Unduh PDF A4
         </a>
@@ -136,7 +136,7 @@ function Step({ n, title, warn, children }: { n: number; title: string; warn?: b
   return (
     <div className="flex gap-3">
       <span
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base font-extrabold text-white ${warn ? "bg-danger" : "bg-navy"}`}
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base font-extrabold text-white ${warn ? "bg-danger-solid" : "bg-navy"}`}
       >
         {n}
       </span>
@@ -151,7 +151,7 @@ function Step({ n, title, warn, children }: { n: number; title: string; warn?: b
 function Btn({ children, tone = "gray" }: { children: ReactNode; tone?: "gray" | "green" | "dark" | "blue" }) {
   const cls = {
     gray: "bg-surface text-ink ring-1 ring-line",
-    green: "bg-success text-white",
+    green: "bg-success-solid text-white",
     dark: "bg-navy text-white",
     blue: "bg-action text-white",
   }[tone];

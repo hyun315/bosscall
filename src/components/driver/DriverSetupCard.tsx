@@ -16,6 +16,7 @@ import { errorMessage } from "@/services/client/api";
 import { isStandaloneApp, subscribeInstall } from "@/services/client/install";
 import { enablePush, getPushState, type PushState } from "@/services/client/push";
 import { useI18n } from "@/i18n/client";
+import { IconBell, IconSound } from "@/components/brand/Icons";
 
 const TESTED_KEY = "bosscall.soundTested";
 
@@ -90,8 +91,8 @@ export function DriverSetupCard({ groupId }: { groupId: string }) {
   return (
     <section className="rounded-card border-2 border-action bg-action-soft p-4">
       <div className="flex items-center justify-between">
-        <p className="text-[13px] font-bold uppercase tracking-wide text-action">{t("setup.title")}</p>
-        <p className="text-[13px] font-bold text-action">{step} / 3</p>
+        <p className="text-[13px] font-bold uppercase tracking-wide text-link">{t("setup.title")}</p>
+        <p className="text-[13px] font-bold text-link">{step} / 3</p>
       </div>
       <div className="mt-2 flex gap-1.5" aria-hidden>
         {[1, 2, 3].map((n) => (
@@ -107,7 +108,7 @@ export function DriverSetupCard({ groupId }: { groupId: string }) {
 
       {step === 2 && (
         <div className="mt-3 space-y-3">
-          <p className="text-[18px] font-extrabold text-ink">🔔 {t("setup.pushTitle")}</p>
+          <p className="flex items-center gap-2 text-[18px] font-extrabold text-ink"><IconBell className="h-6 w-6 text-link" />{t("setup.pushTitle")}</p>
           <p className="text-[15px] leading-relaxed text-ink-sub">{t("setup.pushBody")}</p>
           {push === "default" ? (
             <Button variant="success" size="cta" block loading={busy} onClick={() => void turnOn()}>
@@ -123,7 +124,7 @@ export function DriverSetupCard({ groupId }: { groupId: string }) {
 
       {step === 3 && (
         <div className="mt-3 space-y-3">
-          <p className="text-[18px] font-extrabold text-ink">🔊 {t("setup.testTitle")}</p>
+          <p className="flex items-center gap-2 text-[18px] font-extrabold text-ink"><IconSound className="h-6 w-6 text-link" />{t("setup.testTitle")}</p>
           <p className="text-[15px] leading-relaxed text-ink-sub">{testSent ? t("setup.testWait") : t("setup.testBody")}</p>
           {!testSent ? (
             <Button variant="success" size="cta" block loading={busy} onClick={() => void test()}>

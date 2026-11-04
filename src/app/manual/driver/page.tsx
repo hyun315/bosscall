@@ -64,8 +64,8 @@ export default function DriverManualPage() {
         kicker: t("BossCall · Panduan Sopir", "BossCall 사용 설명서 · 기사용"),
         title: t("HP Anda akan berbunyi saat dipanggil", "부르면 기사님 휴대폰이 울립니다"),
         lead: t(
-          "Ikuti langkah di bawah. Tekan tombol yang bergaris kuning.",
-          "아래 순서대로 하세요. 노란 테두리 단추를 누르면 됩니다.",
+          "Ikuti langkah di bawah. Tekan tombol yang bergaris biru.",
+          "아래 순서대로 하세요. 파란 테두리 단추를 누르면 됩니다.",
         ),
         osAsk: t("HP Anda?", "기사님 휴대폰은?"),
         ios: "iPhone",
@@ -85,9 +85,9 @@ function SetupMock({ t }: { t: T }) {
   return (
     <Phone title="BossCall">
       <MockCard>
-        <p className="text-[10px] font-bold text-action">{t("Siapkan HP 2/3", "휴대폰 준비 2/3")}</p>
+        <p className="text-[10px] font-bold text-link">{t("Siapkan HP 2/3", "휴대폰 준비 2/3")}</p>
         <p className="mt-0.5 text-[12px] font-bold text-ink">{t("Nyalakan notifikasi", "알림을 켜 주세요")}</p>
-        <div className={`mt-2 rounded-lg bg-success py-2 text-center text-[11px] font-bold text-white ${HL}`}>
+        <div className={`mt-2 rounded-lg bg-success-solid py-2 text-center text-[11px] font-bold text-white ${HL}`}>
           🔔 {t("Nyalakan notifikasi", "알림 켜기")}
         </div>
       </MockCard>
@@ -103,7 +103,7 @@ function ClockInMock({ t }: { t: T }) {
         <span className="rounded-full bg-line px-1.5 py-0.5 text-[10px] font-bold text-ink-sub">● {t("Belum kerja", "퇴근")}</span>
         <p className="mt-1 text-[13px] font-bold text-ink">Budi</p>
       </MockCard>
-      <div className={`flex h-11 items-center justify-center rounded-xl bg-success text-[13px] font-extrabold text-white ${HL}`}>
+      <div className={`flex h-11 items-center justify-center rounded-xl bg-success-solid text-[13px] font-extrabold text-white ${HL}`}>
         {t("Mulai Kerja", "출근하기")}
       </div>
     </Phone>
@@ -117,7 +117,7 @@ function CallMock({ t }: { t: T }) {
         <p className="text-ink">📍 {t("Rumah", "집")}</p>
         <p className="text-ink">🎯 Grand Indonesia</p>
       </MockCard>
-      <div className={`rounded-xl bg-success py-2.5 text-center text-[12px] font-extrabold text-white ${HL}`}>✓ {t("Terima panggilan", "호출 수락")}</div>
+      <div className={`rounded-xl bg-success-solid py-2.5 text-center text-[12px] font-extrabold text-white ${HL}`}>✓ {t("Terima panggilan", "호출 수락")}</div>
       <div className="rounded-xl bg-surface py-2 text-center font-semibold text-ink ring-1 ring-line">{t("Tidak bisa sekarang", "지금은 어려워요")}</div>
     </Phone>
   );
@@ -128,7 +128,7 @@ function TripMock({ t }: { t: T }) {
     <Phone title={t("‹  Panggilan", "‹  호출")}>
       <div className="flex items-center justify-between rounded-xl bg-surface px-2 py-2 ring-1 ring-line">
         {(isId(t) ? ["Terima", "Jalan", "Tiba", "Antar", "Selesai"] : ["수락", "이동", "도착", "운행", "완료"]).map((s, i) => (
-          <span key={s} className={`text-[9px] font-bold ${i <= 1 ? "text-action" : "text-ink-faint"}`}>
+          <span key={s} className={`text-[9px] font-bold ${i <= 1 ? "text-link" : "text-ink-faint"}`}>
             {s}
           </span>
         ))}
@@ -144,7 +144,7 @@ const isId = (t: T) => t(true, false);
 
 function CancelMock({ t }: { t: T }) {
   return (
-    <div className="overflow-hidden rounded-[26px] border-[6px] border-navy bg-danger p-3 text-center text-white shadow-modal" aria-hidden>
+    <div className="overflow-hidden rounded-[26px] border-[6px] border-navy bg-danger-solid p-3 text-center text-white shadow-modal" aria-hidden>
       <p className="text-3xl">🚫</p>
       <p className="mt-1 text-[14px] font-extrabold">{t("Panggilan dibatalkan", "호출이 취소되었습니다")}</p>
       <p className="mt-1 text-[10px] text-white/80">{t("Tidak perlu berangkat.", "출발하지 않아도 됩니다.")}</p>

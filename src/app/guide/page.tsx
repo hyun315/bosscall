@@ -77,7 +77,7 @@ export default function OwnerGuidePage() {
       <header className="relative overflow-hidden bg-navy px-5 pb-8 pt-[calc(24px+var(--safe-top))] text-white print:px-8 print:pb-5 print:pt-6">
         <span aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-action/40 blur-3xl print:hidden" />
         <div className="relative mx-auto max-w-md print:max-w-none">
-          <p className="text-[13px] font-semibold tracking-wide text-[#F2C230]">BossCall 사용 안내 · 사장님용</p>
+          <p className="text-[13px] font-semibold tracking-wide text-brand-teal">BossCall 사용 안내 · 사장님용</p>
           <h1 className="mt-2 text-[28px] font-extrabold leading-tight [text-wrap:balance] print:text-[26px]">
             기사님 부를 때,
             <br />
@@ -152,11 +152,11 @@ export default function OwnerGuidePage() {
             href={`https://wa.me/?text=${encodeURIComponent(waText)}`}
             target="_blank"
             rel="noopener"
-            className="mt-4 flex min-h-[52px] items-center justify-center gap-2 rounded-btn bg-[#25D366] text-[15px] font-bold text-white"
+            className="mt-4 flex min-h-[52px] items-center justify-center gap-2 rounded-btn bg-[#0E7A52] text-[15px] font-bold text-white"
           >
             WhatsApp으로 기사님께 보내기
           </a>
-          <Link href="/manual/driver" className="mt-2 block text-center text-sm font-semibold text-action">
+          <Link href="/manual/driver" className="mt-2 block text-center text-sm font-semibold text-link">
             기사용 설명서 미리 보기 ›
           </Link>
         </section>
@@ -168,13 +168,13 @@ export default function OwnerGuidePage() {
         >
           🖨 이 화면 인쇄하기
         </button>
-        <Link href="/manual" className="-mt-4 block text-center text-[15px] font-bold text-action print:hidden">
+        <Link href="/manual" className="-mt-4 block text-center text-[15px] font-bold text-link print:hidden">
           📖 자세한 사용 설명서 (이럴 땐 이렇게 · 문제 해결) ›
         </Link>
         <a
           href="/guide/bosscall-guide-owner.pdf"
           download
-          className="-mt-5 block text-center text-sm font-semibold text-action print:hidden"
+          className="-mt-5 block text-center text-sm font-semibold text-link print:hidden"
         >
           A4 인쇄용 PDF 내려받기 (사장님용)
         </a>

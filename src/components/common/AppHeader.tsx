@@ -5,6 +5,8 @@ import type { ReactNode } from "react";
 import { useLiveQuery, w, lim } from "@/hooks/useLive";
 import { useSession } from "@/hooks/useSession";
 import { useI18n } from "@/i18n/client";
+import { Logo } from "@/components/brand/Logo";
+import { IconBack, IconBell } from "@/components/brand/Icons";
 
 /** 상단 헤더 (§18 AppHeader) */
 export function AppHeader({
@@ -29,7 +31,7 @@ export function AppHeader({
   const count = unread.data.length;
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line/60 bg-bg/95 pt-[var(--safe-top)] backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-line bg-surface/95 pt-[var(--safe-top)] backdrop-blur">
       <div className="mx-auto flex h-14 max-w-md items-center gap-2 px-4">
         {back ? (
           <button
@@ -39,24 +41,28 @@ export function AppHeader({
               else if (typeof back === "string") router.push(back);
               else router.back();
             }}
-            className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-2xl text-ink active:bg-line/60"
+            className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-ink active:bg-line/60"
           >
-            ‹
+            <IconBack />
           </button>
         ) : null}
-        <h1 className={`flex-1 truncate ${title ? "text-lg font-bold text-ink" : "text-xl font-extrabold tracking-tight text-brand"}`}>
-          {title ?? "BossCall"}
-        </h1>
+        {title ? (
+          <h1 className="flex-1 truncate text-lg font-bold text-ink">{title}</h1>
+        ) : (
+          <h1 className="flex flex-1 items-center">
+            <Logo className="h-7 w-auto" />
+          </h1>
+        )}
         {right}
         {showBell && (
           <Link
             href="/notifications"
             aria-label={count > 0 ? t("header.notificationsCount", { n: count }) : t("header.notifications")}
-            className="relative flex h-11 w-11 items-center justify-center rounded-full text-xl active:bg-line/60"
+            className="relative flex h-11 w-11 items-center justify-center rounded-full text-ink active:bg-line/60"
           >
-            <span aria-hidden>🔔</span>
+            <IconBell />
             {count > 0 && (
-              <span className="absolute right-1.5 top-1.5 min-w-[18px] rounded-full bg-danger px-1 text-center text-[11px] font-bold leading-[18px] text-white">
+              <span className="absolute right-1.5 top-1.5 min-w-[18px] rounded-full bg-danger-solid px-1 text-center text-[11px] font-bold leading-[18px] text-white">
                 {count > 9 ? "9+" : count}
               </span>
             )}
