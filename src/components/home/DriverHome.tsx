@@ -20,6 +20,7 @@ import { ensurePushOnTap } from "@/services/client/push";
 import { errorMessage } from "@/services/client/api";
 import type { DriverDoc } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
+import { IconBook, IconPin } from "@/components/brand/Icons";
 
 /** §6 D01 Driver Home — Owner UI보다 훨씬 단순하게. 큰 버튼, 최소 텍스트. */
 export function DriverHome() {
@@ -122,8 +123,8 @@ export function DriverHome() {
           href={`/manual/driver${locale === "ko" ? "?lang=ko" : ""}`}
           className="card flex min-h-[60px] items-center gap-3 px-4 py-3 active:bg-bg"
         >
-          <span className="text-2xl" aria-hidden>
-            📖
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-action-soft text-link" aria-hidden>
+            <IconBook className="h-5 w-5" />
           </span>
           <span className="flex-1">
             <span className="block text-[15px] font-bold text-ink">{t("dhome.manual")}</span>
@@ -139,7 +140,7 @@ export function DriverHome() {
       <BottomSheet open={clockInSheet} onClose={() => !busy && setClockInSheet(false)} title={t("dhome.clockIn")}>
         <div className="space-y-4">
           {/* 처음 한 번만 묻는다 — 짧게. 자세한 내용은 펼쳐 보기 */}
-          <p className="text-[17px] font-bold leading-snug text-ink">📍 {t("dhome.shareAsk")}</p>
+          <p className="flex items-start gap-2 text-[17px] font-bold leading-snug text-ink"><IconPin className="mt-0.5 h-5 w-5 shrink-0 text-link" />{t("dhome.shareAsk")}</p>
           <p className="text-[15px] leading-relaxed text-ink-sub">{t("dhome.consent1")}</p>
           <details className="rounded-btn bg-bg px-3 py-2 text-sm text-ink-sub">
             <summary className="cursor-pointer font-semibold text-ink">{t("dhome.shareMore")}</summary>

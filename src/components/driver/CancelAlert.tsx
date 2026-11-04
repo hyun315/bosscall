@@ -9,6 +9,7 @@ import { isCallSilenced, silenceCall, unsilenceCall } from "@/services/client/al
 import { ackCancelledCall } from "@/services/client/actions";
 import type { CallDoc } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
+import { IconAlarm, IconBan, IconFlag, IconPin } from "@/components/brand/Icons";
 
 export function CancelAlert({ groupId, alerts }: { groupId: string; alerts: CallDoc[] }) {
   const { t } = useI18n();
@@ -32,9 +33,9 @@ export function CancelAlert({ groupId, alerts }: { groupId: string; alerts: Call
     >
       <div className="w-full max-w-sm overflow-hidden rounded-card bg-surface text-center shadow-modal">
         <div className="bg-danger-solid px-5 pb-5 pt-6 text-white">
-          <p className="text-5xl" aria-hidden>
-            {missed ? "⏰" : "🚫"}
-          </p>
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/15" aria-hidden>
+            {missed ? <IconAlarm className="h-9 w-9" /> : <IconBan className="h-9 w-9" />}
+          </span>
           <h2 id="cancel-alert-title" className="mt-3 text-[22px] font-extrabold">
             {t(missed ? "cancelAlert.missedTitle" : "cancelAlert.title")}
           </h2>
@@ -43,8 +44,8 @@ export function CancelAlert({ groupId, alerts }: { groupId: string; alerts: Call
           </p>
         </div>
         <div className="space-y-1.5 px-5 py-4 text-left text-[15px] text-ink">
-          <p className="truncate">📍 {shortPlace(call.pickupName, call.pickupAddress)}</p>
-          <p className="truncate">🎯 {shortPlace(call.destinationName, call.destinationAddress)}</p>
+          <p className="flex items-center gap-2 truncate"><IconPin className="h-4 w-4 shrink-0 text-link" />{shortPlace(call.pickupName, call.pickupAddress)}</p>
+          <p className="flex items-center gap-2 truncate"><IconFlag className="h-4 w-4 shrink-0 text-teal" />{shortPlace(call.destinationName, call.destinationAddress)}</p>
         </div>
         <div className="px-5 pb-5">
           <button

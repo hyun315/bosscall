@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import { installPlatform, isStandaloneApp } from "@/services/client/install";
 import { useI18n } from "@/i18n/client";
+import { IconHeartbeat } from "@/components/brand/Icons";
 
 type Row = { key: string; ok: boolean | null; value: string };
 
@@ -53,7 +54,7 @@ export function PhoneCheck() {
   const bad = rows.some((r) => r.ok === false);
   return (
     <div className="rounded-btn bg-bg p-3 text-sm ring-1 ring-line">
-      <p className="font-bold text-ink">🩺 {t("pcheck.title")}</p>
+      <p className="flex items-center gap-2 font-bold text-ink"><IconHeartbeat className="h-5 w-5 text-link" />{t("pcheck.title")}</p>
       <ul className="mt-2 space-y-1">
         {rows.map((r) => (
           <li key={r.key} className="flex items-center justify-between gap-2">

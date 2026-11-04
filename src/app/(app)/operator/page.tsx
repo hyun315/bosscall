@@ -15,6 +15,7 @@ import { REPORT_DIMENSIONS, REPORT_MIN_COUNT, type ReportDimension } from "@/lib
 import { getOperatorStatus, getPois, getTripReport, uploadPois, type TripReport } from "@/services/client/actions";
 import { errorMessage } from "@/services/client/api";
 import { PLACE_CATEGORIES, type PoiDoc } from "@/types/domain";
+import { IconLock } from "@/components/brand/Icons";
 
 const DIM_LABEL: Record<ReportDimension, string> = {
   month: "월",
@@ -43,7 +44,7 @@ export default function OperatorPage() {
       <main className="mx-auto max-w-md space-y-6 px-4 pb-8 pt-3">
         {allowed === null && <LoadingState />}
         {allowed === false && (
-          <EmptyState icon="🔒" title="운영자만 볼 수 있습니다." description="서버 환경변수 OPERATOR_EMAILS 에 이 Google 계정을 넣어야 합니다." />
+          <EmptyState icon={<IconLock className="h-7 w-7" />} title="운영자만 볼 수 있습니다." description="서버 환경변수 OPERATOR_EMAILS 에 이 Google 계정을 넣어야 합니다." />
         )}
         {allowed && (
           <>

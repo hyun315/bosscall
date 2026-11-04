@@ -15,6 +15,7 @@ import { createFavorite, deleteFavorite } from "@/services/client/actions";
 import { errorMessage } from "@/services/client/api";
 import { PLACE_CATEGORIES, type FavoriteLocationDoc, type PlaceCategory, type PlaceInput } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
+import { IconStar } from "@/components/brand/Icons";
 
 const PRESETS = ["Home", "Office", "School", "Country Club"];
 /** 이름 예시를 누르면 분류도 함께 고른다 */
@@ -53,7 +54,7 @@ export default function PlacesPage() {
         ) : favorites.error ? (
           <ErrorState title={favorites.error} />
         ) : favorites.data.length === 0 ? (
-          <EmptyState icon="⭐" title={t("places.empty")} description={t("places.emptyDesc")} />
+          <EmptyState icon={<IconStar className="h-7 w-7" />} title={t("places.empty")} description={t("places.emptyDesc")} />
         ) : (
           <div className="card divide-y divide-line overflow-hidden">
             {favorites.data.map((f) => (

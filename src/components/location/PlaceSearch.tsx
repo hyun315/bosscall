@@ -7,6 +7,7 @@ import { PlaceSearchSession, type Suggestion } from "@/services/client/location"
 import { MapsError } from "@/lib/location/googleMaps";
 import type { PlaceInput } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
+import { IconPin, IconSearch } from "@/components/brand/Icons";
 
 /**
  * 장소 검색 (§5 C02 "장소 검색", §34.2 Places Autocomplete → Place ID + 좌표 + 주소)
@@ -75,8 +76,8 @@ export function PlaceSearch({
   return (
     <div>
       <div className="relative">
-        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg" aria-hidden>
-          🔍
+        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-faint" aria-hidden>
+          <IconSearch className="h-5 w-5" />
         </span>
         <input
           className="field pl-11 pr-10"
@@ -105,7 +106,7 @@ export function PlaceSearch({
           {items.map((s) => (
             <PlaceRow
               key={s.placeId}
-              icon={selecting === s.placeId ? "⏳" : "📌"}
+              icon={selecting === s.placeId ? <Spinner className="h-5 w-5 text-link" /> : <IconPin className="h-5 w-5" />}
               title={s.main}
               subtitle={s.secondary}
               onClick={() => void pick(s)}

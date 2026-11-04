@@ -17,6 +17,7 @@ import {
 } from "@/services/client/install";
 import { trackClient } from "@/services/client/api";
 import { useI18n } from "@/i18n/client";
+import { IconCheck, IconDownload } from "@/components/brand/Icons";
 
 /** Safari 공유 버튼 모양 (□↑) */
 function ShareIcon() {
@@ -70,9 +71,7 @@ export function InstallPrompt({
     if (variant !== "panel") return null;
     return (
       <div className="card flex items-center gap-3 px-4 py-3.5">
-        <span className="text-xl" aria-hidden>
-          ✅
-        </span>
+        <IconCheck className="h-6 w-6 shrink-0 text-teal" />
         <span className="text-[15px] font-semibold text-ink">{t("install.using")}</span>
       </div>
     );
@@ -103,10 +102,10 @@ export function InstallPrompt({
     >
       <div className="flex items-start gap-3">
         <span
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-btn bg-navy text-xl text-white shadow-card"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-btn bg-action-soft text-link"
           aria-hidden
         >
-          📲
+          <IconDownload className="h-6 w-6" />
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[16px] font-bold text-ink">{t("install.title")}</p>

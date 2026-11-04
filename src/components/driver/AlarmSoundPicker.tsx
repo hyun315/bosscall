@@ -8,6 +8,7 @@ import { TestPushResult } from "@/components/common/TestPushResult";
 import { errorMessage } from "@/services/client/api";
 import { getAlarmSound, installAlarmUnlock, previewAlarm, setAlarmSound } from "@/services/client/alarm";
 import { useI18n } from "@/i18n/client";
+import { IconBell } from "@/components/brand/Icons";
 
 /**
  * 기사: 알람 소리 고르기 (이 휴대폰에 저장) + 화면 끄고 확인하는 테스트 알림.
@@ -81,8 +82,8 @@ export function AlarmSoundPicker() {
       <div className="card space-y-2 p-4">
         <p className="text-[15px] font-semibold text-ink">{t("alarm.testTitle")}</p>
         <p className="text-sm leading-relaxed text-ink-sub">{t("alarm.testDesc")}</p>
-        <Button block variant="secondary" loading={testing} onClick={() => void test()}>
-          🔔 {t("alarm.testButton")}
+        <Button block variant="secondary" loading={testing} onClick={() => void test()} icon={<IconBell className="h-5 w-5" />}>
+          {t("alarm.testButton")}
         </Button>
         <TestPushResult sentAt={sentAt} />
       </div>

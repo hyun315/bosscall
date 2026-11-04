@@ -98,7 +98,7 @@ export function ManualShell({
             </Link>
             {top}
           </div>
-          <p className="mt-4 text-[13px] font-bold tracking-wide text-[#F2C230]">{text.kicker}</p>
+          <p className="mt-4 text-[13px] font-bold tracking-wide text-brand-teal">{text.kicker}</p>
           <h1 className="mt-1 text-[28px] font-extrabold leading-tight [text-wrap:balance]">{text.title}</h1>
           <p className="mt-2 text-[16px] leading-relaxed text-white/80">{text.lead}</p>
         </div>
@@ -244,8 +244,8 @@ export function MockCard({ children }: { children: ReactNode }) {
   return <div className="rounded-xl bg-surface p-2.5 ring-1 ring-line">{children}</div>;
 }
 
-/** 노란 테두리 = "여기를 누르세요" */
-export const HL = "ring-4 ring-[#F2C230]";
+/** 파란 테두리(흰 틈 포함) = "여기를 누르세요" */
+export const HL = "ring-[3px] ring-action ring-offset-2 ring-offset-surface";
 
 /** 아이폰 Safari — 아래 공유 단추 → 홈 화면에 추가 */
 export function IosAddToHomeMock({ share, add, more }: { share: string; add: string; more: string }) {

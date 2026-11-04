@@ -8,6 +8,7 @@ import { setLocationSharing } from "@/services/client/actions";
 import { errorMessage } from "@/services/client/api";
 import type { DriverDoc } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
+import { IconBan, IconPin } from "@/components/brand/Icons";
 
 /** 기사 홈: 위치 공유 상태 표시 + 켜기/끄기 — 공유 중임을 항상 기사에게 보여준다 */
 export function DriverLocationShareCard({ driver, groupId }: { driver: DriverDoc; groupId: string }) {
@@ -57,8 +58,8 @@ export function DriverLocationShareCard({ driver, groupId }: { driver: DriverDoc
 
   return (
     <div className="card flex items-center gap-3 p-4">
-      <span className="text-2xl" aria-hidden>
-        {on ? "📍" : "🚫"}
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${on ? "bg-teal-soft text-teal" : "bg-bg text-ink-sub"}`} aria-hidden>
+        {on ? <IconPin className="h-5 w-5" /> : <IconBan className="h-5 w-5" />}
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-[15px] font-semibold text-ink">{on ? t("share.titleOn") : t("share.titleOff")}</p>

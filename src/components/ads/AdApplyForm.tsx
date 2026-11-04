@@ -205,7 +205,7 @@ export function AdApplyForm({ mode }: { mode: "public" | "operator" }) {
           </Link>
           <h1 className="mt-4 text-[24px] font-extrabold">BossCall 광고 신청</h1>
           <p className="mt-1 text-sm text-white/70">작성 5분 · 검토 후 승인되면 자동 게재</p>
-          <span className="mt-3 inline-block rounded-full bg-[#F2C230] px-2.5 py-0.5 text-[12px] font-bold text-navy">
+          <span className="mt-3 inline-block rounded-full bg-brand-teal px-2.5 py-0.5 text-[12px] font-bold text-navy">
             🎉 신규 출시 기념 · 2027년 3월 31일까지 무료
           </span>
         </div>

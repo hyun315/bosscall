@@ -18,6 +18,7 @@ import {
 import { callSidePlace, favoritePlace, resolvePlace, usable, type StoredPlace } from "@/services/client/places";
 import type { CallDoc, FavoriteLocationDoc, PlaceInput } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
+import { IconFlag, IconMap, IconPin } from "@/components/brand/Icons";
 
 /** 최근 호출에서 최근 장소를 뽑는다 (중복 제거: placeId 또는 좌표 4자리 ≈ 11m) */
 export function recentPlaces(calls: CallDoc[], which: "pickup" | "destination" | "both", max = 5): StoredPlace[] {
@@ -125,7 +126,7 @@ export function LocationPicker({
         <section>
           {/* 픽업 카드 아래에서 "이제 목적지를 고를 차례"임을 분명히 보여준다 */}
           <h3 className="mb-2 flex items-center gap-2 text-lg font-bold text-ink">
-            <span aria-hidden>🎯</span>
+            <IconFlag className="h-5 w-5 text-teal" />
             {t("loc.chooseDestinationTitle")}
           </h3>
           <PlaceSearch groupId={groupId} onSelect={onPicked} placeholder={t("loc.destinationSearchPlaceholder")} />
@@ -134,7 +135,7 @@ export function LocationPicker({
 
       {kind === "pickup" && (
         <div className="grid gap-3">
-          <Button size="lg" block loading={locating} onClick={() => void pickCurrent()} icon={<span aria-hidden>📍</span>}>
+          <Button size="lg" block loading={locating} onClick={() => void pickCurrent()} icon={<IconPin className="h-5 w-5" />}>
             {t("loc.pickupHere")}
           </Button>
           {geoProblem === "DENIED" && (
@@ -160,7 +161,7 @@ export function LocationPicker({
         </section>
       )}
 
-      <Button variant="secondary" block onClick={() => setMapOpen(null)} icon={<span aria-hidden>🗺</span>}>
+      <Button variant="secondary" block onClick={() => setMapOpen(null)} icon={<IconMap className="h-5 w-5" />}>
         {t("loc.chooseOnMap")}
       </Button>
 

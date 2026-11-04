@@ -16,6 +16,7 @@ import { errorMessage } from "@/services/client/api";
 import { isStandaloneApp, subscribeInstall } from "@/services/client/install";
 import { enablePush, getPushState, type PushState } from "@/services/client/push";
 import { useI18n } from "@/i18n/client";
+import { IconBell, IconSound } from "@/components/brand/Icons";
 
 const TESTED_KEY = "bosscall.soundTested";
 
@@ -107,7 +108,7 @@ export function DriverSetupCard({ groupId }: { groupId: string }) {
 
       {step === 2 && (
         <div className="mt-3 space-y-3">
-          <p className="text-[18px] font-extrabold text-ink">🔔 {t("setup.pushTitle")}</p>
+          <p className="flex items-center gap-2 text-[18px] font-extrabold text-ink"><IconBell className="h-6 w-6 text-link" />{t("setup.pushTitle")}</p>
           <p className="text-[15px] leading-relaxed text-ink-sub">{t("setup.pushBody")}</p>
           {push === "default" ? (
             <Button variant="success" size="cta" block loading={busy} onClick={() => void turnOn()}>
@@ -123,7 +124,7 @@ export function DriverSetupCard({ groupId }: { groupId: string }) {
 
       {step === 3 && (
         <div className="mt-3 space-y-3">
-          <p className="text-[18px] font-extrabold text-ink">🔊 {t("setup.testTitle")}</p>
+          <p className="flex items-center gap-2 text-[18px] font-extrabold text-ink"><IconSound className="h-6 w-6 text-link" />{t("setup.testTitle")}</p>
           <p className="text-[15px] leading-relaxed text-ink-sub">{testSent ? t("setup.testWait") : t("setup.testBody")}</p>
           {!testSent ? (
             <Button variant="success" size="cta" block loading={busy} onClick={() => void test()}>

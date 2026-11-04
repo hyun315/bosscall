@@ -9,6 +9,7 @@ import { acceptInvite, previewInvite, type InvitePreview } from "@/services/clie
 import { errorMessage } from "@/services/client/api";
 import { useI18n } from "@/i18n/client";
 import { LanguagePicker } from "@/components/common/LanguagePicker";
+import { IconCheck, IconHistory, IconLink } from "@/components/brand/Icons";
 
 /** 초대 수락 — /invite/{code} */
 export default function InvitePage() {
@@ -51,10 +52,10 @@ export default function InvitePage() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-5 pb-[calc(32px+var(--safe-bottom))] pt-[calc(32px+var(--safe-top))]">
       {error || !preview ? (
-        <EmptyState icon="🔗" title={t("inv.cannotCheck")} description={error ?? undefined} />
+        <EmptyState icon={<IconLink className="h-7 w-7" />} title={t("inv.cannotCheck")} description={error ?? undefined} />
       ) : preview.status !== "VALID" ? (
         <EmptyState
-          icon={preview.status === "ALREADY_MEMBER" ? "✅" : "⌛"}
+          icon={preview.status === "ALREADY_MEMBER" ? <IconCheck className="h-7 w-7" /> : <IconHistory className="h-7 w-7" />}
           title={
             preview.status === "ALREADY_MEMBER"
               ? t("inv.alreadyIn", { group: preview.groupName })

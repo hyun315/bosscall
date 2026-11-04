@@ -2,23 +2,25 @@
 import type { ReactNode } from "react";
 import { useI18n } from "@/i18n/client";
 import { Spinner } from "@/components/common/Button";
+import { IconInbox } from "@/components/brand/Icons";
 
 /** 빈 상태 (§19) — 사용자가 빈 화면을 보지 않도록 다음 행동을 함께 제시 */
 export function EmptyState({
-  icon = "🚗",
+  icon,
   title,
   description,
   action,
 }: {
-  icon?: string;
+  /** 선 아이콘 (Icons.tsx). 없으면 빈 상자 아이콘 */
+  icon?: ReactNode;
   title: string;
   description?: ReactNode;
   action?: ReactNode;
 }) {
   return (
     <div className="card flex flex-col items-center px-6 py-10 text-center">
-      <div className="mb-3 text-4xl" aria-hidden>
-        {icon}
+      <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-action-soft text-link" aria-hidden>
+        {icon ?? <IconInbox className="h-7 w-7" />}
       </div>
       <p className="text-base font-semibold text-ink">{title}</p>
       {description && <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-ink-sub">{description}</p>}

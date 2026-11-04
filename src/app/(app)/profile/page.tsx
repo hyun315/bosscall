@@ -8,6 +8,7 @@ import { useReadySession } from "@/hooks/useSession";
 import type { DriverDoc } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
 import { LanguagePicker } from "@/components/common/LanguagePicker";
+import { IconBell } from "@/components/brand/Icons";
 
 /** §2.2 Driver Profile — 기사 정보 */
 export default function ProfilePage() {
@@ -36,7 +37,7 @@ export default function ProfilePage() {
           href="/settings/notifications"
           className="card flex min-h-[56px] items-center gap-3 px-4 active:bg-bg"
         >
-          <span aria-hidden>🔔</span>
+          <IconBell className="h-5 w-5 text-ink-sub" />
           <span className="flex-1 font-semibold">{t("settings.notifications")}</span>
           <span className="text-ink-faint" aria-hidden>›</span>
         </Link>

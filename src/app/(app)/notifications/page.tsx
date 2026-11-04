@@ -9,6 +9,7 @@ import { formatDate, formatTime } from "@/lib/time";
 import { markNotificationsRead } from "@/services/client/actions";
 import type { NotificationDoc } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
+import { IconBell } from "@/components/brand/Icons";
 
 /** 알림함 (§28 Phase 4 Notification center) */
 export default function NotificationsPage() {
@@ -31,7 +32,7 @@ export default function NotificationsPage() {
         ) : list.error ? (
           <ErrorState title={list.error} />
         ) : list.data.length === 0 ? (
-          <EmptyState icon="🔔" title={t("notif.empty")} />
+          <EmptyState icon={<IconBell className="h-7 w-7" />} title={t("notif.empty")} />
         ) : (
           <div className="card divide-y divide-line overflow-hidden">
             {list.data.map((n) => (

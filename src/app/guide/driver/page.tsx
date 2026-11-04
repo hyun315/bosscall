@@ -12,7 +12,7 @@ export default function DriverGuidePage() {
     <main lang="id" className="min-h-dvh bg-bg pb-[calc(40px+var(--safe-bottom))] print:min-h-0 print:bg-white print:pb-0">
       <header className="bg-navy px-5 pb-7 pt-[calc(24px+var(--safe-top))] text-white print:px-8 print:pb-4 print:pt-5">
         <div className="mx-auto max-w-md print:max-w-none">
-          <p className="text-[13px] font-semibold tracking-wide text-[#F2C230]">BossCall · Panduan untuk Sopir</p>
+          <p className="text-[13px] font-semibold tracking-wide text-brand-teal">BossCall · Panduan untuk Sopir</p>
           <h1 className="mt-2 text-[26px] font-extrabold leading-tight [text-wrap:balance] print:text-[24px]">
             Bapak/Ibu akan memanggil Anda lewat BossCall
           </h1>

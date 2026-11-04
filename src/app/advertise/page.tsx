@@ -52,14 +52,14 @@ export default function AdvertisePage() {
       {/* 히어로 */}
       <header className="relative overflow-hidden bg-navy px-5 pb-10 pt-[calc(28px+var(--safe-top))] text-white">
         <span aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-action/40 blur-3xl" />
-        <span aria-hidden className="pointer-events-none absolute -bottom-20 left-0 h-48 w-48 rounded-full bg-[#F2C230]/20 blur-3xl" />
+        <span aria-hidden className="pointer-events-none absolute -bottom-20 left-0 h-48 w-48 rounded-full bg-brand-teal/25 blur-3xl" />
         <div className="relative mx-auto max-w-md">
           <Link href="/" className="text-sm font-semibold text-white/70">
             ← BossCall
           </Link>
-          <p className="mt-6 flex flex-wrap items-center gap-2 text-[13px] font-semibold tracking-wide text-[#F2C230]">
+          <p className="mt-6 flex flex-wrap items-center gap-2 text-[13px] font-semibold tracking-wide text-brand-teal">
             BossCall 광고 안내
-            <span className="rounded-full bg-[#F2C230] px-2.5 py-0.5 text-[12px] font-bold text-navy">
+            <span className="rounded-full bg-brand-teal px-2.5 py-0.5 text-[12px] font-bold text-navy">
               🎉 신규 출시 기념 · 2027년 3월 31일까지 무료
             </span>
           </p>
@@ -165,7 +165,7 @@ export default function AdvertisePage() {
               </li>
             ))}
           </ol>
-          <div className="mt-4 rounded-card bg-[#F2C230]/15 px-4 py-3 ring-1 ring-[#F2C230]/50">
+          <div className="mt-4 rounded-card bg-teal-soft px-4 py-3 ring-1 ring-teal/40">
             <p className="text-[15px] font-bold text-ink">🎉 신규 출시 기념 · 2027년 3월 31일까지 무료</p>
             <p className="mt-0.5 text-sm text-ink-sub">
               이 기간에는 게재 비용을 받지 않고 모든 광고를 무작위 순서로 고르게 보여 드립니다. 무료 기간에 입점한 업체에는 유료 전환 때 <b>창립 광고주 혜택</b>을

@@ -19,6 +19,7 @@ import {
 } from "@/lib/ads";
 import { trackClient } from "@/services/client/api";
 import { useI18n } from "@/i18n/client";
+import { IconFlag, IconPin } from "@/components/brand/Icons";
 
 /**
  * 광고 칸 — 사장님·가족 화면 전용. 기사 계정에는 아무것도 그리지 않는다.
@@ -122,7 +123,7 @@ export function AdSlot({
           onClick={clickOf("inquiry")}
           className="flex items-center justify-center gap-1 py-1 text-[13px] font-semibold text-ink-sub active:text-link"
         >
-          📣 {t("ad.inquiryLine")} ›
+          {t("ad.inquiryLine")} ›
         </Link>
       )}
     </aside>
@@ -228,14 +229,14 @@ export function PaidBanner({
             onClick={() => onGo("pickup")}
             className="inline-flex h-8 items-center gap-1 rounded-full bg-white/95 px-2.5 text-[12px] font-bold text-navy shadow-card ring-1 ring-black/10 backdrop-blur active:scale-95"
           >
-            📍 {t("ad.setPickup")}
+            <IconPin className="h-3.5 w-3.5" /> {t("ad.setPickup")}
           </button>
           <button
             type="button"
             onClick={() => onGo("destination")}
             className="inline-flex h-8 items-center gap-1 rounded-full bg-action/95 px-2.5 text-[12px] font-bold text-white shadow-card ring-1 ring-black/10 backdrop-blur active:scale-95"
           >
-            🎯 {t("ad.setDestination")}
+            <IconFlag className="h-3.5 w-3.5" /> {t("ad.setDestination")}
           </button>
         </div>
       )}
@@ -306,14 +307,14 @@ function AdDetail({
               onClick={() => onGo("pickup")}
               className="flex min-h-[52px] items-center justify-center gap-1.5 rounded-btn bg-white text-[15px] font-bold text-navy"
             >
-              📍 {t("ad.setPickup")}
+              <IconPin className="h-3.5 w-3.5" /> {t("ad.setPickup")}
             </button>
             <button
               type="button"
               onClick={() => onGo("destination")}
               className="flex min-h-[52px] items-center justify-center gap-1.5 rounded-btn bg-action text-[15px] font-bold text-white"
             >
-              🎯 {t("ad.setDestination")}
+              <IconFlag className="h-3.5 w-3.5" /> {t("ad.setDestination")}
             </button>
           </div>
         )}

@@ -52,7 +52,7 @@ export function OwnerClockButton({ driver, compact = false }: { driver: DriverDo
         </button>
       ) : (
         <Button variant="secondary" block onClick={() => setConfirm(true)}>
-          {onDuty ? "⚪ " : "🟢 "}
+          <span aria-hidden className={`mr-1 inline-block h-2.5 w-2.5 rounded-full ${onDuty ? "bg-ink-faint" : "bg-teal"}`} />
           {t(onDuty ? "ownerClock.outButton" : "ownerClock.inButton")}
         </Button>
       )}

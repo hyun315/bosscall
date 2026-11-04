@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { AppHeader } from "@/components/common/AppHeader";
@@ -25,6 +25,7 @@ import { ClientApiError, errorMessage } from "@/services/client/api";
 import type { CallDoc, CallEventDoc, CallStatus, DriverDoc, MemberDoc } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
 import type { MsgKey } from "@/i18n/index";
+import { IconAlarm, IconBan, IconCar, IconCheck, IconFlag, IconInfo, IconNavigate, IconPin } from "@/components/brand/Icons";
 
 /**
  * 호출 상세 — Owner: C04 Calling / C05 Accepted / C06 Completed, Driver: D02 Incoming Call + 운행 진행.
@@ -325,8 +326,8 @@ function OwnerPanel({
       <div className="card flex flex-col items-center px-6 py-8 text-center">
         <div className="relative mb-5 flex h-24 w-24 items-center justify-center">
           <span className="bc-pulse-ring absolute inset-0 rounded-full bg-action/30" aria-hidden />
-          <span className="relative flex h-20 w-20 items-center justify-center rounded-full bg-action text-4xl" aria-hidden>
-            🚗
+          <span className="relative flex h-20 w-20 items-center justify-center rounded-full bg-action text-white" aria-hidden>
+            <IconCar className="h-10 w-10" />
           </span>
         </div>
         <p className="text-xl font-bold text-ink">{t("call.calling")}</p>
@@ -370,7 +371,7 @@ function OwnerPanel({
               href={`https://wa.me/${toWhatsAppNumber(driverPhone)}`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-btn bg-[#25D366] font-semibold text-white active:brightness-95"
+              className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-btn bg-[#0E7A52] font-semibold text-white active:brightness-95"
             >
               WhatsApp
             </a>
@@ -384,9 +385,9 @@ function OwnerPanel({
     // C06 Completed
     return (
       <div className="card p-6 text-center">
-        <p className="text-4xl" aria-hidden>
-          🏁
-        </p>
+        <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success-soft text-success" aria-hidden>
+          <IconCheck className="h-9 w-9" />
+        </span>
         <p className="mt-3 text-xl font-bold text-ink">{t("call.completedTitle")}</p>
         <p className="mt-1 text-[15px] text-ink-sub">{t("call.completedSaved")}</p>
         <p className="mt-3 font-semibold text-ink">
@@ -400,17 +401,18 @@ function OwnerPanel({
   }
 
   // DECLINED / TIMEOUT / CANCELLED
-  const text: Record<string, { icon: string; title: string; desc: string }> = {
-    DECLINED: { icon: "🙏", title: t("call.declinedTitle"), desc: t("call.declinedDesc") },
-    TIMEOUT: { icon: "⏱", title: t("call.timeoutTitle"), desc: t("call.timeoutDesc") },
-    CANCELLED: { icon: "✕", title: t("call.cancelledTitle"), desc: "" },
+  const I = "h-9 w-9";
+  const text: Record<string, { icon: ReactNode; title: string; desc: string }> = {
+    DECLINED: { icon: <IconBan className={I} />, title: t("call.declinedTitle"), desc: t("call.declinedDesc") },
+    TIMEOUT: { icon: <IconAlarm className={I} />, title: t("call.timeoutTitle"), desc: t("call.timeoutDesc") },
+    CANCELLED: { icon: <IconBan className={I} />, title: t("call.cancelledTitle"), desc: "" },
   };
-  const info = text[call.status] ?? { icon: "ℹ️", title: t(CALL_STATUS_LABEL[call.status].key), desc: "" };
+  const info = text[call.status] ?? { icon: <IconInfo className={I} />, title: t(CALL_STATUS_LABEL[call.status].key), desc: "" };
   return (
     <div className="card p-6 text-center">
-      <p className="text-4xl" aria-hidden>
+      <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-bg text-ink-sub" aria-hidden>
         {info.icon}
-      </p>
+      </span>
       <p className="mt-3 text-lg font-bold text-ink">{info.title}</p>
       {info.desc && <p className="mt-1 text-[15px] text-ink-sub">{info.desc}</p>}
       <div className="mt-5 space-y-3">
@@ -486,8 +488,8 @@ function DriverPanel({
       <div className="rounded-card border-2 border-action bg-action-soft p-5">
         <p className="text-lg font-bold text-link">{t("push.callCreated.title")}</p>
         <p className="mt-2 text-2xl font-extrabold text-ink">{t("call.honorific", { name: call.callerName })}</p>
-        <p className="mt-2 text-lg font-semibold text-ink">📍 {shortPlace(call.pickupName, call.pickupAddress)}</p>
-        <p className="text-lg font-semibold text-ink">🎯 {shortPlace(call.destinationName, call.destinationAddress)}</p>
+        <p className="mt-2 flex items-center gap-2 text-lg font-semibold text-ink"><IconPin className="h-5 w-5 shrink-0 text-link" />{shortPlace(call.pickupName, call.pickupAddress)}</p>
+        <p className="flex items-center gap-2 text-lg font-semibold text-ink"><IconFlag className="h-5 w-5 shrink-0 text-teal" />{shortPlace(call.destinationName, call.destinationAddress)}</p>
         <p className="mt-2 text-sm tabular-nums text-ink-sub">{t("call.respondWithin", { s: seconds })}</p>
         {/* 아이폰은 앱을 새로 연 직후 한 번 터치해야 앱 소리가 난다 — 따로 묻지 않고, 화면 어디를 눌러도 (수락 단추 포함) 처리된다 */}
         <div className="mt-6 flex flex-col gap-5">
@@ -553,7 +555,7 @@ function DriverPanel({
         rel="noreferrer"
         className="flex min-h-[56px] items-center justify-center gap-2 rounded-btn bg-navy text-lg font-bold text-white active:brightness-110"
       >
-        🧭 {call.status === "TRIP_STARTED" ? t("call.navDestination") : t("call.navPickup")}
+        <IconNavigate className="h-5 w-5" /> {call.status === "TRIP_STARTED" ? t("call.navDestination") : t("call.navPickup")}
       </a>
       {step && (
         <Button
@@ -580,7 +582,7 @@ function DriverPanel({
             href={`https://wa.me/${toWhatsAppNumber(callerPhone)}`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex min-h-[52px] items-center justify-center rounded-btn bg-[#25D366] font-semibold text-white"
+            className="inline-flex min-h-[52px] items-center justify-center rounded-btn bg-[#0E7A52] font-semibold text-white"
           >
             WhatsApp
           </a>

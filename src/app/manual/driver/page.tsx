@@ -64,8 +64,8 @@ export default function DriverManualPage() {
         kicker: t("BossCall · Panduan Sopir", "BossCall 사용 설명서 · 기사용"),
         title: t("HP Anda akan berbunyi saat dipanggil", "부르면 기사님 휴대폰이 울립니다"),
         lead: t(
-          "Ikuti langkah di bawah. Tekan tombol yang bergaris kuning.",
-          "아래 순서대로 하세요. 노란 테두리 단추를 누르면 됩니다.",
+          "Ikuti langkah di bawah. Tekan tombol yang bergaris biru.",
+          "아래 순서대로 하세요. 파란 테두리 단추를 누르면 됩니다.",
         ),
         osAsk: t("HP Anda?", "기사님 휴대폰은?"),
         ios: "iPhone",

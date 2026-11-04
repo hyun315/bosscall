@@ -31,7 +31,7 @@ export default function ManualPage() {
       text={{
         kicker: "BossCall 사용 설명서 · 보스용",
         title: "이럴 땐, 이렇게",
-        lead: "하고 싶은 일을 고르세요. 노란 테두리 단추를 그대로 따라 누르면 됩니다.",
+        lead: "하고 싶은 일을 고르세요. 파란 테두리 단추를 그대로 따라 누르면 됩니다.",
         osAsk: "내 휴대폰은?",
         ios: "아이폰·아이패드",
         android: "안드로이드",
@@ -55,7 +55,7 @@ export default function ManualPage() {
               )}`}
               target="_blank"
               rel="noopener"
-              className="flex min-h-[48px] items-center justify-center rounded-btn bg-[#25D366] font-bold text-white"
+              className="flex min-h-[48px] items-center justify-center rounded-btn bg-[#0E7A52] font-bold text-white"
             >
               왓츠앱으로 보내기
             </a>
@@ -75,7 +75,7 @@ const HomeMock = (
       <p className="mt-1 text-[13px] font-bold text-ink">Budi 기사</p>
       <p className="text-[10px] text-ink-sub">오늘 07:58 출근</p>
     </MockCard>
-    <div className="flex h-11 items-center justify-center rounded-xl bg-action text-[13px] font-extrabold text-white ring-4 ring-[#F2C230]">
+    <div className="flex h-11 items-center justify-center rounded-xl bg-action text-[13px] font-extrabold text-white ring-[3px] ring-action ring-offset-2 ring-offset-bg">
       🚗 기사 호출
     </div>
     <div className="grid grid-cols-2 gap-1.5">
@@ -93,7 +93,7 @@ const HomeMock = (
 
 const PickupMock = (
   <Phone title="‹  픽업 위치">
-    <div className="flex h-9 items-center justify-center rounded-xl bg-action text-[11px] font-bold text-white ring-4 ring-[#F2C230]">
+    <div className="flex h-9 items-center justify-center rounded-xl bg-action text-[11px] font-bold text-white ring-[3px] ring-action ring-offset-2 ring-offset-bg">
       📍 현재 위치에서 픽업
     </div>
     <div className="rounded-xl bg-surface px-2 py-2 text-ink-faint ring-1 ring-line">🔍 장소 검색</div>
@@ -128,7 +128,7 @@ const DriverClockMock = (
       <span className="rounded-full bg-line px-1.5 py-0.5 text-[10px] font-bold text-ink-sub">● 퇴근</span>
       <p className="mt-1 text-[13px] font-bold text-ink">Budi 기사</p>
     </MockCard>
-    <div className="rounded-xl bg-surface py-2 text-center font-semibold text-ink ring-2 ring-[#F2C230]">기사님 대신 출근 처리</div>
+    <div className="rounded-xl bg-surface py-2 text-center font-semibold text-ink ring-2 ring-action">기사님 대신 출근 처리</div>
     <div className="flex h-10 items-center justify-center rounded-xl bg-action/35 text-[12px] font-extrabold text-white">🚗 기사 호출</div>
   </Phone>
 );

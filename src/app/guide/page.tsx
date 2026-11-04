@@ -77,7 +77,7 @@ export default function OwnerGuidePage() {
       <header className="relative overflow-hidden bg-navy px-5 pb-8 pt-[calc(24px+var(--safe-top))] text-white print:px-8 print:pb-5 print:pt-6">
         <span aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-action/40 blur-3xl print:hidden" />
         <div className="relative mx-auto max-w-md print:max-w-none">
-          <p className="text-[13px] font-semibold tracking-wide text-[#F2C230]">BossCall 사용 안내 · 사장님용</p>
+          <p className="text-[13px] font-semibold tracking-wide text-brand-teal">BossCall 사용 안내 · 사장님용</p>
           <h1 className="mt-2 text-[28px] font-extrabold leading-tight [text-wrap:balance] print:text-[26px]">
             기사님 부를 때,
             <br />
@@ -152,7 +152,7 @@ export default function OwnerGuidePage() {
             href={`https://wa.me/?text=${encodeURIComponent(waText)}`}
             target="_blank"
             rel="noopener"
-            className="mt-4 flex min-h-[52px] items-center justify-center gap-2 rounded-btn bg-[#25D366] text-[15px] font-bold text-white"
+            className="mt-4 flex min-h-[52px] items-center justify-center gap-2 rounded-btn bg-[#0E7A52] text-[15px] font-bold text-white"
           >
             WhatsApp으로 기사님께 보내기
           </a>

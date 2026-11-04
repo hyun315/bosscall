@@ -9,6 +9,7 @@ import { errorMessage, trackClient } from "@/services/client/api";
 import { reverseGeocode } from "@/services/client/location";
 import type { DriverDoc, DriverLocationDoc } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
+import { IconCar, IconPin } from "@/components/brand/Icons";
 
 export function useDriverLocation(groupId: string, driver: DriverDoc | null | undefined) {
   const enabled = Boolean(driver && driver.currentSessionId && driver.locationSharing);
@@ -55,9 +56,7 @@ export function DriverLocationMap({
       <div className="card overflow-hidden">
         {emptyText || !data ? (
           <div className="flex items-center gap-3 p-4">
-            <span className="text-2xl" aria-hidden>
-              📍
-            </span>
+            <IconPin className="h-6 w-6 shrink-0 text-ink-sub" />
             <p className="text-sm text-ink-sub">{emptyText}</p>
           </div>
         ) : (
@@ -133,11 +132,11 @@ function LocationBody({ data, now, height, groupId }: { data: DriverLocationDoc;
             <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" aria-hidden>
               <span className={`absolute -inset-3 rounded-full ${stale ? "bg-ink-faint/30" : "bc-pulse-ring bg-action/40"}`} />
               <span
-                className={`relative flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white text-base shadow-modal ${
+                className={`relative flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white text-white shadow-modal ${
                   stale ? "bg-ink-faint" : "bg-action"
                 }`}
               >
-                🚗
+                <IconCar className="h-5 w-5" />
               </span>
             </div>
           </>

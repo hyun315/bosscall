@@ -1,4 +1,5 @@
 "use client";
+import { IconFlag, IconHistory, IconPin, IconStar } from "@/components/brand/Icons";
 import type { ReactNode } from "react";
 import { useI18n } from "@/i18n/client";
 import { googleMapsViewUrl } from "@/lib/format";
@@ -26,8 +27,8 @@ export function LocationCard({
   const { t } = useI18n();
   return (
     <div className="flex items-start gap-3">
-      <span className={`mt-0.5 ${large ? "text-2xl" : "text-xl"}`} aria-hidden>
-        {kind === "pickup" ? "📍" : "🎯"}
+      <span className={`mt-0.5 ${kind === "pickup" ? "text-link" : "text-teal"}`} aria-hidden>
+        {kind === "pickup" ? <IconPin className={large ? "h-7 w-7" : "h-6 w-6"} /> : <IconFlag className={large ? "h-7 w-7" : "h-6 w-6"} />}
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold text-ink-sub">{kind === "pickup" ? t("loc.pickup") : t("loc.destination")}</p>
@@ -59,7 +60,7 @@ export function PlaceRow({
   onClick,
   trailing,
 }: {
-  icon: string;
+  icon: ReactNode;
   title: string;
   subtitle?: string;
   onClick?: () => void;
@@ -72,7 +73,7 @@ export function PlaceRow({
         onClick={onClick}
         className="flex min-h-[56px] flex-1 items-center gap-3 px-4 py-2.5 text-left active:bg-bg"
       >
-        <span className="text-xl" aria-hidden>
+        <span className="text-ink-sub" aria-hidden>
           {icon}
         </span>
         <span className="min-w-0 flex-1">
@@ -86,9 +87,9 @@ export function PlaceRow({
 }
 
 export function FavoriteLocationCard(props: { name: string; address: string; onClick?: () => void; trailing?: ReactNode }) {
-  return <PlaceRow icon="⭐" title={props.name} subtitle={props.address} onClick={props.onClick} trailing={props.trailing} />;
+  return <PlaceRow icon={<IconStar className="h-5 w-5 text-link" />} title={props.name} subtitle={props.address} onClick={props.onClick} trailing={props.trailing} />;
 }
 
 export function RecentLocationCard(props: { title: string; address: string; onClick?: () => void }) {
-  return <PlaceRow icon="🕘" title={props.title} subtitle={props.address} onClick={props.onClick} />;
+  return <PlaceRow icon={<IconHistory className="h-5 w-5" />} title={props.title} subtitle={props.address} onClick={props.onClick} />;
 }

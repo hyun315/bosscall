@@ -10,6 +10,7 @@ import { errorMessage } from "@/services/client/api";
 import { weekdayShort } from "@/lib/time";
 import type { DriverDoc } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
+import { IconAlarm } from "@/components/brand/Icons";
 
 const WEEK = [1, 2, 3, 4, 5, 6, 0];
 
@@ -45,7 +46,7 @@ export function ClockInReminderCard({ groupId, driver }: { groupId: string; driv
     <div className="card space-y-3 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[15px] font-semibold text-ink">🕘 {t("reminder.title")}</p>
+          <p className="flex items-center gap-2 text-[15px] font-semibold text-ink"><IconAlarm className="h-5 w-5 text-link" />{t("reminder.title")}</p>
           <p className="mt-0.5 text-sm leading-relaxed text-ink-sub">
             {saved ? t("reminder.onDesc", { time: saved.time }) : t("reminder.desc")}
           </p>

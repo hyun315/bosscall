@@ -1,6 +1,7 @@
 "use client";
 import { LOCALES, LOCALE_NAMES } from "@/i18n/core";
 import { useI18n } from "@/i18n/client";
+import { IconGlobe } from "@/components/brand/Icons";
 
 /**
  * 언어 선택 — 한국어 / Bahasa Indonesia / English.
@@ -37,7 +38,7 @@ export function LanguagePicker({ variant = "card" }: { variant?: "card" | "compa
   return (
     <section className="card space-y-3 p-4">
       <div>
-        <p className="text-[15px] font-semibold text-ink">🌐 {t("lang.title")}</p>
+        <p className="flex items-center gap-2 text-[15px] font-semibold text-ink"><IconGlobe className="h-5 w-5 text-ink-sub" />{t("lang.title")}</p>
         <p className="mt-0.5 text-sm text-ink-sub">{t("lang.desc")}</p>
       </div>
       {buttons}

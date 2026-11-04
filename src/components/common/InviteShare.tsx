@@ -6,6 +6,7 @@ import { createInvite } from "@/services/client/actions";
 import { errorMessage } from "@/services/client/api";
 import { useI18n } from "@/i18n/client";
 import { translate } from "@/i18n/index";
+import { IconSend } from "@/components/brand/Icons";
 
 /**
  * 초대 링크 생성·공유 — 기사/가족 초대 (§1 Driver 초대, Family Member 초대)
@@ -80,7 +81,7 @@ export function InviteShare({
 
   if (!invite) {
     return (
-      <Button block loading={busy} onClick={() => void make()} icon={<span aria-hidden>✉️</span>}>
+      <Button block loading={busy} onClick={() => void make()} icon={<IconSend className="h-5 w-5" />}>
         {role === "DRIVER" ? t("invite.makeDriver") : t("invite.makeMember")}
       </Button>
     );
@@ -97,7 +98,7 @@ export function InviteShare({
           href={`https://wa.me/?text=${encodeURIComponent(message)}`}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex min-h-[48px] items-center justify-center rounded-btn bg-[#25D366] px-4 font-semibold text-white active:brightness-95"
+          className="inline-flex min-h-[48px] items-center justify-center rounded-btn bg-[#0E7A52] px-4 font-semibold text-white active:brightness-95"
         >
           WhatsApp
         </a>
