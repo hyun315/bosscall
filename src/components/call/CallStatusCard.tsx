@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useI18n } from "@/i18n/client";
+import { CallProgress } from "@/components/call/CallProgress";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { CALL_STATUS_LABEL, shortPlace } from "@/lib/format";
 import type { CallDoc } from "@/types/domain";
@@ -29,6 +30,7 @@ export function CallStatusCard({ call, viewer }: { call: CallDoc; viewer: "owner
       <p className="mt-0.5 truncate text-sm text-ink-sub">
         {shortPlace(call.pickupName, call.pickupAddress)} → {shortPlace(call.destinationName, call.destinationAddress)}
       </p>
+      {viewer === "owner" && <CallProgress status={call.status} compact className="mt-3" />}
     </Link>
   );
 }

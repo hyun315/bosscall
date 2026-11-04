@@ -10,6 +10,7 @@ import { ErrorState, LoadingState, NotificationBanner } from "@/components/commo
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { useToast } from "@/components/common/Toast";
 import { DriverLocationMap } from "@/components/driver/DriverLocationMap";
+import { CallProgress } from "@/components/call/CallProgress";
 import { LocationCard } from "@/components/location/LocationCard";
 import { lim, ob, useLiveDoc, useLiveQuery } from "@/hooks/useLive";
 import { useSearchParam } from "@/hooks/useSearchParam";
@@ -341,6 +342,7 @@ function OwnerPanel({
           {call.status === "RECEIVED" ? t("call.seen") : t("call.delivering")}
         </p>
         <p className="mt-1 text-sm tabular-nums text-ink-faint">{t("call.waitingSeconds", { s: seconds })}</p>
+        <CallProgress status={call.status} className="mt-6 w-full" />
       </div>
     );
   }
@@ -358,7 +360,7 @@ function OwnerPanel({
       <div className="card p-6">
         <p className="text-sm font-bold text-success">✓ {t(CALL_STATUS_LABEL[call.status].key)}</p>
         <p className="mt-2 whitespace-pre-line text-xl font-bold leading-snug text-ink">{headline[call.status]}</p>
-        <ProgressSteps status={call.status} />
+        <CallProgress status={call.status} className="mt-5" />
         {driverPhone && (
           <div className="mt-5 grid grid-cols-2 gap-3">
             <a
@@ -434,28 +436,6 @@ function OwnerPanel({
         </Button>
       </div>
     </div>
-  );
-}
-
-function ProgressSteps({ status }: { status: CallDoc["status"] }) {
-  const { t } = useI18n();
-  const steps: Array<{ key: string; label: MsgKey }> = [
-    { key: "ACCEPTED", label: "step.accepted" },
-    { key: "ON_THE_WAY", label: "step.onTheWay" },
-    { key: "ARRIVED", label: "step.arrived" },
-    { key: "TRIP_STARTED", label: "step.trip" },
-    { key: "COMPLETED", label: "step.done" },
-  ];
-  const idx = steps.findIndex((s) => s.key === status);
-  return (
-    <ol className="mt-5 flex items-center gap-1" aria-label={t("step.aria")}>
-      {steps.map((s, i) => (
-        <li key={s.key} className="flex flex-1 flex-col items-center gap-1">
-          <span className={`h-1.5 w-full rounded-full ${i <= idx ? "bg-success-solid" : "bg-line"}`} />
-          <span className={`text-[11px] font-semibold ${i <= idx ? "text-success" : "text-ink-faint"}`}>{t(s.label)}</span>
-        </li>
-      ))}
-    </ol>
   );
 }
 

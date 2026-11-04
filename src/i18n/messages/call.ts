@@ -151,8 +151,8 @@ export const callMsgs = {
 
   // ── 진행 단계
   "step.aria": { ko: "진행 단계", id: "Tahap perjalanan", en: "Progress" },
-  "step.accepted": { ko: "수락", id: "Diterima", en: "Accepted" },
-  "step.onTheWay": { ko: "이동", id: "Jalan", en: "En route" },
+  "step.called": { ko: "호출", id: "Dipanggil", en: "Called" },
+  "step.onTheWay": { ko: "출발", id: "Berangkat", en: "On the way" },
   "step.arrived": { ko: "도착", id: "Tiba", en: "Arrived" },
   "step.trip": { ko: "운행", id: "Perjalanan", en: "Trip" },
   "step.done": { ko: "완료", id: "Selesai", en: "Done" },
