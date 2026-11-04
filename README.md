@@ -376,3 +376,12 @@ npm run typecheck
   - 정기 실행: `.github/workflows/clockin-reminders.yml` 이 10분마다 `GET /api/cron/clockin-reminders` 호출. 하루 한 번만 보내도록 서버가 표시하므로 여러 번 불려도 안전(비밀값 불필요). GitHub Actions 의 정기 실행은 몇 분 늦어질 수 있다.
   - 계산: `lib/clockInReminder.ts` (테스트 `tests/clockInReminder.test.ts`)
 - **놓친 호출 표시**: 사장 홈에 "오늘 ○○님이 응답하지 못한 호출 N건" — 누르면 기록으로.
+
+## 26. 브랜드 리뉴얼 (2026-11-04)
+
+- **로고** `public/brand/`: 가로형(밝은/어두운 바탕), 세로형, 심볼만, 앱 아이콘. 배포용 SVG는 글자를 Inter Bold 외곽선으로 바꿨고, 고칠 수 있는 글자형 원본은 `public/brand/editable/`. 화면에서는 공통 컴포넌트 `components/brand/Logo.tsx`(horizontal·symbol·vertical × auto·light·dark)만 씁니다. 모양·비율·색은 바꾸지 않습니다.
+- **PWA 아이콘** `public/icons/` 새로 생성 (192·512·maskable·apple-touch·badge·favicon). 이미 홈 화면에 추가한 휴대폰은 다시 추가해야 새 아이콘으로 바뀔 수 있습니다.
+- **색** — 브랜드 색과 화면용(UI) 색을 나눴습니다. 브랜드: blue #1479C9 · navy #102A43 · teal #55B8A5 · gray #F4F7FA. UI 변수는 `globals.css`(밝은/다크), WCAG AA(글자 4.5:1, 큰 글자·아이콘·테두리 3:1) 기준으로 계산. 기능 표시(근무 중 등)는 진한 teal #167C70, Soft Teal은 장식에만. 링크 글자 `text-link`, 흰 글자 바탕은 `success-solid`·`danger-solid`. WhatsApp 단추 #0E7A52.
+- **아이콘** — 앱 화면의 이모지를 선 아이콘(`components/brand/Icons.tsx`)으로 통일. 푸시 알림 제목과 설명서·안내장 그림의 이모지는 그대로.
+- **화면** — 로그인(로고 + 영어 슬로건 + 각 언어 설명), 시작 화면, 헤더 로고, 설정 › **BossCall 소개**(`/about`, Our Story, 문의 hanin.jakarta114@gmail.com). 이용약관·개인정보처리방침은 본문이 생길 때까지 숨김.
+- 기능·데이터·API·DB·인증은 바꾸지 않았습니다.
