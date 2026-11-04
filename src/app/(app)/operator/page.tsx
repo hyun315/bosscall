@@ -104,7 +104,7 @@ function ReportSection() {
                   aria-pressed={on}
                   onClick={() => setDims(on ? dims.filter((x) => x !== d) : [...dims, d])}
                   className={`min-h-[40px] rounded-full border px-3 text-sm ${
-                    on ? "border-action bg-action-soft font-semibold text-action" : "border-line text-ink-sub"
+                    on ? "border-action bg-action-soft font-semibold text-link" : "border-line text-ink-sub"
                   }`}
                 >
                   {DIM_LABEL[d]}

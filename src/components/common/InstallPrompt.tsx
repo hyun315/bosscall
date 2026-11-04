@@ -21,7 +21,7 @@ import { useI18n } from "@/i18n/client";
 /** Safari 공유 버튼 모양 (□↑) */
 function ShareIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="inline h-5 w-5 align-[-3px] text-action" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg viewBox="0 0 24 24" className="inline h-5 w-5 align-[-3px] text-link" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="M12 3v12M8 7l4-4 4 4" />
       <path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1" />
     </svg>

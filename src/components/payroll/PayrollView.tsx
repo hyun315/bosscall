@@ -191,7 +191,7 @@ export function PayrollView({
                     <div className="text-right text-sm tabular-nums">
                       <p className="font-semibold text-ink">{formatMinutes(d.workedMin, locale)}</p>
                       {d.overtimeMin > 0 && (
-                        <p className="font-semibold text-action">{t("pay.overtimeShort", { dur: formatMinutes(d.overtimeMin, locale) })}</p>
+                        <p className="font-semibold text-link">{t("pay.overtimeShort", { dur: formatMinutes(d.overtimeMin, locale) })}</p>
                       )}
                     </div>
                   </div>

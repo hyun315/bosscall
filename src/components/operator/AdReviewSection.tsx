@@ -249,7 +249,7 @@ function RequestCard({
               <>
                 <dt className="text-ink-sub">WhatsApp</dt>
                 <dd>
-                  <a className="font-semibold text-action" href={wa ?? "#"} target="_blank" rel="noopener">
+                  <a className="font-semibold text-link" href={wa ?? "#"} target="_blank" rel="noopener">
                     {r.whatsapp}
                   </a>
                 </dd>
@@ -263,7 +263,7 @@ function RequestCard({
             )}
             <dt className="text-ink-sub">이메일</dt>
             <dd>
-              <a className="font-semibold text-action" href={`mailto:${r.email}`}>
+              <a className="font-semibold text-link" href={`mailto:${r.email}`}>
                 {r.email}
               </a>
             </dd>
@@ -272,7 +272,7 @@ function RequestCard({
             <dt className="text-ink-sub">링크</dt>
             <dd className="break-all text-ink">
               {r.linkUrl ? (
-                <a className="text-action" href={r.linkUrl} target="_blank" rel="noopener">
+                <a className="text-link" href={r.linkUrl} target="_blank" rel="noopener">
                   {r.linkUrl}
                 </a>
               ) : (

@@ -115,7 +115,7 @@ export function OwnerHome() {
                 </span>
                 {t("home.stepDriver")}
                 {(blocker === "NOT_CONNECTED" || blocker === "NO_DRIVER") && (
-                  <Link href={driver ? `/drivers/${driver.id}` : "/drivers"} className="ml-auto text-sm font-semibold text-action">
+                  <Link href={driver ? `/drivers/${driver.id}` : "/drivers"} className="ml-auto text-sm font-semibold text-link">
                     {t("home.invite")} ›
                   </Link>
                 )}
@@ -154,7 +154,7 @@ export function OwnerHome() {
                   <button
                     type="button"
                     onClick={() => setShowOthers((v) => !v)}
-                    className="min-h-[40px] text-sm font-semibold text-action"
+                    className="min-h-[40px] text-sm font-semibold text-link"
                     aria-expanded={showOthers}
                   >
                     {t("home.otherDrivers", { n: others.length })} {showOthers ? "▲" : "▼"}
@@ -302,7 +302,7 @@ export function OwnerHome() {
           <div className="mb-2 flex items-center justify-between px-1">
             <h2 className="text-sm font-semibold text-ink-sub">{t("home.recentCalls")}</h2>
             {recent.data.length > 0 && (
-              <Link href="/history" className="text-sm font-semibold text-action">
+              <Link href="/history" className="text-sm font-semibold text-link">
                 {t("common.all")} ›
               </Link>
             )}

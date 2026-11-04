@@ -58,6 +58,7 @@ export default function SettingsPage() {
     { href: "/settings/account", icon: "👤", label: "settings.account" },
     // 사용 안내 — 기사는 인도네시아어 기사용, 그 외는 사용 설명서(차례·단추 모양·문제 해결)
     { href: role === "DRIVER" ? "/manual/driver" : "/manual", icon: "📖", label: "settings.guide" },
+    { href: "/about", icon: "ℹ️", label: "about.title" },
   ];
 
   return (
@@ -101,7 +102,7 @@ export default function SettingsPage() {
             {/* 운영자 전용 메뉴 — 한국어로만 표시 */}
             <span className="flex-1 text-[15px] font-semibold text-ink">운영자 도구</span>
             {pendingAds > 0 && (
-              <span className="rounded-full bg-danger px-2 py-0.5 text-xs font-bold text-white">광고 신청 {pendingAds}</span>
+              <span className="rounded-full bg-danger-solid px-2 py-0.5 text-xs font-bold text-white">광고 신청 {pendingAds}</span>
             )}
             <span className="text-ink-faint" aria-hidden>
               ›

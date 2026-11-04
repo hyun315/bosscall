@@ -79,7 +79,7 @@ export default function DriverDetailPage() {
         back="/drivers"
         right={
           isOwner(role) && !driver.removedAt ? (
-            <button type="button" onClick={() => setTab("info")} className="rounded-full px-3 py-1.5 text-sm font-semibold text-action">
+            <button type="button" onClick={() => setTab("info")} className="rounded-full px-3 py-1.5 text-sm font-semibold text-link">
               ✏️ {t("drivers.edit")}
             </button>
           ) : undefined

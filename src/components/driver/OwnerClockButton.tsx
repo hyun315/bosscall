@@ -46,7 +46,7 @@ export function OwnerClockButton({ driver, compact = false }: { driver: DriverDo
         <button
           type="button"
           onClick={() => setConfirm(true)}
-          className="min-h-[44px] w-full rounded-btn text-sm font-semibold text-action active:bg-action-soft"
+          className="min-h-[44px] w-full rounded-btn text-sm font-semibold text-link active:bg-action-soft"
         >
           {t(onDuty ? "ownerClock.outButton" : "ownerClock.inButton")}
         </button>

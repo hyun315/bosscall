@@ -80,7 +80,7 @@ export default function OnboardingPage() {
         {[t("onb.step1"), t("home.stepDriver"), t("home.stepFirstCall")].map((label, i) => (
           <li key={label} className="flex-1">
             <div className={`h-1.5 rounded-full ${i < step ? "bg-action" : "bg-line"}`} />
-            <p className={`mt-1.5 text-xs font-semibold ${i + 1 === step ? "text-action" : "text-ink-faint"}`}>
+            <p className={`mt-1.5 text-xs font-semibold ${i + 1 === step ? "text-link" : "text-ink-faint"}`}>
               {i + 1}. {label}
             </p>
           </li>

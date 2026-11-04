@@ -276,7 +276,7 @@ export function AdApplyForm({ mode }: { mode: "public" | "operator" }) {
               <p className="mt-1 text-sm text-ink-sub">아래 4개 화면에 모두 나옵니다. 무료 기간에는 모든 광고가 무작위 순서로 고르게 노출됩니다.</p>
               <span className="mt-3 flex flex-wrap gap-1.5">
                 {SLOT_INFO.map((si) => (
-                  <span key={si.slot} className="rounded-full bg-action-soft px-2.5 py-1 text-xs font-semibold text-action">
+                  <span key={si.slot} className="rounded-full bg-action-soft px-2.5 py-1 text-xs font-semibold text-link">
                     {si.icon} {si.title}
                   </span>
                 ))}
@@ -315,7 +315,7 @@ export function AdApplyForm({ mode }: { mode: "public" | "operator" }) {
                     {info.slots.map((s) => {
                       const si = SLOT_INFO.find((x) => x.slot === s);
                       return (
-                        <span key={s} className="rounded-full bg-action-soft px-2.5 py-1 text-xs font-semibold text-action">
+                        <span key={s} className="rounded-full bg-action-soft px-2.5 py-1 text-xs font-semibold text-link">
                           {si?.icon} {si?.title}
                         </span>
                       );

@@ -1,14 +1,14 @@
 {
   "name": "BossCall",
   "short_name": "BossCall",
-  "description": "내 기사, 한 번에 호출.",
+  "description": "Your Family. Your Driver. Your Peace of Mind.",
   "lang": "ko",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0B1736",
-  "theme_color": "#0B1736",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },

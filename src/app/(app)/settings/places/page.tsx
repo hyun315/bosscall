@@ -143,7 +143,7 @@ function AddFavoriteSheet({ groupId, onClose }: { groupId: string; onClose: () =
                 aria-checked={category === c}
                 onClick={() => setCategory(category === c ? null : c)}
                 className={`min-h-[40px] rounded-full border px-3 text-sm ${
-                  category === c ? "border-action bg-action-soft font-semibold text-action" : "border-line text-ink-sub"
+                  category === c ? "border-action bg-action-soft font-semibold text-link" : "border-line text-ink-sub"
                 }`}
               >
                 {t(`cat.${c}`)}
@@ -158,7 +158,7 @@ function AddFavoriteSheet({ groupId, onClose }: { groupId: string; onClose: () =
               name={place.name}
               address={place.address}
               action={
-                <button onClick={() => setPlace(null)} className="text-sm font-semibold text-action">
+                <button onClick={() => setPlace(null)} className="text-sm font-semibold text-link">
                   {t("common.change")}
                 </button>
               }

@@ -449,7 +449,7 @@ function ProgressSteps({ status }: { status: CallDoc["status"] }) {
     <ol className="mt-5 flex items-center gap-1" aria-label={t("step.aria")}>
       {steps.map((s, i) => (
         <li key={s.key} className="flex flex-1 flex-col items-center gap-1">
-          <span className={`h-1.5 w-full rounded-full ${i <= idx ? "bg-success" : "bg-line"}`} />
+          <span className={`h-1.5 w-full rounded-full ${i <= idx ? "bg-success-solid" : "bg-line"}`} />
           <span className={`text-[11px] font-semibold ${i <= idx ? "text-success" : "text-ink-faint"}`}>{t(s.label)}</span>
         </li>
       ))}
@@ -484,7 +484,7 @@ function DriverPanel({
     // D02 Incoming Call
     return (
       <div className="rounded-card border-2 border-action bg-action-soft p-5">
-        <p className="text-lg font-bold text-action">{t("push.callCreated.title")}</p>
+        <p className="text-lg font-bold text-link">{t("push.callCreated.title")}</p>
         <p className="mt-2 text-2xl font-extrabold text-ink">{t("call.honorific", { name: call.callerName })}</p>
         <p className="mt-2 text-lg font-semibold text-ink">📍 {shortPlace(call.pickupName, call.pickupAddress)}</p>
         <p className="text-lg font-semibold text-ink">🎯 {shortPlace(call.destinationName, call.destinationAddress)}</p>

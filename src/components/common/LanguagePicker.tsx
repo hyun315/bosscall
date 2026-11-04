@@ -23,7 +23,7 @@ export function LanguagePicker({ variant = "card" }: { variant?: "card" | "compa
             onClick={() => setLocale(l)}
             className={`flex min-h-[44px] items-center justify-center gap-2 rounded-btn border px-3 text-[15px] font-semibold ${
               variant === "card" ? "justify-between" : ""
-            } ${on ? "border-action bg-action-soft text-action" : "border-line bg-surface text-ink"}`}
+            } ${on ? "border-action bg-action-soft text-link" : "border-line bg-surface text-ink"}`}
           >
             <span className={variant === "compact" ? "text-sm" : ""}>{LOCALE_NAMES[l]}</span>
             {variant === "card" && on && <span aria-hidden>✓</span>}

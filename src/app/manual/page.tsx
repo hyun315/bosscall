@@ -109,7 +109,7 @@ const ProgressMock = (
     <div className="rounded-xl bg-success-soft px-2 py-2 font-bold text-success">✓ 기사님이 수락하고 출발했습니다</div>
     <div className="flex items-center justify-between rounded-xl bg-surface px-2 py-2 ring-1 ring-line">
       {["수락", "이동", "도착", "운행", "완료"].map((s, i) => (
-        <span key={s} className={`text-[10px] font-bold ${i <= 1 ? "text-action" : "text-ink-faint"}`}>
+        <span key={s} className={`text-[10px] font-bold ${i <= 1 ? "text-link" : "text-ink-faint"}`}>
           {s}
         </span>
       ))}

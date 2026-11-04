@@ -31,7 +31,7 @@ export function CancelAlert({ groupId, alerts }: { groupId: string; alerts: Call
       className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 px-5"
     >
       <div className="w-full max-w-sm overflow-hidden rounded-card bg-surface text-center shadow-modal">
-        <div className="bg-danger px-5 pb-5 pt-6 text-white">
+        <div className="bg-danger-solid px-5 pb-5 pt-6 text-white">
           <p className="text-5xl" aria-hidden>
             {missed ? "⏰" : "🚫"}
           </p>

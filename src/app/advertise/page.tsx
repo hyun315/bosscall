@@ -103,7 +103,7 @@ export default function AdvertisePage() {
               >
                 <span className="flex items-center justify-between">
                   <span className="text-[17px] font-extrabold text-ink">{PRODUCT_INFO[p].name}</span>
-                  <span className="text-sm font-semibold text-action">신청 ›</span>
+                  <span className="text-sm font-semibold text-link">신청 ›</span>
                 </span>
                 <span className="mt-1 block text-sm text-ink-sub">
                   {AD_TIERS_ENABLED ? PRODUCT_INFO[p].desc : "홈 · 기사님 응답 대기 · 픽업 위치 · 목적지 — 4개 화면 모두"}

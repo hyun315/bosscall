@@ -154,7 +154,7 @@ function LocationBody({ data, now, height, groupId }: { data: DriverLocationDoc;
             href={googleMapsViewUrl(data.lat, data.lng, null)}
             target="_blank"
             rel="noreferrer"
-            className="shrink-0 text-sm font-semibold text-action"
+            className="shrink-0 text-sm font-semibold text-link"
           >
             {t("common.googleMaps")}
           </a>

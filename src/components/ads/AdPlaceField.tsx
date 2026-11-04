@@ -14,7 +14,7 @@ export function AdPlaceField({ value, onChange }: { value: AdPlace | null; onCha
           <span className="block truncate text-[15px] font-semibold text-ink">{value.name}</span>
           <span className="block truncate text-xs text-ink-sub">{value.address}</span>
         </span>
-        <button type="button" onClick={() => onChange(null)} className="shrink-0 text-sm font-semibold text-action">
+        <button type="button" onClick={() => onChange(null)} className="shrink-0 text-sm font-semibold text-link">
           변경
         </button>
       </div>

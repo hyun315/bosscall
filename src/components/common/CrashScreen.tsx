@@ -40,7 +40,7 @@ export function CrashScreen({ error, reset }: { error: Error & { digest?: string
         다시 열기 · Buka lagi
       </button>
       {reset && (
-        <button type="button" onClick={reset} className="text-sm font-semibold text-action">
+        <button type="button" onClick={reset} className="text-sm font-semibold text-link">
           이 화면만 다시 시도
         </button>
       )}

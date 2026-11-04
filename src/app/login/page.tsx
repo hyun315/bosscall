@@ -6,6 +6,7 @@ import { safeNext, useSearchParam } from "@/hooks/useSearchParam";
 import { useSession } from "@/hooks/useSession";
 import { useI18n } from "@/i18n/client";
 import { LanguagePicker } from "@/components/common/LanguagePicker";
+import { Logo } from "@/components/brand/Logo";
 
 /** S02 Login — MVP 인증: Google 로그인 */
 export default function LoginPage() {
@@ -43,12 +44,12 @@ export default function LoginPage() {
         <LanguagePicker variant="compact" />
       </div>
       <div className="flex-1">
-        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-[20px] bg-navy text-3xl" aria-hidden>
-          🚗
-        </div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-brand">BossCall</h1>
-        <p className="mt-2 text-xl font-bold text-ink">{t("brand.tagline")}</p>
-        <p className="mt-4 text-[15px] leading-relaxed text-ink-sub">
+        <h1>
+          <Logo className="h-14 w-auto" />
+        </h1>
+        <p className="mt-8 text-[22px] font-bold leading-snug tracking-tight text-ink [text-wrap:balance]">{t("brand.slogan")}</p>
+        <p className="mt-2 text-[15px] font-medium text-teal">{t("brand.sloganDesc")}</p>
+        <p className="mt-6 text-[15px] leading-relaxed text-ink-sub">
           {t("brand.desc1")}
           <br />
           {t("brand.desc2")}

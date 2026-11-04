@@ -4,13 +4,17 @@ import { Providers } from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "BossCall — Your driver, one tap away",
-  description: "Call your private driver in one tap. 내 기사, 한 번에 호출. Panggil sopir Anda sekali tekan.",
+  title: "BossCall — Your Family. Your Driver. Your Peace of Mind.",
+  description: "Your Family. Your Driver. Your Peace of Mind. 가족과 기사님의 하루를 편하게 잇습니다. Menghubungkan hari keluarga dan sopir.",
   manifest: "/manifest.webmanifest",
   applicationName: "BossCall",
   appleWebApp: { capable: true, title: "BossCall", statusBarStyle: "default" },
   icons: {
-    icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+    icon: [
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
   },
   formatDetection: { telephone: false },
@@ -21,8 +25,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#0B1736" },
-    { media: "(prefers-color-scheme: dark)", color: "#0E1014" },
+    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
+    { media: "(prefers-color-scheme: dark)", color: "#13212F" },
   ],
 };
 

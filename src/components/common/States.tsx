@@ -34,7 +34,7 @@ export function LoadingState({ label, full = false }: { label?: string; full?: b
       className={`flex flex-col items-center justify-center gap-3 text-ink-sub ${full ? "min-h-[60dvh]" : "py-12"}`}
       role="status"
     >
-      <Spinner className="h-7 w-7 text-action" />
+      <Spinner className="h-7 w-7 text-link" />
       <span className="text-sm">{label ?? t("common.loading")}</span>
     </div>
   );

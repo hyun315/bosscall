@@ -19,7 +19,7 @@ export function CallStatusCard({ call, viewer }: { call: CallDoc; viewer: "owner
     >
       <div className="flex items-center justify-between">
         <StatusBadge label={t(s.key)} tone={s.tone} />
-        <span className="text-sm font-semibold text-action">{t("common.open")} ›</span>
+        <span className="text-sm font-semibold text-link">{t("common.open")} ›</span>
       </div>
       <p className="mt-2 text-base font-bold text-ink">
         {viewer === "driver"

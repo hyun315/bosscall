@@ -40,7 +40,7 @@ export function LocationCard({
             href={googleMapsViewUrl(lat, lng, placeId ?? null)}
             target="_blank"
             rel="noreferrer"
-            className="mt-1 inline-block text-sm font-semibold text-action"
+            className="mt-1 inline-block text-sm font-semibold text-link"
           >
             {t("common.viewOnMap")}
           </a>

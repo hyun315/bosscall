@@ -4,25 +4,27 @@ import { usePathname } from "next/navigation";
 import { useI18n } from "@/i18n/client";
 import type { MsgKey } from "@/i18n/index";
 import type { MemberRole } from "@/types/domain";
+import { IconDrivers, IconHistory, IconHome, IconProfile, IconSettings } from "@/components/brand/Icons";
+
 
 interface Tab {
   href: string;
   label: MsgKey;
-  icon: string;
+  icon: typeof IconHome;
   match: (p: string) => boolean;
 }
 
 const OWNER_TABS: Tab[] = [
-  { href: "/home", label: "nav.home", icon: "🏠", match: (p) => p === "/home" || p.startsWith("/call") },
-  { href: "/history", label: "nav.history", icon: "🗂", match: (p) => p.startsWith("/history") },
-  { href: "/drivers", label: "nav.drivers", icon: "🚗", match: (p) => p.startsWith("/drivers") },
-  { href: "/settings", label: "nav.settings", icon: "⚙️", match: (p) => p.startsWith("/settings") },
+  { href: "/home", label: "nav.home", icon: IconHome, match: (p) => p === "/home" || p.startsWith("/call") },
+  { href: "/history", label: "nav.history", icon: IconHistory, match: (p) => p.startsWith("/history") },
+  { href: "/drivers", label: "nav.drivers", icon: IconDrivers, match: (p) => p.startsWith("/drivers") },
+  { href: "/settings", label: "nav.settings", icon: IconSettings, match: (p) => p.startsWith("/settings") },
 ];
 
 const DRIVER_TABS: Tab[] = [
-  { href: "/home", label: "nav.home", icon: "🏠", match: (p) => p === "/home" || p.startsWith("/call") },
-  { href: "/history", label: "nav.history", icon: "🗂", match: (p) => p.startsWith("/history") },
-  { href: "/profile", label: "nav.profile", icon: "👤", match: (p) => p.startsWith("/profile") },
+  { href: "/home", label: "nav.home", icon: IconHome, match: (p) => p === "/home" || p.startsWith("/call") },
+  { href: "/history", label: "nav.history", icon: IconHistory, match: (p) => p.startsWith("/history") },
+  { href: "/profile", label: "nav.profile", icon: IconProfile, match: (p) => p.startsWith("/profile") },
 ];
 
 /** 하단 탭 (§18 BottomNavigation, §2 정보구조) */
@@ -44,12 +46,10 @@ export function BottomNavigation({ role }: { role: MemberRole }) {
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
                 className={`flex h-16 flex-col items-center justify-center gap-0.5 text-xs font-semibold ${
-                  active ? "text-action" : "text-ink-faint"
+                  active ? "text-link" : "text-ink-faint"
                 }`}
               >
-                <span className={`text-xl ${active ? "" : "opacity-60 grayscale"}`} aria-hidden>
-                  {tab.icon}
-                </span>
+                <tab.icon className={`h-6 w-6 ${active ? "stroke-[2.4]" : ""}`} />
                 {t(tab.label)}
               </Link>
             </li>

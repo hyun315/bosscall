@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360">
+  <title>BossCall logo</title>
+  <desc>Two connected abstract human figures in blue and teal beside the BossCall wordmark.</desc>
+  <g transform="translate(36,28)">
+    <!-- Blue figure -->
+    <circle cx="112" cy="66" r="39" fill="#1479C9"/>
+    <path d="M38 222
+             C38 166 68 128 112 128
+             C155 128 184 157 191 202
+             C195 229 179 251 153 251
+             L79 251
+             C54 251 38 240 38 222Z"
+          fill="#1479C9"/>
+    <!-- Teal figure, slightly behind and to the right -->
+    <circle cx="204" cy="105" r="34" fill="#55B8A5"/>
+    <path d="M150 235
+             C154 184 174 151 211 151
+             C249 151 274 183 274 222
+             C274 241 260 253 241 253
+             L174 253
+             C157 253 148 246 150 235Z"
+          fill="#55B8A5"/>
+    <!-- Small negative-space overlap detail to express connection -->
+    <path d="M139 165 C163 153 190 154 210 169
+             C192 178 178 193 170 213
+             C163 193 153 178 139 165Z"
+          fill="#FFFFFF" opacity="0.92"/>
+  </g>
+  <text x="365" y="232"
+        font-family="Inter, Arial, Helvetica, sans-serif"
+        font-size="174" font-weight="700"
+        letter-spacing="-8" fill="#FFFFFF">BossCall</text>
+</svg>

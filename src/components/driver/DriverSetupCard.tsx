@@ -90,8 +90,8 @@ export function DriverSetupCard({ groupId }: { groupId: string }) {
   return (
     <section className="rounded-card border-2 border-action bg-action-soft p-4">
       <div className="flex items-center justify-between">
-        <p className="text-[13px] font-bold uppercase tracking-wide text-action">{t("setup.title")}</p>
-        <p className="text-[13px] font-bold text-action">{step} / 3</p>
+        <p className="text-[13px] font-bold uppercase tracking-wide text-link">{t("setup.title")}</p>
+        <p className="text-[13px] font-bold text-link">{step} / 3</p>
       </div>
       <div className="mt-2 flex gap-1.5" aria-hidden>
         {[1, 2, 3].map((n) => (

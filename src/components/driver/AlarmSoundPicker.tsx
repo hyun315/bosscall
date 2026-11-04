@@ -68,7 +68,7 @@ export function AlarmSoundPicker() {
             <button
               type="button"
               onClick={() => previewAlarm(id)}
-              className="min-h-[44px] rounded-btn px-3 text-sm font-semibold text-action active:bg-action-soft"
+              className="min-h-[44px] rounded-btn px-3 text-sm font-semibold text-link active:bg-action-soft"
               aria-label={t("alarm.previewAria", { name: t(`alarm.sound.${id}`) })}
             >
               ▶ {t("alarm.preview")}

@@ -1,11 +1,13 @@
 import type { Tone } from "@/lib/format";
 
 const TONE: Record<Tone, { box: string; dot: string }> = {
-  success: { box: "bg-success-soft text-success", dot: "bg-success" },
+  success: { box: "bg-success-soft text-success", dot: "bg-success-solid" },
   warning: { box: "bg-warning-soft text-warning-text", dot: "bg-warning" },
-  danger: { box: "bg-danger-soft text-danger", dot: "bg-danger" },
-  info: { box: "bg-action-soft text-action", dot: "bg-action" },
+  danger: { box: "bg-danger-soft text-danger", dot: "bg-danger-solid" },
+  info: { box: "bg-action-soft text-link", dot: "bg-action" },
   neutral: { box: "bg-bg text-ink-sub border border-line", dot: "bg-ink-faint" },
+  // 연결·근무 중 — 진한 틸 (브랜드 틸은 장식용이라 글자에 쓰지 않음)
+  connected: { box: "bg-teal-soft text-teal", dot: "bg-teal" },
 };
 
 /** 상태 배지 — 점(색) + 텍스트를 함께 표시해 색상만으로 전달하지 않는다 (§6) */

@@ -156,7 +156,7 @@ export default function OwnerGuidePage() {
           >
             WhatsApp으로 기사님께 보내기
           </a>
-          <Link href="/manual/driver" className="mt-2 block text-center text-sm font-semibold text-action">
+          <Link href="/manual/driver" className="mt-2 block text-center text-sm font-semibold text-link">
             기사용 설명서 미리 보기 ›
           </Link>
         </section>
@@ -168,13 +168,13 @@ export default function OwnerGuidePage() {
         >
           🖨 이 화면 인쇄하기
         </button>
-        <Link href="/manual" className="-mt-4 block text-center text-[15px] font-bold text-action print:hidden">
+        <Link href="/manual" className="-mt-4 block text-center text-[15px] font-bold text-link print:hidden">
           📖 자세한 사용 설명서 (이럴 땐 이렇게 · 문제 해결) ›
         </Link>
         <a
           href="/guide/bosscall-guide-owner.pdf"
           download
-          className="-mt-5 block text-center text-sm font-semibold text-action print:hidden"
+          className="-mt-5 block text-center text-sm font-semibold text-link print:hidden"
         >
           A4 인쇄용 PDF 내려받기 (사장님용)
         </a>

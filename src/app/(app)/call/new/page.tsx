@@ -289,7 +289,7 @@ export default function NewCallPage() {
                   lng={pickup.lng}
                   placeId={pickup.placeId}
                   action={
-                    <button onClick={() => setStep("pickup")} className="text-sm font-semibold text-action">
+                    <button onClick={() => setStep("pickup")} className="text-sm font-semibold text-link">
                       {t("common.change")}
                     </button>
                   }
@@ -304,7 +304,7 @@ export default function NewCallPage() {
                   lng={destination.lng}
                   placeId={destination.placeId}
                   action={
-                    <button onClick={() => setStep("destination")} className="text-sm font-semibold text-action">
+                    <button onClick={() => setStep("destination")} className="text-sm font-semibold text-link">
                       {t("common.change")}
                     </button>
                   }
@@ -322,7 +322,7 @@ export default function NewCallPage() {
                     <p className="font-semibold text-ink">
                       {selectedDriver ? t("driver.nameTitle", { name: selectedDriver.displayName }) : t("newCall.noDriverOnDuty")}
                     </p>
-                    <button type="button" onClick={() => setShowOtherDrivers(true)} className="text-sm font-semibold text-action">
+                    <button type="button" onClick={() => setShowOtherDrivers(true)} className="text-sm font-semibold text-link">
                       {t("newCall.otherDriver")} ›
                     </button>
                   </div>

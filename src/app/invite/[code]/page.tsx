@@ -80,7 +80,7 @@ export default function InvitePage() {
           <div className="mb-5">
             <LanguagePicker variant="compact" />
           </div>
-          <p className="text-sm font-semibold text-action">{t("invite.shareTitle")}</p>
+          <p className="text-sm font-semibold text-link">{t("invite.shareTitle")}</p>
           <h1 className="mt-2 text-2xl font-bold leading-snug text-ink">
             {preview.role === "DRIVER"
               ? t("inv.joinAsDriver", { group: preview.groupName })
