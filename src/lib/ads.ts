@@ -202,7 +202,8 @@ export function rankTaken(
   );
 }
 
-export type AdCell = { kind: "paid"; n: number; c: AdCampaignDoc } | { kind: "house"; n: number } | { kind: "empty"; n: number };
+/** house: 운영자 자체 광고. ad 가 없으면 기본(한인업소록) */
+export type AdCell = { kind: "paid"; n: number; c: AdCampaignDoc } | { kind: "house"; n: number; ad?: string } | { kind: "empty"; n: number };
 
 /** 이 화면의 1~5번 자리에 무엇이 나오는지 */
 export function slotLayout(all: readonly AdCampaignDoc[], slot: AdSlotId, now: number): AdCell[] {
@@ -249,7 +250,15 @@ export function simpleLayout(all: readonly AdCampaignDoc[], slot: AdSlotId, now:
   // 무료 기간: 화면에 들어올 때마다 무작위 순서 (seed 로 섞음 — 같은 화면 안에서는 순서 고정)
   const shown = seededShuffle(live, seed).slice(0, paidCap);
   const cells: AdCell[] = [{ kind: "house", n: 1 }, ...shown.map((c, i): AdCell => ({ kind: "paid", n: i + 2, c }))];
-  if (live.length < paidCap) cells.push({ kind: "empty", n: cells.length + 1 });
+  // 유료 광고가 다 차지 않은 칸은 운영자의 다른 앱(Kenal Dekat 등)이 먼저 채운다 — 유료 광고가 늘면 자연히 밀려난다
+  let room = paidCap - shown.length;
+  for (const h of EXTRA_HOUSE_ADS) {
+    if (room <= 0) break;
+    if (h.slots && !h.slots.includes(slot)) continue;
+    cells.push({ kind: "house", n: cells.length + 1, ad: h.id });
+    room--;
+  }
+  if (room > 0) cells.push({ kind: "empty", n: cells.length + 1 });
   return cells;
 }
 
@@ -315,6 +324,8 @@ export interface HouseAd {
   stat?: Tri;
   /** 카테고리 칩 */
   chips?: { icon: string; label: Tri }[];
+  /** 이 화면들에만 (없으면 모든 화면) */
+  slots?: readonly AdSlotId[];
 }
 
 export interface InquirySlot {
@@ -348,6 +359,43 @@ const HANIN_DIRECTORY: HouseAd = {
   cta: { ko: "업소록 열기", id: "Buka direktori", en: "Open directory" },
   url: "https://hanin-jakarta.vercel.app",
 };
+
+/** 운영자의 다른 앱 — 자카르타 장소 이야기 (빈 광고 칸을 채운다) */
+const KENAL_DEKAT: HouseAd = {
+  kind: "ad",
+  id: "kenal-dekat",
+  icon: "🏛️",
+  sponsor: { ko: "Kenal Dekat · 자카르타 이야기", id: "Kenal Dekat · Cerita Jakarta", en: "Kenal Dekat · Jakarta Stories" },
+  title: {
+    ko: "가는 곳의 이야기를 알고 가면, 다르게 보입니다",
+    id: "Kenali tempat tujuan lewat ceritanya",
+    en: "Know the story before you arrive",
+  },
+  body: {
+    ko: "짧게 읽고, 음성으로 듣는 장소 이야기",
+    id: "Baca singkat atau dengarkan ceritanya",
+    en: "Read in a minute, or listen on the way",
+  },
+  stat: { ko: "자카르타 20곳 · 이야기 60여 편", id: "20 tempat · 60+ cerita", en: "20 places · 60+ stories" },
+  chips: [
+    { icon: "🏛️", label: { ko: "모나스·유적지", id: "Monas & situs", en: "Landmarks" } },
+    { icon: "🕌", label: { ko: "모스크·성당", id: "Masjid & gereja", en: "Mosque & church" } },
+    { icon: "🖼️", label: { ko: "박물관", id: "Museum", en: "Museums" } },
+    { icon: "🦧", label: { ko: "동물원·공원", id: "Kebun binatang", en: "Zoo & parks" } },
+  ],
+  cta: { ko: "이야기 보기", id: "Lihat cerita", en: "Read stories" },
+  url: "https://kenal-dekat-psi.vercel.app",
+  // 픽업 화면은 바쁜 순간이라 빼고, 홈·기다리는 화면·목적지 고르는 화면에만
+  slots: ["homeBenefits", "waiting", "destinationSearch"],
+};
+
+/** 한인업소록 다음, 빈 칸을 채우는 운영자 자체 광고 (순서대로) */
+export const EXTRA_HOUSE_ADS: readonly HouseAd[] = [KENAL_DEKAT];
+
+/** house 칸에 나올 광고 (ad 가 없으면 한인업소록) */
+export function houseAdOf(id?: string): HouseAd {
+  return EXTRA_HOUSE_ADS.find((a) => a.id === id) ?? HANIN_DIRECTORY;
+}
 
 const INQUIRY: InquirySlot = { kind: "inquiry" };
 

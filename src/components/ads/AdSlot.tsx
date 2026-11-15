@@ -6,8 +6,8 @@ import { createPortal } from "react-dom";
 import { useReadySession } from "@/hooks/useSession";
 import { useAdCampaigns } from "@/hooks/useAdCampaigns";
 import {
-  SLOT_FALLBACK,
   adLink,
+  houseAdOf,
   adsEnabled,
   advertisePath,
   placeHref,
@@ -57,9 +57,8 @@ export function AdSlot({
   const [seed] = useState(() => Math.floor(Math.random() * 1000));
   const allCells = screenLayout(campaigns, slot, Date.now(), seed);
   const cells = part === "top" ? allCells.slice(0, 1) : part === "rest" ? allCells.slice(1) : allCells;
-  const house = SLOT_FALLBACK.find((c): c is HouseAd => c.kind === "ad");
   const adIds = cells
-    .map((x) => (x.kind === "paid" ? x.c.id : x.kind === "house" ? house?.id : null))
+    .map((x) => (x.kind === "paid" ? x.c.id : x.kind === "house" ? houseAdOf(x.ad).id : null))
     .filter(Boolean)
     .join(",");
 
@@ -89,7 +88,8 @@ export function AdSlot({
     <aside ref={ref} className={`space-y-3 ${className}`}>
       {cells.map((cell) => {
         if (cell.kind === "house") {
-          return house ? <BannerCard key="house" ad={house} slot={slot} onClick={clickOf(house.id)} /> : null;
+          const house = houseAdOf(cell.ad);
+          return <BannerCard key={`house-${house.id}`} ad={house} slot={slot} onClick={clickOf(house.id)} />;
         }
         if (cell.kind === "empty") {
           return <EmptyAdCard key={`e${cell.n}`} n={cell.n} slot={slot} onClick={clickOf("inquiry")} />;

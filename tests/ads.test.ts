@@ -116,27 +116,34 @@ test("placeHref: 출발지·목적지 /call/new 주소", () => {
   assert.equal(k.searchParams.get("dest"), null);
 });
 
-test("simpleLayout: 한인업소록 → 광고 무작위 순서, 화면 5칸, 남으면 안내 1칸", () => {
+test("simpleLayout: 한인업소록 → 광고 무작위 순서 → 빈 칸은 Kenal Dekat, 화면 5칸, 남으면 안내 1칸", () => {
   const mk = (id: string, createdAt: number, slots: AdCampaignDoc["slots"] = [...PRODUCT_INFO.premium.slots]) => ({
     ...camp(id, slots, 0, 100),
     createdAt,
   });
-  const ids = (cells: ReturnType<typeof simpleLayout>) => cells.map((x) => (x.kind === "paid" ? x.c.id : x.kind));
+  const ids = (cells: ReturnType<typeof simpleLayout>) => cells.map((x) => (x.kind === "paid" ? x.c.id : x.kind === "house" ? x.ad ?? "house" : x.kind));
   for (const s of ["homeBenefits", "waiting", "pickup", "destinationSearch"] as const) assert.equal(SCREEN_CAP[s], 5);
   // 광고 없음
-  assert.deepEqual(ids(simpleLayout([], "homeBenefits", 10, 0)), ["house", "empty"]);
+  assert.deepEqual(ids(simpleLayout([], "homeBenefits", 10, 0)), ["house", "kenal-dekat", "empty"]);
+  // 픽업 화면에는 Kenal Dekat 을 넣지 않는다
+  assert.deepEqual(ids(simpleLayout([], "pickup", 10, 0)), ["house", "empty"]);
   // 2곳: 호출 묶음으로 올렸던 광고도 모든 화면에, 칸이 남아 안내 1칸
   const two = [mk("a", 1, [...PRODUCT_INFO.callBundle.slots]), mk("b", 2)];
   const l2 = ids(simpleLayout(two, "homeBenefits", 10, 7));
   assert.equal(l2[0], "house");
   assert.deepEqual([...l2.slice(1, 3)].sort(), ["a", "b"]);
-  assert.equal(l2[3], "empty");
+  assert.equal(l2[3], "kenal-dekat");
+  assert.equal(l2[4], "empty");
+  // 3곳: Kenal Dekat 이 마지막 칸을 채우고 안내 칸은 없다
+  const three = [...two, mk("c", 3)];
+  assert.deepEqual(ids(simpleLayout(three, "destinationSearch", 10, 1)).slice(4), ["kenal-dekat"]);
   // 6곳: 광고 4칸만, 안내 없음. seed 가 같으면 같은 순서, 여러 seed 로 보면 모두 고르게 나온다
   const six = ["a", "b", "c", "d", "e", "f"].map((id, i) => mk(id, i));
   const one = ids(simpleLayout(six, "pickup", 10, 42));
   assert.equal(one.length, 5);
   assert.equal(one[0], "house");
   assert.ok(!one.includes("empty"));
+  assert.ok(!one.includes("kenal-dekat"));
   assert.deepEqual(one, ids(simpleLayout(six, "pickup", 10, 42)));
   const seen = new Map<string, number>();
   for (let seed = 1; seed <= 600; seed++) {
@@ -144,7 +151,9 @@ test("simpleLayout: 한인업소록 → 광고 무작위 순서, 화면 5칸, �
   }
   for (const id of ["a", "b", "c", "d", "e", "f"]) assert.ok((seen.get(id) ?? 0) > 300, `${id} ${seen.get(id)}`);
   // 끝난 광고는 빠진다
-  assert.deepEqual(ids(simpleLayout(six, "homeBenefits", 100, 0)), ["house", "empty"]);
+  assert.deepEqual(ids(simpleLayout(six, "homeBenefits", 100, 0)), ["house", "kenal-dekat", "empty"]);
+  // 광고 4곳이면 유료 광고가 먼저 — Kenal Dekat 은 밀려난다
+  assert.ok(!ids(simpleLayout(six, "homeBenefits", 10, 3)).includes("kenal-dekat"));
   assert.equal(overlappingCount(six, 50, 150), 6);
   assert.equal(overlappingCount(six, 50, 150, "a"), 5);
   assert.equal(overlappingCount(six, 100, 150), 0);
