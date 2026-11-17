@@ -9,23 +9,37 @@ export const authMsgs = {
     id: "Your Family. Your Driver. Your Peace of Mind.",
     en: "Your Family. Your Driver. Your Peace of Mind.",
   },
-  "brand.sloganDesc": {
-    ko: "가족과 기사님의 하루를 편하게 잇습니다.",
-    id: "Menghubungkan hari keluarga dan sopir dengan mudah.",
-    en: "Connecting your family and your driver, every day.",
-  },
-  "brand.desc1": {
-    ko: "기사님 호출, 이동 상황, 근무 기록을 한곳에서.",
-    id: "Panggil sopir, pantau perjalanan, dan catat jam kerja di satu tempat.",
-    en: "Call your driver, follow each trip, and keep work hours in one place.",
-  },
-  "brand.desc2": {
-    ko: "앱 설치 없이 휴대폰 브라우저에서 바로 시작합니다.",
-    id: "Langsung mulai dari browser HP, tanpa instal aplikasi.",
-    en: "Start right away in your phone's browser — no app store needed.",
-  },
-
   // ── 로그인
+  // 로그인 첫 화면 소개 (2026-11-17, A안) — 처음 온 사람이 무엇·누구용인지 바로 알게
+  "login.headline": {
+    ko: "우리 집 기사님,\n버튼 하나로 부르세요",
+    id: "Panggil sopir keluarga Anda dengan satu tombol",
+    en: "Call your family driver with one tap",
+  },
+  "login.forWho": {
+    ko: "개인 기사님을 둔 가족을 위한 무료 앱 · 택시 호출 앱이 아닙니다",
+    id: "Aplikasi gratis untuk keluarga yang punya sopir pribadi · Bukan aplikasi taksi",
+    en: "A free app for families with a private driver · Not a taxi app",
+  },
+  "login.f1t": { ko: "버튼 하나로 호출", id: "Panggil dengan satu tombol", en: "One-tap call" },
+  "login.f1d": {
+    ko: "기사님 휴대폰에 알람이 울립니다",
+    id: "Alarm langsung berbunyi di HP sopir",
+    en: "An alarm rings on your driver's phone",
+  },
+  "login.f2t": { ko: "어디쯤 왔는지 확인", id: "Lihat posisi perjalanan", en: "See where they are" },
+  "login.f2d": {
+    ko: "출발·도착·운행 중을 한눈에",
+    id: "Berangkat, tiba, sedang mengantar",
+    en: "On the way, arrived, driving",
+  },
+  "login.f3t": { ko: "근무 기록 자동 정리", id: "Catatan kerja otomatis", en: "Work log, done for you" },
+  "login.f3d": {
+    ko: "출퇴근·근무시간·급여 계산까지",
+    id: "Jam masuk-pulang, jam kerja, hitung gaji",
+    en: "Clock-in, hours and pay",
+  },
+  "login.browse": { ko: "먼저 둘러보기", id: "Lihat dulu", en: "Take a look first" },
   "login.google": { ko: "Google로 계속", id: "Lanjut dengan Google", en: "Continue with Google" },
   "login.failed": {
     ko: "로그인하지 못했습니다. 잠시 후 다시 시도해주세요.",
