@@ -251,7 +251,7 @@ export const HL = "ring-[3px] ring-action ring-offset-2 ring-offset-surface";
 export function IosAddToHomeMock({ share, add, more }: { share: string; add: string; more: string }) {
   return (
     <Phone
-      title={<span className="mx-auto rounded-md bg-line/70 px-6 py-0.5 text-[10px] font-semibold text-ink-sub">🔒 bosscall-ten.vercel.app</span>}
+      title={<span className="mx-auto rounded-md bg-line/70 px-6 py-0.5 text-[10px] font-semibold text-ink-sub">🔒 www.bosscallapp.com</span>}
       bar={
         <div className="flex items-center justify-around border-t border-line bg-surface py-2 text-[15px] text-link">
           <span>‹</span>
@@ -281,7 +281,7 @@ export function AndroidInstallMock({ install, home }: { install: string; home: s
     <Phone
       title={
         <span className="flex w-full items-center gap-2">
-          <span className="flex-1 rounded-full bg-line/70 px-2 py-0.5 text-[10px] font-semibold text-ink-sub">bosscall-ten.vercel.app</span>
+          <span className="flex-1 rounded-full bg-line/70 px-2 py-0.5 text-[10px] font-semibold text-ink-sub">www.bosscallapp.com</span>
           <span className={`rounded px-1 text-[14px] text-ink ${HL}`}>⋮</span>
         </span>
       }

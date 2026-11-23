@@ -6,7 +6,7 @@
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 
-const APP_HOST = "bosscall-ten.vercel.app";
+const APP_HOST = "www.bosscallapp.com";
 
 const FEATURES = [
   { icon: "🔔", title: "버튼 한 번으로 호출", desc: "기사님 휴대폰은 응답할 때까지 알람이 계속 울립니다." },

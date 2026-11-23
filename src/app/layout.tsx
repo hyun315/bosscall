@@ -2,10 +2,39 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Providers } from "./providers";
 import "./globals.css";
+import { SITE_URL, SITE_VERIFICATION } from "@/lib/site";
+
+const DESC =
+  "우리 집 기사님, 버튼 하나로 부르세요. 개인 기사님을 둔 가족을 위한 무료 앱 — 기사 호출, 출발·도착 확인, 출퇴근·근무시간·급여 기록까지. 자카르타 한인 가족을 위한 BossCall. Panggil sopir keluarga Anda dengan satu tombol.";
 
 export const metadata: Metadata = {
-  title: "BossCall — Your Family. Your Driver. Your Peace of Mind.",
-  description: "Your Family. Your Driver. Your Peace of Mind. 가족과 기사님의 하루를 편하게 잇습니다. Menghubungkan hari keluarga dan sopir.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "BossCall — 우리 집 기사님, 버튼 하나로 | Your Family. Your Driver. Your Peace of Mind.",
+    template: "%s | BossCall",
+  },
+  description: DESC,
+  keywords: ["BossCall", "보스콜", "기사 호출", "개인 기사", "운전기사", "자카르타", "인도네시아", "주재원", "한인", "sopir pribadi", "driver app"],
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "BossCall",
+    title: "BossCall — 우리 집 기사님, 버튼 하나로 부르세요",
+    description: DESC,
+    locale: "ko_KR",
+    alternateLocale: ["id_ID", "en_US"],
+    images: [{ url: "/og-image.jpg", width: 1200, height: 630, alt: "BossCall — 우리 집 기사님, 버튼 하나로 부르세요" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BossCall — 우리 집 기사님, 버튼 하나로 부르세요",
+    description: DESC,
+    images: ["/og-image.jpg"],
+  },
+  verification: {
+    ...(SITE_VERIFICATION.google ? { google: SITE_VERIFICATION.google } : {}),
+    ...(SITE_VERIFICATION.naver ? { other: { "naver-site-verification": SITE_VERIFICATION.naver } } : {}),
+  },
   manifest: "/manifest.webmanifest",
   applicationName: "BossCall",
   appleWebApp: { capable: true, title: "BossCall", statusBarStyle: "default" },

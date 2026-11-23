@@ -146,7 +146,7 @@ def png(text, path, scale=12):
     im.save(path)
 if __name__=="__main__":
     import cv2
-    for name,url in [("owner","https://bosscall-ten.vercel.app/guide"),("driver","https://bosscall-ten.vercel.app/guide/driver")]:
+    for name,url in [("owner","https://www.bosscallapp.com/guide"),("driver","https://www.bosscallapp.com/guide/driver")]:
         p=f"{sys.argv[1]}/test-{name}.png"; png(url,p)
         val,_,_=cv2.QRCodeDetector().detectAndDecode(cv2.imread(p))
         print(name, "OK" if val==url else f"FAIL {val!r}")

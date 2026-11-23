@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - run: curl -fsS --max-time 60 https://bosscall-ten.vercel.app/api/cron/clockin-reminders
+      - run: curl -fsS --max-time 60 https://www.bosscallapp.com/api/cron/clockin-reminders

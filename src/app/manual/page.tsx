@@ -51,7 +51,7 @@ export default function ManualPage() {
             </Link>
             <a
               href={`https://wa.me/?text=${encodeURIComponent(
-                "Pak/Bu sopir, ini panduan BossCall. Tolong ikuti langkahnya:\nhttps://bosscall-ten.vercel.app/manual/driver",
+                "Pak/Bu sopir, ini panduan BossCall. Tolong ikuti langkahnya:\nhttps://www.bosscallapp.com/manual/driver",
               )}`}
               target="_blank"
               rel="noopener"
@@ -144,7 +144,7 @@ const SECTIONS: ManualSection[] = [
     steps: {
       ios: [
         <>
-          <b>Safari</b>로 <b>bosscall-ten.vercel.app</b> 열기 (카톡 안에서 열렸다면 Safari로 넘어갑니다)
+          <b>Safari</b>로 <b>www.bosscallapp.com</b> 열기 (카톡 안에서 열렸다면 Safari로 넘어갑니다)
         </>,
         <>
           <B>Google로 계속</B> → 우리 가족 이름, 기사님 이름·전화번호 → <B tone="blue">시작하기</B>
@@ -158,7 +158,7 @@ const SECTIONS: ManualSection[] = [
       ],
       android: [
         <>
-          <b>Chrome</b>으로 <b>bosscall-ten.vercel.app</b> 열기 (삼성 인터넷·카톡이 아니라 Chrome)
+          <b>Chrome</b>으로 <b>www.bosscallapp.com</b> 열기 (삼성 인터넷·카톡이 아니라 Chrome)
         </>,
         <>
           <B>Google로 계속</B> → 우리 가족 이름, 기사님 이름·전화번호 → <B tone="blue">시작하기</B>

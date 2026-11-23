@@ -5,7 +5,7 @@
  */
 import type { ReactNode } from "react";
 
-const APP_HOST = "bosscall-ten.vercel.app";
+const APP_HOST = "www.bosscallapp.com";
 
 export default function DriverGuidePage() {
   return (
