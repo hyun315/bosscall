@@ -69,6 +69,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="/open-external.js" />
         <script src="/recover.js" />
+        {/* Vercel Web Analytics — 방문자·페이지뷰 집계 (쿠키 없음). 대시보드 Analytics 탭에서 켜져 있어야 수집됨 */}
+        <script
+          dangerouslySetInnerHTML={{ __html: "window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};" }}
+        />
+        <script defer src="/_vercel/insights/script.js" />
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
         <link
           rel="stylesheet"
