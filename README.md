@@ -41,7 +41,7 @@ Next.js 15 (App Router) · TypeScript strict · Tailwind CSS · Firebase (Auth �
 
 1. [Firebase 콘솔](https://console.firebase.google.com) › 프로젝트 만들기
 2. **Authentication** › 로그인 방법 › **Google** 사용 설정
-3. Authentication › 설정 › **승인된 도메인**에 Vercel 도메인 추가 (예: `bosscall.vercel.app`)
+3. Authentication › 설정 › **승인된 도메인**에 Vercel 도메인 추가 (예: `www.bosscallapp.com`)
 4. **Firestore Database** › 데이터베이스 만들기 › 위치 **asia-southeast2 (Jakarta)** 권장 › 프로덕션 모드
 5. Firestore › **규칙** 탭에 이 저장소의 `firestore.rules` 내용을 그대로 붙여넣고 게시
    (복합 색인은 필요 없습니다. 단, 구글 좌표 30일 정리용 **단일 필드 예외 2개**는 꼭 추가하세요:
@@ -52,7 +52,7 @@ Next.js 15 (App Router) · TypeScript strict · Tailwind CSS · Firebase (Auth �
 8. 프로젝트 설정 › **클라우드 메시징** › 웹 푸시 인증서 › **키 쌍 생성** → `NEXT_PUBLIC_FIREBASE_VAPID_KEY`
 9. 프로젝트 설정 › **서비스 계정** › 새 비공개 키 생성 → JSON 의 `project_id`, `client_email`, `private_key` 를 서버 환경변수로 사용 (파일은 저장소에 올리지 마세요)
 
-> **iPhone 로그인 안정화**: `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` 을 `xxx.firebaseapp.com` 이 아니라 **앱 도메인**(예: `bosscall.vercel.app`)으로 설정하세요. `next.config.mjs` 가 `/__/auth/*` 를 Firebase로 프록시합니다. 그리고 Google Cloud 콘솔 › API 및 서비스 › 사용자 인증 정보 › *Web client (auto created by Google Service)* 의 **승인된 리디렉션 URI** 에 `https://bosscall.vercel.app/__/auth/handler` 를 추가합니다.
+> **iPhone 로그인 안정화**: `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` 을 `xxx.firebaseapp.com` 이 아니라 **앱 도메인**(예: `www.bosscallapp.com`)으로 설정하세요. `next.config.mjs` 가 `/__/auth/*` 를 Firebase로 프록시합니다. 그리고 Google Cloud 콘솔 › API 및 서비스 › 사용자 인증 정보 › *Web client (auto created by Google Service)* 의 **승인된 리디렉션 URI** 에 `https://www.bosscallapp.com/__/auth/handler` 를 추가합니다.
 
 ## 4. Google Maps Platform 설정 (명세 §34 — 필수)
 
@@ -63,7 +63,7 @@ Next.js 15 (App Router) · TypeScript strict · Tailwind CSS · Firebase (Auth �
 
 | Key | 환경변수 | 애플리케이션 제한 | API 제한 |
 |---|---|---|---|
-| 브라우저용 | `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` | 웹사이트: `https://bosscall.vercel.app/*`, (개발) `http://localhost:3000/*` | Maps JavaScript API, Places API (New) |
+| 브라우저용 | `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` | 웹사이트: `https://www.bosscallapp.com/*`, (개발) `http://localhost:3000/*` | Maps JavaScript API, Places API (New) |
 | 서버용 | `GOOGLE_MAPS_SERVER_KEY` | 없음 (Vercel IP는 고정이 아님) | Geocoding API **만** |
 
 3. **결제 › 예산 및 알림**: 월 예산(예: $50)과 50/90/100% 알림 설정 (§34.5)
