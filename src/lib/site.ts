@@ -10,7 +10,7 @@ export const SITE_HOST = "www.bosscallapp.com";
  * 「HTML 태그」 방식으로 받은 content 값만 넣는다 (비밀값 아님).
  */
 export const SITE_VERIFICATION = {
-  google: "",
+  google: "wZKnqg2rD--QJeKTP5-AI7hG0wAHmd0Vf97L00OeBOg",
   naver: "",
 };
 
