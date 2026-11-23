@@ -11,7 +11,7 @@ export const SITE_HOST = "www.bosscallapp.com";
  */
 export const SITE_VERIFICATION = {
   google: "wZKnqg2rD--QJeKTP5-AI7hG0wAHmd0Vf97L00OeBOg",
-  naver: "",
+  naver: "0d68cdd2ad454fea198524a9d2b56d71a81d61d5",
 };
 
 /** 로그인 없이 열리는 공개 페이지 — sitemap.xml 에 실린다 */
