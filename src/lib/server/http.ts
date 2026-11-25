@@ -1,3 +1,4 @@
+import { SITE_URL } from "@/lib/site";
 import "server-only";
 import { NextResponse } from "next/server";
 import { isLocale, pickLocale, type Locale } from "@/i18n/core";
@@ -87,6 +88,7 @@ export function routeWithParams<P extends Record<string, string>>(
 }
 
 export function appUrl(path: string): string {
-  const base = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+  // 실서비스는 항상 공식 주소(www.bosscallapp.com)로 링크를 만든다 — 초대 링크 등
+  const base = (process.env.VERCEL_ENV === "production" ? SITE_URL : (process.env.NEXT_PUBLIC_APP_URL ?? "")).replace(/\/$/, "");
   return `${base}${path}`;
 }
