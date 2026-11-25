@@ -15,7 +15,7 @@ import {
  */
 const config = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  authDomain: pickAuthDomain(),
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
@@ -45,4 +45,16 @@ export function clientDb(): Firestore {
     db = getFirestore(app);
   }
   return db;
+}
+
+/**
+ * 로그인 처리 주소는 「지금 열린 앱 주소」와 같게 둔다 — 두 주소 모두 /__/auth 를 Firebase로 프록시하므로
+ * www.bosscallapp.com 에서도, 옛 주소에서도 같은 사이트 안에서 로그인이 끝난다 (iOS Safari 안정성).
+ * 각 주소는 Firebase 「승인된 도메인」과 Google OAuth 「승인된 리디렉션 URI」(…/__/auth/handler)에 등록돼 있어야 한다.
+ */
+function pickAuthDomain(): string | undefined {
+  const fallback = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN;
+  if (typeof window === "undefined") return fallback;
+  const host = window.location.host;
+  return ["www.bosscallapp.com", "bosscall-ten.vercel.app"].includes(host) ? host : fallback;
 }
